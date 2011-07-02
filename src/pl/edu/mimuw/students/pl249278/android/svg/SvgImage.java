@@ -4,10 +4,24 @@ import java.util.ArrayList;
 
 public class SvgImage {
 	float width, height;
+	public float getWidth() {
+		return width;
+	}
+
+	public float getHeight() {
+		return height;
+	}
+
 	//TODO remove public modifier
 	public ArrayList<SvgObject> objects;
 	
 	public SvgImage() {
 		objects = new ArrayList<SvgObject>();
+	}
+	
+	public SvgImage(float width, float height) {
+		this();
+		this.width = width;
+		this.height = height;
 	}
 }

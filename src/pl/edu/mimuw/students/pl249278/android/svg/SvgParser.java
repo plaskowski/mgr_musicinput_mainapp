@@ -1,5 +1,8 @@
 package pl.edu.mimuw.students.pl249278.android.svg;
 
+import static pl.edu.mimuw.students.pl249278.android.common.LogUtils.info;
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.*;
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.regex.Matcher;
@@ -10,9 +13,6 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import pl.edu.mimuw.students.pl249278.android.svg.StyleAttribute.ValueType;
-
-import android.R.style;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.LogUtils.*;
 
 public class SvgParser {
 	private static final String VAL_STYLETYPE_TEXTCSS = "text/css";
@@ -177,12 +177,16 @@ public class SvgParser {
 
 	private class SVGPathParser {
 		
-	    private String source;
+		private String source;
 	    private int index;
 		private int length;
 		private StringBuilder commands = new StringBuilder();
 		private ArrayFloatList args = new ArrayFloatList();
 		private char currCmd;
+		
+		private boolean isFirstCmd() {
+			return commands.length() == 0;
+		}
 	
 		private SvgPath parsePath(String svgPathSpec) throws ParseException {
 	    	this.source = svgPathSpec;
@@ -204,18 +208,21 @@ public class SvgParser {
 			index = i+1;
 			currCmd = source.charAt(i);
 			switch(currCmd) {
-			case 'm':
-			case 'M':
+			case PATH_CMD_RMOVETO:
+			case PATH_CMD_MOVETO:
 				parseMoveTo();
 				break;
-			case 'c':
-			case 'C':
+			case PATH_CMD_RCUBICTO:
+			case PATH_CMD_CUBICTO:
 				parseCubicCurve();
 				break;
+			case PATH_CMD_RLINETO:
+			case PATH_CMD_LINETO:
+				parseLineTo();
+				break;
 			case 'z':
-			case 'Z':
-				commands.append('Z');
-	//			result.close();
+			case PATH_CMD_CLOSE:
+				commands.append(PATH_CMD_CLOSE);
 				break;
 			default:
 				throw new ParseException("Uknown commmand char "+currCmd, i);
@@ -243,9 +250,13 @@ public class SvgParser {
 		}
 	
 		private void parseMoveTo() throws ParseException {
-			commands.append(currCmd);
+			commands.append(isFirstCmd() ? Character.toUpperCase(currCmd) : currCmd);
 			args.add(readArgument());
 			args.add(readArgument());
+			parseLineTo();
+		}
+
+		private void parseLineTo() throws ParseException {
 			Float x1;
 			int counter = 0;
 			while((x1 = tryReadArgument()) != null) {
@@ -254,7 +265,7 @@ public class SvgParser {
 				args.add(readArgument());
 			}
 			if(counter > 0) {
-				appendCommand(Character.isUpperCase(currCmd) ? 'L' : 'l', counter);
+				appendCommand(Character.isUpperCase(currCmd) ? PATH_CMD_LINETO : PATH_CMD_RLINETO, counter);
 			}
 		}
 		

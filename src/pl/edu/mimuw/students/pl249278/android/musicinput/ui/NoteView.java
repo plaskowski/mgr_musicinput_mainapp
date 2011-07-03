@@ -28,7 +28,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.Point;
 import android.graphics.PointF;
 import android.util.Pair;
 import android.view.View;
@@ -58,20 +57,20 @@ public class NoteView extends View {
 	public NoteView(Context context, int noteLength, int noteHeight) throws NoteDescriptionLoadingException {
 		super(context);
 		
+		// FIXME real logic for discovering if it's upsidedown or normal
+		boolean upsdown = noteHeight <= 4;
 		// FIXME real logic for discovering anchors
 		int baseAnchor = noteHeight;
-		int endingAnchor = noteHeight-6;
+		int endingAnchor = baseAnchor + (upsdown ? 6 : -6);
 		
 		// discover appropriate parts images
-		// FIXME real logic for discovering if it's upsidedown or normal
-		boolean upsdown = false;
 		this.base = NotePartFactory.getBaseImage(context, noteLength, NoteConstants.anchorType(baseAnchor), upsdown);
 		this.ending = NotePartFactory.getEndingImage(context, noteLength, NoteConstants.anchorType(endingAnchor), upsdown);
     	IMarker firstM = base.getImarkers().get(0), secondM = base.getImarkers().get(1);
 		baseIM1Anchor = imarkerAnchor(firstM, baseAnchor);
 		baseIM2Anchor = imarkerAnchor(secondM, baseAnchor);
 		endingIMAnchor = imarkerAnchor(ending.imarkers.get(0), endingAnchor);
-    	ratioE2B = lineXSpan(ending.getJoinLine()) / lineXSpan(base.getJoinLine());
+    	ratioE2B = lineXSpan(base.getJoinLine()) / lineXSpan(ending.getJoinLine());
     	float diff = base.getJoinLine().first.x - ending.getJoinLine().first.x * ratioE2B;
 		if(diff >= 0) {
 			this.baseXoffset = 0;
@@ -94,7 +93,7 @@ public class NoteView extends View {
 			baseXoffset * scaleB, 0
 		);
     		
-    	scaleE = scaleB / ratioE2B;
+    	scaleE = scaleB * ratioE2B;
     	IMarker endingIM = ending.getImarkers().get(0);
     	int endingIMRelativeOffset = sheetParams.anchorOffset(endingIMAnchor, part(endingIM));
 		endingDrawOffset = new PointF(
@@ -150,6 +149,24 @@ public class NoteView extends View {
 	
 	@Override
 	protected void onDraw(Canvas canvas) {
+		canvas.drawColor(Color.YELLOW);
+		
+		paint.setColor(Color.GRAY);
+		canvas.drawRect(
+			baseDrawOffset.x, baseDrawOffset.y, 
+			baseDrawOffset.x + base.getWidth()*scaleB, baseDrawOffset.y + base.getHeight()*scaleB, 
+			paint
+		);
+
+		paint.setColor(Color.GREEN);
+		canvas.drawRect(
+			endingDrawOffset.x, endingDrawOffset.y, 
+			endingDrawOffset.x + ending.getWidth()*scaleE, endingDrawOffset.y+ending.getHeight()*scaleE, 
+			paint
+		);
+		
+		paint.setColor(Color.BLACK);
+		
 		PointF baseJLStart = new PointF(baseDrawOffset.x, baseDrawOffset.y);
 		baseJLStart.offset(base.getJoinLine().first.x*scaleB, base.getJoinLine().first.y * scaleB);
 		PointF endingJLEnd = new PointF(endingDrawOffset.x, endingDrawOffset.y);

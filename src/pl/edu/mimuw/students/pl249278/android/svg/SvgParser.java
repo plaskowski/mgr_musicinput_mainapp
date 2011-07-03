@@ -42,11 +42,11 @@ public class SvgParser {
         		 info("Ignoring element %s:%s not from SVG NS", xmlParser.getNamespace(), xmlParser.getName());
         	 } else {
         		 String name = xmlParser.getName();
-	             if(TAG_ROOT.equals(xmlParser.getName())) {
+	             if(TAG_ROOT.equals(name)) {
 	            	 assertAttrsPresence(xmlParser, ROOT_ATTR_WIDTH, ROOT_ATTR_HEIGHT);
 	            	 result.width = parseSizeValue(attrValue(xmlParser, ROOT_ATTR_WIDTH));
 	            	 result.height =  parseSizeValue(attrValue(xmlParser, ROOT_ATTR_HEIGHT));
-	             } if(TAG_PATH.equals(name)) {
+	             } else if(TAG_PATH.equals(name)) {
         			 SvgPath path = parsePathNode(xmlParser);
         			 result.objects.add(path);
         		 } else if(TAG_RECT.equals(name)) {
@@ -57,9 +57,9 @@ public class SvgParser {
         		 }
         	 }
          } else if(eventType == XmlPullParser.END_TAG) {
-             System.out.println("End tag "+xmlParser.getName());
+//             System.out.println("End tag "+xmlParser.getName());
          } else if(eventType == XmlPullParser.TEXT) {
-             System.out.println("Text "+xmlParser.getText());
+//             System.out.println("Text "+xmlParser.getText());
          }
          eventType = xmlParser.next();
         }
@@ -135,7 +135,7 @@ public class SvgParser {
 					throw new SvgFormatException("Unsupported style property value format: "+styleAttribute.type.name());
 				}
 				obj.style.put(styleAttribute, value);
-				info("Style property %s: %s", propName, propValue);
+//				info("Style property %s: %s", propName, propValue);
 			} else {
 				info("Ignoring unsupported style property %s: %s", propName, propValue);
 			}

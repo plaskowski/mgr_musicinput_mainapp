@@ -160,7 +160,10 @@ public class EnhancedSvgImage extends SvgImage {
 		if(second.cmd == PATH_CMD_RLINETO) {
 			end.offset(start.x, start.y);
 		}
-		return new Pair<PointF, PointF>(start, end); 
+		if(start.x <= end.x)
+			return new Pair<PointF, PointF>(start, end);
+		else 
+			return new Pair<PointF, PointF>(end, start);
 	}
 
 	private boolean matchesFill(SvgObject obj, int color, int alpha) {

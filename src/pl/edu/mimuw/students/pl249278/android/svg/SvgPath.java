@@ -27,7 +27,7 @@ public class SvgPath extends SvgObject {
 		this.commands = commands;
 		this.args = args;
 	}
-	//TODO remove public modifier and add some way to access and iterate over this
+	
 	private String commands;
 	private float[] args;
 	private int count = NO_VALUE;
@@ -59,61 +59,82 @@ public class SvgPath extends SvgObject {
 	}
 	
 	public MemorySaavyIterator<SvgPathCommand> getIterator() {
-		return new MemorySaavyIterator<SvgPathCommand>() {
-			int specIndex = 0, repeatCounter = 0, argsOffset = 0, specLength = SvgPath.this.commands.length();
-			int currentChar = NO_VALUE;
-			private boolean isRepeatable;
-			private int argsAmount;
-
-			@Override
-			public void readNext(SvgPathCommand dest) {
-				if(currentChar == NO_VALUE) {
-					currentChar = commands.charAt(specIndex);
-					isRepeatable = false;
-					argsAmount = 0;
-					switch(currentChar) {
-					case PATH_CMD_LINETO:
-					case PATH_CMD_RLINETO:
-						isRepeatable = true;
-					case PATH_CMD_MOVETO:
-					case PATH_CMD_RMOVETO:
-						argsAmount = 2;
-						break;
-					case PATH_CMD_CLOSE:
-						break;
-					case PATH_CMD_CUBICTO:
-					case PATH_CMD_RCUBICTO:
-						isRepeatable = true;
-						argsAmount = 6;
-						break;
-					default:
-						throw new RuntimeException("Source code error. Character "+currentChar+" hasn't been handled.");	
-					}
-					repeatCounter = !isRepeatable ? 1 :
-						commands.charAt(++specIndex);
-				}
-				
-				dest.cmd = (char) currentChar;
-				System.arraycopy(args, argsOffset, dest.args, 0, argsAmount);
-				argsOffset += argsAmount;
-				
-				repeatCounter--;
-				if(repeatCounter <= 0) {
-					specIndex++;
-					currentChar = NO_VALUE;
-				}
-			}
-
-			@Override
-			public boolean hasNext() {
-				return specIndex < specLength;
-			}
-			
-		};
+		return new PathIterator();
 	}
 	
 	public static interface MemorySaavyIterator<T> {
 		void readNext(T dest);
 		boolean hasNext();
+	}
+	
+	private class PathIterator implements MemorySaavyIterator<SvgPathCommand> {
+		int specIndex = 0, repeatCounter = 0, argsOffset = 0, specLength = SvgPath.this.commands.length();
+		int currentChar = NO_VALUE;
+		private boolean isRepeatable;
+		private int argsAmount;
+
+		@Override
+		public void readNext(SvgPathCommand dest) {
+			if(currentChar == NO_VALUE) {
+				currentChar = commands.charAt(specIndex);
+				isRepeatable = false;
+				argsAmount = 0;
+				switch(currentChar) {
+				case PATH_CMD_LINETO:
+				case PATH_CMD_RLINETO:
+					isRepeatable = true;
+				case PATH_CMD_MOVETO:
+				case PATH_CMD_RMOVETO:
+					argsAmount = 2;
+					break;
+				case PATH_CMD_CLOSE:
+					break;
+				case PATH_CMD_CUBICTO:
+				case PATH_CMD_RCUBICTO:
+					isRepeatable = true;
+					argsAmount = 6;
+					break;
+				default:
+					throw new RuntimeException("Source code error. Character "+currentChar+" hasn't been handled.");	
+				}
+				repeatCounter = !isRepeatable ? 1 :
+					commands.charAt(++specIndex);
+			}
+			
+			if(dest != null) {
+				dest.cmd = (char) currentChar;
+				System.arraycopy(args, argsOffset, dest.args, 0, argsAmount);
+			}
+			argsOffset += argsAmount;
+			
+			repeatCounter--;
+			if(repeatCounter <= 0) {
+				specIndex++;
+				currentChar = NO_VALUE;
+			}
+		}
+
+		@Override
+		public boolean hasNext() {
+			return specIndex < specLength;
+		}
+		
+	};
+
+	@Override
+	public void translate(float dx, float dy) {
+		for(PathIterator it = new PathIterator(); it.hasNext();) {
+			it.readNext(null);
+			int cmdLabel = it.currentChar != NO_VALUE ? it.currentChar :
+				commands.charAt(it.specIndex- (it.isRepeatable ? 2 : 1));
+			switch(cmdLabel) {
+			case PATH_CMD_LINETO:
+			case PATH_CMD_MOVETO:
+			case PATH_CMD_CUBICTO:
+				for(int i = 0; i < it.argsAmount; i++) {
+					args[it.argsOffset-it.argsAmount+i] += i%2 == 0 ? dx : dy;
+				}
+			}
+		}
 	}
 }

@@ -19,4 +19,6 @@ public abstract class SvgObject {
 		Object result = style.get(attr);
 		return result != null ? (Integer) result : defaultVal;
 	}
+
+	public abstract void translate(float dx, float dy);
 }

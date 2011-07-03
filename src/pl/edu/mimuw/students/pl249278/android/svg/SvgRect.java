@@ -19,4 +19,10 @@ public class SvgRect extends SvgObject {
 	public float getHegiht() {
 		return hegiht;
 	}
+
+	@Override
+	public void translate(float dx, float dy) {
+		x += dx;
+		y += dy;
+	}
 }

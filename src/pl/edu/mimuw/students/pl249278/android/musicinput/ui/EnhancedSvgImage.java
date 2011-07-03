@@ -1,21 +1,26 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_X;
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_Y;
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_MOVETO;
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RLINETO;
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RMOVETO;
+
 import java.util.ArrayList;
 
 import org.joda.primitives.list.impl.ArrayIntList;
 
-import android.graphics.PointF;
-import android.graphics.RectF;
-import android.util.Pair;
 import pl.edu.mimuw.students.pl249278.android.svg.StyleAttribute;
+import pl.edu.mimuw.students.pl249278.android.svg.StyleAttribute.ValueType;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgObject;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgPath;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgPath.MemorySaavyIterator;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgPath.SvgPathCommand;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgRect;
-import pl.edu.mimuw.students.pl249278.android.svg.StyleAttribute.ValueType;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.*;
+import android.graphics.PointF;
+import android.graphics.RectF;
+import android.util.Pair;
 
 public class EnhancedSvgImage extends SvgImage {
 	protected static final int CLIPAREA_COLOR = 0xFF0000;
@@ -32,11 +37,6 @@ public class EnhancedSvgImage extends SvgImage {
 		IMARKER_EDGE_COLOR
 	});
 	
-	protected RectF areaMarker = null;
-	public RectF getAreaMarker() {
-		return areaMarker;
-	}
-
 	public ArrayList<Pair<PointF, PointF>> getMarkers() {
 		return markers;
 	}
@@ -83,16 +83,17 @@ public class EnhancedSvgImage extends SvgImage {
 	public EnhancedSvgImage(SvgImage source) throws InvalidMetaException {
 		super(source.getWidth(), source.getHeight());
 		
+		RectF clipArea = null;
 		for (int i = 0; i < source.objects.size(); i++) {
 			SvgObject obj = source.objects.get(i);
 			
 			if(obj instanceof SvgRect) {
 				SvgRect rect = (SvgRect) obj;
 				if(matchesFill(rect, CLIPAREA_COLOR, MARKER_ALPHA)) {
-					if(areaMarker != null) {
+					if(clipArea != null) {
 						throw new InvalidMetaException("Found second ClipArea meta-object");
 					}
-					areaMarker = new RectF(
+					clipArea = new RectF(
 						rect.getX(), rect.getY(),
 						rect.getX()+rect.getWidth(), rect.getY()+rect.getHegiht()
 					);
@@ -117,6 +118,26 @@ public class EnhancedSvgImage extends SvgImage {
 				this.objects.add(obj);
 			}
 		}
+		
+		// apply clip area
+		if(clipArea != null) {
+			for (SvgObject obj : objects) {
+				obj.translate(-clipArea.left, -clipArea.top);
+			}
+			for (Pair<PointF, PointF> marker : markers) {
+				translateLine(marker, -clipArea.left, -clipArea.top);
+			}
+			for(IMarker marker: imarkers) {
+				translateLine(marker.line, -clipArea.left, -clipArea.top);
+			}
+			this.width = clipArea.width();
+			this.height = clipArea.height();
+		}
+	}
+
+	private static void translateLine(Pair<PointF, PointF> line, float dx, float dy) {
+		line.first.offset(dx, dy);
+		line.second.offset(dx, dy);
 	}
 
 	public static int alphaToIndex(int alpha) {
@@ -130,7 +151,7 @@ public class EnhancedSvgImage extends SvgImage {
 		return result;
 	}
 
-	private Pair<PointF, PointF> asLine(SvgPath obj) {
+	private static Pair<PointF, PointF> asLine(SvgPath obj) {
 		MemorySaavyIterator<SvgPathCommand> it = obj.getIterator();
 		SvgPathCommand first = new SvgPathCommand(), second = new SvgPathCommand();
 		it.readNext(first);
@@ -211,11 +232,19 @@ public class EnhancedSvgImage extends SvgImage {
 		return new PointF(arg(cmd, xIndex), arg(cmd, yIndex));
 	}
 
-	public static boolean isTypeRelative(int color) {
+	private static boolean isTypeRelative(int color) {
 		return color == IMARKER_EDGE_REL_COLOR || color == IMARKER_MIDDLE_REL_COLOR;
 	}
 
-	public static boolean isTypeBottomEdge(int color) {
+	private static boolean isTypeBottomEdge(int color) {
 		return color == IMARKER_EDGE_COLOR || color == IMARKER_EDGE_REL_COLOR;
+	}
+
+	public static boolean isTypeRelative(IMarker iMarker) {
+		return isTypeRelative(iMarker.getColor());
+	}
+
+	public static boolean isTypeBottomEdge(IMarker imarker) {
+		return isTypeBottomEdge(imarker.getColor());
 	}
 }

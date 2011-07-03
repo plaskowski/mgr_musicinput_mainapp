@@ -1,17 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
+ -->
 	<HorizontalScrollView
+		xmlns:android="http://schemas.android.com/apk/res/android"
 		android:layout_height="wrap_content"
 		android:layout_width="fill_parent"
 	>
-		<ImageView
-			android:id="@+id/test_imgview"
-			android:layout_width="1000px"
-			android:layout_height="1000px"
-		/>
+		<RelativeLayout
+			android:id="@+id/sheet"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:background="@android:color/white"
+		>
+			<ImageView
+				android:id="@+id/sheet_bg"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_alignParentLeft="true"
+				android:layout_alignParentTop="true"
+			/>
+		</RelativeLayout>
 	</HorizontalScrollView>
+<!-- 
 </ScrollView>
+ -->

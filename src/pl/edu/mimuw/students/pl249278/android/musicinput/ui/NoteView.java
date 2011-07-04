@@ -65,21 +65,28 @@ public class NoteView extends View {
 		
 		// discover appropriate parts images
 		this.base = NotePartFactory.getBaseImage(context, noteLength, NoteConstants.anchorType(baseAnchor), upsdown);
-		this.ending = NotePartFactory.getEndingImage(context, noteLength, NoteConstants.anchorType(endingAnchor), upsdown);
     	IMarker firstM = base.getImarkers().get(0), secondM = base.getImarkers().get(1);
 		baseIM1Anchor = imarkerAnchor(firstM, baseAnchor);
 		baseIM2Anchor = imarkerAnchor(secondM, baseAnchor);
-		endingIMAnchor = imarkerAnchor(ending.imarkers.get(0), endingAnchor);
-    	ratioE2B = lineXSpan(base.getJoinLine()) / lineXSpan(ending.getJoinLine());
-    	float diff = base.getJoinLine().first.x - ending.getJoinLine().first.x * ratioE2B;
-		if(diff >= 0) {
-			this.baseXoffset = 0;
-			this.endingXoffset = diff;
+
+		this.ending = NotePartFactory.getEndingImage(context, noteLength, NoteConstants.anchorType(endingAnchor), upsdown);
+		if(ending != null) {
+			endingIMAnchor = imarkerAnchor(ending.imarkers.get(0), endingAnchor);
+	
+			ratioE2B = lineXSpan(base.getJoinLine()) / lineXSpan(ending.getJoinLine());
+	    	float diff = base.getJoinLine().first.x - ending.getJoinLine().first.x * ratioE2B;
+			if(diff >= 0) {
+				this.baseXoffset = 0;
+				this.endingXoffset = diff;
+			} else {
+				this.baseXoffset = -diff;
+				this.endingXoffset = 0;
+			}
+			this.composedWidth = Math.max(baseXoffset+base.getWidth(), endingXoffset+ending.getWidth()*ratioE2B);
 		} else {
-			this.baseXoffset = -diff;
-			this.endingXoffset = 0;
+			this.baseXoffset = 0;
+			this.composedWidth = base.getWidth();
 		}
-		this.composedWidth = Math.max(baseXoffset+base.getWidth(), endingXoffset+ending.getWidth()*ratioE2B);
 	}
 	
 	public void setSheetParams(SheetParams params) {
@@ -93,19 +100,21 @@ public class NoteView extends View {
 			baseXoffset * scaleB, 0
 		);
     		
-    	scaleE = scaleB * ratioE2B;
-    	IMarker endingIM = ending.getImarkers().get(0);
-    	int endingIMRelativeOffset = sheetParams.anchorOffset(endingIMAnchor, part(endingIM));
-		endingDrawOffset = new PointF(
-			endingXoffset * scaleB, 0
-		);
-    	
-    	int baseTopOffset = (int) (baseIM1RelativeOffset - firstM.line.first.y * scaleB);
-    	int endingTopOffset = (int) (endingIMRelativeOffset - endingIM.line.first.y * scaleE);
-    	if(baseTopOffset > endingTopOffset) {
-    		baseDrawOffset.y = baseTopOffset - endingTopOffset;
-    	} else {
-    		endingDrawOffset.y = endingTopOffset - baseTopOffset;
+    	if(ending != null) {
+	    	scaleE = scaleB * ratioE2B;
+	    	IMarker endingIM = ending.getImarkers().get(0);
+	    	int endingIMRelativeOffset = sheetParams.anchorOffset(endingIMAnchor, part(endingIM));
+			endingDrawOffset = new PointF(
+				endingXoffset * scaleB, 0
+			);
+	    	
+	    	int baseTopOffset = (int) (baseIM1RelativeOffset - firstM.line.first.y * scaleB);
+	    	int endingTopOffset = (int) (endingIMRelativeOffset - endingIM.line.first.y * scaleE);
+	    	if(baseTopOffset > endingTopOffset) {
+	    		baseDrawOffset.y = baseTopOffset - endingTopOffset;
+	    	} else {
+	    		endingDrawOffset.y = endingTopOffset - baseTopOffset;
+	    	}
     	}
 	}
 	
@@ -138,7 +147,7 @@ public class NoteView extends View {
 			(int) (composedWidth*scaleB), 
 			(int) (Math.max(
 				baseDrawOffset.y + base.getHeight()*scaleB,
-				endingDrawOffset.y + ending.getHeight()*scaleE
+				ending == null ? 0 : endingDrawOffset.y + ending.getHeight()*scaleE
 			))
 		);
 	}
@@ -151,6 +160,30 @@ public class NoteView extends View {
 	protected void onDraw(Canvas canvas) {
 		canvas.drawColor(Color.YELLOW);
 		
+		if(ending != null) {
+			PointF baseJLStart = new PointF(baseDrawOffset.x, baseDrawOffset.y);
+			baseJLStart.offset(base.getJoinLine().first.x*scaleB, base.getJoinLine().first.y * scaleB);
+			PointF endingJLEnd = new PointF(endingDrawOffset.x, endingDrawOffset.y);
+			endingJLEnd.offset(ending.getJoinLine().second.x*scaleE, ending.getJoinLine().second.y * scaleE);
+			canvas.drawRect(
+				baseJLStart.x,
+				Math.min(baseJLStart.y, endingJLEnd.y)-1,
+				endingJLEnd.x,
+				Math.max(baseJLStart.y, endingJLEnd.y)+1,
+				paint
+			);
+	
+			paint.setColor(Color.GREEN);
+			canvas.drawRect(
+				endingDrawOffset.x, endingDrawOffset.y, 
+				endingDrawOffset.x + ending.getWidth()*scaleE, endingDrawOffset.y+ending.getHeight()*scaleE, 
+				paint
+			);
+			
+			paint.setColor(Color.BLACK);
+			drawSvgImage(canvas, ending, scaleE, endingDrawOffset, paint);
+		}
+		
 		paint.setColor(Color.GRAY);
 		canvas.drawRect(
 			baseDrawOffset.x, baseDrawOffset.y, 
@@ -158,29 +191,8 @@ public class NoteView extends View {
 			paint
 		);
 
-		paint.setColor(Color.GREEN);
-		canvas.drawRect(
-			endingDrawOffset.x, endingDrawOffset.y, 
-			endingDrawOffset.x + ending.getWidth()*scaleE, endingDrawOffset.y+ending.getHeight()*scaleE, 
-			paint
-		);
-		
 		paint.setColor(Color.BLACK);
-		
-		PointF baseJLStart = new PointF(baseDrawOffset.x, baseDrawOffset.y);
-		baseJLStart.offset(base.getJoinLine().first.x*scaleB, base.getJoinLine().first.y * scaleB);
-		PointF endingJLEnd = new PointF(endingDrawOffset.x, endingDrawOffset.y);
-		endingJLEnd.offset(ending.getJoinLine().second.x*scaleE, ending.getJoinLine().second.y * scaleE);
-		canvas.drawRect(
-			baseJLStart.x,
-			Math.min(baseJLStart.y, endingJLEnd.y)-1,
-			endingJLEnd.x,
-			Math.max(baseJLStart.y, endingJLEnd.y)+1,
-			paint
-		);
-
 		drawSvgImage(canvas, base, scaleB, baseDrawOffset, paint);
-		drawSvgImage(canvas, ending, scaleE, endingDrawOffset, paint);
 	}
 	
 	// TODO move to more appropriate class

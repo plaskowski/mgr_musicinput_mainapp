@@ -24,11 +24,13 @@ public class NotePartFactory {
 	public static NoteBase getBaseImage(Context context, int noteLength, int anchorType, boolean isUpsidedown) throws NoteDescriptionLoadingException {
 		// TODO real implementation
 		SvgParser parser = new SvgParser();
-		XmlPullParser xmlParser = context.getResources().getXml(R.xml.test_obrazek);
+		int resId = isUpsidedown ? R.xml.test_polnota_upsd_laprawo : R.xml.test_obrazek;
+		if(noteLength == 0) { resId = R.xml.test_calanuta; }
+		XmlPullParser xmlParser = context.getResources().getXml(resId);
 		SvgImage svgImg;
 		try {
 			svgImg = parser.parse(xmlParser);
-			return new NoteBase(svgImg, true);
+			return new NoteBase(svgImg, noteLength != 0);
 		} catch (Exception e) {
 			throw new NoteDescriptionLoadingException(e, noteLength, anchorType, isUpsidedown);
 		}
@@ -39,9 +41,11 @@ public class NotePartFactory {
 	 * @throws NoteDescriptionLoadingException 
 	 */
 	public static NoteEnding getEndingImage(Context context, int noteLength, int anchorType, boolean isUpsidedown) throws NoteDescriptionLoadingException {
+		if(noteLength == 0) return null;
 		// TODO real implementation
 		SvgParser parser = new SvgParser();
-		XmlPullParser xmlParser = context.getResources().getXml(R.xml.test_8ending);
+		int resId = isUpsidedown ? R.xml.test_8ending_upsd_lalewo : R.xml.test_8ending;
+		XmlPullParser xmlParser = context.getResources().getXml(resId);
 		SvgImage svgImg;
 		try {
 			svgImg = parser.parse(xmlParser);

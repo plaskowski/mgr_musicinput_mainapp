@@ -8,4 +8,17 @@ public class LogUtils {
 	public static void info(String format, Object... args) {
 		Log.i(TAG, String.format(format, args));
 	}
+	
+	public static void tinfo(String tag, String format, Object... args) {
+		Log.i(tag, String.format(format, args));
+	}
+	
+	private String tag;
+	public LogUtils(Class<?> cl) {
+		tag = cl.getName();
+	}
+	
+	public void i(String format, Object... args) {
+		tinfo(tag, format, args);
+	}
 }

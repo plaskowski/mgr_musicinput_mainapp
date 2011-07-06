@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout 
+	xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:id="@+id/EDIT_main_containter"
+>
+    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView
+    	android:id="@+id/EDIT_outer_hscrollview"
+    	android:layout_width="fill_parent" 
+    	android:layout_height="fill_parent"
+    	android:layout_alignParentLeft="true"
+    	android:layout_alignParentRight="true" 
+    >
+    	<ScrollView
+	    	android:layout_width="wrap_content" 
+    		android:layout_height="fill_parent"
+    	>
+			<RelativeLayout
+				android:id='@+id/EDIT_sheet_container'  
+		    	android:background="@android:color/white"
+		    	android:layout_width="300px"
+		    	android:layout_height="300px"
+		   	>
+		   	</RelativeLayout>
+		</ScrollView>
+    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView>
+    
+    <ImageView
+	    android:id="@+id/EDIT_inputArea"
+	    android:layout_width="@dimen/inputAreaWidth"
+	    android:layout_alignParentRight="true"
+	    android:layout_height="fill_parent"
+	    android:background="#1FFF0000"
+    />
+    
+</RelativeLayout>

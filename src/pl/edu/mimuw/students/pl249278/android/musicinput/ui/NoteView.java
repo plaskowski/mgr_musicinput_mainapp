@@ -15,6 +15,7 @@ import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_MOVETO
 import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RCUBICTO;
 import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RLINETO;
 import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RMOVETO;
+import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.EnhancedSvgImage.IMarker;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
@@ -53,12 +54,13 @@ public class NoteView extends View {
 	private float scaleE;
 	private PointF baseDrawOffset;
 	private PointF endingDrawOffset;
+	private AnchorPart baseIM1AnchorPart;
 
 	public NoteView(Context context, int noteLength, int noteHeight) throws NoteDescriptionLoadingException {
 		super(context);
 		
 		// FIXME real logic for discovering if it's upsidedown or normal
-		boolean upsdown = noteHeight <= 4;
+		boolean upsdown = noteHeight <= NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE);
 		// FIXME real logic for discovering anchors
 		int baseAnchor = noteHeight;
 		int endingAnchor = baseAnchor + (upsdown ? 6 : -6);
@@ -67,6 +69,7 @@ public class NoteView extends View {
 		this.base = NotePartFactory.getBaseImage(context, noteLength, NoteConstants.anchorType(baseAnchor), upsdown);
     	IMarker firstM = base.getImarkers().get(0), secondM = base.getImarkers().get(1);
 		baseIM1Anchor = imarkerAnchor(firstM, baseAnchor);
+    	baseIM1AnchorPart = part(firstM);
 		baseIM2Anchor = imarkerAnchor(secondM, baseAnchor);
 
 		this.ending = NotePartFactory.getEndingImage(context, noteLength, NoteConstants.anchorType(endingAnchor), upsdown);
@@ -93,7 +96,7 @@ public class NoteView extends View {
 		this.sheetParams = params;
 	
     	IMarker firstM = base.getImarkers().get(0), secondM = base.getImarkers().get(1);
-    	int baseIM1RelativeOffset = sheetParams.anchorOffset(baseIM1Anchor, part(firstM));
+		int baseIM1RelativeOffset = sheetParams.anchorOffset(baseIM1Anchor, baseIM1AnchorPart);
     	int baseIM2RelativeOffset = sheetParams.anchorOffset(baseIM2Anchor, part(secondM));
     	scaleB = (baseIM1RelativeOffset-baseIM2RelativeOffset)/(firstM.getLine().first.y - secondM.getLine().first.y);
     	baseDrawOffset = new PointF(
@@ -116,6 +119,8 @@ public class NoteView extends View {
 	    		endingDrawOffset.y = endingTopOffset - baseTopOffset;
 	    	}
     	}
+    	
+    	invalidate();
 	}
 	
 	private AnchorPart part(IMarker imarker) {
@@ -141,24 +146,41 @@ public class NoteView extends View {
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		if(sheetParams == null) {
-			throw new IllegalStateException("Must provide sheet params before measuring");
+			LogUtils.info("onMeasure without sheetParams set");
+			super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+			return;
 		}
 		setMeasuredDimension(
-			(int) (composedWidth*scaleB), 
+			measureWidth(), 
 			(int) (Math.max(
 				baseDrawOffset.y + base.getHeight()*scaleB,
 				ending == null ? 0 : endingDrawOffset.y + ending.getHeight()*scaleE
 			))
 		);
 	}
+
+	public int measureWidth() {
+		if(sheetParams == null) {
+			throw new IllegalStateException();
+		}
+		return (int) (composedWidth*scaleB);
+	}
 	
 	public void setPaint(Paint paint) {
 		this.paint = paint;
 	}
 	
+	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {
+		return
+			sheetParams.anchorOffset(baseIM1Anchor, baseIM1AnchorPart)
+			- sheetParams.anchorOffset(anchorAbsIndex, part)
+			- ((int) (baseDrawOffset.y + (base.getImarkers().get(0).line.first.y*scaleB)))
+		;
+	}
+	
 	@Override
 	protected void onDraw(Canvas canvas) {
-		canvas.drawColor(Color.YELLOW);
+//		canvas.drawColor(Color.YELLOW);
 		
 		if(ending != null) {
 			PointF baseJLStart = new PointF(baseDrawOffset.x, baseDrawOffset.y);
@@ -173,23 +195,27 @@ public class NoteView extends View {
 				paint
 			);
 	
+			/*
 			paint.setColor(Color.GREEN);
 			canvas.drawRect(
 				endingDrawOffset.x, endingDrawOffset.y, 
 				endingDrawOffset.x + ending.getWidth()*scaleE, endingDrawOffset.y+ending.getHeight()*scaleE, 
 				paint
 			);
+			*/
 			
 			paint.setColor(Color.BLACK);
 			drawSvgImage(canvas, ending, scaleE, endingDrawOffset, paint);
 		}
 		
+		/*
 		paint.setColor(Color.GRAY);
 		canvas.drawRect(
 			baseDrawOffset.x, baseDrawOffset.y, 
 			baseDrawOffset.x + base.getWidth()*scaleB, baseDrawOffset.y + base.getHeight()*scaleB, 
 			paint
 		);
+		*/
 
 		paint.setColor(Color.BLACK);
 		drawSvgImage(canvas, base, scaleB, baseDrawOffset, paint);
@@ -255,6 +281,10 @@ public class NoteView extends View {
 		for (int i = 0; i < args.length; i++) {
 			args[i] = args[i]*scale;
 		}
+	}
+
+	public int getBaseMiddleX() {
+		return (int) (baseDrawOffset.x + base.xMiddleMarker * scaleB);
 	}	
 	
 }

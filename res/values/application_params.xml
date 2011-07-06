@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<integer name="lineThickness">10</integer>
+	<integer name="linespaceThickness">40</integer>
+	<dimen name="inputAreaWidth">88dip</dimen>
+	<dimen name="inputAreaMaxRightMargin">80dip</dimen>
+</resources>

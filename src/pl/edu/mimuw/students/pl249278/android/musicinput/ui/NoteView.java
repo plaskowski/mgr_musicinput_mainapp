@@ -194,43 +194,42 @@ public class NoteView extends View {
 	
 	@Override
 	protected void onDraw(Canvas canvas) {
-//		canvas.drawColor(Color.YELLOW);
-		
-		if(ending != null) {
+		if(ending == null) {
+			drawSvgImage(canvas, base, scaleB, baseDrawOffset, paint);
+		} else {
 			PointF baseJLStart = new PointF(baseDrawOffset.x, baseDrawOffset.y);
 			baseJLStart.offset(base.getJoinLine().first.x*scaleB, base.getJoinLine().first.y * scaleB);
 			PointF endingJLEnd = new PointF(endingDrawOffset.x, endingDrawOffset.y);
-			endingJLEnd.offset(ending.getJoinLine().second.x*scaleE, ending.getJoinLine().second.y * scaleE);
-			canvas.drawRect(
-				baseJLStart.x,
-				Math.min(baseJLStart.y, endingJLEnd.y)-1,
-				endingJLEnd.x,
-				Math.max(baseJLStart.y, endingJLEnd.y)+1,
-				paint
-			);
-	
-			/*
-			paint.setColor(Color.GREEN);
-			canvas.drawRect(
-				endingDrawOffset.x, endingDrawOffset.y, 
-				endingDrawOffset.x + ending.getWidth()*scaleE, endingDrawOffset.y+ending.getHeight()*scaleE, 
-				paint
-			);
-			*/
 			
-			drawSvgImage(canvas, ending, scaleE, endingDrawOffset, paint);
-		}
+			// draw in appropriate order (so shadow effect would compound correctly)
+			if(baseDrawOffset.y > endingDrawOffset.y) {
+				drawSvgImage(canvas, ending, scaleE, endingDrawOffset, paint);
+				
+				endingJLEnd.offset(ending.getJoinLine().second.x*scaleE, ending.getJoinLine().second.y * scaleE);
+				canvas.drawRect(
+					baseJLStart.x,
+					Math.min(baseJLStart.y, endingJLEnd.y)-1,
+					endingJLEnd.x,
+					Math.max(baseJLStart.y, endingJLEnd.y)+1,
+					paint
+				);
 		
-		/*
-		paint.setColor(Color.GRAY);
-		canvas.drawRect(
-			baseDrawOffset.x, baseDrawOffset.y, 
-			baseDrawOffset.x + base.getWidth()*scaleB, baseDrawOffset.y + base.getHeight()*scaleB, 
-			paint
-		);
-		*/
-
-		drawSvgImage(canvas, base, scaleB, baseDrawOffset, paint);
+				drawSvgImage(canvas, base, scaleB, baseDrawOffset, paint);
+			} else {
+				drawSvgImage(canvas, base, scaleB, baseDrawOffset, paint);
+				
+				endingJLEnd.offset(ending.getJoinLine().second.x*scaleE, ending.getJoinLine().second.y * scaleE);
+				canvas.drawRect(
+					baseJLStart.x,
+					Math.min(baseJLStart.y, endingJLEnd.y)-1,
+					endingJLEnd.x,
+					Math.max(baseJLStart.y, endingJLEnd.y)+1,
+					paint
+				);
+		
+				drawSvgImage(canvas, ending, scaleE, endingDrawOffset, paint);
+			}
+		}
 	}
 	
 	// TODO move to more appropriate class

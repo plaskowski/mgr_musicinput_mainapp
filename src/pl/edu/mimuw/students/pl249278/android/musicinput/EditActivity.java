@@ -47,12 +47,12 @@ public class EditActivity extends Activity {
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
 
 	private static final int ANIM_TIME = 150;
-	protected Paint highlightPaint = new Paint();
+	protected Paint noteHighlightPaint = new Paint();
 	protected static final Paint normalPaint = new Paint();
 	{
 		normalPaint.setAntiAlias(true);
-		highlightPaint.setAntiAlias(true);
-		highlightPaint.setShadowLayer(10, 5, 5, Color.BLACK);		
+		noteHighlightPaint.setAntiAlias(true);
+		noteHighlightPaint.setShadowLayer(10, 5, 10, Color.BLACK);		
 	}
 
 	private static LogUtils log = new LogUtils(EditActivity.class);
@@ -104,12 +104,10 @@ public class EditActivity extends Activity {
 		lines = new Sheet5LinesView(this);
 		int hColor = getResources().getColor(R.color.highlightColor);
 		lines.setHiglightColor(hColor);
-		highlightPaint.setColor(hColor);
+		noteHighlightPaint.setColor(hColor);
 		sheet.addView(lines, new LayoutParams(LayoutParams.FILL_PARENT, 100));
 		scaleGestureDetector.setOnScaleListener(scaleListener);
 		sheet.setOnTouchListener(iaTouchListener);
-		//TODO remove
-		lines.highlightAnchor(1);
 		
 		this.inputArea = findViewById(R.id.EDIT_inputArea);
 		this.inputAreaWidth = getResources().getDimensionPixelSize(R.dimen.inputAreaWidth);
@@ -183,7 +181,7 @@ public class EditActivity extends Activity {
 						return false;
 					}
 					newNote.setSheetParams(sheetParams);
-					newNote.setPaint(highlightPaint);
+					newNote.setPaint(noteHighlightPaint);
 					sheet.addView(newNote);
 					updatePosition(newNote,
 						hscroll.getScrollX()+visibleRectWidth-iaRightMargin-inputAreaWidth/2-newNote.getBaseMiddleX(),

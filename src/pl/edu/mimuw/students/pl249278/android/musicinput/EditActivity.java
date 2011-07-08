@@ -32,6 +32,7 @@ import android.view.animation.Interpolator;
 import android.widget.HorizontalScrollView;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
+import android.widget.ScrollView;
 
 public class EditActivity extends Activity {
 	private static final int ANIM_TIME = 150;
@@ -46,6 +47,7 @@ public class EditActivity extends Activity {
 	private int inputAreaWidth;
 	private View inputArea;
 	private HorizontalScrollView hscroll;
+	private ScrollView vertscroll;
 	private ScaleGestureInterceptor scaleGestureDetector;
 	/**
 	 * Index of note that is first on right side of InputArea,
@@ -61,12 +63,17 @@ public class EditActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.editscreen);
 		
-		sheetParams = new SheetParams(10, 40);
+		// TODO sheetParams comes from previous view
+		sheetParams = new SheetParams(10, 40); // TODO read thickness from xml
+		sheetParams.setMinSpaceAnchor(getResources().getInteger(R.integer.minSpaceDefault));
+		sheetParams.setMaxSpaceAnchor(getResources().getInteger(R.integer.maxSpaceDefault));
+		
 		Paint paint = new Paint();
 		paint.setAntiAlias(true);
 
 		scaleGestureDetector = (ScaleGestureInterceptor) findViewById(R.id.EDIT_scale_detector);
 		hscroll = (HorizontalScrollView) findViewById(R.id.EDIT_outer_hscrollview);
+		vertscroll = (ScrollView) findViewById(R.id.EDIT_vertscrollview);
 		sheet = (RelativeLayout) findViewById(R.id.EDIT_sheet_container);
 		lines = new Sheet5LinesView(this);
 		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
@@ -193,8 +200,10 @@ public class EditActivity extends Activity {
 			isScaling = true;
 			animator.forceFinishAll();
 			int fpX = (int) ((focusPoint.x+hscroll.getScrollX()-notesAreaX)*scaleFactor);
+			int fpY = (int) ((focusPoint.y+vertscroll.getScrollY())*scaleFactor);
 			updateScaleFactor(sheetParams.getScale()*scaleFactor);
 			hscroll.scrollTo((int) (fpX+notesAreaX-focusPoint.x), 0);
+			vertscroll.scrollTo(0, (int) (fpY-focusPoint.y));
 		}
 
 		@Override
@@ -321,6 +330,8 @@ public class EditActivity extends Activity {
 	private int visibleRectWidth;
 	private int visibleRectHeight;
 	private int notesAreaX;
+
+	private int line0Top;
 	
 	private static class LayoutAnimator implements Runnable {
 		private static Interpolator interpolator = new AccelerateDecelerateInterpolator();
@@ -488,6 +499,9 @@ public class EditActivity extends Activity {
 		    @Override
 		    public void run() {
 				hscroll.scrollTo(sheet.getLayoutParams().width, 0);
+				vertscroll.scrollTo(0,
+					line0Top + sheetParams.anchorOffset(NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINESPACE), AnchorPart.TOP_EDGE)
+				);
 		    } 
 		});
 	}
@@ -512,11 +526,11 @@ public class EditActivity extends Activity {
 		// TODO extract this to sheetParams
 		int noteSpacingBase = (int) (300*sheetParams.getScale());
 		int length = model.size();
-		int line0y = Math.abs(
-			sheetParams.anchorOffset(
-				NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINESPACE), AnchorPart.TOP_EDGE
-			)
+		int minLinespaceTopOffset = sheetParams.anchorOffset(
+			NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE), 
+			AnchorPart.TOP_EDGE
 		);
+		line0Top = Math.abs(minLinespaceTopOffset);
 		
 		int notesTotalSpacing = 0;
 		int spacingAfter = 0;
@@ -529,7 +543,7 @@ public class EditActivity extends Activity {
 			updatePosition(
 				v, 
 				xpos,
-				line0y + v.getOffsetToAnchor(NoteConstants.anchorIndex(0, ANCHOR_TYPE_LINE), TOP_EDGE)
+				line0Top + v.getOffsetToAnchor(NoteConstants.anchorIndex(0, ANCHOR_TYPE_LINE), TOP_EDGE)
 			);
 			log.i("onScaleFactor() note[%d] at x: %d", i, xpos);
 			spacingAfter = noteSpacingBase >> model.get(i).length();
@@ -551,9 +565,13 @@ public class EditActivity extends Activity {
 				// space for right part of note
 				maxNoteRightSideWidth
 			);
-		updateSize(sheet, sheetNewWidth, visibleRectHeight);
+		int maxLinespaceBottomOffset = sheetParams.anchorOffset(
+			NoteConstants.anchorIndex(sheetParams.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE),
+			AnchorPart.BOTTOM_EDGE
+		);
+		updateSize(sheet, sheetNewWidth, maxLinespaceBottomOffset - minLinespaceTopOffset);
 		
-		updatePosition(lines, 0, line0y);
+		updatePosition(lines, 0, line0Top);
 		updateSize(
 			lines, 
 			sheetNewWidth, 

@@ -4,4 +4,6 @@
 	<integer name="linespaceThickness">40</integer>
 	<dimen name="inputAreaWidth">88dip</dimen>
 	<dimen name="inputAreaMaxRightMargin">80dip</dimen>
+	<integer name="minSpaceDefault">-3</integer>
+	<integer name="maxSpaceDefault">6</integer>
 </resources>

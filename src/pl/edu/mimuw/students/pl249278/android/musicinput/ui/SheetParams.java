@@ -5,6 +5,8 @@
 		private int lineFactor;
 		private int linespacingFactor;
 		private float scale = 1;
+		private int minSpaceAnchor;
+		private int maxSpaceAnchor;
 		
 		public SheetParams(int lineFactor, int linespacingFactor) {
 			super();
@@ -66,5 +68,22 @@
 		public int getLineThickness() {
 			return (int) (lineFactor*scale);
 		}
+
+		public int getMinSpaceAnchor() {
+			return minSpaceAnchor;
+		}
+
+		public void setMinSpaceAnchor(int minSpaceAnchor) {
+			this.minSpaceAnchor = minSpaceAnchor;
+		}
+
+		public int getMaxSpaceAnchor() {
+			return maxSpaceAnchor;
+		}
+
+		public void setMaxSpaceAnchor(int maxSpaceAnchor) {
+			this.maxSpaceAnchor = maxSpaceAnchor;
+		}
+
 	
 	}

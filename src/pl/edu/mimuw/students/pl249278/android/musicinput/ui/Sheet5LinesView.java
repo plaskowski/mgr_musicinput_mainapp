@@ -30,6 +30,7 @@ public class Sheet5LinesView extends View {
 	SheetParams params;
 	private int lineThickness;
 	private int totalVerticalSpan;
+	private int notesAreaLeftPadding;
 	public void setParams(SheetParams params) {
 		this.params = params;
 		lineThickness = params.getLineThickness();
@@ -43,21 +44,16 @@ public class Sheet5LinesView extends View {
 		for(int i = 0; i < 5; i++) {
 			int anchorIndex = NoteConstants.anchorIndex(i, NoteConstants.ANCHOR_TYPE_LINE);
 			canvas.drawRect(
-				lineThickness, params.anchorOffset(anchorIndex, AnchorPart.TOP_EDGE),
-				getWidth()-lineThickness, params.anchorOffset(anchorIndex, AnchorPart.BOTTOM_EDGE),
+				notesAreaLeftPadding-lineThickness, params.anchorOffset(anchorIndex, AnchorPart.TOP_EDGE),
+				getWidth(), params.anchorOffset(anchorIndex, AnchorPart.BOTTOM_EDGE),
 				paint
 			);
 		}
 		int line0top = params.anchorOffset(LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
 		int line4bottom = params.anchorOffset(LINE4_ABSINDEX, AnchorPart.BOTTOM_EDGE);
 		canvas.drawRect(
-			lineThickness, line0top,
-			2*lineThickness, line4bottom,
-			paint
-		);
-		canvas.drawRect(
-			getWidth()-2*lineThickness, line0top,
-			getWidth()-lineThickness, line4bottom,
+			notesAreaLeftPadding-lineThickness, line0top,
+			notesAreaLeftPadding, line4bottom,
 			paint
 		);
 	}
@@ -83,5 +79,13 @@ public class Sheet5LinesView extends View {
 //			width, totalVerticalSpan
 //		);
 		setMeasuredDimension(width, totalVerticalSpan);
+	}
+
+	public int getMinPadding() {
+		return 2*lineThickness;
+	}
+
+	public void setNotesAreaLeftPadding(int paddingLeft) {
+		this.notesAreaLeftPadding = paddingLeft;
 	}
 }

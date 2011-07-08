@@ -18,6 +18,7 @@
 	    	android:layout_alignParentRight="true" 
 	    >
 	    	<ScrollView
+	    		android:id="@+id/EDIT_vertscrollview"
 		    	android:layout_width="wrap_content" 
 	    		android:layout_height="fill_parent"
 	    	>

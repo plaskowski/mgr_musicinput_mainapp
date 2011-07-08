@@ -21,8 +21,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Sheet5LinesView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
 import android.app.Activity;
-import android.graphics.BlurMaskFilter;
-import android.graphics.BlurMaskFilter.Blur;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PointF;
@@ -30,9 +28,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
@@ -310,10 +308,11 @@ public class EditActivity extends Activity {
 			int delta =
 				sheetParams.anchorOffset(SPACE0_ABSINDEX, AnchorPart.MIDDLE)
 				- line0middle;
-			int indexDelta = (y - (line0Top + line0middle - delta/2))/delta;
+			int indexDeltaBase = y - (line0Top + line0middle - delta/2);
+			int indexDelta = indexDeltaBase/delta;
 			return Math.max( 
 				Math.min(
-				LINE0_ABSINDEX + indexDelta + (indexDelta < 0 ? -1 : 0),
+				LINE0_ABSINDEX + indexDelta + (indexDeltaBase < 0 ? -1 : 0),
 				NoteConstants.anchorIndex(sheetParams.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
 				),
 				NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
+import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView.OnScrollChangedListener;
@@ -20,22 +21,39 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Sheet5LinesView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
 import android.app.Activity;
+import android.graphics.BlurMaskFilter;
+import android.graphics.BlurMaskFilter.Blur;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup.LayoutParams;
+import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.HorizontalScrollView;
 import android.widget.RelativeLayout;
-import android.widget.RelativeLayout.LayoutParams;
 import android.widget.ScrollView;
 
 public class EditActivity extends Activity {
+	private static final int LINE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE);
+	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
+
 	private static final int ANIM_TIME = 150;
+	protected Paint highlightPaint = new Paint();
+	protected static final Paint normalPaint = new Paint();
+	{
+		normalPaint.setAntiAlias(true);
+		highlightPaint.setAntiAlias(true);
+		highlightPaint.setShadowLayer(10, 5, 5, Color.BLACK);		
+	}
 
 	private static LogUtils log = new LogUtils(EditActivity.class);
 	
@@ -49,6 +67,9 @@ public class EditActivity extends Activity {
 	private HorizontalScrollView hscroll;
 	private ScrollView vertscroll;
 	private ScaleGestureInterceptor scaleGestureDetector;
+	private LayoutAnimator animator = new LayoutAnimator();
+	private NoteView newNote;
+	
 	/**
 	 * Index of note that is first on right side of InputArea,
 	 * when there is no such note rightToIA = model.size() 
@@ -57,6 +78,14 @@ public class EditActivity extends Activity {
 	private int iaRightMargin;
 	private int delta;
 	private int mTouchSlop;
+	protected boolean isScaling = false;
+	private int visibleRectWidth;
+	private int visibleRectHeight;
+	private int notesAreaX;
+	private int line0Top;
+
+	// TODO bind this with widget
+	protected int currentNoteLength = 1;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -68,20 +97,19 @@ public class EditActivity extends Activity {
 		sheetParams.setMinSpaceAnchor(getResources().getInteger(R.integer.minSpaceDefault));
 		sheetParams.setMaxSpaceAnchor(getResources().getInteger(R.integer.maxSpaceDefault));
 		
-		Paint paint = new Paint();
-		paint.setAntiAlias(true);
-
 		scaleGestureDetector = (ScaleGestureInterceptor) findViewById(R.id.EDIT_scale_detector);
 		hscroll = (HorizontalScrollView) findViewById(R.id.EDIT_outer_hscrollview);
 		vertscroll = (ScrollView) findViewById(R.id.EDIT_vertscrollview);
 		sheet = (RelativeLayout) findViewById(R.id.EDIT_sheet_container);
 		lines = new Sheet5LinesView(this);
-		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
-			LayoutParams.FILL_PARENT,
-			100
-		);
-		sheet.addView(lines, params);
+		int hColor = getResources().getColor(R.color.highlightColor);
+		lines.setHiglightColor(hColor);
+		highlightPaint.setColor(hColor);
+		sheet.addView(lines, new LayoutParams(LayoutParams.FILL_PARENT, 100));
 		scaleGestureDetector.setOnScaleListener(scaleListener);
+		sheet.setOnTouchListener(iaTouchListener);
+		//TODO remove
+		lines.highlightAnchor(1);
 		
 		this.inputArea = findViewById(R.id.EDIT_inputArea);
 		this.inputAreaWidth = getResources().getDimensionPixelSize(R.dimen.inputAreaWidth);
@@ -92,13 +120,13 @@ public class EditActivity extends Activity {
 		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE)));
 		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE)));
 		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(1, NoteConstants.ANCHOR_TYPE_LINESPACE)));
-		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE)));
+		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, LINE0_ABSINDEX));
 		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINESPACE)));
 		
 		try {
 			for (NoteSpec noteSpec : model) {
 				NoteView noteView = new NoteView(this, noteSpec.length(), noteSpec.positon());
-				noteView.setPaint(paint);
+				noteView.setPaint(normalPaint);
 				noteViews.add(noteView);
 				sheet.addView(noteView);
 			}
@@ -127,12 +155,177 @@ public class EditActivity extends Activity {
 		hscroll.getViewTreeObserver().addOnGlobalLayoutListener(listener);
 	}
 	
-	private LayoutAnimator animator = new LayoutAnimator();
+	private View.OnTouchListener iaTouchListener = new OnTouchListener() {
+		private static final int INVALID_POINTER = -1;
+		private int activePointerId = INVALID_POINTER;
+		private int currentAnchor;
+		
+		@Override
+		public boolean onTouch(View v, MotionEvent event) {
+			log.i(
+				"sheet::onTouch(): %s activePointerId %d", 
+				ReflectionUtils.findConst(MotionEvent.class, "ACTION_", event.getActionMasked()),	
+				activePointerId
+			);
+			switch(event.getActionMasked()) {
+			case MotionEvent.ACTION_DOWN:
+				if(insideIA((int) event.getX())) {
+					activePointerId = event.getPointerId(event.getActionIndex());
+					currentAnchor = nearestAnchor((int) event.getY());
+					if(newNote == null) {
+						newNote = new NoteView(EditActivity.this);
+					}
+					try {
+						newNote.setNoteSpec(EditActivity.this, currentNoteLength , currentAnchor);
+					} catch (NoteDescriptionLoadingException e) {
+						e.printStackTrace();
+						finish();
+						return false;
+					}
+					newNote.setSheetParams(sheetParams);
+					newNote.setPaint(highlightPaint);
+					sheet.addView(newNote);
+					updatePosition(newNote,
+						hscroll.getScrollX()+visibleRectWidth-iaRightMargin-inputAreaWidth/2-newNote.getBaseMiddleX(),
+						noteViewY(newNote)
+					);
+					lines.highlightAnchor(currentAnchor);
+					// TODO turn off vertical scrolling
+					return true;
+				}
+				break;
+			case MotionEvent.ACTION_MOVE:
+				if(activePointerId == INVALID_POINTER) 
+					break;
+				if(!insideIA((int) event.getX())) {
+					cancel();
+					activePointerId = INVALID_POINTER;
+					break;
+				}
+				int newAnchor = nearestAnchor((int) event.getY());
+				if(newAnchor != currentAnchor) {
+					lines.highlightAnchor(newAnchor);
+					try {
+						newNote.setNoteSpec(EditActivity.this, currentNoteLength, newAnchor);
+					} catch (NoteDescriptionLoadingException e) {
+						e.printStackTrace();
+						finish();
+						return false;
+					}
+					updatePosition(newNote,
+						hscroll.getScrollX()+visibleRectWidth-iaRightMargin-inputAreaWidth/2-newNote.getBaseMiddleX(),
+						noteViewY(newNote)
+					);
+					currentAnchor = newAnchor;
+				}
+				return true;
+			case MotionEvent.ACTION_POINTER_1_UP:
+				if(event.getPointerId(event.getActionIndex()) != activePointerId)
+					break;
+				activePointerId = INVALID_POINTER;
+			case MotionEvent.ACTION_CANCEL:
+				cancel();
+				return true;
+			case MotionEvent.ACTION_UP:
+				if(activePointerId == INVALID_POINTER)
+					break;
+				insertNoteAndClean();
+				return true;
+			}
+			return false;
+		}
+		
+		private void insertNoteAndClean() {
+			int index = rightToIA;
+			model.add(index, new NoteSpec(currentNoteLength, currentAnchor));
+			rightToIA++;
+			NoteView noteView = newNote;
+			newNote = null;
+			noteView.setPaint(normalPaint);
+			noteViews.add(index, noteView);
+			resizeSheetOnNoteInsert(index);
+			
+			int noteMiddle = leftMargin(noteView)+noteView.getBaseMiddleX();
+			int destNoteMiddle;
+			if(index == 0) {
+				destNoteMiddle = notesAreaX;
+			} else {
+				NoteView prevNote = noteViews.get(index-1);
+				destNoteMiddle = leftMargin(prevNote) + prevNote.getBaseMiddleX() + afterNoteSpacing(model.get(index-1));
+			}
+			long duration = 500;
+			
+			WaitManyRunOnce animationsEndListener = new WaitManyRunOnce(2+model.size()-rightToIA) {
+				@Override
+				protected void allFinished() {
+					// TODO enable touch input
+				}
+			}; 
+			
+			animator.startHScrollAnimation(
+				hscroll, 
+				(destNoteMiddle-hscroll.getScrollX())-((visibleRectWidth - inputAreaWidth - iaRightMargin - delta)), 
+				duration, 
+				animationsEndListener
+			);
+			animator.startRLAnimation(
+				noteView, 
+				destNoteMiddle-noteMiddle, 
+				duration, 
+				animationsEndListener
+			);
+			int newNoteSpacing = afterNoteSpacing(model.get(index)); 
+			for(int i = rightToIA; i < model.size(); i++) {
+				animator.startRLAnimation(noteViews.get(i), newNoteSpacing, duration, animationsEndListener);
+			}
+			
+			lines.highlightAnchor(null);
+			// TODO turn on vertical scroll
+			// TODO disable any touch input
+		}
+		
+		/**
+		 * Clear all artifacts introduced by touch inside IA box
+		 */
+		private void cancel() {
+			/* TODO turn on vertical scroll */
+			lines.highlightAnchor(null);
+			sheet.removeView(newNote);
+		}
 
+		/**
+		 * @param x in sheet view coordinates
+		 * @return if point (x,?) is inside input area box
+		 */
+		private boolean insideIA(int x) {
+			int pos = x-hscroll.getScrollX();
+			return pos >= visibleRectWidth-inputAreaWidth-iaRightMargin && pos <= visibleRectWidth-iaRightMargin;
+		}
+
+		/**
+		 * find which anchor from range <minSpaceAbsIndex, maxSpaceAbsIndex> is nearest to horizontal line y
+		 * @param y in sheet view coordinates
+		 * @return index of anchor
+		 */
+		private int nearestAnchor(int y) {
+			int line0middle = sheetParams.anchorOffset(LINE0_ABSINDEX, AnchorPart.MIDDLE);
+			int delta =
+				sheetParams.anchorOffset(SPACE0_ABSINDEX, AnchorPart.MIDDLE)
+				- line0middle;
+			int indexDelta = (y - (line0Top + line0middle - delta/2))/delta;
+			return Math.max( 
+				Math.min(
+				LINE0_ABSINDEX + indexDelta + (indexDelta < 0 ? -1 : 0),
+				NoteConstants.anchorIndex(sheetParams.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
+				),
+				NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
+			);
+		}
+	};
+	
 	private OnScrollChangedListener horizontalScrollListener = new OnScrollChangedListener() {
 		@Override
 		public void onScrollChanged(int l, int oldl) {
-			// TODO ignore if scaling in progress
 //				LogUtils.info("scrollChange (%d, %d)", l, oldl);
 			if(isScaling) return;
 			if(model.isEmpty()) return;
@@ -152,7 +345,7 @@ public class EditActivity extends Activity {
 							// reverse animation
 							animator.stopAnimation(anim);
 							int dx = anim.startValue()-leftMargin(firstToLeft);
-							log.i("Reverse animation dx: %d", dx);
+//							log.i("Reverse animation dx: %d", dx);
 							animator.startRLAnimation(firstToLeft, dx, ANIM_TIME/3);
 						} else {
 							animator.startRLAnimation(firstToLeft, 2*delta+inputAreaWidth, ANIM_TIME);
@@ -178,7 +371,7 @@ public class EditActivity extends Activity {
 							// reverse animation
 							animator.stopAnimation(anim);
 							int dx = anim.startValue()-leftMargin(firstToRight);
-							log.i("Reverse animation %d--[%d]-->", leftMargin(firstToRight), dx);
+//							log.i("Reverse animation %d--[%d]-->", leftMargin(firstToRight), dx);
 							animator.startRLAnimation(firstToRight, dx, ANIM_TIME/3);
 						} else {
 							animator.startRLAnimation(firstToRight, -2*delta-inputAreaWidth, ANIM_TIME);
@@ -192,8 +385,6 @@ public class EditActivity extends Activity {
 		}
 	};
 
-	protected boolean isScaling = false;
-	
 	private ScaleGestureInterceptor.OnScaleListener scaleListener = new OnScaleListener() {
 		@Override
 		public void onScale(float scaleFactor, PointF focusPoint) {
@@ -208,14 +399,7 @@ public class EditActivity extends Activity {
 
 		@Override
 		public void onScaleEnd() {
-			/* TODO
-			 * - lock touch input for whole SGInterceptor tree
-			 * - scroll (with my modified animator) sheet to position so the note with xmiddle to left of IA.left is at distance delta
-			 * - translate all visible next notes to make IA a space
-			 * - isScaling := false; 
-			 * - unlock touch input 
-			 * - update rightToIA value
-			 */
+			/* TODO lock touch input for whole SGInterceptor tree */
 			// find new rightToIA
 			log.i("onScaleEnd(): old right: %d", rightToIA);
 			int IAmiddle = visibleRectWidth - iaRightMargin -inputAreaWidth/2;
@@ -327,12 +511,6 @@ public class EditActivity extends Activity {
 		}
 	};
 
-	private int visibleRectWidth;
-	private int visibleRectHeight;
-	private int notesAreaX;
-
-	private int line0Top;
-	
 	private static class LayoutAnimator implements Runnable {
 		private static Interpolator interpolator = new AccelerateDecelerateInterpolator();
 
@@ -398,8 +576,7 @@ public class EditActivity extends Activity {
 			startRLAnimation(view, dx, duration, null);
 		}
 		public void startRLAnimation(View view, int dx, long duration, Runnable listn) {
-			RelativeLayout.LayoutParams params = (LayoutParams) view.getLayoutParams();
-			RLAnimation anim = new RLAnimation(view, params.leftMargin, dx, duration);
+			RLAnimation anim = new RLAnimation(view, leftMargin(view), dx, duration);
 			anim.onAnimationEndListener = listn;
 //			log.i("startAnimation(): %d --[%d]--> %d, dur: %d", anim.start_value, dx, anim.start_value+dx, duration);
 			mStartAnimation(anim);
@@ -481,7 +658,7 @@ public class EditActivity extends Activity {
 		this.visibleRectWidth = visibleRectWidth;
 		this.visibleRectHeight = visibleRectHeight;
 		// position IA
-		RelativeLayout.LayoutParams params = (LayoutParams) inputArea.getLayoutParams();
+		MarginLayoutParams params = (MarginLayoutParams) inputArea.getLayoutParams();
 		iaRightMargin = params.rightMargin = Math.min(
 			getResources().getDimensionPixelSize(R.dimen.inputAreaMaxRightMargin),
 			(int) (visibleRectWidth*0.4 - inputAreaWidth)
@@ -498,7 +675,7 @@ public class EditActivity extends Activity {
 		hscroll.post(new Runnable() {
 		    @Override
 		    public void run() {
-				hscroll.scrollTo(sheet.getLayoutParams().width, 0);
+				hscroll.scrollTo(declaredWidth(sheet), 0);
 				vertscroll.scrollTo(0,
 					line0Top + sheetParams.anchorOffset(NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINESPACE), AnchorPart.TOP_EDGE)
 				);
@@ -523,8 +700,6 @@ public class EditActivity extends Activity {
 		
 		// TODO extract this to sheetParams
 		delta = (int) (70*newScaleFactor);
-		// TODO extract this to sheetParams
-		int noteSpacingBase = (int) (300*sheetParams.getScale());
 		int length = model.size();
 		int minLinespaceTopOffset = sheetParams.anchorOffset(
 			NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE), 
@@ -543,10 +718,10 @@ public class EditActivity extends Activity {
 			updatePosition(
 				v, 
 				xpos,
-				line0Top + v.getOffsetToAnchor(NoteConstants.anchorIndex(0, ANCHOR_TYPE_LINE), TOP_EDGE)
+				noteViewY(v)
 			);
-			log.i("onScaleFactor() note[%d] at x: %d", i, xpos);
-			spacingAfter = noteSpacingBase >> model.get(i).length();
+//			log.i("onScaleFactor() note[%d] at x: %d", i, xpos);
+			spacingAfter = afterNoteSpacing(model.get(i));
 			x += spacingAfter;
 			notesTotalSpacing += spacingAfter;
 			maxNoteRightSideWidth = Math.max(maxNoteRightSideWidth, v.measureWidth()-v.getBaseMiddleX());
@@ -578,23 +753,72 @@ public class EditActivity extends Activity {
 			sheetParams.anchorOffset(NoteConstants.anchorIndex(4, ANCHOR_TYPE_LINE), BOTTOM_EDGE)
 		);
 		
+	}
+	
+	/**
+	 * Resize sheet accordingly to recently inserted note
+	 * @param newNoteIndex index of inserted note
+	 */
+	private void resizeSheetOnNoteInsert(int newNoteIndex) {
+		if(model.size() == 1) return;
+		int delta;
+		if(newNoteIndex < model.size()-1) {
+			// add spacing of inserted note
+			delta = afterNoteSpacing(model.get(newNoteIndex));
+		} else {
+			// add spacing of note that precedes inserted note
+			delta = afterNoteSpacing(model.get(model.size()-2));
+		}
+		int newSheetWidth = declaredWidth(sheet)+delta;
+		updateSize(sheet, newSheetWidth, null);
+		updateSize(lines, newSheetWidth, null);
+	}
+
+	private int afterNoteSpacing(NoteSpec note) {
+		// TODO extract this to sheetParams
+		return (int) (300*sheetParams.getScale()) >> note.length();
+	}
+
+	private int noteViewY(NoteView v) {
+		return line0Top + v.getOffsetToAnchor(NoteConstants.anchorIndex(0, ANCHOR_TYPE_LINE), TOP_EDGE);
 	}	
 	
 	private static int leftMargin(View view) {
-		return ((LayoutParams) view.getLayoutParams()).leftMargin;
+		return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).leftMargin;
 	}
 
+	private static int declaredWidth(View view) {
+		return view.getLayoutParams().width;
+	}
+	
 	private static void updatePosition(View v, Integer left, Integer top) {
-		RelativeLayout.LayoutParams params = (LayoutParams) v.getLayoutParams();
+		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
 		if(left != null) params.leftMargin = left;
 		if(top != null) params.topMargin = top;
 		v.setLayoutParams(params);
 	}
 	
-	private static void updateSize(View v, int width, int height) {
-		android.view.ViewGroup.LayoutParams params = v.getLayoutParams();
+	private static void updateSize(View v, int width, Integer height) {
+		LayoutParams params = v.getLayoutParams();
 		params.width = width;
-		params.height = height;
+		if(height != null) params.height = height;
 		v.setLayoutParams(params);
+	}
+	
+	private static abstract class WaitManyRunOnce implements Runnable {
+		private int amount;
+		public WaitManyRunOnce(int amount) {
+			this.amount = amount;
+		}
+
+		@Override
+		public void run() {
+			amount--;
+			if(amount == 0) {
+				allFinished();
+			}
+		}
+
+		protected abstract void allFinished();
 	}	
 }

@@ -69,6 +69,10 @@
 			return (int) (lineFactor*scale);
 		}
 
+		public int getLinespacingThickness() {
+			return (int) (linespacingFactor*scale);
+		}
+
 		public int getMinSpaceAnchor() {
 			return minSpaceAnchor;
 		}
@@ -84,6 +88,5 @@
 		public void setMaxSpaceAnchor(int maxSpaceAnchor) {
 			this.maxSpaceAnchor = maxSpaceAnchor;
 		}
-
 	
 	}

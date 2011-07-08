@@ -6,4 +6,5 @@
 	<dimen name="inputAreaMaxRightMargin">80dip</dimen>
 	<integer name="minSpaceDefault">-3</integer>
 	<integer name="maxSpaceDefault">6</integer>
+	<color name="highlightColor">#FFFFCC33</color>
 </resources>

@@ -1,16 +1,20 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.GradientDrawable.Orientation;
 import android.util.AttributeSet;
 import android.view.View;
 
 public class Sheet5LinesView extends View {
 
+	private static final int LINESPACE3_ABSINDEX = NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINESPACE);
+	private static final int LINESPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	private static final int LINE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE);
 	private static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
 	
@@ -31,22 +35,44 @@ public class Sheet5LinesView extends View {
 	private int lineThickness;
 	private int totalVerticalSpan;
 	private int notesAreaLeftPadding;
+	private Integer highlightedAnchor = null;
+	private Paint normalPaint = new Paint();
+	private Paint lineHighlightedPaint = new Paint();
+	private GradientDrawable linespaceHighlighted;
+	
 	public void setParams(SheetParams params) {
 		this.params = params;
 		lineThickness = params.getLineThickness();
 		totalVerticalSpan = params.anchorOffset(LINE4_ABSINDEX, AnchorPart.BOTTOM_EDGE);
+		lineHighlightedPaint.setShadowLayer(params.getLineThickness()/2, 0, params.getLineThickness()/4, Color.BLACK);
+		invalidate();
+	}
+	
+	public void setHiglightColor(int color) {
+		lineHighlightedPaint.setColor(color);
+		linespaceHighlighted = new GradientDrawable(
+			Orientation.TOP_BOTTOM,
+			new int[] { color, Color.WHITE, Color.WHITE, color }
+		);
+	}
+	
+	/**
+	 * @param anchorAbsIndex null to turn off previous highlight
+	 */
+	public void highlightAnchor(Integer anchorAbsIndex) {
+		this.highlightedAnchor = anchorAbsIndex;
+		invalidate();
 	}
 
 	@Override
 	protected void onDraw(Canvas canvas) {
 //		LogUtils.info("Sheet5LinesView::onDraw (canvas.size: %dx%d)", canvas.getWidth(), canvas.getHeight());
-		Paint paint = new Paint();
 		for(int i = 0; i < 5; i++) {
 			int anchorIndex = NoteConstants.anchorIndex(i, NoteConstants.ANCHOR_TYPE_LINE);
 			canvas.drawRect(
 				notesAreaLeftPadding-lineThickness, params.anchorOffset(anchorIndex, AnchorPart.TOP_EDGE),
 				getWidth(), params.anchorOffset(anchorIndex, AnchorPart.BOTTOM_EDGE),
-				paint
+				highlightedAnchor != null && highlightedAnchor == anchorIndex ? lineHighlightedPaint : normalPaint
 			);
 		}
 		int line0top = params.anchorOffset(LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
@@ -54,8 +80,18 @@ public class Sheet5LinesView extends View {
 		canvas.drawRect(
 			notesAreaLeftPadding-lineThickness, line0top,
 			notesAreaLeftPadding, line4bottom,
-			paint
+			normalPaint
 		);
+		if(highlightedAnchor != null 
+		&& NoteConstants.anchorType(highlightedAnchor) == NoteConstants.ANCHOR_TYPE_LINESPACE
+		&& highlightedAnchor >= LINESPACE0_ABSINDEX
+		&& highlightedAnchor <= LINESPACE3_ABSINDEX) {
+			linespaceHighlighted.setBounds(
+				notesAreaLeftPadding, params.anchorOffset(highlightedAnchor, AnchorPart.TOP_EDGE),
+				getWidth(), params.anchorOffset(highlightedAnchor, AnchorPart.BOTTOM_EDGE)
+			);
+			linespaceHighlighted.draw(canvas);
+		}
 	}
 	
 	@Override
@@ -73,11 +109,6 @@ public class Sheet5LinesView extends View {
 			width = MeasureSpec.getSize(widthMeasureSpec);
 			break;
 		}
-//		LogUtils.info("Sheet5LinesView::onMeasure(%s %d, %s %d) reports size %dx%d", 
-//			ReflectionUtils.findConst(MeasureSpec.class, "", MeasureSpec.getMode(widthMeasureSpec)), MeasureSpec.getSize(widthMeasureSpec),
-//			ReflectionUtils.findConst(MeasureSpec.class, "", MeasureSpec.getMode(heightMeasureSpec)), MeasureSpec.getSize(heightMeasureSpec),
-//			width, totalVerticalSpan
-//		);
 		setMeasuredDimension(width, totalVerticalSpan);
 	}
 

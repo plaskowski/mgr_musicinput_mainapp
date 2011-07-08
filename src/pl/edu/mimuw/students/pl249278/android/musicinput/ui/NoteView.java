@@ -26,7 +26,6 @@ import pl.edu.mimuw.students.pl249278.android.svg.SvgPath.MemorySaavyIterator;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgPath.SvgPathCommand;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
@@ -56,9 +55,17 @@ public class NoteView extends View {
 	private PointF endingDrawOffset;
 	private AnchorPart baseIM1AnchorPart;
 
+	public NoteView(Context ctx) {
+		super(ctx);
+	}
+
 	public NoteView(Context context, int noteLength, int noteHeight) throws NoteDescriptionLoadingException {
 		super(context);
-		
+		setNoteSpec(context, noteLength, noteHeight);
+	}
+	
+	public void setNoteSpec(Context context, int noteLength, int noteHeight)
+			throws NoteDescriptionLoadingException {
 		// FIXME real logic for discovering if it's upsidedown or normal
 		boolean upsdown = noteHeight <= NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE);
 		// FIXME real logic for discovering anchors
@@ -90,12 +97,20 @@ public class NoteView extends View {
 			this.baseXoffset = 0;
 			this.composedWidth = base.getWidth();
 		}
+		
+		if(sheetParams != null) {
+			sheetParamsCalculations();
+			onMeasure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+		}
 	}
 	
 	public void setSheetParams(SheetParams params) {
 		this.sheetParams = params;
-	
-    	IMarker firstM = base.getImarkers().get(0), secondM = base.getImarkers().get(1);
+		sheetParamsCalculations();
+	}
+
+	private void sheetParamsCalculations() {
+		IMarker firstM = base.getImarkers().get(0), secondM = base.getImarkers().get(1);
 		int baseIM1RelativeOffset = sheetParams.anchorOffset(baseIM1Anchor, baseIM1AnchorPart);
     	int baseIM2RelativeOffset = sheetParams.anchorOffset(baseIM2Anchor, part(secondM));
     	scaleB = (baseIM1RelativeOffset-baseIM2RelativeOffset)/(firstM.getLine().first.y - secondM.getLine().first.y);
@@ -119,8 +134,6 @@ public class NoteView extends View {
 	    		endingDrawOffset.y = endingTopOffset - baseTopOffset;
 	    	}
     	}
-    	
-    	invalidate();
 	}
 	
 	private AnchorPart part(IMarker imarker) {
@@ -168,6 +181,7 @@ public class NoteView extends View {
 	
 	public void setPaint(Paint paint) {
 		this.paint = paint;
+		this.invalidate();
 	}
 	
 	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {
@@ -204,7 +218,6 @@ public class NoteView extends View {
 			);
 			*/
 			
-			paint.setColor(Color.BLACK);
 			drawSvgImage(canvas, ending, scaleE, endingDrawOffset, paint);
 		}
 		
@@ -217,7 +230,6 @@ public class NoteView extends View {
 		);
 		*/
 
-		paint.setColor(Color.BLACK);
 		drawSvgImage(canvas, base, scaleB, baseDrawOffset, paint);
 	}
 	

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView.OnScrollChangedListener;
@@ -159,16 +158,17 @@ public class EditActivity extends Activity {
 		
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
-			log.i(
-				"sheet::onTouch(): %s activePointerId %d", 
-				ReflectionUtils.findConst(MotionEvent.class, "ACTION_", event.getActionMasked()),	
-				activePointerId
-			);
+//			log.i(
+//				"sheet::onTouch(): %s activePointerId %d", 
+//				ReflectionUtils.findConst(MotionEvent.class, "ACTION_", event.getActionMasked()),	
+//				activePointerId
+//			);
 			switch(event.getActionMasked()) {
 			case MotionEvent.ACTION_DOWN:
 				if(insideIA((int) event.getX())) {
-					activePointerId = event.getPointerId(event.getActionIndex());
 					currentAnchor = nearestAnchor((int) event.getY());
+					lines.highlightAnchor(currentAnchor);
+					activePointerId = event.getPointerId(event.getActionIndex());
 					if(newNote == null) {
 						newNote = new NoteView(EditActivity.this);
 					}
@@ -183,7 +183,6 @@ public class EditActivity extends Activity {
 					newNote.setPaint(noteHighlightPaint, NOTE_HIGHLIGHT_PADDING);
 					sheet.addView(newNote);
 					updatePosition(newNote, inIA_noteViewX(newNote), noteViewY(newNote));
-					lines.highlightAnchor(currentAnchor);
 					vertscroll.setVerticalScrollingLocked(true);
 					return true;
 				}
@@ -213,13 +212,14 @@ public class EditActivity extends Activity {
 			case MotionEvent.ACTION_POINTER_1_UP:
 				if(event.getPointerId(event.getActionIndex()) != activePointerId)
 					break;
-				activePointerId = INVALID_POINTER;
 			case MotionEvent.ACTION_CANCEL:
+				activePointerId = INVALID_POINTER;
 				cancel();
 				return true;
 			case MotionEvent.ACTION_UP:
 				if(activePointerId == INVALID_POINTER)
 					break;
+				activePointerId = INVALID_POINTER;
 				insertNoteAndClean();
 				return true;
 			}

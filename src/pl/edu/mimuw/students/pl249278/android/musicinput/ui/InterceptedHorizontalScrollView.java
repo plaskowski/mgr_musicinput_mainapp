@@ -24,30 +24,6 @@ public class InterceptedHorizontalScrollView extends HorizontalScrollView {
 	}
 	
 	@Override
-	public boolean onInterceptTouchEvent(MotionEvent ev) {
-		log.i(
-				"onInterceptTouchEvent:: action: %s, index: %d, pos: %fx%f", 
-				ReflectionUtils.findConst(MotionEvent.class, "ACTION_", ev.getActionMasked()),
-				ev.getActionIndex(),
-				ev.getX(),
-				ev.getY()
-			);
-		return super.onInterceptTouchEvent(ev);
-	}
-	
-	@Override
-	public boolean onTouchEvent(MotionEvent ev) {
-		log.i(
-				"onTouchEvent:: action: %s, index: %d, pos: %fx%f", 
-				ReflectionUtils.findConst(MotionEvent.class, "ACTION_", ev.getActionMasked()),
-				ev.getActionIndex(),
-				ev.getX(),
-				ev.getY()
-			);
-		return super.onTouchEvent(ev);
-	}
-	
-	@Override
 	protected void onScrollChanged(int l, int t, int oldl, int oldt) {
 		super.onScrollChanged(l, t, oldl, oldt);
 		if(listener != null) {

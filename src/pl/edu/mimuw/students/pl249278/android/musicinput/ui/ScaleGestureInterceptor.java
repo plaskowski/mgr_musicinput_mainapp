@@ -125,7 +125,7 @@ public class ScaleGestureInterceptor extends FrameLayout {
 		if(touchInputLocked || detector.isInProgress()) {
 			return true;
 		}
-		logEv("dispatchEvent() normal route ", ev);
+//		logEv("dispatchEvent() normal route ", ev);
 		return super.dispatchTouchEvent(ev);
 	}
 

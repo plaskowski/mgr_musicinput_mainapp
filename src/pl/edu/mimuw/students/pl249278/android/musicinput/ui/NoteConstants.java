@@ -9,7 +9,7 @@ public class NoteConstants {
 	public static final int LEN_QUATERNOTE = 2;
 	
 	public static int anchorType(int anchorIndex) {
-		return anchorIndex%2;
+		return Math.abs(anchorIndex%2);
 	}
 
 	public static int anchorIndex(int withinTypeIndex, int type) {

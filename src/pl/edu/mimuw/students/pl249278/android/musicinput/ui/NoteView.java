@@ -54,6 +54,7 @@ public class NoteView extends View {
 	private PointF baseDrawOffset;
 	private PointF endingDrawOffset;
 	private AnchorPart baseIM1AnchorPart;
+	private int padding = 0;
 
 	public NoteView(Context ctx) {
 		super(ctx);
@@ -133,27 +134,9 @@ public class NoteView extends View {
 	    	} else {
 	    		endingDrawOffset.y = endingTopOffset - baseTopOffset;
 	    	}
+	    	endingDrawOffset.offset(padding, padding);
     	}
-	}
-	
-	private AnchorPart part(IMarker imarker) {
-		if(EnhancedSvgImage.isTypeBottomEdge(imarker))
-			return AnchorPart.BOTTOM_EDGE;
-		else
-			return AnchorPart.MIDDLE;
-	}
-
-	private static int imarkerAnchor(EnhancedSvgImage.IMarker iMarker, int enhImgAnchor) {
-		int index = EnhancedSvgImage.alphaToIndex(iMarker.getAlpha());
-		if(EnhancedSvgImage.isTypeRelative(iMarker)) {
-			return enhImgAnchor + index;
-		} else {
-			return index;
-		}
-	}
-
-	private static float lineXSpan(Pair<PointF, PointF> line) {
-		return Math.abs(line.first.x - line.second.x);
+    	baseDrawOffset.offset(padding, padding);
 	}
 	
 	@Override
@@ -168,7 +151,7 @@ public class NoteView extends View {
 			(int) (Math.max(
 				baseDrawOffset.y + base.getHeight()*scaleB,
 				ending == null ? 0 : endingDrawOffset.y + ending.getHeight()*scaleE
-			))
+			)) + 2*padding
 		);
 	}
 
@@ -176,20 +159,21 @@ public class NoteView extends View {
 		if(sheetParams == null) {
 			throw new IllegalStateException();
 		}
-		return (int) (composedWidth*scaleB);
+		return (int) (composedWidth*scaleB) + 2*padding;
 	}
 	
-	public void setPaint(Paint paint) {
+	public void setPaint(Paint paint, int padding) {
+		int delta = padding-this.padding;
 		this.paint = paint;
-		this.invalidate();
-	}
-	
-	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {
-		return
-			sheetParams.anchorOffset(baseIM1Anchor, baseIM1AnchorPart)
-			- sheetParams.anchorOffset(anchorAbsIndex, part)
-			- ((int) (baseDrawOffset.y + (base.getImarkers().get(0).line.first.y*scaleB)))
-		;
+		this.padding  = padding;
+		if(delta != 0) {
+			baseDrawOffset.offset(delta, delta);
+			if(endingDrawOffset != null)
+				endingDrawOffset.offset(delta, delta);
+			onMeasure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+		} else {
+			invalidate();
+		}
 	}
 	
 	@Override
@@ -232,8 +216,20 @@ public class NoteView extends View {
 		}
 	}
 	
+	public int getBaseMiddleX() {
+		return (int) (baseDrawOffset.x + base.xMiddleMarker * scaleB);
+	}
+	
+	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {
+		return
+			sheetParams.anchorOffset(baseIM1Anchor, baseIM1AnchorPart)
+			- sheetParams.anchorOffset(anchorAbsIndex, part)
+			- ((int) (baseDrawOffset.y + (base.getImarkers().get(0).line.first.y*scaleB)))
+		;
+	}
+		
 	// TODO move to more appropriate class
-	private void drawSvgImage(Canvas c, SvgImage img, float scale, PointF pxOffset, Paint paint) {
+	private static void drawSvgImage(Canvas c, SvgImage img, float scale, PointF pxOffset, Paint paint) {
 		
 		for(SvgObject obj: img.objects) {
 			if(obj instanceof SvgPath) {
@@ -293,9 +289,23 @@ public class NoteView extends View {
 			args[i] = args[i]*scale;
 		}
 	}
-
-	public int getBaseMiddleX() {
-		return (int) (baseDrawOffset.x + base.xMiddleMarker * scaleB);
-	}	
 	
-}
+	private static AnchorPart part(IMarker imarker) {
+		if(EnhancedSvgImage.isTypeBottomEdge(imarker))
+			return AnchorPart.BOTTOM_EDGE;
+		else
+			return AnchorPart.MIDDLE;
+	}
+
+	private static int imarkerAnchor(EnhancedSvgImage.IMarker iMarker, int enhImgAnchor) {
+		int index = EnhancedSvgImage.alphaToIndex(iMarker.getAlpha());
+		if(EnhancedSvgImage.isTypeRelative(iMarker)) {
+			return enhImgAnchor + index;
+		} else {
+			return index;
+		}
+	}
+
+	private static float lineXSpan(Pair<PointF, PointF> line) {
+		return Math.abs(line.first.x - line.second.x);
+	}}

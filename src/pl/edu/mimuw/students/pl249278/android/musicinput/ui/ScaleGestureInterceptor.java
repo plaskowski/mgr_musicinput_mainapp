@@ -76,20 +76,26 @@ public class ScaleGestureInterceptor extends FrameLayout {
 	
 	private boolean dispatchCancel = false;
 	private boolean dispatchDown = false;
+	private boolean touchInputLocked = false;
+	
+	public void setTouchInputLocked(boolean setLocked) {
+		if(touchInputLocked == setLocked) return;
+		dispatchCancel = setLocked;
+		dispatchDown = !setLocked;
+		touchInputLocked = setLocked;
+	}
 	
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent ev) {
-		detector.onTouchEvent(ev);
+		if(!touchInputLocked) {
+			detector.onTouchEvent(ev);
+		}
 		if(dispatchCancel) {
 			int action = ev.getAction();
 			ev.setAction(MotionEvent.ACTION_CANCEL);
 			super.dispatchTouchEvent(ev);
 			ev.setAction(action);
 			dispatchCancel = false;
-		}
-		if(detector.isInProgress()) {
-			logEv("detector in progress ate", ev);
-			return true;
 		}
 		if(dispatchDown) {
 			switch(ev.getActionMasked()) {
@@ -114,6 +120,9 @@ public class ScaleGestureInterceptor extends FrameLayout {
 				super.dispatchTouchEvent(ev);
 				dispatchDown = false;
 			}
+			return true;
+		}
+		if(touchInputLocked || detector.isInProgress()) {
 			return true;
 		}
 		logEv("dispatchEvent() normal route ", ev);

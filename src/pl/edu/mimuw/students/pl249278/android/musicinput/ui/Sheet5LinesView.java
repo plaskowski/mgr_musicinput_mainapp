@@ -44,7 +44,10 @@ public class Sheet5LinesView extends View {
 		this.params = params;
 		lineThickness = params.getLineThickness();
 		totalVerticalSpan = params.anchorOffset(LINE4_ABSINDEX, AnchorPart.BOTTOM_EDGE);
-		lineHighlightedPaint.setShadowLayer(params.getLineThickness()/2, 0, params.getLineThickness()/4, Color.BLACK);
+		int shadowThickness = params.getLineThickness()/2;
+		lineHighlightedPaint.setShadowLayer(shadowThickness, 0, params.getLineThickness()/4, Color.BLACK);
+		setPadding(0, shadowThickness, 0, shadowThickness);
+		setMeasuredDimension(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
 		invalidate();
 	}
 	
@@ -66,20 +69,23 @@ public class Sheet5LinesView extends View {
 
 	@Override
 	protected void onDraw(Canvas canvas) {
+		int paddingTop = getPaddingTop();
 //		LogUtils.info("Sheet5LinesView::onDraw (canvas.size: %dx%d)", canvas.getWidth(), canvas.getHeight());
 		for(int i = 0; i < 5; i++) {
 			int anchorIndex = NoteConstants.anchorIndex(i, NoteConstants.ANCHOR_TYPE_LINE);
 			canvas.drawRect(
-				notesAreaLeftPadding-lineThickness, params.anchorOffset(anchorIndex, AnchorPart.TOP_EDGE),
-				getWidth(), params.anchorOffset(anchorIndex, AnchorPart.BOTTOM_EDGE),
+				notesAreaLeftPadding-lineThickness, 
+				paddingTop + params.anchorOffset(anchorIndex, AnchorPart.TOP_EDGE),
+				getWidth(), 
+				paddingTop + params.anchorOffset(anchorIndex, AnchorPart.BOTTOM_EDGE),
 				highlightedAnchor != null && highlightedAnchor == anchorIndex ? lineHighlightedPaint : normalPaint
 			);
 		}
 		int line0top = params.anchorOffset(LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
 		int line4bottom = params.anchorOffset(LINE4_ABSINDEX, AnchorPart.BOTTOM_EDGE);
 		canvas.drawRect(
-			notesAreaLeftPadding-lineThickness, line0top,
-			notesAreaLeftPadding, line4bottom,
+			notesAreaLeftPadding-lineThickness, paddingTop + line0top,
+			notesAreaLeftPadding, paddingTop + line4bottom,
 			normalPaint
 		);
 		if(highlightedAnchor != null 
@@ -87,8 +93,10 @@ public class Sheet5LinesView extends View {
 		&& highlightedAnchor >= LINESPACE0_ABSINDEX
 		&& highlightedAnchor <= LINESPACE3_ABSINDEX) {
 			linespaceHighlighted.setBounds(
-				notesAreaLeftPadding, params.anchorOffset(highlightedAnchor, AnchorPart.TOP_EDGE),
-				getWidth(), params.anchorOffset(highlightedAnchor, AnchorPart.BOTTOM_EDGE)
+				notesAreaLeftPadding, 
+				paddingTop + params.anchorOffset(highlightedAnchor, AnchorPart.TOP_EDGE),
+				getWidth(), 
+				paddingTop + params.anchorOffset(highlightedAnchor, AnchorPart.BOTTOM_EDGE)
 			);
 			linespaceHighlighted.draw(canvas);
 		}
@@ -109,7 +117,7 @@ public class Sheet5LinesView extends View {
 			width = MeasureSpec.getSize(widthMeasureSpec);
 			break;
 		}
-		setMeasuredDimension(width, totalVerticalSpan);
+		setMeasuredDimension(width, totalVerticalSpan+getPaddingTop()+getPaddingBottom());
 	}
 
 	public int getMinPadding() {

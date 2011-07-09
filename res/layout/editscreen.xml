@@ -17,7 +17,7 @@
 	    	android:layout_alignParentLeft="true"
 	    	android:layout_alignParentRight="true" 
 	    >
-	    	<ScrollView
+	    	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView
 	    		android:id="@+id/EDIT_vertscrollview"
 		    	android:layout_width="wrap_content" 
 	    		android:layout_height="fill_parent"
@@ -29,7 +29,7 @@
 			    	android:layout_height="300px"
 			   	>
 			   	</RelativeLayout>
-			</ScrollView>
+			</pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView>
 	    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView>
    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor>
     

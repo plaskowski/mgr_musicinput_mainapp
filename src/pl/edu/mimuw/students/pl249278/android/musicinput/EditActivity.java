@@ -14,6 +14,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizonta
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor.OnScaleListener;
@@ -106,6 +107,15 @@ public class EditActivity extends Activity {
 		sheet.addView(lines, new LayoutParams(LayoutParams.FILL_PARENT, 100));
 		scaleGestureDetector.setOnScaleListener(scaleListener);
 		sheet.setOnTouchListener(iaTouchListener);
+		
+		// setup noteValue spinner
+		NoteValueSpinner valueSpinner = (NoteValueSpinner) findViewById(R.id.EDIT_note_value_scroll);
+		try {
+			valueSpinner.setupNoteViews();
+		} catch (NoteDescriptionLoadingException e) {
+			e.printStackTrace();
+			finish();
+		}
 		
 		this.inputArea = findViewById(R.id.EDIT_inputArea);
 		this.inputAreaWidth = getResources().getDimensionPixelSize(R.dimen.inputAreaWidth);

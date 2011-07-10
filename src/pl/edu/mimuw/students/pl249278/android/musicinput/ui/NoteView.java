@@ -148,11 +148,15 @@ public class NoteView extends View {
 		}
 		setMeasuredDimension(
 			measureWidth(), 
-			(int) (Math.max(
-				baseDrawOffset.y + base.getHeight()*scaleB,
-				ending == null ? 0 : endingDrawOffset.y + ending.getHeight()*scaleE
-			)) + 2*padding
+			measureHeight()
 		);
+	}
+
+	public int measureHeight() {
+		return (int) (Math.max(
+			baseDrawOffset.y + base.getHeight()*scaleB,
+			ending == null ? 0 : endingDrawOffset.y + ending.getHeight()*scaleE
+		)) + 2*padding;
 	}
 
 	public int measureWidth() {
@@ -166,7 +170,7 @@ public class NoteView extends View {
 		int delta = padding-this.padding;
 		this.paint = paint;
 		this.padding  = padding;
-		if(delta != 0) {
+		if(delta != 0 && sheetParams != null) {
 			baseDrawOffset.offset(delta, delta);
 			if(endingDrawOffset != null)
 				endingDrawOffset.offset(delta, delta);

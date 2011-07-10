@@ -5,8 +5,32 @@
     android:layout_height="fill_parent"
     android:id="@+id/EDIT_main_containter"
 >
+    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner
+		android:layout_alignParentLeft="true" 
+		android:id="@+id/EDIT_note_value_scroll" 
+		android:layout_height="fill_parent" 
+		android:layout_width="50dip" 
+		android:scrollbars="none">
+		<LinearLayout
+			android:id="@+id/EDIT_note_value_container"
+			android:layout_height="wrap_content"
+			android:layout_width="50dip"
+			android:orientation="vertical"
+			android:background="@drawable/pasek_tile"
+			android:paddingLeft="2dip"
+			android:paddingRight="2dip"
+		/>
+    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner>
+	<ImageView 
+		android:layout_alignParentLeft="true" 
+		android:layout_height="match_parent" 
+		android:layout_width="50dip" android:src="@drawable/cien"
+		android:background="@drawable/ramka"
+		android:scaleType="fitXY"
+	/>
 	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor
 		android:id="@+id/EDIT_scale_detector"
+    	android:layout_toRightOf="@id/EDIT_note_value_scroll" 
 	    android:layout_width="fill_parent"
 	    android:layout_height="fill_parent"
 	>

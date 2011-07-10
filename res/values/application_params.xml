@@ -7,4 +7,5 @@
 	<integer name="minSpaceDefault">-3</integer>
 	<integer name="maxSpaceDefault">6</integer>
 	<color name="highlightColor">#FFFFCC33</color>
+	<integer name="defaultMinNoteValue">3</integer>
 </resources>

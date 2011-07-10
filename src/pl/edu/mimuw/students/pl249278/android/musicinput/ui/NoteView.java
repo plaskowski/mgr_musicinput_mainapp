@@ -71,7 +71,7 @@ public class NoteView extends View {
 		boolean upsdown = noteHeight <= NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE);
 		// FIXME real logic for discovering anchors
 		int baseAnchor = noteHeight;
-		int endingAnchor = baseAnchor + (upsdown ? 6 : -6);
+		int endingAnchor = baseAnchor + (upsdown ? 7 : -7);
 		
 		// discover appropriate parts images
 		this.base = NotePartFactory.getBaseImage(context, noteLength, NoteConstants.anchorType(baseAnchor), upsdown);

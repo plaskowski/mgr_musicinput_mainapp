@@ -83,7 +83,7 @@ public class EditActivity extends Activity {
 	private int line0Top;
 
 	// TODO bind this with widget
-	protected int currentNoteLength = 1;
+	protected int currentNoteLength = 0;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +91,7 @@ public class EditActivity extends Activity {
 		setContentView(R.layout.editscreen);
 		
 		// TODO sheetParams comes from previous view
-		sheetParams = new SheetParams(10, 40); // TODO read thickness from xml
+		sheetParams = new SheetParams(10, 100); // TODO read thickness from xml
 		sheetParams.setMinSpaceAnchor(getResources().getInteger(R.integer.minSpaceDefault));
 		sheetParams.setMaxSpaceAnchor(getResources().getInteger(R.integer.maxSpaceDefault));
 		
@@ -113,11 +113,16 @@ public class EditActivity extends Activity {
         this.mTouchSlop = configuration.getScaledTouchSlop();
 		
 		model = new ArrayList<NoteSpec>();
-		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE)));
-		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE)));
-		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(1, NoteConstants.ANCHOR_TYPE_LINESPACE)));
-		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, LINE0_ABSINDEX));
-		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINESPACE)));
+//		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE)));
+//		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE)));
+		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINESPACE)));
+		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINESPACE)));
+//		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE)));
+		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINESPACE)));
+		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE)));
+//		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, LINE0_ABSINDEX));
+		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE)));
+		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(1, NoteConstants.ANCHOR_TYPE_LINE)));
 		
 		try {
 			for (NoteSpec noteSpec : model) {
@@ -763,7 +768,7 @@ public class EditActivity extends Activity {
 
 	private int afterNoteSpacing(NoteSpec note) {
 		// TODO extract this to sheetParams
-		return (int) (300*sheetParams.getScale()) >> note.length();
+		return (int) (400*sheetParams.getScale()) >> note.length();
 	}
 
 	private int noteViewY(NoteView v) {

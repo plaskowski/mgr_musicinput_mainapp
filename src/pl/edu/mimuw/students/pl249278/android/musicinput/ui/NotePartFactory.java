@@ -91,32 +91,52 @@ public class NotePartFactory {
 	static {
 		declare(baseMapping, 0, 
 			anchor(ANCHOR_TYPE_LINE,
-				normal(R.xml.test_calanuta),
-				updown(R.xml.test_calanuta)
+				normal(R.xml.whole),
+				updown(R.xml.whole)
 			),
 			anchor(ANCHOR_TYPE_LINESPACE,
-				normal(R.xml.test_calanuta),
-				updown(R.xml.test_calanuta)
+				normal(R.xml.whole),
+				updown(R.xml.whole)
 			)
 		);
-		declare(baseMapping, lengths(1, 2, 3, 4), 
+		declare(baseMapping, 1, 
 			anchor(ANCHOR_TYPE_LINE,
-				normal(R.xml.test_obrazek),
-				updown(R.xml.test_polnota_upsd_lalewo)
+				normal(R.xml.half_online),
+				updown(R.xml.half_online_updown)
 			),
 			anchor(ANCHOR_TYPE_LINESPACE,
-				normal(R.xml.test_obrazek),
-				updown(R.xml.test_polnota_upsd_lalewo)
+				normal(R.xml.half_onspace),
+				updown(R.xml.half_onspaceupdown)
 			)
 		);
-		declare(endingMapping, lengths(1, 2, 3, 4),
+		declare(baseMapping, lengths(2, 3, 4), 
 			anchor(ANCHOR_TYPE_LINE,
-				normal(R.xml.test_8ending),
-				updown(R.xml.test_8ending_upsd_lalewo)
+				normal(R.xml.quater_online),
+				updown(R.xml.quater_online_updown)
 			),
 			anchor(ANCHOR_TYPE_LINESPACE,
-				normal(R.xml.test_8ending),
-				updown(R.xml.test_8ending_upsd_lalewo)
+				normal(R.xml.quater_onspace),
+				updown(R.xml.quater_onspace_updown)
+			)
+		);
+		declare(endingMapping, lengths(1, 2),
+			anchor(ANCHOR_TYPE_LINE,
+				normal(R.xml.straight_ending),
+				updown(R.xml.straight_ending_upsd)
+			),
+			anchor(ANCHOR_TYPE_LINESPACE,
+				normal(R.xml.straight_ending),
+				updown(R.xml.straight_ending_upsd)
+			)
+		);
+		declare(endingMapping, lengths(3, 4),
+			anchor(ANCHOR_TYPE_LINE,
+				normal(R.xml.eight_ending),
+				updown(R.xml.straight_ending_upsd)
+			),
+			anchor(ANCHOR_TYPE_LINESPACE,
+				normal(R.xml.eight_ending),
+				updown(R.xml.straight_ending_upsd)
 			)
 		);
 	}

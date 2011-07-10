@@ -1,14 +1,10 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
-import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import android.content.Context;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
 import android.widget.HorizontalScrollView;
 
 public class InterceptedHorizontalScrollView extends HorizontalScrollView {
-	private static LogUtils log = new LogUtils(InterceptedHorizontalScrollView.class);  
 	
 	public InterceptedHorizontalScrollView(Context context) {
 		super(context);

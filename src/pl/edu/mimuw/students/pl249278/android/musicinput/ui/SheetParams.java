@@ -14,6 +14,11 @@
 			this.linespacingFactor = linespacingFactor;
 		}
 
+		public SheetParams(SheetParams sheetParams) {
+			this.lineFactor = sheetParams.lineFactor;
+			this.linespacingFactor = sheetParams.linespacingFactor;
+		}
+
 		public static enum AnchorPart {
 			MIDDLE,
 			BOTTOM_EDGE,

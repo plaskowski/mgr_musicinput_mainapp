@@ -65,4 +65,30 @@
 	    android:background="#1FFF0000"
     />
     
+   <LinearLayout
+		android:id="@+id/EDIT_info_popup"   
+   		android:orientation="vertical"
+		android:layout_width="wrap_content" 
+		android:layout_height="wrap_content" 
+		android:background="@drawable/info_popup"
+		android:layout_centerInParent="true"
+		android:visibility="invisible"
+	>
+		<TextView
+			android:text="@string/EDIT_current_note_value"
+			android:textSize="20sp"
+			android:layout_width="wrap_content" 
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_horizontal"
+			android:textColor="@android:color/white"
+			android:layout_marginBottom="5dip"
+		/>
+		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteView
+			android:id="@+id/EDIT_info_popup_note"
+			android:layout_width="wrap_content" 
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_horizontal"
+		/>
+	</LinearLayout>
+    
 </RelativeLayout>

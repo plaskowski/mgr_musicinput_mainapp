@@ -15,6 +15,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner.OnValueChanged;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor.OnScaleListener;
@@ -41,6 +42,7 @@ import android.widget.HorizontalScrollView;
 import android.widget.RelativeLayout;
 
 public class EditActivity extends Activity {
+	private static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
 	private static final int NOTE_HIGHLIGHT_PADDING = 10;
 	private static final int LINE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE);
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
@@ -116,6 +118,20 @@ public class EditActivity extends Activity {
 			e.printStackTrace();
 			finish();
 		}
+		valueSpinner.setOnValueChangedListener(new OnValueChanged<Integer>() {
+			@Override
+			public void onValueChanged(Integer newValue, Integer oldValue) {
+				currentNoteLength = newValue;
+				popupCurrentNoteLength();
+			}
+		});
+		
+		// setup info popup
+		NoteView popupIcon = (NoteView) findViewById(R.id.EDIT_info_popup_note);
+		Paint paint = new Paint();
+		paint.setColor(getResources().getColor(R.color.infoPopupIconColor));
+		paint.setAntiAlias(true);
+		popupIcon.setPaint(paint, 0);
 		
 		this.inputArea = findViewById(R.id.EDIT_inputArea);
 		this.inputAreaWidth = getResources().getDimensionPixelSize(R.dimen.inputAreaWidth);
@@ -774,6 +790,35 @@ public class EditActivity extends Activity {
 		int newSheetWidth = declaredWidth(sheet)+delta;
 		updateSize(sheet, newSheetWidth, null);
 		updateSize(lines, newSheetWidth, null);
+	}
+	
+	private Handler mHandler = new Handler();
+	private Runnable mHideInfoPopupTask = new Runnable() {
+	   public void run() {
+		   findViewById(R.id.EDIT_info_popup).setVisibility(View.GONE);
+	   }
+	};
+	
+	protected void popupCurrentNoteLength() {
+		View popup = findViewById(R.id.EDIT_info_popup);
+		NoteView noteView = (NoteView) popup.findViewById(R.id.EDIT_info_popup_note);
+		SheetParams params = new SheetParams(sheetParams);
+		params.setScale(1);
+		params.setScale(
+			((float) getResources().getDimensionPixelSize(R.dimen.infoPopupIconHeight))
+		/	params.anchorOffset(LINE4_ABSINDEX, BOTTOM_EDGE)
+		);
+		try {
+			noteView.setNoteSpec(this, currentNoteLength, LINE4_ABSINDEX);
+		} catch (NoteDescriptionLoadingException e) {
+			e.printStackTrace();
+			finish();
+		}
+		noteView.setSheetParams(params);
+		popup.requestLayout();
+		popup.setVisibility(View.VISIBLE);		
+		mHandler.removeCallbacks(mHideInfoPopupTask);
+		mHandler.postDelayed(mHideInfoPopupTask, getResources().getInteger(R.integer.infoPopupLife));
 	}
 
 	private int afterNoteSpacing(NoteSpec note) {

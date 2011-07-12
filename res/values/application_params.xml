@@ -8,4 +8,7 @@
 	<integer name="maxSpaceDefault">6</integer>
 	<color name="highlightColor">#FFFFCC33</color>
 	<integer name="defaultMinNoteValue">3</integer>
+	<color name="infoPopupIconColor">#FFFFFFFF</color>
+	<dimen name="infoPopupIconHeight">70dip</dimen>
+	<integer name="infoPopupLife">1500</integer>
 </resources>

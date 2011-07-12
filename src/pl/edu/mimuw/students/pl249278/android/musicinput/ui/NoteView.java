@@ -29,6 +29,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.util.AttributeSet;
 import android.util.Pair;
 import android.view.View;
 
@@ -58,6 +59,14 @@ public class NoteView extends View {
 
 	public NoteView(Context ctx) {
 		super(ctx);
+	}
+
+	public NoteView(Context context, AttributeSet attrs, int defStyle) {
+		super(context, attrs, defStyle);
+	}
+
+	public NoteView(Context context, AttributeSet attrs) {
+		super(context, attrs);
 	}
 
 	public NoteView(Context context, int noteLength, int noteHeight) throws NoteDescriptionLoadingException {
@@ -102,12 +111,15 @@ public class NoteView extends View {
 		if(sheetParams != null) {
 			sheetParamsCalculations();
 			onMeasure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+			invalidate();
 		}
 	}
 	
 	public void setSheetParams(SheetParams params) {
 		this.sheetParams = params;
 		sheetParamsCalculations();
+    	onMeasure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+		invalidate();
 	}
 
 	private void sheetParamsCalculations() {

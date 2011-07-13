@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<integer name="lineThickness">10</integer>
-	<integer name="linespaceThickness">40</integer>
-	<dimen name="inputAreaWidth">88dip</dimen>
-	<dimen name="inputAreaMaxRightMargin">80dip</dimen>
 	<integer name="minSpaceDefault">-3</integer>
 	<integer name="maxSpaceDefault">6</integer>
-	<color name="highlightColor">#FFFFCC33</color>
 	<integer name="defaultMinNoteValue">3</integer>
-	<color name="infoPopupIconColor">#FFFFFFFF</color>
-	<dimen name="infoPopupIconHeight">70dip</dimen>
-	<integer name="infoPopupLife">1500</integer>
 </resources>

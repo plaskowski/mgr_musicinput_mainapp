@@ -44,7 +44,7 @@ public class NoteValueSpinner extends ScrollView {
 		PAINT_NORMAL.setColor(normalColor);
 		PAINT_NORMAL.setShadowLayer(EFFECT_PADDING, 0, 0, normalColor);
 		PAINT_NORMAL.setAntiAlias(true);
-		int selectionColor = ctx.getResources().getColor(R.color.highlightColor);
+		int selectionColor = ctx.getResources().getColor(R.color.spinnerSelectionColor);
 		PAINT_SELECTED.setColor(selectionColor);
 		PAINT_SELECTED.setShadowLayer(EFFECT_PADDING*2, 0, 0, selectionColor);
 		PAINT_SELECTED.setAntiAlias(true);
@@ -61,7 +61,8 @@ public class NoteValueSpinner extends ScrollView {
         for (int i = 0; i <= minNoteValue; i++) {
 			NoteView noteView = new NoteView(getContext());
 			noteView.setNoteSpec(getContext(), i, LINE4_ABSINDEX);
-			noteView.setPaint(PAINT_NORMAL, EFFECT_PADDING);
+			noteView.setPaint(PAINT_NORMAL);
+			noteView.setPadding(EFFECT_PADDING);
 			noteView.setSheetParams(params);
 			maxNoteHorizontalHalfWidth = Math.max(maxNoteHorizontalHalfWidth, Math.max(
 				noteView.getBaseMiddleX(),
@@ -151,7 +152,7 @@ public class NoteValueSpinner extends ScrollView {
 	
 	private void setIsSelected(int value, boolean isSelected) {
 		((NoteView) notesContainer.getChildAt(value)).setPaint(
-			isSelected ? PAINT_SELECTED : PAINT_NORMAL, EFFECT_PADDING
+			isSelected ? PAINT_SELECTED : PAINT_NORMAL
 		);
 	}
 

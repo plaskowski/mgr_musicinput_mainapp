@@ -27,6 +27,17 @@ public class NotePartFactory {
 			), e);
 		}
 	}
+	@SuppressWarnings("serial")
+	public static class LoadingSvgException extends Exception {
+
+		public LoadingSvgException(int xmlResId, Throwable throwable) {
+			super(
+				"Exception while loading EnhancedSvg from xml: " + ReflectionUtils.findConst(R.xml.class, "", xmlResId),
+				throwable
+			);
+		}
+		
+	}
 	private static final int ORIENT_NORMAL = 0;
 	private static final int ORIENT_UPSDOWN = 1;
 
@@ -79,6 +90,21 @@ public class NotePartFactory {
 		return noteEndings.get(resId);
 	}
 	
+	public static EnhancedSvgImage prepareEnhacedSvgImage(Context context, int xmlResId) throws LoadingSvgException {
+		if(svgImages.get(xmlResId) == null) {
+			SvgParser parser = new SvgParser();
+			XmlPullParser xmlParser = context.getResources().getXml(xmlResId);
+			SvgImage svgImg;
+			try {
+				svgImg = parser.parse(xmlParser);
+				svgImages.put(xmlResId, new EnhancedSvgImage(svgImg));
+			} catch (Exception e) {
+				throw new LoadingSvgException(xmlResId, e);
+			}
+		}
+		return svgImages.get(xmlResId);
+	}
+	
 	private static int mappingIndex(int orientation, int anchorType) {
 		return (orientation << 1) | anchorType;
 	}
@@ -87,6 +113,7 @@ public class NotePartFactory {
 	private static Map<Integer, int[]> endingMapping = new HashMap<Integer, int[]>();
 	private static Map<Integer, NoteBase> noteBases = new HashMap<Integer, NoteBase>();
 	private static Map<Integer, NoteEnding> noteEndings = new HashMap<Integer, NoteEnding>();
+	private static Map<Integer, EnhancedSvgImage> svgImages = new HashMap<Integer, EnhancedSvgImage>();
 	
 	static {
 		declare(baseMapping, 0, 
@@ -132,11 +159,11 @@ public class NotePartFactory {
 		declare(endingMapping, lengths(3, 4),
 			anchor(ANCHOR_TYPE_LINE,
 				normal(R.xml.eight_ending),
-				updown(R.xml.straight_ending_upsd)
+				updown(R.xml.eight_ending_updown)
 			),
 			anchor(ANCHOR_TYPE_LINESPACE,
 				normal(R.xml.eight_ending),
-				updown(R.xml.straight_ending_upsd)
+				updown(R.xml.eight_ending_updown)
 			)
 		);
 	}

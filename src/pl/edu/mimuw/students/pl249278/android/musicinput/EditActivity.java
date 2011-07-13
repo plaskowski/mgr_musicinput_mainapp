@@ -6,25 +6,36 @@ import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.A
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.EnhancedSvgImage.InvalidMetaException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView.OnScrollChangedListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.LoadingSvgException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner.OnValueChanged;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.OutlineDrawable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor.OnScaleListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Sheet5LinesView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.StaticNotationElementView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TempoView;
 import android.app.Activity;
 import android.graphics.Color;
+import android.graphics.CornerPathEffect;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
+import android.graphics.Paint.Style;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Handler;
@@ -43,17 +54,16 @@ import android.widget.RelativeLayout;
 
 public class EditActivity extends Activity {
 	private static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
-	private static final int NOTE_HIGHLIGHT_PADDING = 10;
 	private static final int LINE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE);
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
 
 	private static final int ANIM_TIME = 150;
 	protected Paint noteHighlightPaint = new Paint();
+	private int NOTE_DRAW_PADDING = 0;
 	protected static final Paint normalPaint = new Paint();
 	{
 		normalPaint.setAntiAlias(true);
 		noteHighlightPaint.setAntiAlias(true);
-		noteHighlightPaint.setShadowLayer(NOTE_HIGHLIGHT_PADDING, NOTE_HIGHLIGHT_PADDING/2, NOTE_HIGHLIGHT_PADDING, Color.BLACK);		
 	}
 
 	private static LogUtils log = new LogUtils(EditActivity.class);
@@ -87,6 +97,11 @@ public class EditActivity extends Activity {
 
 	// TODO bind this with widget
 	protected int currentNoteLength = 0;
+	private List<SheetElementView> staticElements = new ArrayList<SheetElementView>();
+	private float noteMinDistToIA;
+	private float minNoteSpacingFactor;
+	private int minNoteValue;
+	private float staticElementsSpacing;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -128,17 +143,68 @@ public class EditActivity extends Activity {
 		
 		// setup info popup
 		NoteView popupIcon = (NoteView) findViewById(R.id.EDIT_info_popup_note);
-		Paint paint = new Paint();
-		paint.setColor(getResources().getColor(R.color.infoPopupIconColor));
-		paint.setAntiAlias(true);
-		popupIcon.setPaint(paint, 0);
+		Paint iconPaint = new Paint();
+		iconPaint.setColor(getResources().getColor(R.color.infoPopupIconColor));
+		iconPaint.setAntiAlias(true);
+		popupIcon.setPaint(iconPaint);
+		Paint ipopupBgPaint = new Paint();
+		ipopupBgPaint.setStyle(Style.FILL);
+		ipopupBgPaint.setColor(getResources().getColor(R.color.infoPopupBgColor));
+		ipopupBgPaint.setAntiAlias(true);
+		int ipopupShadow = getResources().getDimensionPixelSize(R.dimen.infoPoupBgShadow);
+		ipopupBgPaint.setShadowLayer(ipopupShadow, ipopupShadow/3, ipopupShadow/3, Color.BLACK);
+		ipopupBgPaint.setPathEffect(new CornerPathEffect(getResources().getDimensionPixelSize(R.dimen.infoPoupBgCorner)));
+		OutlineDrawable ipopupBg = new OutlineDrawable();
+		ipopupBg.addPaint(ipopupBgPaint, ipopupShadow*2);
+		findViewById(R.id.EDIT_info_popup).setBackgroundDrawable(ipopupBg);
+		
+		// setup static elements
+		StaticNotationElementView el;
+		el = new StaticNotationElementView(this);
+		try {
+			el.setImage(NotePartFactory.prepareEnhacedSvgImage(this, R.xml.key_violin));
+			el.setPaint(normalPaint);
+			sheet.addView(el);
+		} catch (InvalidMetaException e1) {
+			e1.printStackTrace();
+			finish();
+		} catch (LoadingSvgException e1) {
+			e1.printStackTrace();
+			finish();
+		}
+		this.staticElements .add(el);
+		TempoView tempo = new TempoView(this);
+		tempo.setLetters('3', '4');
+		tempo.setPaint(normalPaint);
+		sheet.addView(tempo);
+		staticElements.add(tempo);
 		
 		this.inputArea = findViewById(R.id.EDIT_inputArea);
 		this.inputAreaWidth = getResources().getDimensionPixelSize(R.dimen.inputAreaWidth);
 		ViewConfiguration configuration = ViewConfiguration.get(this);
         this.mTouchSlop = configuration.getScaledTouchSlop();
+        Paint iaPaint = new Paint();
+        iaPaint.setColor(getResources().getColor(R.color.iaFrameColor));
+        int iaSWidth = getResources().getDimensionPixelSize(R.dimen.iaFrameStrokeWidth);
+		iaPaint.setStyle(Style.STROKE);
+		iaPaint.setStrokeWidth(iaSWidth);
+		int iaSShadow = iaSWidth/2;
+		iaPaint.setShadowLayer(iaSShadow, iaSShadow, iaSShadow, Color.BLACK);
+		iaPaint.setPathEffect(new DashPathEffect(new float[] {4*iaSWidth, 2*iaSWidth, 6*iaSWidth, 2*iaSWidth}, 0));
+        OutlineDrawable outlineDrawable = new OutlineDrawable();
+        outlineDrawable.addPaint(iaPaint, iaSWidth);
+		inputArea.setBackgroundDrawable(outlineDrawable);
+		
+		noteShadow = Float.parseFloat(getResources().getString(R.string.noteShadow));
+		noteMinDistToIA = Float.parseFloat(getResources().getString(R.string.minDistToIA));
+		minNoteSpacingFactor = Float.parseFloat(getResources().getString(R.string.minNoteSpacing));
+		minNoteValue = getResources().getInteger(R.integer.defaultMinNoteValue);
+		staticElementsSpacing = Float.parseFloat(getResources().getString(R.string.staticElementsSpacing));
 		
 		model = new ArrayList<NoteSpec>();
+		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE)));
+		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE)));
+		/*
 //		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE)));
 //		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE)));
 		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINESPACE)));
@@ -149,11 +215,11 @@ public class EditActivity extends Activity {
 //		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, LINE0_ABSINDEX));
 		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE)));
 		model.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(1, NoteConstants.ANCHOR_TYPE_LINE)));
-		
+		*/
 		try {
 			for (NoteSpec noteSpec : model) {
 				NoteView noteView = new NoteView(this, noteSpec.length(), noteSpec.positon());
-				noteView.setPaint(normalPaint, 0);
+				noteView.setPaint(normalPaint);
 				noteViews.add(noteView);
 				sheet.addView(noteView);
 			}
@@ -211,9 +277,10 @@ public class EditActivity extends Activity {
 						return false;
 					}
 					newNote.setSheetParams(sheetParams);
-					newNote.setPaint(noteHighlightPaint, NOTE_HIGHLIGHT_PADDING);
+					newNote.setPaint(noteHighlightPaint);
+					newNote.setPadding((int) NOTE_DRAW_PADDING);
 					sheet.addView(newNote);
-					updatePosition(newNote, inIA_noteViewX(newNote), noteViewY(newNote));
+					updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
 					vertscroll.setVerticalScrollingLocked(true);
 					return true;
 				}
@@ -236,7 +303,7 @@ public class EditActivity extends Activity {
 						finish();
 						return false;
 					}
-					updatePosition(newNote, inIA_noteViewX(newNote), noteViewY(newNote));
+					updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
 					currentAnchor = newAnchor;
 				}
 				return true;
@@ -263,8 +330,8 @@ public class EditActivity extends Activity {
 			rightToIA++;
 			NoteView noteView = newNote;
 			newNote = null;
-			noteView.setPaint(normalPaint, 0);
-			updatePosition(noteView, inIA_noteViewX(noteView), noteViewY(noteView));
+			noteView.setPaint(normalPaint);
+			updatePosition(noteView, inIA_noteViewX(noteView), sheetElementY(noteView));
 			noteViews.add(index, noteView);
 			resizeSheetOnNoteInsert(index);
 			
@@ -452,7 +519,7 @@ public class EditActivity extends Activity {
 			int leftToIAArea = visibleRectWidth -inputAreaWidth - iaRightMargin - delta + mTouchSlop;
 			int destScrollX = rightToIA == 0
 				// left border of notes area
-				? notesAreaX - visibleRectWidth - inputAreaWidth - iaRightMargin
+				? notesAreaX - (visibleRectWidth - inputAreaWidth - iaRightMargin)
 				// middle of leftToIA note + delta
 				: middleX(noteViews.get(rightToIA-1)) - (leftToIAArea-mTouchSlop);
 			animator.startHScrollAnimation(hscroll, destScrollX-hscroll.getScrollX(), 300, new Runnable() {
@@ -702,27 +769,44 @@ public class EditActivity extends Activity {
 
 	private void updateScaleFactor(float newScaleFactor) {
 		sheetParams.setScale(newScaleFactor);
-		
+		NOTE_DRAW_PADDING = (int) (noteShadow * sheetParams.getLinespacingThickness());
+		noteHighlightPaint.setShadowLayer(NOTE_DRAW_PADDING, NOTE_DRAW_PADDING/2, NOTE_DRAW_PADDING, Color.BLACK);		
 		lines.setParams(sheetParams);
-		// TODO scale and layout static objects and calculate notesStaticOffset
-		int notesStaticOffset = 100;
-		
-		int paddingLeft = Math.max(
-			lines.getMinPadding(),
-			// assure that when sheet is scrolled to start IA left edge matches start of area where notes are placed
-			visibleRectWidth-inputAreaWidth-iaRightMargin - notesStaticOffset
-		);
-		lines.setNotesAreaLeftPadding(paddingLeft);
-		this.notesAreaX = paddingLeft + notesStaticOffset;
-		
 		// TODO extract this to sheetParams
-		delta = (int) (70*newScaleFactor);
-		int length = model.size();
 		int minLinespaceTopOffset = sheetParams.anchorOffset(
 			NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE), 
 			AnchorPart.TOP_EDGE
 		);
 		line0Top = Math.abs(minLinespaceTopOffset);
+
+		// scale static objects
+		int staticEspacing = (int) (staticElementsSpacing*sheetParams.getLinespacingThickness());
+		int staticElementsSpan = 0;
+		for (SheetElementView el : staticElements) {
+			el.setSheetParams(sheetParams);
+			staticElementsSpan += staticEspacing + el.measureWidth();
+		}
+		staticElementsSpan += afterNoteSpacing(minNoteValue);
+		
+		
+		int paddingLeft = Math.max(
+			lines.getMinPadding(),
+			// assure that when sheet is scrolled to start IA left edge matches start of area where notes are placed
+			visibleRectWidth-inputAreaWidth-iaRightMargin - staticElementsSpan
+		);
+		lines.setNotesAreaLeftPadding(paddingLeft);
+		
+		// layout sheet static elements
+		int elX = paddingLeft;
+		for (SheetElementView el : staticElements) {
+			elX += staticEspacing;
+			updatePosition(el, elX, sheetElementY(el));
+			elX += el.measureWidth();
+		}
+		
+		this.notesAreaX = paddingLeft + staticElementsSpan;
+		delta = (int) (sheetParams.getLinespacingThickness()*noteMinDistToIA);
+		int length = model.size();
 		
 		int notesTotalSpacing = 0;
 		int spacingAfter = 0;
@@ -735,7 +819,7 @@ public class EditActivity extends Activity {
 			updatePosition(
 				v, 
 				xpos,
-				noteViewY(v)
+				sheetElementY(v)
 			);
 //			log.i("onScaleFactor() note[%d] at x: %d", i, xpos);
 			spacingAfter = afterNoteSpacing(model.get(i));
@@ -798,6 +882,7 @@ public class EditActivity extends Activity {
 		   findViewById(R.id.EDIT_info_popup).setVisibility(View.GONE);
 	   }
 	};
+	private float noteShadow;
 	
 	protected void popupCurrentNoteLength() {
 		View popup = findViewById(R.id.EDIT_info_popup);
@@ -822,11 +907,13 @@ public class EditActivity extends Activity {
 	}
 
 	private int afterNoteSpacing(NoteSpec note) {
-		// TODO extract this to sheetParams
-		return (int) (400*sheetParams.getScale()) >> note.length();
+		return afterNoteSpacing(note.length());
+	}
+	private int afterNoteSpacing(int noteLength) {
+		return (int) (sheetParams.getLinespacingThickness()*minNoteSpacingFactor*Math.pow(1.3, minNoteValue-noteLength));
 	}
 
-	private int noteViewY(NoteView v) {
+	private int sheetElementY(SheetElementView v) {
 		return line0Top + v.getOffsetToAnchor(NoteConstants.anchorIndex(0, ANCHOR_TYPE_LINE), TOP_EDGE);
 	}	
 	

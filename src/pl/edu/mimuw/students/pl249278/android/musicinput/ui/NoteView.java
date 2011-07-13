@@ -1,44 +1,17 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_CP1_X;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_CP1_Y;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_CP2_X;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_CP2_Y;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_DEST_X;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_DEST_Y;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_X;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_Y;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_CLOSE;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_CUBICTO;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_LINETO;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_MOVETO;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RCUBICTO;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RLINETO;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RMOVETO;
-import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.EnhancedSvgImage.IMarker;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
-import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
-import pl.edu.mimuw.students.pl249278.android.svg.SvgObject;
-import pl.edu.mimuw.students.pl249278.android.svg.SvgPath;
-import pl.edu.mimuw.students.pl249278.android.svg.SvgPath.MemorySaavyIterator;
-import pl.edu.mimuw.students.pl249278.android.svg.SvgPath.SvgPathCommand;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.PointF;
 import android.util.AttributeSet;
-import android.util.Pair;
-import android.view.View;
 
-public class NoteView extends View {
+public class NoteView extends SheetElementView {
 
 	private NoteBase base;
 	private NoteEnding ending;
-	private SheetParams sheetParams;
-	private Paint paint = new Paint();
 	
 	private int baseIM1Anchor;
 	private int baseIM2Anchor;
@@ -55,7 +28,6 @@ public class NoteView extends View {
 	private PointF baseDrawOffset;
 	private PointF endingDrawOffset;
 	private AnchorPart baseIM1AnchorPart;
-	private int padding = 0;
 
 	public NoteView(Context ctx) {
 		super(ctx);
@@ -116,10 +88,9 @@ public class NoteView extends View {
 	}
 	
 	public void setSheetParams(SheetParams params) {
-		this.sheetParams = params;
+		super.setSheetParams(params);
 		sheetParamsCalculations();
-    	onMeasure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
-		invalidate();
+		invalidateMeasure();
 	}
 
 	private void sheetParamsCalculations() {
@@ -146,49 +117,37 @@ public class NoteView extends View {
 	    	} else {
 	    		endingDrawOffset.y = endingTopOffset - baseTopOffset;
 	    	}
-	    	endingDrawOffset.offset(padding, padding);
+	    	endingDrawOffset.offset(getPaddingLeft(), getPaddingTop());
     	}
-    	baseDrawOffset.offset(padding, padding);
+    	baseDrawOffset.offset(getPaddingLeft(), getPaddingTop());
 	}
 	
 	@Override
-	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		if(sheetParams == null) {
-			LogUtils.info("onMeasure without sheetParams set");
-			super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-			return;
-		}
-		setMeasuredDimension(
-			measureWidth(), 
-			measureHeight()
-		);
-	}
-
 	public int measureHeight() {
 		return (int) (Math.max(
 			baseDrawOffset.y + base.getHeight()*scaleB,
 			ending == null ? 0 : endingDrawOffset.y + ending.getHeight()*scaleE
-		)) + 2*padding;
+		)) + getPaddingBottom();
 	}
 
+	@Override
 	public int measureWidth() {
 		if(sheetParams == null) {
 			throw new IllegalStateException();
 		}
-		return (int) (composedWidth*scaleB) + 2*padding;
+		return (int) (composedWidth*scaleB) + getPaddingLeft()+getPaddingRight();
 	}
 	
-	public void setPaint(Paint paint, int padding) {
-		int delta = padding-this.padding;
-		this.paint = paint;
-		this.padding  = padding;
-		if(delta != 0 && sheetParams != null) {
-			baseDrawOffset.offset(delta, delta);
+	@Override
+	public void setPadding(int left, int top, int right, int bottom) {
+		int xdelta = left-getPaddingLeft();
+		int ydelta = top-getPaddingTop();
+		super.setPadding(left, top, right, bottom);
+		if((xdelta != 0 || ydelta != 0) && sheetParams != null) {
+			baseDrawOffset.offset(xdelta, ydelta);
 			if(endingDrawOffset != null)
-				endingDrawOffset.offset(delta, delta);
-			onMeasure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
-		} else {
-			invalidate();
+				endingDrawOffset.offset(xdelta, ydelta);
+			invalidateMeasure();
 		}
 	}
 	
@@ -236,6 +195,7 @@ public class NoteView extends View {
 		return (int) (baseDrawOffset.x + base.xMiddleMarker * scaleB);
 	}
 	
+	@Override
 	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {
 		return
 			sheetParams.anchorOffset(baseIM1Anchor, baseIM1AnchorPart)
@@ -243,85 +203,5 @@ public class NoteView extends View {
 			- ((int) (baseDrawOffset.y + (base.getImarkers().get(0).line.first.y*scaleB)))
 		;
 	}
-		
-	// TODO move to more appropriate class
-	private static void drawSvgImage(Canvas c, SvgImage img, float scale, PointF pxOffset, Paint paint) {
-		
-		for(SvgObject obj: img.objects) {
-			if(obj instanceof SvgPath) {
-				Path path = generate((SvgPath) obj, scale, pxOffset);
-				c.drawPath(path, paint);
-			} else {
-				throw new RuntimeException("Supported type not handled: "+obj.getClass().getName());
-			}
-		}
-	}
+}
 	
-	// TODO move to more appropriate class
-	private static Path generate(SvgPath path, float scale, PointF pxOffset) {
-		Path result = new Path();
-		SvgPathCommand cmd = new SvgPathCommand();
-		for(MemorySaavyIterator<SvgPathCommand> it = path.getIterator(); it.hasNext();) {
-			it.readNext(cmd);
-			char cmdLabel = cmd.cmd;
-			float[] args = cmd.args;
-			scaleArgs(scale, args);
-			switch(cmdLabel) {
-			case PATH_CMD_MOVETO:
-				result.moveTo(args[ARG_X]+pxOffset.x, args[ARG_Y]+pxOffset.y);
-				break;
-			case PATH_CMD_RMOVETO:
-				result.rMoveTo(args[ARG_X], args[ARG_Y]);
-				break;
-			case PATH_CMD_LINETO:
-				result.lineTo(args[ARG_X]+pxOffset.x, args[ARG_Y]+pxOffset.y);
-				break;
-			case PATH_CMD_RLINETO:
-				result.rLineTo(args[ARG_X], args[ARG_Y]);
-				break;
-			case PATH_CMD_CUBICTO:
-				result.cubicTo(
-					args[ARG_CP1_X]+pxOffset.x, args[ARG_CP1_Y]+pxOffset.y, 
-					args[ARG_CP2_X]+pxOffset.x, args[ARG_CP2_Y]+pxOffset.y, 
-					args[ARG_DEST_X]+pxOffset.x, args[ARG_DEST_Y]+pxOffset.y
-				);
-				break;
-			case PATH_CMD_RCUBICTO:
-				result.rCubicTo(
-					args[ARG_CP1_X], args[ARG_CP1_Y], 
-					args[ARG_CP2_X], args[ARG_CP2_Y], 
-					args[ARG_DEST_X], args[ARG_DEST_Y]
-				);
-				break;
-			case PATH_CMD_CLOSE:
-				result.close();
-			}
-		}
-		return result;
-	}
-
-	private static void scaleArgs(float scale, float[] args) {
-		for (int i = 0; i < args.length; i++) {
-			args[i] = args[i]*scale;
-		}
-	}
-	
-	private static AnchorPart part(IMarker imarker) {
-		if(EnhancedSvgImage.isTypeBottomEdge(imarker))
-			return AnchorPart.BOTTOM_EDGE;
-		else
-			return AnchorPart.MIDDLE;
-	}
-
-	private static int imarkerAnchor(EnhancedSvgImage.IMarker iMarker, int enhImgAnchor) {
-		int index = EnhancedSvgImage.alphaToIndex(iMarker.getAlpha());
-		if(EnhancedSvgImage.isTypeRelative(iMarker)) {
-			return enhImgAnchor + index;
-		} else {
-			return index;
-		}
-	}
-
-	private static float lineXSpan(Pair<PointF, PointF> line) {
-		return Math.abs(line.first.x - line.second.x);
-	}}

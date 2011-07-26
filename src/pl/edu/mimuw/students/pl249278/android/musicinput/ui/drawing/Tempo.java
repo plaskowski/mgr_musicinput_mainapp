@@ -1,32 +1,28 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
-import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 
-public class TempoView extends SheetElementView {
+public class Tempo extends SheetElement {
 	
 	private static final int LINE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE);
 	private static final int LINE2_ABSINDEX = NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE);
 	private static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
-
-	public TempoView(Context context) {
-		super(context);
-	}
 	
 	private String upper, lower;
+	private Paint fontPaint;
 	
 	public void setLetters(char upper, char lower) {
 		this.upper = ""+upper;
 		this.lower = ""+lower;
 		if(sheetParams != null) {
 			calculate();
-			invalidateMeasure();
-			invalidate();
 		}
 	}
 
@@ -35,17 +31,14 @@ public class TempoView extends SheetElementView {
 		super.setSheetParams(params);
 		if(upper != null && lower != null) {
 			calculate();
-			invalidateMeasure();
-			invalidate();
 		}
 	}
 	
-	@Override
-	public void setPaint(Paint paint) {
-		paint.setTypeface(Typeface.SERIF);
-		paint.setTextAlign(Align.CENTER);
-		paint.setTextSize(textSize);
-		super.setPaint(paint);
+	public void setPaint(Paint fontPaint) {
+		fontPaint.setTypeface(Typeface.SERIF);
+		fontPaint.setTextAlign(Align.CENTER);
+		fontPaint.setTextSize(textSize);
+		this.fontPaint = fontPaint;
 	}
 
 	private int upperY;
@@ -57,47 +50,40 @@ public class TempoView extends SheetElementView {
 		int horizontalSpace = sheetParams.anchorOffset(LINE2_ABSINDEX, AnchorPart.TOP_EDGE)-start;
 		
 		// find such text size that upper char will fill vertically entire horizontalSpace
-		paint.setTextSize(horizontalSpace);
+		fontPaint.setTextSize(horizontalSpace);
 		Rect bounds = new Rect();
-		paint.getTextBounds(upper, 0, 1, bounds);
+		fontPaint.getTextBounds(upper, 0, 1, bounds);
 		textSize = ((float) horizontalSpace)/bounds.height() * horizontalSpace;
-		paint.setTextSize(textSize);
+		fontPaint.setTextSize(textSize);
 		
-		width = Math.max(paint.measureText(upper), paint.measureText(lower));
+		width = Math.max(fontPaint.measureText(upper), fontPaint.measureText(lower));
 		upperY = start + horizontalSpace;
-		paint.getTextBounds(lower, 0, 1, bounds);
+		fontPaint.getTextBounds(lower, 0, 1, bounds);
 		lowerY = sheetParams.anchorOffset(LINE2_ABSINDEX, AnchorPart.BOTTOM_EDGE) + bounds.height();
 	}
 	
 	@Override
-	protected void onDraw(Canvas canvas) {
-		super.onDraw(canvas);
-		
-		canvas.drawText(upper, getPaddingLeft()+width/2, getPaddingTop()+upperY, paint);
-		canvas.drawText(lower, getPaddingLeft()+width/2, getPaddingTop()+lowerY, paint);
+	public void onDraw(Canvas canvas, Paint paint) {
+		canvas.drawText(upper, width/2, upperY, fontPaint);
+		canvas.drawText(lower, width/2, lowerY, fontPaint);
 	}
 
 	@Override
 	public int measureHeight() {
 		return 
-		getPaddingTop() + 
-		sheetParams.anchorOffset(LINE4_ABSINDEX, AnchorPart.TOP_EDGE) +
-		getPaddingBottom(); 
+		sheetParams.anchorOffset(LINE4_ABSINDEX, AnchorPart.TOP_EDGE);
 	}
 
 	@Override
 	public int measureWidth() {
-		return 
-		getPaddingLeft() +
-		((int) width) +
-		getPaddingRight();
+		return ((int) width);
 	}
 
 	@Override
 	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {
 		return 
-		sheetParams.anchorOffset(anchorAbsIndex, part)
-		- (sheetParams.anchorOffset(LINE0_ABSINDEX, AnchorPart.TOP_EDGE)-getPaddingTop());
+		sheetParams.anchorOffset(anchorAbsIndex, part) 
+		- (sheetParams.anchorOffset(LINE0_ABSINDEX, AnchorPart.TOP_EDGE));
 	}
 
 }

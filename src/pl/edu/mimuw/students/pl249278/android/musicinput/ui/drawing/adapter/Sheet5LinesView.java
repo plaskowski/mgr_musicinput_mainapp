@@ -1,6 +1,8 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -11,6 +13,7 @@ import android.graphics.drawable.GradientDrawable.Orientation;
 import android.util.AttributeSet;
 import android.view.View;
 
+// TODO should I extract logic to SheetElement object?
 public class Sheet5LinesView extends View {
 
 	private static final int LINESPACE3_ABSINDEX = NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINESPACE);

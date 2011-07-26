@@ -1,34 +1,21 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
-import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.EnhancedSvgImage.IMarker;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.EnhancedSvgImage.InvalidMetaException;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
-import android.content.Context;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.EnhancedSvgImage.IMarker;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.EnhancedSvgImage.InvalidMetaException;
+import pl.edu.mimuw.students.pl249278.android.svg.SvgRenderer;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.PointF;
-import android.util.AttributeSet;
 
-public class StaticNotationElementView extends SheetElementView {
-	private static LogUtils log = new LogUtils(StaticNotationElementView.class);
+public class SimpleSheetElement extends SheetElement {
 
 	private float scale;
 	private EnhancedSvgImage image;
 	
 	private int IM1Anchor;
 	private int IM2Anchor;
-
-	public StaticNotationElementView(Context ctx) {
-		super(ctx);
-	}
-
-	public StaticNotationElementView(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
-	}
-
-	public StaticNotationElementView(Context context, AttributeSet attrs) {
-		super(context, attrs);
-	}
 
 	public void setImage(EnhancedSvgImage img) throws InvalidMetaException {
 		this.image = img;
@@ -50,8 +37,6 @@ public class StaticNotationElementView extends SheetElementView {
 		
 		if(sheetParams != null) {
 			sheetParamsCalculations();
-			invalidateMeasure();
-			invalidate();
 		}
 	}
 	
@@ -59,8 +44,6 @@ public class StaticNotationElementView extends SheetElementView {
 	public void setSheetParams(SheetParams params) {
 		super.setSheetParams(params);
 		sheetParamsCalculations();
-		invalidateMeasure();
-		invalidate();
 	}
 
 	private void sheetParamsCalculations() {
@@ -72,28 +55,21 @@ public class StaticNotationElementView extends SheetElementView {
 	
 	public int measureHeight() {
 		return
-		getPaddingTop()
-		+ ((int) (image.getHeight()*scale))
-		+ getPaddingBottom();
+		((int) (image.getHeight()*scale))
+		;
 	}
 
 	public int measureWidth() {
 		if(sheetParams == null) {
 			throw new IllegalStateException();
 		}
-		return (int) (image.getWidth()*scale) + getPaddingLeft()+getPaddingRight();
-	}
-	
-	public void setPadding(int left, int top, int right, int bottom) {
-		super.setPadding(left, top, right, bottom);
-		drawOffset.set(getPaddingLeft(), getPaddingTop());
-		invalidateMeasure();
+		return (int) (image.getWidth()*scale);
 	}
 	
 	private PointF drawOffset = new PointF();
 	@Override
-	protected void onDraw(Canvas canvas) {
-		drawSvgImage(canvas, image, scale, drawOffset, paint);
+	public void onDraw(Canvas canvas, Paint paint) {
+		SvgRenderer.drawSvgImage(canvas, image, scale, drawOffset, paint);
 	}
 	
 	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {
@@ -101,8 +77,8 @@ public class StaticNotationElementView extends SheetElementView {
 		return
 			sheetParams.anchorOffset(IM1Anchor, part(firstM))
 			- sheetParams.anchorOffset(anchorAbsIndex, part)
-			- ((int) (drawOffset.y + (firstM.line.first.y*scale)))
+			- ((int) (drawOffset.y + (firstM.getLine().first.y*scale)))
 		;
 	}
-		
+
 }

@@ -3,6 +3,8 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.Note;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.SheetAlignedElementView;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -59,11 +61,12 @@ public class NoteValueSpinner extends ScrollView {
         params.setScale(1);
         maxNoteHorizontalHalfWidth = 0;
         for (int i = 0; i <= minNoteValue; i++) {
-			NoteView noteView = new NoteView(getContext());
-			noteView.setNoteSpec(getContext(), i, LINE4_ABSINDEX);
+			SheetAlignedElementView noteView = new SheetAlignedElementView(getContext());
+			Note model = new Note(getContext(), i, LINE4_ABSINDEX);
+			noteView.setModel(model);
+			noteView.setSheetParams(params);
 			noteView.setPaint(PAINT_NORMAL);
 			noteView.setPadding(EFFECT_PADDING);
-			noteView.setSheetParams(params);
 			maxNoteHorizontalHalfWidth = Math.max(maxNoteHorizontalHalfWidth, Math.max(
 				noteView.getBaseMiddleX(),
 				noteView.measureWidth()-noteView.getBaseMiddleX()
@@ -85,12 +88,12 @@ public class NoteValueSpinner extends ScrollView {
         int distanceBetweenNotesBases = (int) (visibleRectHeight*0.4);
         
         int horizontalSpaceLeft = visibleRectHeight/2;
-        NoteView current = null;
+        SheetAlignedElementView current = null;
         // calculate scale so that any "half" of any note will fit in half of available width
         params.setScale((availableWidth/2)/((float) maxNoteHorizontalHalfWidth));
         LinearLayout.LayoutParams params = null, templateParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         for(int i = 0; i <= minNoteValue; i++) {
-        	current = (NoteView) notesContainer.getChildAt(i);
+        	current = (SheetAlignedElementView) notesContainer.getChildAt(i);
         	current.setSheetParams(this.params);
 			params = new LinearLayout.LayoutParams(templateParams);
     		params.leftMargin = availableWidth/2-current.getBaseMiddleX();
@@ -104,7 +107,7 @@ public class NoteValueSpinner extends ScrollView {
         current.setLayoutParams(params);
 	}
 
-	private int verticalAlignLine(NoteView noteView) {
+	private int verticalAlignLine(SheetAlignedElementView noteView) {
 		return noteView.measureHeight()/2;
 	}
 	
@@ -119,7 +122,7 @@ public class NoteValueSpinner extends ScrollView {
         int prevDist = notesContainer.getHeight();
         int newNoteHeight = currentValue;
         for(int i = currentValue; i >= 0 && i <= minNoteValue; i += down ? 1 : -1) {
-        	NoteView current = (NoteView) notesContainer.getChildAt(i);
+        	SheetAlignedElementView current = (SheetAlignedElementView) notesContainer.getChildAt(i);
         	int dist = Math.abs(t+cH/2-(current.getTop()+verticalAlignLine(current)));
         	if(dist > prevDist) break;
         	newNoteHeight = i;
@@ -151,7 +154,7 @@ public class NoteValueSpinner extends ScrollView {
 	}
 	
 	private void setIsSelected(int value, boolean isSelected) {
-		((NoteView) notesContainer.getChildAt(value)).setPaint(
+		((SheetAlignedElementView) notesContainer.getChildAt(value)).setPaint(
 			isSelected ? PAINT_SELECTED : PAINT_NORMAL
 		);
 	}

@@ -1,4 +1,4 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
 import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_X;
 import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_Y;

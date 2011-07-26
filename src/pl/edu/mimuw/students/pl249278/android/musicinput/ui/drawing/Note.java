@@ -1,14 +1,18 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.EnhancedSvgImage.IMarker;
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgRenderer.drawSvgImage;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.EnhancedSvgImage.IMarker;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.PointF;
-import android.util.AttributeSet;
 
-public class NoteView extends SheetElementView {
+public class Note extends SheetAlignedElement {
 
 	private NoteBase base;
 	private NoteEnding ending;
@@ -29,20 +33,7 @@ public class NoteView extends SheetElementView {
 	private PointF endingDrawOffset;
 	private AnchorPart baseIM1AnchorPart;
 
-	public NoteView(Context ctx) {
-		super(ctx);
-	}
-
-	public NoteView(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
-	}
-
-	public NoteView(Context context, AttributeSet attrs) {
-		super(context, attrs);
-	}
-
-	public NoteView(Context context, int noteLength, int noteHeight) throws NoteDescriptionLoadingException {
-		super(context);
+	public Note(Context context, int noteLength, int noteHeight) throws NoteDescriptionLoadingException {
 		setNoteSpec(context, noteLength, noteHeight);
 	}
 	
@@ -63,7 +54,7 @@ public class NoteView extends SheetElementView {
 
 		this.ending = NotePartFactory.getEndingImage(context, noteLength, NoteConstants.anchorType(endingAnchor), upsdown);
 		if(ending != null) {
-			endingIMAnchor = imarkerAnchor(ending.imarkers.get(0), endingAnchor);
+			endingIMAnchor = imarkerAnchor(ending.getImarkers().get(0), endingAnchor);
 	
 			ratioE2B = lineXSpan(base.getJoinLine()) / lineXSpan(ending.getJoinLine());
 	    	float diff = base.getJoinLine().first.x - ending.getJoinLine().first.x * ratioE2B;
@@ -82,15 +73,12 @@ public class NoteView extends SheetElementView {
 		
 		if(sheetParams != null) {
 			sheetParamsCalculations();
-			onMeasure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
-			invalidate();
 		}
 	}
 	
 	public void setSheetParams(SheetParams params) {
 		super.setSheetParams(params);
 		sheetParamsCalculations();
-		invalidateMeasure();
 	}
 
 	private void sheetParamsCalculations() {
@@ -110,16 +98,14 @@ public class NoteView extends SheetElementView {
 				endingXoffset * scaleB, 0
 			);
 	    	
-	    	int baseTopOffset = (int) (baseIM1RelativeOffset - firstM.line.first.y * scaleB);
-	    	int endingTopOffset = (int) (endingIMRelativeOffset - endingIM.line.first.y * scaleE);
+	    	int baseTopOffset = (int) (baseIM1RelativeOffset - firstM.getLine().first.y * scaleB);
+	    	int endingTopOffset = (int) (endingIMRelativeOffset - endingIM.getLine().first.y * scaleE);
 	    	if(baseTopOffset > endingTopOffset) {
 	    		baseDrawOffset.y = baseTopOffset - endingTopOffset;
 	    	} else {
 	    		endingDrawOffset.y = endingTopOffset - baseTopOffset;
 	    	}
-	    	endingDrawOffset.offset(getPaddingLeft(), getPaddingTop());
     	}
-    	baseDrawOffset.offset(getPaddingLeft(), getPaddingTop());
 	}
 	
 	@Override
@@ -127,7 +113,7 @@ public class NoteView extends SheetElementView {
 		return (int) (Math.max(
 			baseDrawOffset.y + base.getHeight()*scaleB,
 			ending == null ? 0 : endingDrawOffset.y + ending.getHeight()*scaleE
-		)) + getPaddingBottom();
+		));
 	}
 
 	@Override
@@ -135,24 +121,11 @@ public class NoteView extends SheetElementView {
 		if(sheetParams == null) {
 			throw new IllegalStateException();
 		}
-		return (int) (composedWidth*scaleB) + getPaddingLeft()+getPaddingRight();
+		return (int) (composedWidth*scaleB);
 	}
 	
 	@Override
-	public void setPadding(int left, int top, int right, int bottom) {
-		int xdelta = left-getPaddingLeft();
-		int ydelta = top-getPaddingTop();
-		super.setPadding(left, top, right, bottom);
-		if((xdelta != 0 || ydelta != 0) && sheetParams != null) {
-			baseDrawOffset.offset(xdelta, ydelta);
-			if(endingDrawOffset != null)
-				endingDrawOffset.offset(xdelta, ydelta);
-			invalidateMeasure();
-		}
-	}
-	
-	@Override
-	protected void onDraw(Canvas canvas) {
+	public void onDraw(Canvas canvas, Paint paint) {
 		if(ending == null) {
 			drawSvgImage(canvas, base, scaleB, baseDrawOffset, paint);
 		} else {
@@ -191,8 +164,9 @@ public class NoteView extends SheetElementView {
 		}
 	}
 	
+	@Override
 	public int getBaseMiddleX() {
-		return (int) (baseDrawOffset.x + base.xMiddleMarker * scaleB);
+		return (int) (baseDrawOffset.x + base.getxMiddleMarker() * scaleB);
 	}
 	
 	@Override
@@ -200,8 +174,7 @@ public class NoteView extends SheetElementView {
 		return
 			sheetParams.anchorOffset(baseIM1Anchor, baseIM1AnchorPart)
 			- sheetParams.anchorOffset(anchorAbsIndex, part)
-			- ((int) (baseDrawOffset.y + (base.getImarkers().get(0).line.first.y*scaleB)))
+			- ((int) (baseDrawOffset.y + (base.getImarkers().get(0).getLine().first.y*scaleB)))
 		;
 	}
 }
-	

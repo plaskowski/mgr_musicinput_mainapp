@@ -10,7 +10,6 @@ import java.util.List;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.EnhancedSvgImage.InvalidMetaException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView.OnScrollChangedListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView;
@@ -20,16 +19,19 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.Load
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner.OnValueChanged;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.OutlineDrawable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor.OnScaleListener;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Sheet5LinesView;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.StaticNotationElementView;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TempoView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.EnhancedSvgImage.InvalidMetaException;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.Note;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetElement;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SimpleSheetElement;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.Tempo;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.Sheet5LinesView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.SheetAlignedElementView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.SheetElementView;
 import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.CornerPathEffect;
@@ -72,14 +74,14 @@ public class EditActivity extends Activity {
 	private SheetParams sheetParams;
 	private RelativeLayout sheet;
 	private ArrayList<NoteSpec> model;
-	private ArrayList<NoteView> noteViews = new ArrayList<NoteView>();
+	private ArrayList<SheetAlignedElementView> noteViews = new ArrayList<SheetAlignedElementView>();
 	private int inputAreaWidth;
 	private View inputArea;
 	private HorizontalScrollView hscroll;
 	private ModifiedScrollView vertscroll;
 	private ScaleGestureInterceptor scaleGestureDetector;
 	private LayoutAnimator animator = new LayoutAnimator();
-	private NoteView newNote;
+	private SheetAlignedElementView newNote;
 	
 	/**
 	 * Index of note that is first on right side of InputArea,
@@ -95,9 +97,8 @@ public class EditActivity extends Activity {
 	private int notesAreaX;
 	private int line0Top;
 
-	// TODO bind this with widget
 	protected int currentNoteLength = 0;
-	private List<SheetElementView> staticElements = new ArrayList<SheetElementView>();
+	private List<SheetElementView<?>> staticElements = new ArrayList<SheetElementView<?>>();
 	private float noteMinDistToIA;
 	private float minNoteSpacingFactor;
 	private int minNoteValue;
@@ -142,7 +143,7 @@ public class EditActivity extends Activity {
 		});
 		
 		// setup info popup
-		NoteView popupIcon = (NoteView) findViewById(R.id.EDIT_info_popup_note);
+		SheetAlignedElementView popupIcon = (SheetAlignedElementView) findViewById(R.id.EDIT_info_popup_note);
 		Paint iconPaint = new Paint();
 		iconPaint.setColor(getResources().getColor(R.color.infoPopupIconColor));
 		iconPaint.setAntiAlias(true);
@@ -159,12 +160,15 @@ public class EditActivity extends Activity {
 		findViewById(R.id.EDIT_info_popup).setBackgroundDrawable(ipopupBg);
 		
 		// setup static elements
-		StaticNotationElementView el;
-		el = new StaticNotationElementView(this);
+		SheetElementView<SheetElement> el;
 		try {
-			el.setImage(NotePartFactory.prepareEnhacedSvgImage(this, R.xml.key_violin));
+			SimpleSheetElement elModel = new SimpleSheetElement();
+			elModel.setImage(NotePartFactory.prepareEnhacedSvgImage(this, R.xml.key_violin));
+			el = new SheetElementView<SheetElement>(this, elModel);
 			el.setPaint(normalPaint);
+			el.setSheetParams(sheetParams);
 			sheet.addView(el);
+			this.staticElements.add(el);
 		} catch (InvalidMetaException e1) {
 			e1.printStackTrace();
 			finish();
@@ -172,12 +176,13 @@ public class EditActivity extends Activity {
 			e1.printStackTrace();
 			finish();
 		}
-		this.staticElements .add(el);
-		TempoView tempo = new TempoView(this);
+		Tempo tempo = new Tempo();
 		tempo.setLetters('3', '4');
 		tempo.setPaint(normalPaint);
-		sheet.addView(tempo);
-		staticElements.add(tempo);
+		el = new SheetElementView<SheetElement>(this, tempo);
+		el.setSheetParams(sheetParams);
+		sheet.addView(el);
+		staticElements.add(el);
 		
 		this.inputArea = findViewById(R.id.EDIT_inputArea);
 		this.inputAreaWidth = getResources().getDimensionPixelSize(R.dimen.inputAreaWidth);
@@ -218,8 +223,10 @@ public class EditActivity extends Activity {
 		*/
 		try {
 			for (NoteSpec noteSpec : model) {
-				NoteView noteView = new NoteView(this, noteSpec.length(), noteSpec.positon());
+				Note model = new Note(this, noteSpec.length(), noteSpec.positon());
+				SheetAlignedElementView noteView = new SheetAlignedElementView(this, model);
 				noteView.setPaint(normalPaint);
+				noteView.setSheetParams(sheetParams);
 				noteViews.add(noteView);
 				sheet.addView(noteView);
 			}
@@ -267,10 +274,11 @@ public class EditActivity extends Activity {
 					lines.highlightAnchor(currentAnchor);
 					activePointerId = event.getPointerId(event.getActionIndex());
 					if(newNote == null) {
-						newNote = new NoteView(EditActivity.this);
+						newNote = new SheetAlignedElementView(EditActivity.this);
 					}
 					try {
-						newNote.setNoteSpec(EditActivity.this, currentNoteLength , currentAnchor);
+						Note model = new Note(EditActivity.this, currentNoteLength, currentAnchor);
+						newNote.setModel(model);
 					} catch (NoteDescriptionLoadingException e) {
 						e.printStackTrace();
 						finish();
@@ -297,7 +305,8 @@ public class EditActivity extends Activity {
 				if(newAnchor != currentAnchor) {
 					lines.highlightAnchor(newAnchor);
 					try {
-						newNote.setNoteSpec(EditActivity.this, currentNoteLength, newAnchor);
+						Note model = new Note(EditActivity.this, currentNoteLength, newAnchor);
+						newNote.setModel(model);
 					} catch (NoteDescriptionLoadingException e) {
 						e.printStackTrace();
 						finish();
@@ -328,7 +337,7 @@ public class EditActivity extends Activity {
 			int index = rightToIA;
 			model.add(index, new NoteSpec(currentNoteLength, currentAnchor));
 			rightToIA++;
-			NoteView noteView = newNote;
+			SheetAlignedElementView noteView = newNote;
 			newNote = null;
 			noteView.setPaint(normalPaint);
 			updatePosition(noteView, inIA_noteViewX(noteView), sheetElementY(noteView));
@@ -340,7 +349,7 @@ public class EditActivity extends Activity {
 			if(index == 0) {
 				destNoteMiddle = notesAreaX;
 			} else {
-				NoteView prevNote = noteViews.get(index-1);
+				SheetAlignedElementView prevNote = noteViews.get(index-1);
 				destNoteMiddle = leftMargin(prevNote) + prevNote.getBaseMiddleX() + afterNoteSpacing(model.get(index-1));
 			}
 			long duration = 500;
@@ -374,7 +383,7 @@ public class EditActivity extends Activity {
 			scaleGestureDetector.setTouchInputLocked(true);
 		}
 
-		private int inIA_noteViewX(NoteView noteView) {
+		private int inIA_noteViewX(SheetAlignedElementView noteView) {
 			return hscroll.getScrollX()+visibleRectWidth-iaRightMargin-inputAreaWidth/2-noteView.getBaseMiddleX();
 		}
 		
@@ -426,7 +435,7 @@ public class EditActivity extends Activity {
 			if(model.isEmpty()) return;
 			if(l < oldl && rightToIA-1 >= 0) {
 				while(rightToIA-1 >= 0) {
-					NoteView firstToLeft = noteViews.get(rightToIA-1);
+					SheetAlignedElementView firstToLeft = noteViews.get(rightToIA-1);
 					int x;
 					LayoutAnimator.LayoutAnimation<?> anim = null;
 					if((anim = animator.getAnimation(firstToLeft)) != null) {
@@ -452,7 +461,7 @@ public class EditActivity extends Activity {
 				}
 			} else if(l > oldl && rightToIA < model.size()) {
 				while(rightToIA < model.size()) {
-					NoteView firstToRight = noteViews.get(rightToIA);
+					SheetAlignedElementView firstToRight = noteViews.get(rightToIA);
 					LayoutAnimator.LayoutAnimation<?> anim = null;
 					int x;
 					if((anim = animator.getAnimation(firstToRight)) != null) {
@@ -505,7 +514,7 @@ public class EditActivity extends Activity {
 				if(rightToIA < 0 || rightToIA >= modelSize) {
 					rightToIA = searchRightToBackwards(modelSize-1, IAmiddle);
 				} else {
-					NoteView prevToRight = noteViews.get(rightToIA);
+					SheetAlignedElementView prevToRight = noteViews.get(rightToIA);
 					if(middleVisibleX(prevToRight) <= IAmiddle) {
 						rightToIA = searchRightTo(rightToIA, IAmiddle);
 					} else {
@@ -536,7 +545,7 @@ public class EditActivity extends Activity {
 							}
 						};
 						for(int i = rightToIA; i < modelSize; i++) {
-							NoteView view = noteViews.get(i);
+							SheetAlignedElementView view = noteViews.get(i);
 							log.i("onScaleEnd() shifts note[%d] from x: %d", i, leftMargin(view)); 
 							animator.startRLAnimation(view, inputAreaWidth+2*delta, 300, listn);
 						}
@@ -553,7 +562,7 @@ public class EditActivity extends Activity {
 		private int searchRightTo(int index, int markerX) {
 			int size = model.size();
 			for(; index < size; index++) {
-				NoteView view = noteViews.get(index);
+				SheetAlignedElementView view = noteViews.get(index);
 				if(middleVisibleX(view) > markerX) {
 					break;
 				}
@@ -569,7 +578,7 @@ public class EditActivity extends Activity {
 		private int searchRightToBackwards(int index, int markerX) {
 			int prevGood = model.size();
 			for(; index >= 0; index--) {
-				NoteView view = noteViews.get(index);
+				SheetAlignedElementView view = noteViews.get(index);
 				if(middleVisibleX(view) > markerX) {
 					prevGood = index;
 				} else {
@@ -582,10 +591,10 @@ public class EditActivity extends Activity {
 		/**
 		 * @return vertical position of note base middle inside visible rect
 		 */
-		public int middleVisibleX(NoteView view) {
+		public int middleVisibleX(SheetAlignedElementView view) {
 			return middleX(view)-hscroll.getScrollX();
 		}
-		private int middleX(NoteView view) {
+		private int middleX(SheetAlignedElementView view) {
 			return leftMargin(view)+view.getBaseMiddleX();
 		}
 		
@@ -656,7 +665,7 @@ public class EditActivity extends Activity {
 		private boolean mIsRunning = false;
 		private long lastticktime;
 		
-		public void startRLAnimation(NoteView view, int dx, int duration) {
+		public void startRLAnimation(View view, int dx, int duration) {
 			startRLAnimation(view, dx, duration, null);
 		}
 		public void startRLAnimation(View view, int dx, long duration, Runnable listn) {
@@ -782,7 +791,7 @@ public class EditActivity extends Activity {
 		// scale static objects
 		int staticEspacing = (int) (staticElementsSpacing*sheetParams.getLinespacingThickness());
 		int staticElementsSpan = 0;
-		for (SheetElementView el : staticElements) {
+		for (SheetElementView<?> el : staticElements) {
 			el.setSheetParams(sheetParams);
 			staticElementsSpan += staticEspacing + el.measureWidth();
 		}
@@ -798,7 +807,7 @@ public class EditActivity extends Activity {
 		
 		// layout sheet static elements
 		int elX = paddingLeft;
-		for (SheetElementView el : staticElements) {
+		for (SheetElementView<?> el : staticElements) {
 			elX += staticEspacing;
 			updatePosition(el, elX, sheetElementY(el));
 			elX += el.measureWidth();
@@ -813,7 +822,7 @@ public class EditActivity extends Activity {
 		int maxNoteRightSideWidth = 0;
 		int x = notesAreaX;
 		for(int i = 0; i < length; i++) {
-			NoteView v = noteViews.get(i);
+			SheetAlignedElementView v = noteViews.get(i);
 			v.setSheetParams(sheetParams);
 			int xpos = x-v.getBaseMiddleX();
 			updatePosition(
@@ -886,7 +895,7 @@ public class EditActivity extends Activity {
 	
 	protected void popupCurrentNoteLength() {
 		View popup = findViewById(R.id.EDIT_info_popup);
-		NoteView noteView = (NoteView) popup.findViewById(R.id.EDIT_info_popup_note);
+		SheetAlignedElementView noteView = (SheetAlignedElementView) popup.findViewById(R.id.EDIT_info_popup_note);
 		SheetParams params = new SheetParams(sheetParams);
 		params.setScale(1);
 		params.setScale(
@@ -894,7 +903,8 @@ public class EditActivity extends Activity {
 		/	params.anchorOffset(LINE4_ABSINDEX, BOTTOM_EDGE)
 		);
 		try {
-			noteView.setNoteSpec(this, currentNoteLength, LINE4_ABSINDEX);
+			Note model = new Note(this, currentNoteLength, LINE4_ABSINDEX);
+			noteView.setModel(model);
 		} catch (NoteDescriptionLoadingException e) {
 			e.printStackTrace();
 			finish();
@@ -913,7 +923,7 @@ public class EditActivity extends Activity {
 		return (int) (sheetParams.getLinespacingThickness()*minNoteSpacingFactor*Math.pow(1.3, minNoteValue-noteLength));
 	}
 
-	private int sheetElementY(SheetElementView v) {
+	private int sheetElementY(SheetElementView<?> v) {
 		return line0Top + v.getOffsetToAnchor(NoteConstants.anchorIndex(0, ANCHOR_TYPE_LINE), TOP_EDGE);
 	}	
 	

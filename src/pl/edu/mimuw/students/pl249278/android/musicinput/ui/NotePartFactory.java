@@ -10,6 +10,9 @@ import org.xmlpull.v1.XmlPullParser;
 
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.EnhancedSvgImage;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NoteBase;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NoteEnding;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgParser;
 import android.content.Context;

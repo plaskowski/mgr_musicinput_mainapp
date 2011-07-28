@@ -20,7 +20,7 @@ public class NoteEnding extends EnhancedSvgImage {
 		}
 		IMarker iMarker = imarkers.get(0);
 		assertLineIsHorizontal(iMarker.line);
-		assertTypeRelative(iMarker.color);
+		assertTypeRelative(iMarker);
 		
 		// check if we have 1 horizontal marker
 		int markersCount = markers.size();

@@ -40,7 +40,7 @@ public class Note extends SheetAlignedElement {
 	public void setNoteSpec(Context context, int noteLength, int noteHeight)
 			throws NoteDescriptionLoadingException {
 		// FIXME real logic for discovering if it's upsidedown or normal
-		boolean upsdown = noteHeight <= NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE);
+		boolean upsdown = NoteConstants.isUpsdown(noteHeight);
 		// FIXME real logic for discovering anchors
 		int baseAnchor = noteHeight;
 		int endingAnchor = baseAnchor + (upsdown ? 7 : -7);

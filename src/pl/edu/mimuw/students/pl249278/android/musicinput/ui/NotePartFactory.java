@@ -10,7 +10,7 @@ import org.xmlpull.v1.XmlPullParser;
 
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.EnhancedSvgImage;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.AdjustableSizeImage;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NoteBase;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NoteEnding;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
@@ -93,19 +93,24 @@ public class NotePartFactory {
 		return noteEndings.get(resId);
 	}
 	
-	public static EnhancedSvgImage prepareEnhacedSvgImage(Context context, int xmlResId) throws LoadingSvgException {
-		if(svgImages.get(xmlResId) == null) {
+	public static AdjustableSizeImage prepareModifier(Context context, NoteConstants.NoteModifier modifier, boolean isUpsdown, int anchorType) throws LoadingSvgException {
+		int resId = modifiersMapping.get(modifier.ordinal())[mappingIndex(isUpsdown ? ORIENT_UPSDOWN : ORIENT_NORMAL, anchorType)];
+		return prepareAdujstableImage(context, resId, true);
+	}
+	
+	public static AdjustableSizeImage prepareAdujstableImage(Context context, int xmlResId, boolean relativeIMarkers) throws LoadingSvgException {
+		if(adjustableImages.get(xmlResId) == null) {
 			SvgParser parser = new SvgParser();
 			XmlPullParser xmlParser = context.getResources().getXml(xmlResId);
 			SvgImage svgImg;
 			try {
 				svgImg = parser.parse(xmlParser);
-				svgImages.put(xmlResId, new EnhancedSvgImage(svgImg));
+				adjustableImages.put(xmlResId, new AdjustableSizeImage(svgImg, relativeIMarkers));
 			} catch (Exception e) {
 				throw new LoadingSvgException(xmlResId, e);
 			}
 		}
-		return svgImages.get(xmlResId);
+		return adjustableImages.get(xmlResId);
 	}
 	
 	private static int mappingIndex(int orientation, int anchorType) {
@@ -114,11 +119,22 @@ public class NotePartFactory {
 
 	private static Map<Integer, int[]> baseMapping = new HashMap<Integer, int[]>();
 	private static Map<Integer, int[]> endingMapping = new HashMap<Integer, int[]>();
+	private static Map<Integer, int[]> modifiersMapping = new HashMap<Integer, int[]>();
 	private static Map<Integer, NoteBase> noteBases = new HashMap<Integer, NoteBase>();
 	private static Map<Integer, NoteEnding> noteEndings = new HashMap<Integer, NoteEnding>();
-	private static Map<Integer, EnhancedSvgImage> svgImages = new HashMap<Integer, EnhancedSvgImage>();
+	private static Map<Integer, AdjustableSizeImage> adjustableImages = new HashMap<Integer, AdjustableSizeImage>();
 	
 	static {
+		declare(modifiersMapping, NoteConstants.NoteModifier.SHARP,
+			anchor(ANCHOR_TYPE_LINE,
+				normal(R.xml.sharp_online),
+				updown(R.xml.sharp_online)
+			),
+			anchor(ANCHOR_TYPE_LINESPACE,
+				normal(R.xml.sharp_onspace),
+				updown(R.xml.sharp_onspace)
+			)
+		);
 		declare(baseMapping, 0, 
 			anchor(ANCHOR_TYPE_LINE,
 				normal(R.xml.whole),
@@ -172,6 +188,9 @@ public class NotePartFactory {
 	}
 	
 	// ALL METHODS BELOW SERVE ONLY FOR STATIC DECLARATION PURPOSES
+	private static <T extends Enum<T>> void declare(Map<Integer, int[]> lenght2mapping, T value, int[]... partialMappings) {
+		declare(lenght2mapping, value.ordinal(), partialMappings);
+	}
 	private static void declare(Map<Integer, int[]> lenght2mapping, int lenght, int[]... partialMappings) {
 		declare(lenght2mapping, new int[] { lenght }, partialMappings);
 	}

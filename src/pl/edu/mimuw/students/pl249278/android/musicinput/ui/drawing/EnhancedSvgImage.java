@@ -201,9 +201,14 @@ public class EnhancedSvgImage extends SvgImage {
 		));
 	}
 	
-	protected void assertTypeRelative(int color) throws InvalidMetaException {
-		if(!isTypeRelative(color)) {
-			throw new InvalidMetaException("Expected relative imarker type, got "+color);
+	protected void assertTypeRelative(IMarker marker) throws InvalidMetaException {
+		if(!isTypeRelative(marker.color)) {
+			throw new InvalidMetaException("Expected relative imarker type, got "+marker.color);
+		}
+	}
+	protected void assertTypeAbsolute(IMarker marker) throws InvalidMetaException {
+		if(isTypeRelative(marker.color)) {
+			throw new InvalidMetaException("Expected absolute imarker type, got "+marker.color);
 		}
 	}
 

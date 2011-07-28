@@ -14,6 +14,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizonta
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView.OnScrollChangedListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.NoteModifier;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.LoadingSvgException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
@@ -24,8 +25,10 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureIntercep
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor.OnScaleListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.EnhancedSvgImage.InvalidMetaException;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.AddedLine;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.Modifier;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.Note;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SimpleSheetElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.Tempo;
@@ -162,16 +165,14 @@ public class EditActivity extends Activity {
 		// setup static elements
 		SheetElementView<SheetElement> el;
 		try {
-			SimpleSheetElement elModel = new SimpleSheetElement();
-			elModel.setImage(NotePartFactory.prepareEnhacedSvgImage(this, R.xml.key_violin));
+			SimpleSheetElement elModel = new SimpleSheetElement(
+				NotePartFactory.prepareAdujstableImage(this, R.xml.key_violin, false)
+			);
 			el = new SheetElementView<SheetElement>(this, elModel);
 			el.setPaint(normalPaint);
 			el.setSheetParams(sheetParams);
 			sheet.addView(el);
 			this.staticElements.add(el);
-		} catch (InvalidMetaException e1) {
-			e1.printStackTrace();
-			finish();
 		} catch (LoadingSvgException e1) {
 			e1.printStackTrace();
 			finish();
@@ -207,7 +208,7 @@ public class EditActivity extends Activity {
 		staticElementsSpacing = Float.parseFloat(getResources().getString(R.string.staticElementsSpacing));
 		
 		model = new ArrayList<NoteSpec>();
-		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE)));
+//		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE)));
 		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE)));
 		/*
 //		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE)));
@@ -223,7 +224,7 @@ public class EditActivity extends Activity {
 		*/
 		try {
 			for (NoteSpec noteSpec : model) {
-				Note model = new Note(this, noteSpec.length(), noteSpec.positon());
+				SheetAlignedElement model = createDrawingModel(noteSpec);
 				SheetAlignedElementView noteView = new SheetAlignedElementView(this, model);
 				noteView.setPaint(normalPaint);
 				noteView.setSheetParams(sheetParams);
@@ -277,8 +278,7 @@ public class EditActivity extends Activity {
 						newNote = new SheetAlignedElementView(EditActivity.this);
 					}
 					try {
-						Note model = new Note(EditActivity.this, currentNoteLength, currentAnchor);
-						newNote.setModel(model);
+						newNote.setModel(createDrawingModel(new NoteSpec(currentNoteLength, currentAnchor)));
 					} catch (NoteDescriptionLoadingException e) {
 						e.printStackTrace();
 						finish();
@@ -305,8 +305,7 @@ public class EditActivity extends Activity {
 				if(newAnchor != currentAnchor) {
 					lines.highlightAnchor(newAnchor);
 					try {
-						Note model = new Note(EditActivity.this, currentNoteLength, newAnchor);
-						newNote.setModel(model);
+						newNote.setModel(createDrawingModel(new NoteSpec(currentNoteLength, newAnchor)));
 					} catch (NoteDescriptionLoadingException e) {
 						e.printStackTrace();
 						finish();
@@ -914,6 +913,26 @@ public class EditActivity extends Activity {
 		popup.setVisibility(View.VISIBLE);		
 		mHandler.removeCallbacks(mHideInfoPopupTask);
 		mHandler.postDelayed(mHideInfoPopupTask, getResources().getInteger(R.integer.infoPopupLife));
+	}
+	
+	private SheetAlignedElement createDrawingModel(NoteSpec noteSpec)
+			throws NoteDescriptionLoadingException {
+		SheetAlignedElement model = new Note(this, noteSpec.length(), noteSpec.positon());
+		// FIXME remove
+		try {
+			model = new Modifier(this, model, noteSpec.positon(), NoteModifier.SHARP);
+		} catch (LoadingSvgException e) {
+			throw new RuntimeException(e);
+		}
+		int nearestLine = NoteConstants.anchorTypedIndex(noteSpec.positon());
+		if(NoteConstants.anchorType(noteSpec.positon()) == NoteConstants.ANCHOR_TYPE_LINESPACE
+			&& nearestLine < 0) {
+			nearestLine += 1;
+		}
+		if(nearestLine < 0 || nearestLine > 4) {
+			model = new AddedLine(model, nearestLine);
+		}
+		return model;
 	}
 
 	private int afterNoteSpacing(NoteSpec note) {

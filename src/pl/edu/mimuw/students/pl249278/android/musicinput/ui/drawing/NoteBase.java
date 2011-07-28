@@ -4,7 +4,7 @@ import android.graphics.PointF;
 import android.util.Pair;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 
-public class NoteBase extends EnhancedSvgImage {
+public class NoteBase extends AdjustableSizeImage {
 	Pair<PointF, PointF> joinLine = null;
 	float xMiddleMarker;
 
@@ -17,18 +17,7 @@ public class NoteBase extends EnhancedSvgImage {
 	}
 
 	public NoteBase(SvgImage source, boolean hasJoinLine) throws InvalidMetaException {
-		super(source);
-		
-		// check if we have 2 horizontal imarkers
-		if(imarkers.size() != 2) {
-			throw new InvalidMetaException("Excepted 2 imarkers, found "+imarkers.size());
-		}
-		IMarker iMarker = imarkers.get(0);
-		assertLineIsHorizontal(iMarker.line);
-		assertTypeRelative(iMarker.color);
-		iMarker = imarkers.get(1);
-		assertLineIsHorizontal(iMarker.line);
-		assertTypeRelative(iMarker.color);
+		super(source, true);
 		
 		// check if we have 1 vertical marker and optional horizontal marker
 		int markersCount = markers.size();

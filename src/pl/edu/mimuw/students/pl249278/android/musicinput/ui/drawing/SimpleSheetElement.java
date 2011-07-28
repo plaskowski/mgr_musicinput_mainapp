@@ -12,32 +12,21 @@ import android.graphics.PointF;
 public class SimpleSheetElement extends SheetElement {
 
 	private float scale;
-	private EnhancedSvgImage image;
+	private AdjustableSizeImage image;
 	
 	private int IM1Anchor;
 	private int IM2Anchor;
+	
+	public SimpleSheetElement(AdjustableSizeImage img) {
+		this(img, 0);
+	}
 
-	public void setImage(EnhancedSvgImage img) throws InvalidMetaException {
+	public SimpleSheetElement(AdjustableSizeImage img, int baseAnchor) {
 		this.image = img;
-		// we require 2 i-markers so we can scale svg image appropriately
-		if(image.getImarkers().size() != 2) {
-			throw new EnhancedSvgImage.InvalidMetaException("Expected exaclty 2 imarkers, found "+image.getImarkers().size());
-		}
     	IMarker firstM = image.getImarkers().get(0), secondM = image.getImarkers().get(1);
-    	// imarkers must reffer to absolute indexes of anchors
-    	if(EnhancedSvgImage.isTypeRelative(firstM)) {
-    		throw new EnhancedSvgImage.InvalidMetaException("First imarker is relative-type, but static element doesn't reffer to any height");
-    	} else if(EnhancedSvgImage.isTypeRelative(secondM)) {
-    		throw new EnhancedSvgImage.InvalidMetaException("Second imarker is relative-type, but static element doesn't reffer to any height");
-    	}
-		
 		// discover appropriate parts images
-		IM1Anchor = imarkerAnchor(firstM, 0);
-		IM2Anchor = imarkerAnchor(secondM, 0);
-		
-		if(sheetParams != null) {
-			sheetParamsCalculations();
-		}
+		IM1Anchor = imarkerAnchor(firstM, baseAnchor);
+		IM2Anchor = imarkerAnchor(secondM, baseAnchor);
 	}
 	
 	@Override

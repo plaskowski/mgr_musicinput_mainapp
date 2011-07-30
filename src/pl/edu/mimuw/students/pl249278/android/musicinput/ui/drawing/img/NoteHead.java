@@ -1,10 +1,10 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img;
 
 import android.graphics.PointF;
 import android.util.Pair;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 
-public class NoteBase extends AdjustableSizeImage {
+public class NoteHead extends AdjustableSizeImage {
 	Pair<PointF, PointF> joinLine = null;
 	float xMiddleMarker;
 
@@ -16,7 +16,7 @@ public class NoteBase extends AdjustableSizeImage {
 		return xMiddleMarker;
 	}
 
-	public NoteBase(SvgImage source, boolean hasJoinLine) throws InvalidMetaException {
+	public NoteHead(SvgImage source, boolean hasJoinLine) throws InvalidMetaException {
 		super(source, true);
 		
 		// check if we have 1 vertical marker and optional horizontal marker

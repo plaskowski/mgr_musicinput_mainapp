@@ -2,8 +2,9 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.Note;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.SheetAlignedElementView;
 import android.content.Context;
 import android.graphics.Color;
@@ -57,19 +58,21 @@ public class NoteValueSpinner extends ScrollView {
 	public void setupNoteViews() throws NoteDescriptionLoadingException {
         notesContainer = (ViewGroup) findViewById(R.id.EDIT_note_value_container);
         notesContainer.removeAllViews();
+        // TODO externalize sheet params
         params = new SheetParams(10, 100);
         params.setScale(1);
         maxNoteHorizontalHalfWidth = 0;
         for (int i = 0; i <= minNoteValue; i++) {
 			SheetAlignedElementView noteView = new SheetAlignedElementView(getContext());
-			Note model = new Note(getContext(), i, LINE4_ABSINDEX);
-			noteView.setModel(model);
+			noteView.setModel(DrawingModelFactory.createDrawingModel(getContext(), 
+				new NoteSpec(i, LINE4_ABSINDEX)
+			));
 			noteView.setSheetParams(params);
 			noteView.setPaint(PAINT_NORMAL);
 			noteView.setPadding(EFFECT_PADDING);
 			maxNoteHorizontalHalfWidth = Math.max(maxNoteHorizontalHalfWidth, Math.max(
-				noteView.getBaseMiddleX(),
-				noteView.measureWidth()-noteView.getBaseMiddleX()
+				noteView.getHeadMiddleX(),
+				noteView.measureWidth()-noteView.getHeadMiddleX()
 			));
 			notesContainer.addView(noteView, new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
 		}
@@ -85,7 +88,7 @@ public class NoteValueSpinner extends ScrollView {
 		
         // align notes on scrollbar
         int visibleRectHeight = h, availableWidth = w - notesContainer.getPaddingLeft()-notesContainer.getPaddingRight();
-        int distanceBetweenNotesBases = (int) (visibleRectHeight*0.4);
+        int distanceBetweenNotesHeads = (int) (visibleRectHeight*0.4);
         
         int horizontalSpaceLeft = visibleRectHeight/2;
         SheetAlignedElementView current = null;
@@ -96,11 +99,11 @@ public class NoteValueSpinner extends ScrollView {
         	current = (SheetAlignedElementView) notesContainer.getChildAt(i);
         	current.setSheetParams(this.params);
 			params = new LinearLayout.LayoutParams(templateParams);
-    		params.leftMargin = availableWidth/2-current.getBaseMiddleX();
+    		params.leftMargin = availableWidth/2-current.getHeadMiddleX();
     		int verticalAlignLine = verticalAlignLine(current);
 			params.topMargin = horizontalSpaceLeft - verticalAlignLine;
         	current.setLayoutParams(params);
-        	horizontalSpaceLeft = distanceBetweenNotesBases-(current.measureHeight()-verticalAlignLine);
+        	horizontalSpaceLeft = distanceBetweenNotesHeads-(current.measureHeight()-verticalAlignLine);
         }
         // bottomMargin for last
 		params.bottomMargin = visibleRectHeight/2 - (current.measureHeight()-verticalAlignLine(current));
@@ -117,7 +120,7 @@ public class NoteValueSpinner extends ScrollView {
 		if(t == oldt) return;
 		boolean down = t > oldt;
 		
-		// find which of notes base is nearest center of ScrollView
+		// find which of notes head is nearest center of ScrollView
         int cH = this.getHeight();
         int prevDist = notesContainer.getHeight();
         int newNoteHeight = currentValue;
@@ -130,7 +133,7 @@ public class NoteValueSpinner extends ScrollView {
         }
         if(newNoteHeight == currentValue) return;
         setIsSelected(currentValue, false);
-//        info("Note change: %d -> %d", currentNoteLength, newNoteHeight);
+//        info("NoteStemAndFlag change: %d -> %d", currentNoteLength, newNoteHeight);
         int oldValue = currentValue;
         currentValue = newNoteHeight;
         setIsSelected(currentValue, true);
@@ -143,8 +146,8 @@ public class NoteValueSpinner extends ScrollView {
 	private SheetParams params;
 	/**
 	 * Max value from widths of notes horizontal parts:
-	 * - from left edge of View to baseMiddleX
-	 * - from baseMiddleX to right edge of View
+	 * - from left edge of View to headMiddleX
+	 * - from headMiddleX to right edge of View
 	 * with sheetParams.scale = 1
 	 */
 	private int maxNoteHorizontalHalfWidth = 0;

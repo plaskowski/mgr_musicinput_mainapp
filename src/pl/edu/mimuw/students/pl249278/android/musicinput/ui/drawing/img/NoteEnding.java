@@ -1,4 +1,4 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img;
 
 import android.graphics.PointF;
 import android.util.Pair;
@@ -34,6 +34,10 @@ public class NoteEnding extends EnhancedSvgImage {
 				1
 			));
 		}
+	}
+	
+	public IMarker getIMarker() {
+		return imarkers.get(0);
 	}
 
 }

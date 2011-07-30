@@ -1,16 +1,19 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Point;
 
-public abstract class AlignedElementWrapper extends SheetAlignedElement {
-	protected SheetAlignedElement wrappedElement;
+public abstract class AlignedElementWrapper<WrappedType extends SheetAlignedElement> extends SheetAlignedElement {
+	protected WrappedType wrappedElement;
 	protected Point elementDrawOffset = new Point();
 	protected Point wrapperDrawOffset = new Point();
 	protected int totalWidth, totalHeight;
 	
-	public AlignedElementWrapper(SheetAlignedElement wrappedElement) {
+	public AlignedElementWrapper(WrappedType wrappedElement) {
 		this.wrappedElement = wrappedElement;
 	}
 
@@ -19,10 +22,42 @@ public abstract class AlignedElementWrapper extends SheetAlignedElement {
 		super.setSheetParams(params);
 		wrappedElement.setSheetParams(params);
 	}
+	
+	/**
+	 * Helper function, fills elementDrawOffset and wrapperDrawOffset
+	 * @param elRelOffsetX wrapped.x - wrappingDrawable.x
+	 * @param elRelOffsetY wrapped.y - wrappingDrawable.y
+	 */
+	protected void calcDrawOffsets(int elRelOffsetX, int elRelOffsetY) {
+		elementDrawOffset.set(
+			elRelOffsetX >= 0 ? elRelOffsetX : 0,
+			elRelOffsetY >= 0 ? elRelOffsetY : 0
+		);
+		wrapperDrawOffset.set(
+			elementDrawOffset.x - elRelOffsetX, 
+			elementDrawOffset.y - elRelOffsetY
+		);
+	}
+	
+	/** 
+	 * Helper function, fills totalWidth, totalHeight
+	 * @param wrapperWidth width of wrapper drawing area
+	 * @param wrapperHeight height of wrapper drawing area
+	 */
+	protected void calcSize(int wrapperWidth, int wrapperHeight) {
+		totalWidth = Math.max(
+			elementDrawOffset.x + wrappedElement.measureWidth(),
+			wrapperDrawOffset.x + wrapperWidth
+		);
+		totalHeight = Math.max(
+			elementDrawOffset.y + wrappedElement.measureHeight(),
+			wrapperDrawOffset.y + wrapperHeight
+		);
+	}
 
 	@Override
-	public int getBaseMiddleX() {
-		return elementDrawOffset.x + wrappedElement.getBaseMiddleX();
+	public int getHeadMiddleX() {
+		return elementDrawOffset.x + wrappedElement.getHeadMiddleX();
 	}
 
 	@Override
@@ -40,5 +75,20 @@ public abstract class AlignedElementWrapper extends SheetAlignedElement {
 		return wrappedElement.getOffsetToAnchor(anchorAbsIndex, part)
 		- elementDrawOffset.y;
 	}
-
+	
+	@Override
+	public NoteSpec getNoteSpec() {
+		return wrappedElement.getNoteSpec();
+	}
+	
+	/**
+	 * Draws wrappedElement onto appropriate place (elementDrawOffset).
+	 * Preserve canvas state (matrix, clip).
+	 */
+	@Override
+	public void onDraw(Canvas canvas, Paint paint) {
+		canvas.translate(elementDrawOffset.x, elementDrawOffset.y);
+		wrappedElement.onDraw(canvas, paint);
+		canvas.translate(-elementDrawOffset.x, -elementDrawOffset.y);
+	}
 }

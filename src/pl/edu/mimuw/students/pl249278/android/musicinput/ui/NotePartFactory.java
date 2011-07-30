@@ -10,9 +10,9 @@ import org.xmlpull.v1.XmlPullParser;
 
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.AdjustableSizeImage;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NoteBase;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NoteEnding;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.AdjustableSizeImage;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteEnding;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteHead;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgParser;
 import android.content.Context;
@@ -44,32 +44,32 @@ public class NotePartFactory {
 	private static final int ORIENT_NORMAL = 0;
 	private static final int ORIENT_UPSDOWN = 1;
 
-	public static NoteBase getBaseImage(Context context, int noteLength, int anchorType, boolean isUpsidedown) throws NoteDescriptionLoadingException {
-		return prepareBase(context, noteLength, anchorType, isUpsidedown ? ORIENT_UPSDOWN : ORIENT_NORMAL);
+	public static NoteHead getHeadImage(Context context, int noteLength, int anchorType, boolean isUpsidedown) throws NoteDescriptionLoadingException {
+		return prepareHeadImage(context, noteLength, anchorType, isUpsidedown ? ORIENT_UPSDOWN : ORIENT_NORMAL);
 	}
 	
-	private static NoteBase prepareBase(Context context, int noteLength, int anchorType, int orient) throws NoteDescriptionLoadingException {
-		int resId = baseMapping.get(noteLength)[mappingIndex(orient, anchorType)];
-		if(noteBases.get(resId) == null) {
+	private static NoteHead prepareHeadImage(Context context, int noteLength, int anchorType, int orient) throws NoteDescriptionLoadingException {
+		int resId = headMapping.get(noteLength)[mappingIndex(orient, anchorType)];
+		if(noteHeads.get(resId) == null) {
 			SvgParser parser = new SvgParser();
 			XmlPullParser xmlParser = context.getResources().getXml(resId);
 			SvgImage svgImg;
 			try {
 				svgImg = parser.parse(xmlParser);
-				noteBases.put(resId, new NoteBase(svgImg, hasEnding(noteLength)));
+				noteHeads.put(resId, new NoteHead(svgImg, hasEnding(noteLength)));
 			} catch (Exception e) {
 				throw new NoteDescriptionLoadingException(e, noteLength, anchorType, orient);
 			}
 		}
-		return noteBases.get(resId);
+		return noteHeads.get(resId);
 	}
 	
 	private static boolean hasEnding(int noteLength) {
-		return noteLength != 0;
+		return NoteConstants.hasStem(noteLength);
 	}
 
 	/**
-	 * @return can return null if note consists of base only
+	 * @return can return null if note consists of head only
 	 * @throws NoteDescriptionLoadingException 
 	 */
 	public static NoteEnding getEndingImage(Context context, int noteLength, int anchorType, boolean isUpsidedown) throws NoteDescriptionLoadingException {
@@ -117,10 +117,10 @@ public class NotePartFactory {
 		return (orientation << 1) | anchorType;
 	}
 
-	private static Map<Integer, int[]> baseMapping = new HashMap<Integer, int[]>();
+	private static Map<Integer, int[]> headMapping = new HashMap<Integer, int[]>();
 	private static Map<Integer, int[]> endingMapping = new HashMap<Integer, int[]>();
 	private static Map<Integer, int[]> modifiersMapping = new HashMap<Integer, int[]>();
-	private static Map<Integer, NoteBase> noteBases = new HashMap<Integer, NoteBase>();
+	private static Map<Integer, NoteHead> noteHeads = new HashMap<Integer, NoteHead>();
 	private static Map<Integer, NoteEnding> noteEndings = new HashMap<Integer, NoteEnding>();
 	private static Map<Integer, AdjustableSizeImage> adjustableImages = new HashMap<Integer, AdjustableSizeImage>();
 	
@@ -135,7 +135,7 @@ public class NotePartFactory {
 				updown(R.xml.sharp_onspace)
 			)
 		);
-		declare(baseMapping, 0, 
+		declare(headMapping, 0, 
 			anchor(ANCHOR_TYPE_LINE,
 				normal(R.xml.whole),
 				updown(R.xml.whole)
@@ -145,7 +145,7 @@ public class NotePartFactory {
 				updown(R.xml.whole)
 			)
 		);
-		declare(baseMapping, 1, 
+		declare(headMapping, 1, 
 			anchor(ANCHOR_TYPE_LINE,
 				normal(R.xml.half_online),
 				updown(R.xml.half_online_updown)
@@ -155,7 +155,7 @@ public class NotePartFactory {
 				updown(R.xml.half_onspaceupdown)
 			)
 		);
-		declare(baseMapping, lengths(2, 3, 4), 
+		declare(headMapping, lengths(2, 3, 4), 
 			anchor(ANCHOR_TYPE_LINE,
 				normal(R.xml.quater_online),
 				updown(R.xml.quater_online_updown)

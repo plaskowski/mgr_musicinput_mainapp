@@ -15,9 +15,12 @@ public class LogUtils {
 	
 	private String tag;
 	public LogUtils(Class<?> cl) {
-		tag = cl.getName();
+		this(cl.getName());
 	}
-	
+	public LogUtils(String tag) {
+		this.tag = tag;
+	}
+
 	public void i(String format, Object... args) {
 		tinfo(tag, format, args);
 	}

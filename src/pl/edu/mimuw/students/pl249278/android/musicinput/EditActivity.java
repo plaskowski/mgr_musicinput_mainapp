@@ -14,7 +14,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizonta
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView.OnScrollChangedListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.NoteModifier;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.LoadingSvgException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
@@ -25,9 +24,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureIntercep
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor.OnScaleListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.AddedLine;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.Modifier;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.Note;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SimpleSheetElement;
@@ -209,7 +206,7 @@ public class EditActivity extends Activity {
 		
 		model = new ArrayList<NoteSpec>();
 //		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE)));
-		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE)));
+//		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE)));
 		/*
 //		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE)));
 //		model.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE)));
@@ -343,13 +340,13 @@ public class EditActivity extends Activity {
 			noteViews.add(index, noteView);
 			resizeSheetOnNoteInsert(index);
 			
-			int noteMiddle = leftMargin(noteView)+noteView.getBaseMiddleX();
+			int noteMiddle = leftMargin(noteView)+noteView.getHeadMiddleX();
 			int destNoteMiddle;
 			if(index == 0) {
 				destNoteMiddle = notesAreaX;
 			} else {
 				SheetAlignedElementView prevNote = noteViews.get(index-1);
-				destNoteMiddle = leftMargin(prevNote) + prevNote.getBaseMiddleX() + afterNoteSpacing(model.get(index-1));
+				destNoteMiddle = leftMargin(prevNote) + prevNote.getHeadMiddleX() + afterNoteSpacing(model.get(index-1));
 			}
 			long duration = 500;
 			
@@ -383,7 +380,7 @@ public class EditActivity extends Activity {
 		}
 
 		private int inIA_noteViewX(SheetAlignedElementView noteView) {
-			return hscroll.getScrollX()+visibleRectWidth-iaRightMargin-inputAreaWidth/2-noteView.getBaseMiddleX();
+			return hscroll.getScrollX()+visibleRectWidth-iaRightMargin-inputAreaWidth/2-noteView.getHeadMiddleX();
 		}
 		
 		/**
@@ -414,11 +411,11 @@ public class EditActivity extends Activity {
 			int delta =
 				sheetParams.anchorOffset(SPACE0_ABSINDEX, AnchorPart.MIDDLE)
 				- line0middle;
-			int indexDeltaBase = y - (line0Top + line0middle - delta/2);
-			int indexDelta = indexDeltaBase/delta;
+			int indexDeltaHead = y - (line0Top + line0middle - delta/2);
+			int indexDelta = indexDeltaHead/delta;
 			return Math.max( 
 				Math.min(
-				LINE0_ABSINDEX + indexDelta + (indexDeltaBase < 0 ? -1 : 0),
+				LINE0_ABSINDEX + indexDelta + (indexDeltaHead < 0 ? -1 : 0),
 				NoteConstants.anchorIndex(sheetParams.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
 				),
 				NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
@@ -442,7 +439,7 @@ public class EditActivity extends Activity {
 					} else {
 						x = leftMargin(firstToLeft);
 					}
-					int middle = x - l + firstToLeft.getBaseMiddleX();
+					int middle = x - l + firstToLeft.getHeadMiddleX();
 					if(middle > hscroll.getWidth()-inputAreaWidth - iaRightMargin - delta + mTouchSlop) {
 						if(anim != null) {
 							// reverse animation
@@ -468,7 +465,7 @@ public class EditActivity extends Activity {
 					} else {
 						x = leftMargin(firstToRight);
 					}
-					int middle = x - l + firstToRight.getBaseMiddleX();
+					int middle = x - l + firstToRight.getHeadMiddleX();
 					if(middle < hscroll.getWidth() - iaRightMargin + delta - mTouchSlop) {
 						if(anim != null) {
 							// reverse animation
@@ -588,13 +585,13 @@ public class EditActivity extends Activity {
 		}
 
 		/**
-		 * @return vertical position of note base middle inside visible rect
+		 * @return vertical position of note head middle inside visible rect
 		 */
 		public int middleVisibleX(SheetAlignedElementView view) {
 			return middleX(view)-hscroll.getScrollX();
 		}
 		private int middleX(SheetAlignedElementView view) {
-			return leftMargin(view)+view.getBaseMiddleX();
+			return leftMargin(view)+view.getHeadMiddleX();
 		}
 		
 		private void scalingFinished() {
@@ -823,7 +820,7 @@ public class EditActivity extends Activity {
 		for(int i = 0; i < length; i++) {
 			SheetAlignedElementView v = noteViews.get(i);
 			v.setSheetParams(sheetParams);
-			int xpos = x-v.getBaseMiddleX();
+			int xpos = x-v.getHeadMiddleX();
 			updatePosition(
 				v, 
 				xpos,
@@ -833,7 +830,7 @@ public class EditActivity extends Activity {
 			spacingAfter = afterNoteSpacing(model.get(i));
 			x += spacingAfter;
 			notesTotalSpacing += spacingAfter;
-			maxNoteRightSideWidth = Math.max(maxNoteRightSideWidth, v.measureWidth()-v.getBaseMiddleX());
+			maxNoteRightSideWidth = Math.max(maxNoteRightSideWidth, v.measureWidth()-v.getHeadMiddleX());
 		}
 		notesTotalSpacing -= spacingAfter;
 		
@@ -902,7 +899,11 @@ public class EditActivity extends Activity {
 		/	params.anchorOffset(LINE4_ABSINDEX, BOTTOM_EDGE)
 		);
 		try {
-			Note model = new Note(this, currentNoteLength, LINE4_ABSINDEX);
+			SheetAlignedElement model = createDrawingModel(new NoteSpec(
+				currentNoteLength, 
+				LINE4_ABSINDEX, 
+				NoteSpec.ORIENT_UP
+			)); 
 			noteView.setModel(model);
 		} catch (NoteDescriptionLoadingException e) {
 			e.printStackTrace();
@@ -915,24 +916,8 @@ public class EditActivity extends Activity {
 		mHandler.postDelayed(mHideInfoPopupTask, getResources().getInteger(R.integer.infoPopupLife));
 	}
 	
-	private SheetAlignedElement createDrawingModel(NoteSpec noteSpec)
-			throws NoteDescriptionLoadingException {
-		SheetAlignedElement model = new Note(this, noteSpec.length(), noteSpec.positon());
-		// FIXME remove
-		try {
-			model = new Modifier(this, model, noteSpec.positon(), NoteModifier.SHARP);
-		} catch (LoadingSvgException e) {
-			throw new RuntimeException(e);
-		}
-		int nearestLine = NoteConstants.anchorTypedIndex(noteSpec.positon());
-		if(NoteConstants.anchorType(noteSpec.positon()) == NoteConstants.ANCHOR_TYPE_LINESPACE
-			&& nearestLine < 0) {
-			nearestLine += 1;
-		}
-		if(nearestLine < 0 || nearestLine > 4) {
-			model = new AddedLine(model, nearestLine);
-		}
-		return model;
+	private SheetAlignedElement createDrawingModel(NoteSpec noteSpec) throws NoteDescriptionLoadingException {
+		return DrawingModelFactory.createDrawingModel(this, noteSpec);
 	}
 
 	private int afterNoteSpacing(NoteSpec note) {

@@ -2,7 +2,8 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.EnhancedSvgImage.IMarker;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.EnhancedSvgImage;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.EnhancedSvgImage.IMarker;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PointF;
@@ -42,6 +43,12 @@ public abstract class SheetElement {
 	public abstract void onDraw(Canvas canvas, Paint paint);
 	public SheetParams getSheetParams() {
 		return sheetParams;
-	}	
+	}
+	
+	protected void assertParamsPresence() {
+		if(sheetParams == null) {
+			throw new IllegalStateException();
+		}
+	}
 
 }

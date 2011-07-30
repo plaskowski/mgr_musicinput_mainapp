@@ -8,7 +8,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPa
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
-public class AddedLine extends AlignedElementWrapper {
+public class AddedLine extends AlignedElementWrapper<SheetAlignedElement> {
 	private int startLine, endLine;
 	private int wrapperRadius;
 	
@@ -36,21 +36,13 @@ public class AddedLine extends AlignedElementWrapper {
 		int wrapperHeight = linesNum*sheetParams.getLineThickness()+(linesNum-1)*sheetParams.getLinespacingThickness();
 		int elOffsetX = wrapperRadius - wrappedElement.collisionRegionLeft();
 		int elOffsetY = wrappedElement.getOffsetToAnchor(startAbsIndex, AnchorPart.TOP_EDGE);
-		elementDrawOffset.set(
-			elOffsetX >= 0 ? elOffsetX : 0,
-			elOffsetY >= 0 ? elOffsetY : 0
+		calcDrawOffsets(
+			elOffsetX,
+			elOffsetY
 		);
-		wrapperDrawOffset.set(
-			elementDrawOffset.x - elOffsetX, 
-			elementDrawOffset.y - elOffsetY
-		);
-		totalWidth = Math.max(
-			elementDrawOffset.x+wrappedElement.measureWidth(), 
-			elementDrawOffset.x+wrappedElement.collisionReginRight()+wrapperRadius
-		);
-		totalHeight = Math.max(
-			elementDrawOffset.y+wrappedElement.measureHeight(),
-			wrapperDrawOffset.y+wrapperHeight
+		calcSize(
+			wrappedElement.collisionReginRight() - wrappedElement.collisionRegionLeft() + 2*wrapperRadius,
+			wrapperHeight
 		);
 	}
 
@@ -68,14 +60,7 @@ public class AddedLine extends AlignedElementWrapper {
 			);
 			y += sheetParams.getLineThickness()+sheetParams.getLinespacingThickness();
 		}
-		canvas.translate(elementDrawOffset.x, elementDrawOffset.y);
-		// TODO remove debugging drawing
-//		Paint paint2 = new Paint();
-//		paint2.setColor(Color.RED);
-//		canvas.drawRect(0, 0, wrappedElement.measureWidth(), wrappedElement.measureHeight(),
-//			paint2
-//		);
-		wrappedElement.onDraw(canvas, paint);
+		super.onDraw(canvas, paint);
 	}
 
 }

@@ -939,7 +939,7 @@ public class EditActivity extends Activity {
 		Math.max(
 			lines.getMinPadding(),
 			// assure that when sheet is scrolled to start IA left edge matches start of area where notes are placed
-			visibleRectWidth-inputAreaWidth-iaRightMargin - firstDivider.model().collisionReginRight()
+			visibleRectWidth-inputAreaWidth-iaRightMargin - firstDivider.model().collisionRegionRight()
 		);
 		lines.setNotesAreaLeftPadding(paddingLeft);
 		
@@ -1010,7 +1010,7 @@ public class EditActivity extends Activity {
 		for(int i = firstEl; i <= lastEl; i++) { // for each element inside Time 
 			SheetAlignedElementView el = elementViews.get(i);
 			/** minimal visual spacing between 2 element's middles so that they don't collide */
-			int minSpacing = el.model().collisionReginRight()-el.model().getMiddleX() + MIN_DRAW_SPACING;
+			int minSpacing = el.model().collisionRegionRight()-el.model().getMiddleX() + MIN_DRAW_SPACING;
 			if(i+1 < elementViews.size()) {
 				SheetAlignedElementView next = elementViews.get(i+1);
 				next.setSheetParams(sheetParams);
@@ -1111,7 +1111,7 @@ public class EditActivity extends Activity {
 	
 	private int timeDividerSpacing(Time time) {
 		SheetAlignedElementView v = elementViews.get(time.rangeStart);
-		int minSpacing = v.model().collisionReginRight()-v.model().getMiddleX()+(int) (afterTimeDividerVisualSpacingFactor*sheetParams.getScale());
+		int minSpacing = v.model().collisionRegionRight()-v.model().getMiddleX()+(int) (afterTimeDividerVisualSpacingFactor*sheetParams.getScale());
 		if(time.rangeStart + 1 < elementViews.size()) {
 			SheetAlignedElementView firstTimeEl = elementViews.get(time.rangeStart+1);
 			minSpacing += firstTimeEl.model().getMiddleX()-firstTimeEl.model().collisionRegionLeft();

@@ -41,7 +41,7 @@ public class AddedLine extends AlignedElementWrapper<SheetAlignedElement> {
 			elOffsetY
 		);
 		calcSize(
-			wrappedElement.collisionReginRight() - wrappedElement.collisionRegionLeft() + 2*wrapperRadius,
+			wrappedElement.collisionRegionRight() - wrappedElement.collisionRegionLeft() + 2*wrapperRadius,
 			wrapperHeight
 		);
 	}
@@ -49,7 +49,7 @@ public class AddedLine extends AlignedElementWrapper<SheetAlignedElement> {
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
 		int y = wrapperDrawOffset.y;
-		int xEnd = elementDrawOffset.x+wrappedElement.collisionReginRight()+wrapperRadius;
+		int xEnd = elementDrawOffset.x+wrappedElement.collisionRegionRight()+wrapperRadius;
 		for(int i = startLine; i <= endLine; i++) {
 			canvas.drawRect(
 				wrapperDrawOffset.x,

@@ -104,6 +104,7 @@ public class TimeDivider extends SheetAlignedElement {
 		canvas.translate(-totalDX, -(line0Yoffset+dy2line0));
 	}
 
+	@SuppressWarnings("unused")
 	private static void debugElementDrawArea(Canvas canvas, SheetElement el) {
 		Paint paint = new Paint();
 		paint.setColor(Color.RED);

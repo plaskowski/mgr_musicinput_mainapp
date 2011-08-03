@@ -67,7 +67,7 @@ public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement
 
 		@Override
 		protected int elementOffsetX(int spacing) {
-			return -(spacing+wrappedElement.collisionReginRight());
+			return -(spacing+wrappedElement.collisionRegionRight());
 		}
 	}
 

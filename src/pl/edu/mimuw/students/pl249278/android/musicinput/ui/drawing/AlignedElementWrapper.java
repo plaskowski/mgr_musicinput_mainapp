@@ -1,6 +1,5 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
 import android.graphics.Canvas;
@@ -56,8 +55,8 @@ public abstract class AlignedElementWrapper<WrappedType extends SheetAlignedElem
 	}
 
 	@Override
-	public int getHeadMiddleX() {
-		return elementDrawOffset.x + wrappedElement.getHeadMiddleX();
+	public int getMiddleX() {
+		return elementDrawOffset.x + wrappedElement.getMiddleX();
 	}
 
 	@Override
@@ -77,8 +76,8 @@ public abstract class AlignedElementWrapper<WrappedType extends SheetAlignedElem
 	}
 	
 	@Override
-	public NoteSpec getNoteSpec() {
-		return wrappedElement.getNoteSpec();
+	public ElementSpec getElementSpec() {
+		return wrappedElement.getElementSpec();
 	}
 	
 	/**

@@ -2,5 +2,6 @@
 <resources>
 	<integer name="minSpaceDefault">-3</integer>
 	<integer name="maxSpaceDefault">6</integer>
-	<integer name="defaultMinNoteValue">3</integer>
+	<integer name="spinnerDefaultMinNoteValue">3</integer>
+	<integer name="minNotePossibleValue">3</integer>
 </resources>

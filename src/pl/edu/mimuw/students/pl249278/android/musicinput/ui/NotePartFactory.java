@@ -3,6 +3,7 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.ANCHOR_TYPE_LINE;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.ANCHOR_TYPE_LINESPACE;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,6 +11,7 @@ import org.xmlpull.v1.XmlPullParser;
 
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.Key;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.AdjustableSizeImage;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteEnding;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteHead;
@@ -98,6 +100,10 @@ public class NotePartFactory {
 		return prepareAdujstableImage(context, resId, true);
 	}
 	
+	public static AdjustableSizeImage prepareKeyImage(Context ctx, Key key) throws LoadingSvgException {
+		return prepareAdujstableImage(ctx, keysMapping.get(key), false);
+	}
+	
 	public static AdjustableSizeImage prepareAdujstableImage(Context context, int xmlResId, boolean relativeIMarkers) throws LoadingSvgException {
 		if(adjustableImages.get(xmlResId) == null) {
 			SvgParser parser = new SvgParser();
@@ -120,11 +126,14 @@ public class NotePartFactory {
 	private static Map<Integer, int[]> headMapping = new HashMap<Integer, int[]>();
 	private static Map<Integer, int[]> endingMapping = new HashMap<Integer, int[]>();
 	private static Map<Integer, int[]> modifiersMapping = new HashMap<Integer, int[]>();
+	private static EnumMap<NoteConstants.Key, Integer> keysMapping = new EnumMap<NoteConstants.Key, Integer>(NoteConstants.Key.class);
 	private static Map<Integer, NoteHead> noteHeads = new HashMap<Integer, NoteHead>();
 	private static Map<Integer, NoteEnding> noteEndings = new HashMap<Integer, NoteEnding>();
 	private static Map<Integer, AdjustableSizeImage> adjustableImages = new HashMap<Integer, AdjustableSizeImage>();
 	
 	static {
+		keysMapping.put(NoteConstants.Key.VIOLIN, R.xml.key_violin);
+		
 		declare(modifiersMapping, NoteConstants.NoteModifier.SHARP,
 			anchor(ANCHOR_TYPE_LINE,
 				normal(R.xml.sharp_online),
@@ -133,6 +142,16 @@ public class NotePartFactory {
 			anchor(ANCHOR_TYPE_LINESPACE,
 				normal(R.xml.sharp_onspace),
 				updown(R.xml.sharp_onspace)
+			)
+		);
+		declare(modifiersMapping, NoteConstants.NoteModifier.DOT,
+			anchor(ANCHOR_TYPE_LINE,
+				normal(R.xml.dot_online),
+				updown(R.xml.dot_online)
+			),
+			anchor(ANCHOR_TYPE_LINESPACE,
+				normal(R.xml.dot_onspace),
+				updown(R.xml.dot_onspace)
 			)
 		);
 		declare(headMapping, 0, 

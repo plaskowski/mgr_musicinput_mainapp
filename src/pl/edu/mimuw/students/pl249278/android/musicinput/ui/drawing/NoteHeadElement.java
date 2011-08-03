@@ -79,7 +79,7 @@ public class NoteHeadElement extends SheetAlignedElement {
 	}
 	
 	@Override
-	public int getHeadMiddleX() {
+	public int getMiddleX() {
 		return (int) (head.getxMiddleMarker() * scale);
 	}
 	
@@ -93,8 +93,8 @@ public class NoteHeadElement extends SheetAlignedElement {
 	}
 	
 	@Override
-	public NoteSpec getNoteSpec() {
-		return this.spec;
+	public ElementSpec getElementSpec() {
+		return new ElementSpec.NormalNote(spec);
 	}
 	
 	float joinLineExactWidth() {

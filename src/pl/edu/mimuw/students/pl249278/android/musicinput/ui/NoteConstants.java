@@ -17,7 +17,14 @@ public class NoteConstants {
 		NATURAL // kasownik
 	}
 	
+	public static enum Key {
+		VIOLIN,
+		ALTO,
+		BASS
+	}
+	
 	public static final int LINE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE);
+	public static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
 	
 	public static int anchorType(int anchorIndex) {
 		return Math.abs(anchorIndex%2);

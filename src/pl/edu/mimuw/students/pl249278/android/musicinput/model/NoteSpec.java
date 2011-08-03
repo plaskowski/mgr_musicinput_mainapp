@@ -1,16 +1,34 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.model;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
+import java.util.HashMap;
 
-public class NoteSpec {
-	private int length;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.NoteModifier;
+
+public class NoteSpec extends PauseSpec implements PositonSpec {
 	private int postion;
 	
 	public static final int ORIENT_UP = 0;
 	public static final int ORIENT_DOWN = 1;
 	
-	private int flags;
-	private static final int FLAG_ORIENT = 0;
+	private static final int FLAG_ORIENT = FLAGS_AMOUNT;
+	private static final int FLAG_JOINARC = FLAG_ORIENT+1;
+	private static final int FLAG_GROUPED = FLAG_JOINARC+1;
+	private static final int FLAG_TONEMODIFIER_L = FLAG_GROUPED+1;
+	private static final int FLAG_TONEMODIFIER_H = FLAG_TONEMODIFIER_L+1;
+	
+	private static final NoteModifier[] TONE_MODIFIER_REVERSE_MAPPING = new NoteModifier[] {
+		null,
+		NoteModifier.FLAT,
+		NoteModifier.NATURAL,
+		NoteModifier.SHARP
+	};
+	private static final HashMap<NoteModifier, Integer> TONE_MODIFIER_MAPPING = new HashMap<NoteConstants.NoteModifier, Integer>();
+	static {
+		for(int i = 1; i < TONE_MODIFIER_REVERSE_MAPPING.length; i++) {
+			TONE_MODIFIER_MAPPING.put(TONE_MODIFIER_REVERSE_MAPPING[i], i);
+		}
+	}
 	
 	/**
 	 * Assumes orientation := ORIENT_UP
@@ -19,7 +37,7 @@ public class NoteSpec {
 		this(length, postion, NoteConstants.isUpsdown(postion) ? ORIENT_DOWN : ORIENT_UP);
 	}
 	public NoteSpec(int length, int postion, int orientation) {
-		this.length = length;
+		super(length);
 		this.postion = postion;
 		setOrientation(orientation);
 	}
@@ -32,19 +50,35 @@ public class NoteSpec {
 		return flag;
 	}
 	
-	private int getFlag(int flag) {
-		return (flags >> flag) & 1;
+	/**
+	 * @return null if isn't set
+	 */
+	public NoteModifier getToneModifier() {
+		int value = getValue(FLAG_TONEMODIFIER_H, FLAG_TONEMODIFIER_L);
+		return TONE_MODIFIER_REVERSE_MAPPING[value];
 	}
-	private void setFlag(int flag, int flagVal) {
-		flags = (flags & ~(1<<flag)) | ((flagVal & 1) << flag); 
+	
+	public void clearToneModifier() {
+		putValue(
+			FLAG_TONEMODIFIER_H, FLAG_TONEMODIFIER_L,
+			0
+		);
 	}
-
-	public int length() {
-		return length;
+	public void setToneModifier(NoteModifier modifier) {
+		putValue(
+			FLAG_TONEMODIFIER_H, FLAG_TONEMODIFIER_L,
+			TONE_MODIFIER_MAPPING.get(modifier)
+		);
 	}
-
+	
 	public int positon() {
 		return postion;
+	}
+	public void setHasDot(boolean hasDot) {
+		setFlag(FLAG_DOT, hasDot ? 1 : 0);
+	}
+	public boolean hasDot() {
+		return dotExtension() > 0;
 	}
 	
 }

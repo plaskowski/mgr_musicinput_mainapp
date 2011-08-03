@@ -1,4 +1,6 @@
-	package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
+
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 	
 	public class SheetParams {
 	
@@ -7,6 +9,8 @@
 		private float scale = 1;
 		private int minSpaceAnchor;
 		private int maxSpaceAnchor;
+		private TimeSpec.TimeStep timeStep;
+		private NoteConstants.Key key;
 		
 		public SheetParams(int lineFactor, int linespacingFactor) {
 			super();
@@ -93,5 +97,21 @@
 		public void setMaxSpaceAnchor(int maxSpaceAnchor) {
 			this.maxSpaceAnchor = maxSpaceAnchor;
 		}
-	
+
+		public NoteConstants.Key getKey() {
+			return key;
+		}
+
+		public void setKey(NoteConstants.Key key) {
+			this.key = key;
+		}
+
+		public TimeSpec.TimeStep getTimeStep() {
+			return timeStep;
+		}
+
+		public void setTimeStep(TimeSpec.TimeStep timeStep) {
+			this.timeStep = timeStep;
+		}
+
 	}

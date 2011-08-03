@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<integer name="lineThickness">10</integer>
-	<integer name="linespaceThickness">40</integer>
+ 	<integer name="linespaceThickness">100</integer>
+	<string name="minDrawSpacing">2l</string>
+ 	
 	<dimen name="inputAreaWidth">88dip</dimen>
 	<dimen name="inputAreaMaxRightMargin">80dip</dimen>
-	<color name="highlightColor">#FF73DCFF</color>
-	<color name="infoPopupIconColor">#FFFFFFFF</color>
-	<dimen name="infoPopupIconHeight">70dip</dimen>
-	<integer name="infoPopupLife">1500</integer>
-	<color name="infoPopupBgColor">#FF73DCFF</color>
-	<dimen name="infoPoupBgShadow">5dip</dimen>
-	<dimen name="infoPoupBgCorner">8dip</dimen>
-	<color name="spinnerSelectionColor">#FFFFD700</color>
+	<string name="minDistToIA">1.5s</string>
 	<color name="iaFrameColor">#FF73DCFF</color>
 	<dimen name="iaFrameStrokeWidth">3dip</dimen>
-	<string name="noteShadow">0.07</string>
-	<string name="minDistToIA">1.5</string>
-	<string name="minNoteSpacing">2</string>
-	<string name="staticElementsSpacing">1</string>
+	
+	<string name="timeDividerDrawAfterSpacingFactor">1s</string>
+	<string name="defaultTimeSpacingBaseFactor">8s</string>
+
+	<color name="highlightColor">#FF73DCFF</color>
+	<string name="noteShadow">0.07s</string>
+	
+	<color name="spinnerSelectionColor">#FFFFD700</color>
 </resources>

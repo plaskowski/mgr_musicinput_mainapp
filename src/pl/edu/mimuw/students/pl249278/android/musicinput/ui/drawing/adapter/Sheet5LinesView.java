@@ -18,7 +18,6 @@ public class Sheet5LinesView extends View {
 
 	private static final int LINESPACE3_ABSINDEX = NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	private static final int LINESPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
-	private static final int LINE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE);
 	private static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
 	
 	public Sheet5LinesView(Context context) {
@@ -77,20 +76,13 @@ public class Sheet5LinesView extends View {
 		for(int i = 0; i < 5; i++) {
 			int anchorIndex = NoteConstants.anchorIndex(i, NoteConstants.ANCHOR_TYPE_LINE);
 			canvas.drawRect(
-				notesAreaLeftPadding-lineThickness, 
+				notesAreaLeftPadding, 
 				paddingTop + params.anchorOffset(anchorIndex, AnchorPart.TOP_EDGE),
 				getWidth(), 
 				paddingTop + params.anchorOffset(anchorIndex, AnchorPart.BOTTOM_EDGE),
 				highlightedAnchor != null && highlightedAnchor == anchorIndex ? lineHighlightedPaint : normalPaint
 			);
 		}
-		int line0top = params.anchorOffset(LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
-		int line4bottom = params.anchorOffset(LINE4_ABSINDEX, AnchorPart.BOTTOM_EDGE);
-		canvas.drawRect(
-			notesAreaLeftPadding-lineThickness, paddingTop + line0top,
-			notesAreaLeftPadding, paddingTop + line4bottom,
-			normalPaint
-		);
 		if(highlightedAnchor != null 
 		&& NoteConstants.anchorType(highlightedAnchor) == NoteConstants.ANCHOR_TYPE_LINESPACE
 		&& highlightedAnchor >= LINESPACE0_ABSINDEX

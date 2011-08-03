@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<color name="infoPopupIconColor">#FFFFFFFF</color>
+	<dimen name="infoPopupIconHeight">70dip</dimen>
+	<integer name="infoPopupLife">1500</integer>
+	<color name="infoPopupBgColor">#FF73DCFF</color>
+	<dimen name="infoPoupBgShadow">5dip</dimen>
+	<dimen name="infoPoupBgCorner">8dip</dimen>
+</resources>

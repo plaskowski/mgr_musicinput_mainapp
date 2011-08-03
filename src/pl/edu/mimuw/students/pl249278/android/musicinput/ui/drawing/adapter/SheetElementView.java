@@ -94,5 +94,9 @@ public class SheetElementView<ElementType extends SheetElement> extends View {
 		);
 		model.onDraw(canvas, paint);
 	}
+	
+	public ElementType model() {
+		return model;
+	}
 
 }

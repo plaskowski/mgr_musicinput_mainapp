@@ -21,10 +21,5 @@ public class SheetAlignedElementView extends SheetElementView<SheetAlignedElemen
 	public SheetAlignedElementView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 	}
-	
-	public int getHeadMiddleX() {
-		return model.getHeadMiddleX()+getPaddingLeft();
-	}
-	
 }
 	

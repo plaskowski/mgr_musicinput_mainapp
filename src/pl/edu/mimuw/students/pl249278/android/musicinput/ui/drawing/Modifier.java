@@ -11,8 +11,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
-public class Modifier extends AlignedElementWrapper<SheetAlignedElement> {
-	private SimpleSheetElement modifierElement;
+public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement> {
+	protected SimpleSheetElement modifierElement;
 	
 	public Modifier(Context context, SheetAlignedElement wrappedElement, int position, NoteModifier modifier) throws LoadingSvgException {
 		super(wrappedElement);
@@ -27,7 +27,7 @@ public class Modifier extends AlignedElementWrapper<SheetAlignedElement> {
 		modifierElement.setSheetParams(params);
 		
 		int spacing = params.getLineThickness();
-		int elOffsetX = modifierElement.measureWidth() + spacing - wrappedElement.collisionRegionLeft();
+		int elOffsetX = elementOffsetX(spacing);
 		int wrappOY = modifierElement.getOffsetToAnchor(0, AnchorPart.TOP_EDGE);
 		int elOY = wrappedElement.getOffsetToAnchor(0, AnchorPart.TOP_EDGE);
 		int elOffsetY =  elOY - wrappOY;
@@ -38,11 +38,37 @@ public class Modifier extends AlignedElementWrapper<SheetAlignedElement> {
 		);
 	}
 
+	protected abstract int elementOffsetX(int spacing);
+
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
 		super.onDraw(canvas, paint);
 		canvas.translate(wrapperDrawOffset.x, wrapperDrawOffset.y);
 		modifierElement.onDraw(canvas, paint);
+		canvas.translate(-wrapperDrawOffset.x, -wrapperDrawOffset.y);
+	}
+	
+	public static class Prefix extends Modifier {
+		public Prefix(Context context, SheetAlignedElement wrappedElement,
+				int position, NoteModifier modifier) throws LoadingSvgException {
+			super(context, wrappedElement, position, modifier);
+		}
+
+		@Override
+		protected int elementOffsetX(int spacing) {
+			return modifierElement.measureWidth() + spacing - wrappedElement.collisionRegionLeft();
+		}
+	}
+	public static class Suffix extends Modifier {
+		public Suffix(Context context, SheetAlignedElement wrappedElement,
+				int position, NoteModifier modifier) throws LoadingSvgException {
+			super(context, wrappedElement, position, modifier);
+		}
+
+		@Override
+		protected int elementOffsetX(int spacing) {
+			return -(spacing+wrappedElement.collisionReginRight());
+		}
 	}
 
 }

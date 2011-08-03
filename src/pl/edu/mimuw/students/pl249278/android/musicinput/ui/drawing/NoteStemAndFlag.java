@@ -28,7 +28,8 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 	}
 	
 	private void parseNoteSpec(Context context) throws NoteDescriptionLoadingException {
-		NoteSpec noteSpec = getNoteSpec();
+		NoteSpec noteSpec = ((ElementSpec.NormalNote) getElementSpec()).spec;
+		
 		boolean upsdown = noteSpec.getOrientation() == NoteSpec.ORIENT_DOWN;
 		int endingAnchor = NoteConstants.stemEnd(noteSpec);
 		

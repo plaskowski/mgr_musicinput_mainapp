@@ -42,15 +42,14 @@ public class SimpleSheetElement extends SheetElement {
 	}
 	
 	public int measureHeight() {
+		assertParamsPresence();
 		return
 		((int) (image.getHeight()*scale))
 		;
 	}
 
 	public int measureWidth() {
-		if(sheetParams == null) {
-			throw new IllegalStateException();
-		}
+		assertParamsPresence();
 		return (int) (image.getWidth()*scale);
 	}
 	

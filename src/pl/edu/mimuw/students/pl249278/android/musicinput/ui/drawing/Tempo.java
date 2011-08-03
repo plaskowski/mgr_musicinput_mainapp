@@ -18,12 +18,10 @@ public class Tempo extends SheetElement {
 	private String upper, lower;
 	private Paint fontPaint;
 	
-	public void setLetters(char upper, char lower) {
+	public Tempo(int upper, int lower) {
 		this.upper = ""+upper;
 		this.lower = ""+lower;
-		if(sheetParams != null) {
-			calculate();
-		}
+		setPaint(new Paint());
 	}
 
 	@Override
@@ -38,6 +36,7 @@ public class Tempo extends SheetElement {
 		fontPaint.setTypeface(Typeface.SERIF);
 		fontPaint.setTextAlign(Align.CENTER);
 		fontPaint.setTextSize(textSize);
+		fontPaint.setAntiAlias(true);
 		this.fontPaint = fontPaint;
 	}
 

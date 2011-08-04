@@ -10,7 +10,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 		private int minSpaceAnchor;
 		private int maxSpaceAnchor;
 		private TimeSpec.TimeStep timeStep;
-		private NoteConstants.Key key;
+		private NoteConstants.Clef clef;
+		private NoteConstants.KeySignature keySignature;
 		
 		public SheetParams(int lineFactor, int linespacingFactor) {
 			super();
@@ -98,20 +99,28 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 			this.maxSpaceAnchor = maxSpaceAnchor;
 		}
 
-		public NoteConstants.Key getKey() {
-			return key;
+		public NoteConstants.Clef getClef() {
+			return clef;
 		}
 
-		public void setKey(NoteConstants.Key key) {
-			this.key = key;
+		public void setClef(NoteConstants.Clef clef) {
+			this.clef = clef;
 		}
-
+		
 		public TimeSpec.TimeStep getTimeStep() {
 			return timeStep;
 		}
 
 		public void setTimeStep(TimeSpec.TimeStep timeStep) {
 			this.timeStep = timeStep;
+		}
+
+		public NoteConstants.KeySignature getKeySignature() {
+			return keySignature;
+		}
+
+		public void setKeySignature(NoteConstants.KeySignature keySignature) {
+			this.keySignature = keySignature;
 		}
 
 	}

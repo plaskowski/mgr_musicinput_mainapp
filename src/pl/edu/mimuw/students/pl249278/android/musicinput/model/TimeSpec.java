@@ -1,13 +1,12 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.model;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.Key;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.Clef;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.KeySignature;
 
 public class TimeSpec {
 	TimeStep timeStep;
-	Key key;
-	// TODO add tonacja
-	
-	// TODO add contructor
+	Clef clef;
+	KeySignature keySignature;
 	
 	public static class TimeStep {
 		int baseMultiplier, tempoBaseLength;
@@ -28,28 +27,38 @@ public class TimeSpec {
 		
 	}
 	
-	public TimeSpec(TimeStep timeStep, Key key) {
+	public TimeSpec(TimeStep timeStep, Clef clef, KeySignature keySignature) {
 		this.timeStep = timeStep;
-		this.key = key;
+		this.clef = clef;
+		this.keySignature = keySignature;
 	}
 
 	public TimeSpec() {
-		this(null, null);
+		this(null, null, null);
 	}
 
 	public TimeStep getTimeStep() {
 		return timeStep;
 	}
 
-	public Key getKey() {
-		return key;
+	public Clef getClef() {
+		return clef;
 	}
 
 	public void setTimeStep(TimeStep timeStep) {
 		this.timeStep = timeStep;
 	}
 
-	public void setKey(Key key) {
-		this.key = key;
+	public void setClef(Clef clef) {
+		this.clef = clef;
 	}
+
+	public KeySignature getKeySignature() {
+		return keySignature;
+	}
+
+	public void setKeySignature(KeySignature keySignature) {
+		this.keySignature = keySignature;
+	}
+	
 }

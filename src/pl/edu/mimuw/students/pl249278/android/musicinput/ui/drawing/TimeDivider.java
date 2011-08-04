@@ -1,5 +1,8 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.LINE0_ABSINDEX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.LINE4_ABSINDEX;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,8 +16,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.*;
-
 
 public class TimeDivider extends SheetAlignedElement {
 	private static final int EL_SPACING = 2;
@@ -26,12 +27,14 @@ public class TimeDivider extends SheetAlignedElement {
 		spec = new ElementSpec.TimeDivider(leftTime, rightTime);
 		if(rightTime != null) {
 			rightParts = new ArrayList<SheetElement>(3);
-			if(rightTime.getKey() != null) {
+			if(rightTime.getClef() != null) {
 				rightParts.add(new SimpleSheetElement(
-					NotePartFactory.prepareKeyImage(ctx, rightTime.getKey())
+					NotePartFactory.prepareClefImage(ctx, rightTime.getClef())
 				));
 			}
-			// TODO handle tonacja
+			if(rightTime.getKeySignature() != null) {
+				rightParts.add(new KeySignatureElement(ctx, rightTime.getKeySignature()));
+			}
 			TimeStep rTS = rightTime.getTimeStep();
 			if(rTS != null) {
 				rightParts.add(new Tempo(rTS.getBaseMultiplier(), 1 << rTS.getTempoBaseLength()));

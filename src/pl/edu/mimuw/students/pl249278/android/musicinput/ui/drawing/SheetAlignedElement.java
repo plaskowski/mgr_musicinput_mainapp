@@ -9,4 +9,5 @@ public abstract class SheetAlignedElement extends SheetElement {
 		return measureWidth();
 	}
 	public abstract ElementSpec getElementSpec();
+	public void positionChanged(int newAbsoluteX, int newAbsoluteY) {}
 }

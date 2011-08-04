@@ -57,6 +57,9 @@ public abstract class ElementSpec {
 		public PositonSpec positonSpec() {
 			return spec;
 		}
+		public NoteSpec noteSpec() {
+			return spec;
+		}
 	}
 	
 	public static class Pause extends ElementWithLength<PauseSpec> {

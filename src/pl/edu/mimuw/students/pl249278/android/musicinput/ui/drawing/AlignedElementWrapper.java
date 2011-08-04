@@ -53,6 +53,14 @@ public abstract class AlignedElementWrapper<WrappedType extends SheetAlignedElem
 			wrapperDrawOffset.y + wrapperHeight
 		);
 	}
+	
+	/**
+	 * Simple "macro" for Wrapper that doesn't draw any content
+	 */
+	protected final void calcNoVisibleWrapper() {
+		calcDrawOffsets(0, 0);
+		calcSize(0, 0);
+	}
 
 	@Override
 	public int getMiddleX() {
@@ -89,5 +97,10 @@ public abstract class AlignedElementWrapper<WrappedType extends SheetAlignedElem
 		canvas.translate(elementDrawOffset.x, elementDrawOffset.y);
 		wrappedElement.onDraw(canvas, paint);
 		canvas.translate(-elementDrawOffset.x, -elementDrawOffset.y);
+	}
+	
+	@Override
+	public void positionChanged(int newAbsoluteX, int newAbsoluteY) {
+		wrappedElement.positionChanged(elementDrawOffset.x+newAbsoluteX, elementDrawOffset.y+newAbsoluteY);
 	}
 }

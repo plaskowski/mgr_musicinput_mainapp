@@ -1,7 +1,12 @@
 package pl.edu.mimuw.students.pl249278.android.svg;
 
-import static pl.edu.mimuw.students.pl249278.android.common.LogUtils.info;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.*;
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_CLOSE;
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_CUBICTO;
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_LINETO;
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_MOVETO;
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RCUBICTO;
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RLINETO;
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RMOVETO;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -12,9 +17,11 @@ import org.joda.primitives.list.impl.ArrayFloatList;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.svg.StyleAttribute.ValueType;
 
 public class SvgParser {
+	private static LogUtils log = new LogUtils(SvgParser.class);
 	private static final String VAL_STYLETYPE_TEXTCSS = "text/css";
 	private static final String ATTR_STYLE_TYPE = "contentStyleType";
 	private static final String TAG_ROOT = "svg";
@@ -39,7 +46,7 @@ public class SvgParser {
         while (eventType != XmlPullParser.END_DOCUMENT) {
          if(eventType == XmlPullParser.START_TAG) {
         	 if(!SVG_NS.equals(xmlParser.getNamespace())) {
-        		 info("Ignoring element %s:%s not from SVG NS", xmlParser.getNamespace(), xmlParser.getName());
+        		 log.i("Ignoring element %s:%s not from SVG NS", xmlParser.getNamespace(), xmlParser.getName());
         	 } else {
         		 String name = xmlParser.getName();
 	             if(TAG_ROOT.equals(name)) {
@@ -53,7 +60,7 @@ public class SvgParser {
         			 SvgRect rect = parseRectNode(xmlParser);
         			 result.objects.add(rect);
         		 } else {
-        			 info("Ignoring not supported element %s:%s", xmlParser.getNamespace(), xmlParser.getName());
+        			 log.i("Ignoring not supported element %s:%s", xmlParser.getNamespace(), xmlParser.getName());
         		 }
         	 }
          } else if(eventType == XmlPullParser.END_TAG) {
@@ -112,7 +119,7 @@ public class SvgParser {
 	private static void parseStyle(XmlPullParser xmlParser, SvgObject obj) throws SvgFormatException {
 		String styleType = attrValue(xmlParser, ATTR_STYLE_TYPE);
 		if(styleType != null && !VAL_STYLETYPE_TEXTCSS.equals(styleType)) {
-			info("Ignoring unsupported style format %s", styleType);
+			log.i("Ignoring unsupported style format %s", styleType);
 			return;
 		}
 		String styleAttrVal = attrValue(xmlParser, ATTR_STYLE);
@@ -135,9 +142,9 @@ public class SvgParser {
 					throw new SvgFormatException("Unsupported style property value format: "+styleAttribute.type.name());
 				}
 				obj.style.put(styleAttribute, value);
-//				info("Style property %s: %s", propName, propValue);
+//				log.i("Style property %s: %s", propName, propValue);
 			} else {
-				info("Ignoring unsupported style property %s: %s", propName, propValue);
+				log.i("Ignoring unsupported style property %s: %s", propName, propValue);
 			}
 		}
 	}

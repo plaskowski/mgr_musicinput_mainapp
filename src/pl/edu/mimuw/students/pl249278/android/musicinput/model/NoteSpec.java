@@ -50,6 +50,13 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 		return flag;
 	}
 	
+	public void setHasJoinArc(boolean hasJoinArc) {
+		setFlag(FLAG_JOINARC, hasJoinArc ? 1 : 0);
+	}
+	public boolean hasJoinArc() {
+		return getFlag(FLAG_JOINARC) == 1;
+	}
+	
 	/**
 	 * @return null if isn't set
 	 */

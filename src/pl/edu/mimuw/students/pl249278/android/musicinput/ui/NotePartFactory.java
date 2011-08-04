@@ -11,7 +11,7 @@ import org.xmlpull.v1.XmlPullParser;
 
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.Key;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.Clef;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.AdjustableSizeImage;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteEnding;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteHead;
@@ -100,8 +100,8 @@ public class NotePartFactory {
 		return prepareAdujstableImage(context, resId, true);
 	}
 	
-	public static AdjustableSizeImage prepareKeyImage(Context ctx, Key key) throws LoadingSvgException {
-		return prepareAdujstableImage(ctx, keysMapping.get(key), false);
+	public static AdjustableSizeImage prepareClefImage(Context ctx, Clef key) throws LoadingSvgException {
+		return prepareAdujstableImage(ctx, clefMapping.get(key), false);
 	}
 	
 	public static AdjustableSizeImage prepareAdujstableImage(Context context, int xmlResId, boolean relativeIMarkers) throws LoadingSvgException {
@@ -126,42 +126,38 @@ public class NotePartFactory {
 	private static Map<Integer, int[]> headMapping = new HashMap<Integer, int[]>();
 	private static Map<Integer, int[]> endingMapping = new HashMap<Integer, int[]>();
 	private static Map<Integer, int[]> modifiersMapping = new HashMap<Integer, int[]>();
-	private static EnumMap<NoteConstants.Key, Integer> keysMapping = new EnumMap<NoteConstants.Key, Integer>(NoteConstants.Key.class);
+	private static EnumMap<NoteConstants.Clef, Integer> clefMapping = new EnumMap<NoteConstants.Clef, Integer>(NoteConstants.Clef.class);
 	private static Map<Integer, NoteHead> noteHeads = new HashMap<Integer, NoteHead>();
 	private static Map<Integer, NoteEnding> noteEndings = new HashMap<Integer, NoteEnding>();
 	private static Map<Integer, AdjustableSizeImage> adjustableImages = new HashMap<Integer, AdjustableSizeImage>();
 	
 	static {
-		keysMapping.put(NoteConstants.Key.VIOLIN, R.xml.key_violin);
+		clefMapping.put(NoteConstants.Clef.VIOLIN, R.xml.key_violin);
 		
 		declare(modifiersMapping, NoteConstants.NoteModifier.SHARP,
 			anchor(ANCHOR_TYPE_LINE,
-				normal(R.xml.sharp_online),
-				updown(R.xml.sharp_online)
+				anyOrient(R.xml.sharp_online)
 			),
 			anchor(ANCHOR_TYPE_LINESPACE,
-				normal(R.xml.sharp_onspace),
-				updown(R.xml.sharp_onspace)
+				anyOrient(R.xml.sharp_onspace)
+			)
+		);
+		declare(modifiersMapping, NoteConstants.NoteModifier.FLAT,
+			anyAnchor(
+				anyOrient(R.xml.flat)
 			)
 		);
 		declare(modifiersMapping, NoteConstants.NoteModifier.DOT,
 			anchor(ANCHOR_TYPE_LINE,
-				normal(R.xml.dot_online),
-				updown(R.xml.dot_online)
+				anyOrient(R.xml.dot_online)
 			),
 			anchor(ANCHOR_TYPE_LINESPACE,
-				normal(R.xml.dot_onspace),
-				updown(R.xml.dot_onspace)
+				anyOrient(R.xml.dot_onspace)
 			)
 		);
 		declare(headMapping, 0, 
-			anchor(ANCHOR_TYPE_LINE,
-				normal(R.xml.whole),
-				updown(R.xml.whole)
-			),
-			anchor(ANCHOR_TYPE_LINESPACE,
-				normal(R.xml.whole),
-				updown(R.xml.whole)
+			anyAnchor(
+				anyOrient(R.xml.whole)
 			)
 		);
 		declare(headMapping, 1, 
@@ -185,21 +181,13 @@ public class NotePartFactory {
 			)
 		);
 		declare(endingMapping, lengths(1, 2),
-			anchor(ANCHOR_TYPE_LINE,
-				normal(R.xml.straight_ending),
-				updown(R.xml.straight_ending_upsd)
-			),
-			anchor(ANCHOR_TYPE_LINESPACE,
+			anyAnchor(
 				normal(R.xml.straight_ending),
 				updown(R.xml.straight_ending_upsd)
 			)
 		);
 		declare(endingMapping, lengths(3, 4),
-			anchor(ANCHOR_TYPE_LINE,
-				normal(R.xml.eight_ending),
-				updown(R.xml.eight_ending_updown)
-			),
-			anchor(ANCHOR_TYPE_LINESPACE,
+			anyAnchor(
 				normal(R.xml.eight_ending),
 				updown(R.xml.eight_ending_updown)
 			)
@@ -210,6 +198,7 @@ public class NotePartFactory {
 	private static <T extends Enum<T>> void declare(Map<Integer, int[]> lenght2mapping, T value, int[]... partialMappings) {
 		declare(lenght2mapping, value.ordinal(), partialMappings);
 	}
+
 	private static void declare(Map<Integer, int[]> lenght2mapping, int lenght, int[]... partialMappings) {
 		declare(lenght2mapping, new int[] { lenght }, partialMappings);
 	}
@@ -242,10 +231,25 @@ public class NotePartFactory {
 		}
 		return result;
 	}
+	private static int[] anyAnchor(Mapping... orientation2Id) {
+		int[] first = anchor(ORIENT_NORMAL, orientation2Id);
+		int[] second = anchor(ORIENT_UPSDOWN, orientation2Id);
+		int[] result = new int[first.length+second.length];
+		System.arraycopy(first, 0, result, 0, first.length);
+		System.arraycopy(second, 0, result, first.length, second.length);
+		return result;
+	}
+	
 	private static Mapping normal(int resId) {
 		return new Mapping(ORIENT_NORMAL, resId);
 	}
 	private static Mapping updown(int resId) {
 		return new Mapping(ORIENT_UPSDOWN, resId);
+	}
+	private static Mapping[] anyOrient(int resId) {
+		return new Mapping[] {
+			normal(resId),
+			updown(resId)
+		};
 	}
 }

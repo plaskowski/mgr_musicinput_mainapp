@@ -45,6 +45,16 @@ public class AddedLine extends AlignedElementWrapper<SheetAlignedElement> {
 			wrapperHeight
 		);
 	}
+	
+	@Override
+	public int collisionRegionLeft() {
+		return wrapperRadius;
+	}
+	
+	@Override
+	public int collisionRegionRight() {
+		return measureWidth()-wrapperRadius;
+	}
 
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {

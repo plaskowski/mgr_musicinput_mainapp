@@ -17,7 +17,8 @@ import android.widget.ScrollView;
 
 public class NoteValueSpinner extends ScrollView {
 	private Paint PAINT_NORMAL = new Paint();
-	private Paint PAINT_SELECTED = new Paint(); 
+	private Paint PAINT_SELECTED = new Paint();
+	// TODO make this a parametrized factor
 	private static final int EFFECT_PADDING = 5;
 	
 	private static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
@@ -66,7 +67,7 @@ public class NoteValueSpinner extends ScrollView {
         for (int i = 0; i <= minNoteValue; i++) {
 			SheetAlignedElementView noteView = new SheetAlignedElementView(getContext());
 			noteView.setModel(DrawingModelFactory.createDrawingModel(getContext(), 
-				new ElementSpec.NormalNote(new NoteSpec(i, LINE4_ABSINDEX))
+				new ElementSpec.NormalNote(new NoteSpec(i, LINE4_ABSINDEX), NoteConstants.ORIENT_UP)
 			));
 			noteView.setSheetParams(params);
 			noteView.setPaint(PAINT_NORMAL);

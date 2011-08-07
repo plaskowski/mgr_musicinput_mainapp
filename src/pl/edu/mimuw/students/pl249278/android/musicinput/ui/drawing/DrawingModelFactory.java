@@ -1,20 +1,23 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
-import android.content.Context;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.NoteModifier;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.LoadingSvgException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.FakePause;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
+import android.content.Context;
 
 public class DrawingModelFactory {
 	public static SheetAlignedElement createDrawingModel(Context ctx, ElementSpec elementSpec) throws NoteDescriptionLoadingException {
 		switch (elementSpec.getType()) {
 		case NOTE:
-			NoteSpec noteSpec = ((ElementSpec.NormalNote) elementSpec).spec;
-			NoteHeadElement head = new NoteHeadElement(ctx, noteSpec);
+			NormalNote note = (ElementSpec.NormalNote) elementSpec;
+			NoteSpec noteSpec = note.noteSpec();
+			NoteHeadElement head = new NoteHeadElement(ctx, note);
 			SheetAlignedElement model = head;
-			if(NoteConstants.hasStem(noteSpec)) {
+			if(!note.hasNoStem() && NoteConstants.hasStem(noteSpec.length())) {
 				model = new NoteStemAndFlag(ctx, head);
 			}
 			try {
@@ -37,12 +40,13 @@ public class DrawingModelFactory {
 				model = new AddedLine(model, nearestLine);
 			}
 			return model;
+		case FAKE_PAUSE:
+			return new FakePauseElement((FakePause) elementSpec);
 		case PAUSE:
 		case SPECIAL_SIGN:
-		case FAKE_PAUSE:
 		default:
 			// TODO implement
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Unhandled type: "+elementSpec.getType().name());
 				
 		}
 	}

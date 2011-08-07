@@ -32,34 +32,29 @@ public class AddedLine extends AlignedElementWrapper<SheetAlignedElement> {
 		// calculate total bounds
 		int startAbsIndex = NoteConstants.anchorIndex(startLine, NoteConstants.ANCHOR_TYPE_LINE);
 		int linesNum = endLine-startLine+1;
-		wrapperRadius = sheetParams.getLineThickness()*2;
+		wrapperRadius = sheetParams.getLinespacingThickness()/2;
 		int wrapperHeight = linesNum*sheetParams.getLineThickness()+(linesNum-1)*sheetParams.getLinespacingThickness();
-		int elOffsetX = wrapperRadius - wrappedElement.collisionRegionLeft();
+		int left = wrappedElement.getHorizontalOffset(NoteHeadElement.NOTEHEAD_LEFT);
+		int elOffsetX = wrapperRadius - left;
 		int elOffsetY = wrappedElement.getOffsetToAnchor(startAbsIndex, AnchorPart.TOP_EDGE);
 		calcDrawOffsets(
 			elOffsetX,
 			elOffsetY
 		);
+		int right = wrappedElement.getHorizontalOffset(NoteHeadElement.NOTEHEAD_RIGHT);
 		calcSize(
-			wrappedElement.collisionRegionRight() - wrappedElement.collisionRegionLeft() + 2*wrapperRadius,
+			right - left + 2*wrapperRadius,
 			wrapperHeight
 		);
-	}
-	
-	@Override
-	public int collisionRegionLeft() {
-		return wrapperRadius;
-	}
-	
-	@Override
-	public int collisionRegionRight() {
-		return measureWidth()-wrapperRadius;
 	}
 
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
 		int y = wrapperDrawOffset.y;
-		int xEnd = elementDrawOffset.x+wrappedElement.collisionRegionRight()+wrapperRadius;
+		int xEnd = 
+			elementDrawOffset.x
+			+ wrappedElement.getHorizontalOffset(NoteHeadElement.NOTEHEAD_RIGHT)
+			+ wrapperRadius;
 		for(int i = startLine; i <= endLine; i++) {
 			canvas.drawRect(
 				wrapperDrawOffset.x,

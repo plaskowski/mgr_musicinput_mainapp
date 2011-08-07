@@ -12,6 +12,8 @@ import android.widget.FrameLayout;
 
 public class ScaleGestureInterceptor extends FrameLayout {
 	protected static final float MIN_SCALE_STEP = 0.05f;
+	protected static final float MAX_SCALE_STEP = 0.5f;
+	protected 
 
 	static LogUtils log = new LogUtils(ScaleGestureInterceptor.class);
 
@@ -46,7 +48,8 @@ public class ScaleGestureInterceptor extends FrameLayout {
 		PointF point = new PointF();
 		@Override
 		public boolean onScale(ScaleGestureDetector arg0) {
-			boolean handled = Math.abs(arg0.getScaleFactor()-1f) > MIN_SCALE_STEP;
+			float step = Math.abs(arg0.getScaleFactor()-1f);
+			boolean handled = step > MIN_SCALE_STEP && step < MAX_SCALE_STEP;
 			if(handled && onScaleListener != null) {
 				logSG("onScale()", arg0);
 				point.set(arg0.getFocusX(), arg0.getFocusY());

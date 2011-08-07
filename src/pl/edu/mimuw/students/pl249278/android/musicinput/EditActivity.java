@@ -1,16 +1,18 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.ANCHOR_TYPE_LINE;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.LINE0_ABSINDEX;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.LINE4_ABSINDEX;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart.BOTTOM_EDGE;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart.TOP_EDGE;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.length;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.overallLength;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.LengthSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
@@ -31,8 +33,10 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.JoinArc;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.JoinArc;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotesGroup;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotesGroup.GroupBuilder;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.TimeDivider;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.Sheet5LinesView;
@@ -47,9 +51,7 @@ import android.graphics.Paint.Style;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
@@ -59,9 +61,6 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.HorizontalScrollView;
 import android.widget.RelativeLayout;
-
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.length;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.overallLength;
 
 public class EditActivity extends Activity {
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
@@ -137,7 +136,7 @@ public class EditActivity extends Activity {
 			getResources().getInteger(R.integer.lineThickness),
 			getResources().getInteger(R.integer.linespaceThickness)
 		);
-		sheetParams.setTimeStep(new TimeSpec.TimeStep(3, 2));
+		sheetParams.setTimeStep(new TimeSpec.TimeStep(3, 1));
 		sheetParams.setClef(NoteConstants.Clef.VIOLIN);
 		sheetParams.setKeySignature(KeySignature.B_DUR);
 		sheetParams.setMinSpaceAnchor(getResources().getInteger(R.integer.minSpaceDefault));
@@ -214,30 +213,56 @@ public class EditActivity extends Activity {
 		
 		// create elements
 		ArrayList<ElementSpec> rawNotesSequence = new ArrayList<ElementSpec>();
-		NoteSpec n4, n2, n;
-		n2 = new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINESPACE));
-		n4 = new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE));
-//		ns.setToneModifier(NoteModifier.SHARP);
-//		ns.setHasDot(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n4));
-		rawNotesSequence.add(new ElementSpec.NormalNote(n2));
-		n = new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINESPACE));
+		NoteSpec n;
+
+//		n = new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINESPACE));
+//		n.setHasDot(true);
+//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+//		rawNotesSequence.add(new ElementSpec.NormalNote(n4));
+		
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINE));
+		n.setToneModifier(NoteModifier.SHARP);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINESPACE));
+		n.setHasDot(true);
+		n.setToneModifier(NoteModifier.SHARP);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINE));
+		n.setToneModifier(NoteModifier.SHARP);
 		n.setHasDot(true);
 		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-		rawNotesSequence.add(new ElementSpec.NormalNote(n4));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(5, NoteConstants.ANCHOR_TYPE_LINE));
+		n.setIsGrouped(true);
+		n.setHasDot(true);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(1, NoteConstants.ANCHOR_TYPE_LINE));
+		n.setIsGrouped(true);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
-//		n.setHasJoinArc(true);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINE));
-//		n.setHasJoinArc(true);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		n.setIsGrouped(true);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE));
+		n.setIsGrouped(true);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+2, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
+		n.setIsGrouped(true);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(5, NoteConstants.ANCHOR_TYPE_LINE));
+		n.setIsGrouped(true);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE));
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINE));
+		n.setHasJoinArc(true);
+		n.setIsGrouped(true);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
+		n.setHasJoinArc(true);
+		n.setIsGrouped(true);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 //		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
 //		n.setHasJoinArc(true);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
-//		n.setHasJoinArc(true);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE));
 //		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 //		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINESPACE));
 //		n.setHasJoinArc(true);
@@ -328,9 +353,25 @@ public class EditActivity extends Activity {
 				));
 				int firstEl = times.get(i).rangeStart;
 				int lastEl = (i+1 < times.size() ? times.get(i+1).rangeStart : rawNotesSequence.size()) - 1; 
+				GroupBuilder gb = null;
 				for(int elI = firstEl; elI <= lastEl; elI++) {
 					ElementSpec spec = rawNotesSequence.get(elI);
+					if(gb == null && GroupBuilder.canStartGroup(spec)) {
+						gb = new GroupBuilder(sheetParams, spec);
+						for(int groupEl = elI+1; groupEl <= lastEl; groupEl++) {
+							if(!gb.tryExtend(rawNotesSequence.get(groupEl))) {
+								break;
+							}
+						}
+						gb.build();
+					} 
 					SheetAlignedElement model = createDrawingModel(spec);
+					if(gb != null) {
+						model = gb.wrapNext(model, new GroupObserver(elementViews.size()));
+						 if(!gb.hasNext()) {
+							 gb = null;
+						 }
+					}
 					if(spec.getType() == ElementType.NOTE) {
 						if(arc != null) {
 							model = arc.wrapRightElement(model);
@@ -989,7 +1030,7 @@ public class EditActivity extends Activity {
 				updateTimeSpacingBase(timeIndex);
 				spacingAfter = timeDividerSpacing(times.get(timeIndex), false);
 			} else {
-				spacingAfter = afterElementSpacing(times.get(timeIndex), v.model().getElementSpec());
+				spacingAfter = afterElementSpacing(times.get(timeIndex), v.model());
 			}
 			int xpos = x-middleX(v);
 			int ypos = sheetElementY(v);
@@ -998,7 +1039,7 @@ public class EditActivity extends Activity {
 				xpos,
 				ypos
 			);
-			log.i("onScaleFactor() note[%d] at: %dx%d", i, xpos, ypos);
+//			log.i("onScaleFactor() note[%d] at: %dx%d", i, xpos, ypos);
 		}
 		
 		// TODO calculate new sheet size
@@ -1051,7 +1092,7 @@ public class EditActivity extends Activity {
 			}
 			time.spacingBase = (int) Math.max(
 				time.spacingBase,
-				minSpacing * baseLength / overallLength(el.model().getElementSpec().lengthSpec(), minPossibleValue)
+				minSpacing * baseLength / el.model().spacingLength(minPossibleValue)
 			);
 		}
 	}
@@ -1099,10 +1140,12 @@ public class EditActivity extends Activity {
 		/	params.anchorOffset(LINE4_ABSINDEX, BOTTOM_EDGE)
 		);
 		try {
-			SheetAlignedElement model = createDrawingModel(new NoteSpec(
-				currentNoteLength, 
-				LINE4_ABSINDEX, 
-				NoteSpec.ORIENT_UP
+			SheetAlignedElement model = createDrawingModel(new ElementSpec.NormalNote(
+				new NoteSpec(
+					currentNoteLength, 
+					LINE4_ABSINDEX
+				), 
+				NoteConstants.ORIENT_UP
 			)); 
 			noteView.setModel(model);
 		} catch (NoteDescriptionLoadingException e) {
@@ -1133,8 +1176,8 @@ public class EditActivity extends Activity {
 		return DrawingModelFactory.createDrawingModel(this, elementSpec);
 	}
 
-	private int afterElementSpacing(Time time, ElementSpec elementSpec) {
-		return length2spacing(time, overallLength(elementSpec.lengthSpec(), minPossibleValue), minPossibleValue);
+	private int afterElementSpacing(Time time, SheetAlignedElement sheetAlignedElement) {
+		return length2spacing(time, sheetAlignedElement.spacingLength(minPossibleValue), minPossibleValue);
 	}
 	
 	private static int length2spacing(Time time, double lengthInMU, int measureUnit) {
@@ -1178,6 +1221,30 @@ public class EditActivity extends Activity {
 		return view.getLayoutParams().width;
 	}
 	
+	private class GroupObserver implements NotesGroup.Observer {
+		private int elementViewIndex;
+		
+		public GroupObserver(int elementViewIndex) {
+			this.elementViewIndex = elementViewIndex;
+		}
+
+		@Override
+		public void onMeasurementInvalid() {
+			log.i("onMeasureInvalid() at %d", elementViewIndex);
+			int oldMiddleX = lastMiddleAbsoluteX.get(elementViews.get(elementViewIndex));
+			SheetAlignedElementView view = elementViews.get(elementViewIndex);
+			view.invalidateMeasure();
+			int xpos = oldMiddleX-view.model().getMiddleX()-view.getPaddingLeft();
+			int ypos = sheetElementY(view);
+			updatePosition(
+				view, 
+				xpos,
+				ypos
+			);
+		}
+	}	
+	
+	private static Map<SheetAlignedElementView, Integer> lastMiddleAbsoluteX = new HashMap<SheetAlignedElementView, Integer>();
 	private static void updatePosition(View v, Integer left, Integer top) {
 		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
 		if(left != null) params.leftMargin = left;
@@ -1186,6 +1253,7 @@ public class EditActivity extends Activity {
 		if(v instanceof SheetAlignedElementView) {
 			SheetAlignedElementView elView = (SheetAlignedElementView) v;
 			SheetAlignedElement elModel = elView.model();
+			lastMiddleAbsoluteX.put(elView, params.leftMargin + v.getPaddingLeft() + elView.model().getMiddleX());
 			elModel.positionChanged(
 				params.leftMargin + v.getPaddingLeft(), 
 				params.topMargin + +v.getPaddingTop()

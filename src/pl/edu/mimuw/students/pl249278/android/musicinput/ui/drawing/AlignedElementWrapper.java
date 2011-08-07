@@ -61,12 +61,31 @@ public abstract class AlignedElementWrapper<WrappedType extends SheetAlignedElem
 		calcDrawOffsets(0, 0);
 		calcSize(0, 0);
 	}
-
+	
 	@Override
-	public int getMiddleX() {
-		return elementDrawOffset.x + wrappedElement.getMiddleX();
+	public int collisionRegionLeft() {
+		return elementDrawOffset.x+wrappedElement.collisionRegionLeft();
+	}
+	@Override
+	public int collisionRegionRight() {
+		return elementDrawOffset.x+wrappedElement.collisionRegionRight();
 	}
 
+	@Override
+	public int getHorizontalOffset(int lineIdentifier) {
+		return elementDrawOffset.x + wrappedElement.getHorizontalOffset(lineIdentifier);
+	}
+	
+	@Override
+	public int getVerticalOffset(int lineIdentifier) {
+		return elementDrawOffset.y + wrappedElement.getVerticalOffset(lineIdentifier);
+	}
+	
+	@Override
+	public float getMetaValue(int valueIndentifier, int param) {
+		return wrappedElement.getMetaValue(valueIndentifier, param);
+	}
+	
 	@Override
 	public int measureHeight() {
 		return totalHeight;

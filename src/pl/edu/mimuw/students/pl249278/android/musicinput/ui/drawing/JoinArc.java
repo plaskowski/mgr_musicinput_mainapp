@@ -65,11 +65,6 @@ public class JoinArc extends AlignedElementWrapper<SheetAlignedElement> {
 	}
 	
 	@Override
-	public int collisionRegionRight() {
-		return elementDrawOffset.x+wrappedElement.collisionRegionRight();
-	}
-	
-	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
 		super.onDraw(canvas, paint);
 		canvas.drawLine(

@@ -121,14 +121,22 @@ public class TimeDivider extends SheetAlignedElement {
 	}
 
 	@Override
-	public int getMiddleX() {
-		// middle of the line
-		return sheetParams.getLineThickness()/2;
+	public int getHorizontalOffset(int lineIdentifier) {
+		if(lineIdentifier == SheetAlignedElement.MIDDLE_X) {
+			return sheetParams.getLineThickness()/2;
+		} else {
+			throw new UnsupportedOperationException();
+		}
 	}
-
+	
 	@Override
 	public ElementSpec getElementSpec() {
 		return spec;
+	}
+
+	@Override
+	public int getVerticalOffset(int lineIdentifier) {
+		throw new UnsupportedOperationException();
 	}
 	
 }

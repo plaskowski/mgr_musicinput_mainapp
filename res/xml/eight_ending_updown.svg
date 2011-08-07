@@ -22,11 +22,11 @@
      id="path3709"
      style="fill:none;stroke:#0000ff;stroke-width:0.2236068;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.49019608;stroke-dasharray:none" />
   <path
-     d="m 36.026017,70.488046 6.149809,0"
-     id="path3699"
-     style="fill:none;stroke:#00ff00;stroke-width:0.86724073;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.19607843;stroke-dasharray:none" />
-  <path
      d="m 36.028801,70.435268 6.105477,0 0,40.343742 c 0.501484,-0.14431 9.425152,-5.14952 13.081992,-8.96769 6.957376,-7.264315 13.528266,-15.845028 15.971885,-25.602285 2.668739,-10.656149 4.796909,-25.974656 2.234576,-38.154756 -0.879405,-8.13789 -4.359824,-38.33178638 -4.359824,-38.33178638 0,0 7.439608,24.80319838 9.453797,34.58228538 4.104223,14.525685 4.329476,29.915327 1.711834,44.757797 -2.517279,11.129644 -8.381012,21.441885 -14.841044,30.847925 -5.559114,8.09428 -15.368791,12.89617 -20.191741,21.44954 -2.796695,4.95987 -3.205176,25.94562 -4.79774,32.93346 l -4.369212,-0.0222 0,-93.836022 z"
      id="path2820"
      style="fill:#000000;stroke:none" />
+  <path
+     d="m 36.031471,70.488046 6.10421,0"
+     id="path3699"
+     style="fill:none;stroke:#00ff00;stroke-width:0.86401951;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.19607843;stroke-dasharray:none" />
 </svg>

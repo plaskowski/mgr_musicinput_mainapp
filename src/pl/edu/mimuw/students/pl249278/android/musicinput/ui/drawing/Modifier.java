@@ -37,6 +37,39 @@ public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement
 			modifierElement.measureHeight()
 		);
 	}
+	
+	@Override
+	public int collisionRegionLeft() {
+		return Math.min(
+			super.collisionRegionLeft(),
+			wrapperDrawOffset.x
+		);
+	}
+	
+	@Override
+	public int collisionRegionRight() {
+		return Math.max(
+			super.collisionRegionRight(),
+			wrapperDrawOffset.x + modifierElement.measureWidth()
+		);
+	}
+	
+	@Override
+	public int getHorizontalOffset(int lineIdentifier) {
+		if(lineIdentifier == NoteHeadElement.AREA_NOTEHEAD_LEFT) {
+			return Math.min(
+				wrapperDrawOffset.x,
+				super.getHorizontalOffset(lineIdentifier)
+			);
+		} else if(lineIdentifier == NoteHeadElement.AREA_NOTEHEAD_RIGHT) {
+			return Math.max(
+				wrapperDrawOffset.x + modifierElement.measureWidth(),
+				super.getHorizontalOffset(lineIdentifier)
+			);
+		} else {
+			return super.getHorizontalOffset(lineIdentifier);
+		}
+	}
 
 	protected abstract int elementOffsetX(int spacing);
 
@@ -56,7 +89,7 @@ public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement
 
 		@Override
 		protected int elementOffsetX(int spacing) {
-			return modifierElement.measureWidth() + spacing - wrappedElement.collisionRegionLeft();
+			return modifierElement.measureWidth() + spacing - wrappedElement.getHorizontalOffset(NoteHeadElement.AREA_NOTEHEAD_LEFT);
 		}
 	}
 	public static class Suffix extends Modifier {
@@ -67,7 +100,7 @@ public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement
 
 		@Override
 		protected int elementOffsetX(int spacing) {
-			return -(spacing+wrappedElement.collisionRegionRight());
+			return -(spacing+wrappedElement.getHorizontalOffset(NoteHeadElement.AREA_NOTEHEAD_RIGHT));
 		}
 	}
 

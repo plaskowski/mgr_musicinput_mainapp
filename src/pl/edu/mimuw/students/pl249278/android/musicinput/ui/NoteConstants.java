@@ -1,6 +1,7 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.PositonSpec;
 
 public class NoteConstants {
 	public static final int ANCHOR_TYPE_LINE = 0;
@@ -9,6 +10,9 @@ public class NoteConstants {
 	public static final int LEN_FULLNOTE = 0;
 	public static final int LEN_HALFNOTE = 1;
 	public static final int LEN_QUATERNOTE = 2;
+	
+	public static final int ORIENT_UP = 0;
+	public static final int ORIENT_DOWN = 1;
 	
 	public static enum NoteModifier {
 		DOT,
@@ -73,6 +77,7 @@ public class NoteConstants {
 	public static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	public static final int SPACE1_ABSINDEX = NoteConstants.anchorIndex(1, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	public static final int SPACE2_ABSINDEX = NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE);
+	public static final int MIN_STEM_SPAN = 7;
 	
 	public static int anchorType(int anchorIndex) {
 		return Math.abs(anchorIndex%2);
@@ -87,12 +92,12 @@ public class NoteConstants {
 	}
 
 	public static boolean isUpsdown(int noteHeight) {
-		return noteHeight <= anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE);
+		return noteHeight < anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE);
 	}
 
-	public static int stemEnd(NoteSpec noteSpec) {
+	public static int stemEnd(PositonSpec noteSpec, int orientation) {
 		// FIXME real logic for discovering anchors
-		return noteSpec.positon() + (noteSpec.getOrientation() == NoteSpec.ORIENT_UP ? -7 : 7);
+		return noteSpec.positon() + (orientation == ORIENT_UP ? -MIN_STEM_SPAN : MIN_STEM_SPAN);
 	}
 
 	public static boolean hasStem(NoteSpec spec) {
@@ -100,5 +105,9 @@ public class NoteConstants {
 	}
 	public static boolean hasStem(int noteLength) {
 		return noteLength != 0;
+	}
+
+	public static int defaultOrientation(NoteSpec spec) {
+		return isUpsdown(spec.positon()) ? ORIENT_DOWN : ORIENT_UP;
 	}
 }

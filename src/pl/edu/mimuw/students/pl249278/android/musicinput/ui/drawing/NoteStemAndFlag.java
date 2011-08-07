@@ -1,12 +1,12 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteEnding;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgRenderer;
 import android.content.Context;
@@ -22,19 +22,21 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 	private int endingIMAnchor;
 	private float scaleE;
 
+	private float Xcorrection;
+
 	public NoteStemAndFlag(Context context, NoteHeadElement wrappedElement) throws NoteDescriptionLoadingException {
 		super(wrappedElement);
 		parseNoteSpec(context);
 	}
 	
 	private void parseNoteSpec(Context context) throws NoteDescriptionLoadingException {
-		NoteSpec noteSpec = ((ElementSpec.NormalNote) getElementSpec()).spec;
+		NormalNote noteSpec = (ElementSpec.NormalNote) getElementSpec();
 		
-		boolean upsdown = noteSpec.getOrientation() == NoteSpec.ORIENT_DOWN;
-		int endingAnchor = NoteConstants.stemEnd(noteSpec);
+		boolean upsdown = noteSpec.getOrientation() == NoteConstants.ORIENT_DOWN;
+		int endingAnchor = NoteConstants.stemEnd(noteSpec.noteSpec(), noteSpec.getOrientation());
 		
 		// discover appropriate parts images
-		this.ending = NotePartFactory.getEndingImage(context, noteSpec.length(), NoteConstants.anchorType(endingAnchor), upsdown);
+		this.ending = NotePartFactory.getEndingImage(context, noteSpec.lengthSpec().length(), NoteConstants.anchorType(endingAnchor), upsdown);
 		endingIMAnchor = imarkerAnchor(ending.getIMarker(), endingAnchor);
 	}
 	
@@ -45,9 +47,15 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 
 	private void sheetParamsCalculations() {
 		scaleE = wrappedElement.joinLineExactWidth() / lineXSpan(ending.getJoinLine());
-		int endJLx = (int) (ending.getJoinLine().first.x * scaleE); 
 		
-		int headRelativeXOffset = endJLx - wrappedElement.joinLineX(); 
+		float endJLpreciseX = ending.getJoinLine().first.x * scaleE;
+		int endJLx = (int) endJLpreciseX;
+		float headJLpreciseX = wrappedElement.joinLineLeft();
+		int headJLX = (int) headJLpreciseX;
+		
+		Xcorrection = (endJLx - endJLpreciseX) - (headJLX - headJLpreciseX);
+
+		int headRelativeXOffset = endJLx - headJLX; 
 		int headYOffset = wrappedElement.getOffsetToAnchor(NoteConstants.LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
 		int endingYOffset = sheetParams.anchorOffset(endingIMAnchor, part(ending.getIMarker()))
 			- (int) (ending.getIMarker().getLine().first.y * scaleE);
@@ -58,48 +66,64 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 			headRelativeYOffset
 		);
 		calcSize(
-			(int) (ending.getWidth()*scaleE),
-			(int) (ending.getHeight()*scaleE)
+			(int) Math.ceil(ending.getWidth()*scaleE),
+			(int) Math.ceil(ending.getHeight()*scaleE)
+		);
+	}
+	
+	@Override
+	public int collisionRegionLeft() {
+		return Math.min(
+			super.collisionRegionLeft(),
+			wrapperDrawOffset.x
+		);
+	}
+	
+	@Override
+	public int collisionRegionRight() {
+		return Math.max(
+			super.collisionRegionRight(),
+			wrapperDrawOffset.x + (int) Math.ceil(ending.getWidth()*scaleE)
 		);
 	}
 	
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
 		PointF headJLStart = new PointF(elementDrawOffset.x, elementDrawOffset.y);
-		headJLStart.offset(wrappedElement.joinLineX(), wrappedElement.joinLineY());
+		headJLStart.offset(
+			wrappedElement.joinLineLeft(), 
+			wrappedElement.joinLineY()
+		);
 		PointF endingJLEnd = new PointF(wrapperDrawOffset.x, wrapperDrawOffset.y);
 		endingJLEnd.offset(ending.getJoinLine().second.x*scaleE, ending.getJoinLine().second.y * scaleE);
 		
 		// draw in appropriate order (so shadow effect would compound correctly)
 		if(elementDrawOffset.y > wrapperDrawOffset.y) {
-			canvas.translate(wrapperDrawOffset.x, wrapperDrawOffset.y);
-			SvgRenderer.drawSvgImage(canvas, ending, scaleE, paint);
-			canvas.translate(-wrapperDrawOffset.x, -wrapperDrawOffset.y);
-			
-			canvas.drawRect(
-				headJLStart.x,
-				Math.min(headJLStart.y, endingJLEnd.y)-1,
-				endingJLEnd.x,
-				Math.max(headJLStart.y, endingJLEnd.y)+1,
-				paint
-			);
-	
+			drawEndingImage(canvas, paint);
+			drawStem(canvas, paint, headJLStart, endingJLEnd);
 			super.onDraw(canvas, paint);
 		} else {
 			super.onDraw(canvas, paint);
-			
-			canvas.drawRect(
-				headJLStart.x,
-				Math.min(headJLStart.y, endingJLEnd.y)-1,
-				endingJLEnd.x,
-				Math.max(headJLStart.y, endingJLEnd.y)+1,
-				paint
-			);
-	
-			canvas.translate(wrapperDrawOffset.x, wrapperDrawOffset.y);
-			SvgRenderer.drawSvgImage(canvas, ending, scaleE, paint);
-			canvas.translate(-wrapperDrawOffset.x, -wrapperDrawOffset.y);
+			drawStem(canvas, paint, headJLStart, endingJLEnd);
+			drawEndingImage(canvas, paint);
 		}
+	}
+
+	private void drawStem(Canvas canvas, Paint paint, PointF headJLStart,
+			PointF endingJLEnd) {
+		canvas.drawRect(
+			headJLStart.x,
+			Math.min(headJLStart.y, endingJLEnd.y)-1,
+			endingJLEnd.x + Xcorrection,
+			Math.max(headJLStart.y, endingJLEnd.y)+1,
+			paint
+		);
+	}
+
+	private void drawEndingImage(Canvas canvas, Paint paint) {
+		canvas.translate(wrapperDrawOffset.x + Xcorrection, wrapperDrawOffset.y);
+		SvgRenderer.drawSvgImage(canvas, ending, scaleE, paint);
+		canvas.translate(-(wrapperDrawOffset.x + Xcorrection), -wrapperDrawOffset.y);
 	}
 
 }

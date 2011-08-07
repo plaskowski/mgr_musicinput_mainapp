@@ -2,12 +2,12 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
 import static pl.edu.mimuw.students.pl249278.android.svg.SvgRenderer.drawSvgImage;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.EnhancedSvgImage.IMarker;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteHead;
 import android.content.Context;
@@ -15,8 +15,15 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 public class NoteHeadElement extends SheetAlignedElement {
+	static int METAVAL_JOINLINE_LEFT = registerIndex();
+	static int METAVAL_JOINLINE_RIGHT = registerIndex();
+	static int NOTEHEAD_LEFT = registerIndex();
+	static int NOTEHEAD_RIGHT = registerIndex();
+	static int AREA_NOTEHEAD_LEFT = registerIndex();
+	static int AREA_NOTEHEAD_RIGHT = registerIndex();
+	static int JOINLINE_Y = SheetAlignedElement.registerIndex();
 
-	private NoteSpec spec;
+	private ElementSpec.NormalNote spec;
 	private NoteHead head;
 	
 	private int headIM1Anchor;
@@ -24,19 +31,13 @@ public class NoteHeadElement extends SheetAlignedElement {
 	private float scale;
 	private AnchorPart headIM1AnchorPart;
 
-	public NoteHeadElement(Context context, NoteSpec noteSpec) throws NoteDescriptionLoadingException {
-		setNoteSpec(context, noteSpec);
-	}
-	
-	private void setNoteSpec(Context context, NoteSpec noteSpec)
-			throws NoteDescriptionLoadingException {
-		this.spec = noteSpec;
-		// FIXME real logic for discovering if it's upsidedown or normal
-		boolean upsdown = noteSpec.getOrientation() == NoteSpec.ORIENT_DOWN;
-		int headAnchor = noteSpec.positon();
+	public NoteHeadElement(Context context, NormalNote elementSpec) throws NoteDescriptionLoadingException {
+		this.spec = elementSpec;
+		boolean upsdown = spec.getOrientation() == NoteConstants.ORIENT_DOWN;
+		int headAnchor = spec.noteSpec().positon();
 		
 		// discover appropriate parts images
-		this.head = NotePartFactory.getHeadImage(context, noteSpec.length(), NoteConstants.anchorType(headAnchor), upsdown);
+		this.head = NotePartFactory.getHeadImage(context, spec.lengthSpec().length(), NoteConstants.anchorType(headAnchor), upsdown);
     	IMarker firstM = head.getImarkers().get(0), secondM = head.getImarkers().get(1);
 		headIM1Anchor = imarkerAnchor(firstM, headAnchor);
     	headIM1AnchorPart = part(firstM);
@@ -64,13 +65,13 @@ public class NoteHeadElement extends SheetAlignedElement {
 	@Override
 	public int measureHeight() {
 		assertParamsPresence();
-		return (int) (head.getHeight()*scale);
+		return (int) Math.ceil(head.getHeight()*scale);
 	}
 
 	@Override
 	public int measureWidth() {
 		assertParamsPresence();
-		return (int) (head.getWidth()*scale);
+		return (int) Math.ceil(head.getWidth()*scale);
 	}
 	
 	@Override
@@ -79,8 +80,37 @@ public class NoteHeadElement extends SheetAlignedElement {
 	}
 	
 	@Override
-	public int getMiddleX() {
-		return (int) (head.getxMiddleMarker() * scale);
+	public int getHorizontalOffset(int lineIdentifier) {
+		if(lineIdentifier == NOTEHEAD_LEFT || lineIdentifier == AREA_NOTEHEAD_LEFT) {
+			return 0;
+		} else if(lineIdentifier == NOTEHEAD_RIGHT || lineIdentifier == AREA_NOTEHEAD_RIGHT) {
+			return measureWidth();
+		} else if(lineIdentifier == SheetAlignedElement.MIDDLE_X) {
+			return (int) (head.getxMiddleMarker() * scale);
+		} else {
+			throw new UnsupportedOperationException();
+		}
+	}
+	
+	@Override
+	public int getVerticalOffset(int lineIdentifier) {
+		if(lineIdentifier == JOINLINE_Y) {
+			assertJLpresence();
+			return (int) joinLineY();
+		} else {
+			throw new UnsupportedOperationException();
+		}
+	}
+	
+	@Override
+	public float getMetaValue(int valueIndentifier, int param) {
+		if(valueIndentifier == METAVAL_JOINLINE_LEFT) {
+			return joinLineLeft();
+		} else if(valueIndentifier == METAVAL_JOINLINE_RIGHT) {
+			assertJLpresence();
+			return head.getJoinLine().second.x * scale;
+		}
+		throw new UnsupportedOperationException();
 	}
 	
 	@Override
@@ -94,7 +124,7 @@ public class NoteHeadElement extends SheetAlignedElement {
 	
 	@Override
 	public ElementSpec getElementSpec() {
-		return new ElementSpec.NormalNote(spec);
+		return spec;
 	}
 	
 	float joinLineExactWidth() {
@@ -102,13 +132,13 @@ public class NoteHeadElement extends SheetAlignedElement {
 		return scale * lineXSpan(head.getJoinLine());
 	}
 	
-	int joinLineX() {
+	float joinLineLeft() {
 		assertJLpresence();
-		return (int) (head.getJoinLine().first.x * scale);
+		return head.getJoinLine().first.x * scale;
 	}
-	int joinLineY() {
+	float joinLineY() {
 		assertJLpresence();
-		return (int) (head.getJoinLine().first.y * scale);
+		return head.getJoinLine().first.y * scale;
 	}
 
 	private void assertJLpresence() {

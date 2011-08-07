@@ -8,11 +8,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.NoteMo
 public class NoteSpec extends PauseSpec implements PositonSpec {
 	private int postion;
 	
-	public static final int ORIENT_UP = 0;
-	public static final int ORIENT_DOWN = 1;
-	
-	private static final int FLAG_ORIENT = FLAGS_AMOUNT;
-	private static final int FLAG_JOINARC = FLAG_ORIENT+1;
+	private static final int FLAG_JOINARC = FLAGS_AMOUNT;
 	private static final int FLAG_GROUPED = FLAG_JOINARC+1;
 	private static final int FLAG_TONEMODIFIER_L = FLAG_GROUPED+1;
 	private static final int FLAG_TONEMODIFIER_H = FLAG_TONEMODIFIER_L+1;
@@ -30,24 +26,9 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 		}
 	}
 	
-	/**
-	 * Assumes orientation := ORIENT_UP
-	 */
 	public NoteSpec(int length, int postion) {
-		this(length, postion, NoteConstants.isUpsdown(postion) ? ORIENT_DOWN : ORIENT_UP);
-	}
-	public NoteSpec(int length, int postion, int orientation) {
 		super(length);
 		this.postion = postion;
-		setOrientation(orientation);
-	}
-	
-	public void setOrientation(int orientation) {
-		setFlag(FLAG_ORIENT, orientation);
-	}
-	public int getOrientation() {
-		 int flag = getFlag(FLAG_ORIENT);
-		return flag;
 	}
 	
 	public void setHasJoinArc(boolean hasJoinArc) {
@@ -86,6 +67,14 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 	}
 	public boolean hasDot() {
 		return dotExtension() > 0;
+	}
+
+	public boolean isGrouped() {
+		return getFlag(FLAG_GROUPED) == 1;
+	}
+
+	public void setIsGrouped(boolean isGrouped) {
+		setFlag(FLAG_GROUPED, isGrouped ? 1 : 0);
 	}
 	
 }

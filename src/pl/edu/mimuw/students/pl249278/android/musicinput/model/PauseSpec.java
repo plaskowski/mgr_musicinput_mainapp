@@ -1,5 +1,7 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.model;
 
+import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
+
 public class PauseSpec implements LengthSpec {
 	private int length;
 	private int flags;
@@ -11,10 +13,10 @@ public class PauseSpec implements LengthSpec {
 	}
 	
 	protected int getFlag(int flag) {
-		return (flags >> flag) & 1;
+		return IntUtils.getFlag(flags, flag);
 	}
 	protected void setFlag(int flag, int flagVal) {
-		flags = (flags & ~(1<<flag)) | ((flagVal & 1) << flag); 
+		flags = IntUtils.setFlag(flags, flag, flagVal);
 	}
 	
 	/** 
@@ -22,12 +24,11 @@ public class PauseSpec implements LengthSpec {
 	 * @return 
 	 */
 	protected int getValue(int highestBitIndex, int lowestBitIndex) {
-		return (flags >> lowestBitIndex) & ((1<<(highestBitIndex-lowestBitIndex+1))-1);
+		return IntUtils.getValue(flags, highestBitIndex, lowestBitIndex);
 	}
 	
 	protected void putValue(int highestBitIndex, int lowestBitIndex, int value) {
-		int mask = (1<<(highestBitIndex-lowestBitIndex+1))-1;
-		flags = (flags & ~(mask << lowestBitIndex)) | ((value & mask) << lowestBitIndex);
+		flags = IntUtils.putValue(flags, highestBitIndex, lowestBitIndex, value);
 	}	
 
 	public int length() {

@@ -9,9 +9,11 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 		private float scale = 1;
 		private int minSpaceAnchor;
 		private int maxSpaceAnchor;
+		
 		private TimeSpec.TimeStep timeStep;
 		private NoteConstants.Clef clef;
 		private NoteConstants.KeySignature keySignature;
+		private DisplayMode displayMode = DisplayMode.NORMAL;
 		
 		public SheetParams(int lineFactor, int linespacingFactor) {
 			super();
@@ -29,6 +31,12 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 			BOTTOM_EDGE,
 			TOP_EDGE
 		}
+		
+		public static enum DisplayMode {
+			NORMAL,
+			UPPER_VOICE,
+			LOWER_VOICE
+		};
 		
 		private static int line0absIndex = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE);
 		
@@ -121,6 +129,14 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 
 		public void setKeySignature(NoteConstants.KeySignature keySignature) {
 			this.keySignature = keySignature;
+		}
+
+		public DisplayMode getDisplayMode() {
+			return displayMode;
+		}
+
+		public void setDisplayMode(DisplayMode displayMode) {
+			this.displayMode = displayMode;
 		}
 
 	}

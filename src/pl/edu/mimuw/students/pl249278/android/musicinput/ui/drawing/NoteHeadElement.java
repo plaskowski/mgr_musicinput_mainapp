@@ -42,10 +42,6 @@ public class NoteHeadElement extends SheetAlignedElement {
 		headIM1Anchor = imarkerAnchor(firstM, headAnchor);
     	headIM1AnchorPart = part(firstM);
 		headIM2Anchor = imarkerAnchor(secondM, headAnchor);
-
-		if(sheetParams != null) {
-			sheetParamsCalculations();
-		}
 	}
 	
 	public void setSheetParams(SheetParams params) {

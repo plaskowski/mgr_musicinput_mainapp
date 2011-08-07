@@ -5,7 +5,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPa
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetElement;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;

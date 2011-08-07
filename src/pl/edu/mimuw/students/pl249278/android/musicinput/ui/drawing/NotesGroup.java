@@ -29,13 +29,15 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 	private SheetAlignedElement[] elements;
 	private int[] xpositions;
 	private int groupOrientation;
+	private Paint wrapperPaint;
 
-	private NotesGroup(SheetAlignedElement firstElement, int totalElements, int orientation) {
+	private NotesGroup(SheetAlignedElement firstElement, int totalElements, int orientation, Paint wrapperPaint) {
 		super(firstElement);
 		elements = new SheetAlignedElement[totalElements];
 		xpositions = new int[totalElements];
 		Arrays.fill(xpositions, -1);
 		this.groupOrientation = orientation;
+		this.wrapperPaint = wrapperPaint;
 		
 		elements[0] =  firstElement;
 	}
@@ -65,27 +67,46 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 		assert(elements.length > 1);
 		if(!isValid()) {
 			calcNoVisibleWrapper();
-			log.i("recalculate(), calculated when invalid %dx%d", totalWidth, totalHeight);
+			log.i("INVALID recalculate(), calculated when invalid %dx%d", totalWidth, totalHeight);
 			return;
 		}
+		
+		float slopesSum = 0;
+		int prevStemTop = stemTop(0);
+		int prevStemMiddleX = absJMiddeX(0);
+		for(int i = 1; i < elements.length; i++) {
+			int stemTop = stemTop(i);
+			int stemMiddleX = absJMiddeX(i);
+			float slope = ((float) stemTop - prevStemTop)/(stemMiddleX - prevStemMiddleX);
+			if(slope == 0 || (slope < 0 && slopesSum <= 0) || (slope > 0 && slopesSum >= 0)) {
+				slopesSum += slope;
+			} else {
+				slopesSum = 0;
+				break;
+			}
+			prevStemTop = stemTop;
+			prevStemMiddleX = stemMiddleX;
+		}
+		slope = slopesSum / (elements.length-1);
 		
 		int sign = groupOrientation == ORIENT_DOWN ? 1 : -1;
 		Point stemEndExtremum = new Point(absJMiddeX(0), stemTop(0));
 		int jlYextremum = joinLineY(0);
 		for(int i = 1; i < elements.length; i++) {
-			int currentTop = stemTop(i);
-			if(currentTop*sign > stemEndExtremum.y*sign) {
+			int middleX = absJMiddeX(i);
+			int actualTop = (int) (slope*(middleX-stemEndExtremum.x) + stemEndExtremum.y);
+			int minimumTop = stemTop(i);
+			if(minimumTop*sign > actualTop*sign) {
 				stemEndExtremum.x = absJMiddeX(i);
-				stemEndExtremum.y = currentTop;
+				stemEndExtremum.y = minimumTop;
 			}
 			int currentJLy = joinLineY(i);
 			if(currentJLy*sign < jlYextremum*sign) {
 				jlYextremum = currentJLy;
 			}
 		}
-		int last = elements.length-1;
-		slope = ((float) (stemTop(last)-stemTop(0)))/(absJRight(last)-absJLLeft(0));
 		
+		int last = elements.length-1;
 		start.x = (int) jLeft(0);
 		start.y = (int) (stemEndExtremum.y - slope * (stemEndExtremum.x - absJLLeft(0)));
 		end.x = xpositions[last] - xpositions[0] + (int) Math.ceil(jRight(last));
@@ -113,8 +134,6 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
 		super.onDraw(canvas, paint);
-		
-		// TODO wprowadzić oddzielny Paint dla wiązania
 		
 		int translateY = -getOffsetToAnchor(LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
 		canvas.translate(0, translateY);
@@ -173,7 +192,7 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 			prevLength = currLength;
 		}
 		path.close();
-		canvas.drawPath(path, paint);
+		canvas.drawPath(path, wrapperPaint);
 		
 		canvas.translate(0, -translateY);
 	}
@@ -203,7 +222,7 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 	private int stemTop(int index) {
 		SheetAlignedElement current = elements[index];
 		int stemEndAnchor = current.getElementSpec().positonSpec().positon()+(groupOrientation == ORIENT_DOWN ? 1 : -1)*MIN_STEM_SPAN;
-		return sheetParams.anchorOffset(stemEndAnchor, AnchorPart.MIDDLE);
+		return sheetParams.anchorOffset(stemEndAnchor, AnchorPart.TOP_EDGE);
 	}
 	private int absJMiddeX(int index) {
 		return (absJRight(index)+absJLLeft(index))/2;
@@ -309,6 +328,7 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 		private int buildIndex = -1;
 		private int orientation = -1;
 		private NotesGroup notesGroup;
+		private Paint wrapperPaint;
 
 		public GroupBuilder(SheetParams params, ElementSpec firstElementSpec) {
 			specs.add((NormalNote) firstElementSpec);
@@ -348,7 +368,7 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 		/**
 		 * Modified accumulated ElementSpec-s accordingly to logic of GroupBuilder
 		 */
-		public void build() {
+		public void build(Paint wrapperPaint) {
 			/**
 			 * czy wiązanie ma być na górze czy na dole,
 			 * orient < 0,  wiązanie na dole
@@ -374,7 +394,7 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 				}
 			}
 			this.buildIndex = 0;
-			
+			this.wrapperPaint = wrapperPaint;
 		}
 
 		public boolean hasNext() {
@@ -391,7 +411,7 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 			assert buildIndex < specs.size();
 			if(buildIndex == 0) {
 				if(specs.size() > 1) {
-					notesGroup = new NotesGroup(model, specs.size(), orientation);
+					notesGroup = new NotesGroup(model, specs.size(), orientation, wrapperPaint);
 					notesGroup.setMeasureObserver(groupObserver);
 					model = notesGroup;
 				}

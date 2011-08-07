@@ -220,50 +220,52 @@ public class EditActivity extends Activity {
 //		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 //		rawNotesSequence.add(new ElementSpec.NormalNote(n4));
 		
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINE));
-		n.setToneModifier(NoteModifier.SHARP);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINESPACE));
-		n.setHasDot(true);
-		n.setToneModifier(NoteModifier.SHARP);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINE));
-		n.setToneModifier(NoteModifier.SHARP);
-		n.setHasDot(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(5, NoteConstants.ANCHOR_TYPE_LINE));
-		n.setIsGrouped(true);
-		n.setHasDot(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(1, NoteConstants.ANCHOR_TYPE_LINE));
-		n.setIsGrouped(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
-		n.setIsGrouped(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINE));
+//		n.setToneModifier(NoteModifier.SHARP);
+//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINESPACE));
+////		n.setHasDot(true);
+//		n.setToneModifier(NoteModifier.SHARP);
+//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINE));
+//		n.setToneModifier(NoteModifier.SHARP);
+////		n.setHasDot(true);
+//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE));
+//		n.setIsGrouped(true);
+//		n.setHasDot(true);
+//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE));
+//		n.setIsGrouped(true);
+//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(6, NoteConstants.ANCHOR_TYPE_LINESPACE));
+////		n.setIsGrouped(true);
+//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 		
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE));
-		n.setIsGrouped(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+2, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
-		n.setIsGrouped(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(5, NoteConstants.ANCHOR_TYPE_LINE));
-		n.setIsGrouped(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE));
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE));
+//		n.setIsGrouped(true);
+//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+2, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
+//		n.setIsGrouped(true);
+//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(5, NoteConstants.ANCHOR_TYPE_LINE));
+//		n.setIsGrouped(true);
+//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		
+//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE));
+//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINE));
 		n.setHasJoinArc(true);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
+//		n.setHasJoinArc(true);
 		n.setIsGrouped(true);
 		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
-		n.setHasJoinArc(true);
-		n.setIsGrouped(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
 //		n.setHasJoinArc(true);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		
 //		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINESPACE));
 //		n.setHasJoinArc(true);
 //		rawNotesSequence.add(new ElementSpec.NormalNote(n));
@@ -318,13 +320,14 @@ public class EditActivity extends Activity {
 					times.add(newTime);
 					newTime.rangeStart = i;
 					capLeft = timeCapacity(currentMetrum, minPossibleValue);
+//					log.i("creating time[%d]", timeIndex);
 				}
-				Time currentTime = times.get(timeIndex);
 				if(rawNotesSequence.get(i).getType() == ElementType.FAKE_PAUSE) {
 					rawNotesSequence.remove(i);
 					continue;
 				}
 				int width = rawNotesSequence.get(i).timeValue(minPossibleValue);
+//				log.i("try insert note[%d] (timeValue %d) into time[%d] (with cap left %d)", i, width, timeIndex, capLeft);
 				if(width <= capLeft) {
 					capLeft -= width;
 					if(capLeft == 0) {
@@ -363,7 +366,7 @@ public class EditActivity extends Activity {
 								break;
 							}
 						}
-						gb.build();
+						gb.build(normalPaint);
 					} 
 					SheetAlignedElement model = createDrawingModel(spec);
 					if(gb != null) {
@@ -375,6 +378,7 @@ public class EditActivity extends Activity {
 					if(spec.getType() == ElementType.NOTE) {
 						if(arc != null) {
 							model = arc.wrapRightElement(model);
+							arc = null;
 						}
 						if(((ElementSpec.NormalNote) spec).noteSpec().hasJoinArc()) {
 							arc = new JoinArc(model);
@@ -710,7 +714,7 @@ public class EditActivity extends Activity {
 		public void onScaleEnd() {
 			scaleGestureDetector.setTouchInputLocked(true);
 			// find new rightToIA
-			log.i("onScaleEnd(): old right: %d", rightToIA);
+//			log.i("onScaleEnd(): old right: %d", rightToIA);
 			int IAmiddle = visibleRectWidth - iaRightMargin -inputAreaWidth/2;
 			final int elementsCount = elementViews.size();
 			if(elementsCount == 1) {
@@ -730,7 +734,7 @@ public class EditActivity extends Activity {
 					rightToIA++;
 				}
 			}
-			log.i("onScaleEnd(): new right: %d", rightToIA);
+//			log.i("onScaleEnd(): new right: %d", rightToIA);
 			
 			int leftToIAArea = visibleRectWidth -inputAreaWidth - iaRightMargin - delta + mTouchSlop;
 			// scroll sheet so left border of IA matches: 
@@ -754,7 +758,7 @@ public class EditActivity extends Activity {
 						};
 						for(int i = rightToIA; i < elementsCount; i++) {
 							SheetAlignedElementView view = elementViews.get(i);
-							log.i("onScaleEnd() shifts note[%d] from x: %d", i, leftMargin(view)); 
+//							log.i("onScaleEnd() shifts note[%d] from x: %d", i, leftMargin(view)); 
 							animator.startRLAnimation(view, inputAreaWidth+2*delta, 300, listn);
 						}
 					}
@@ -996,6 +1000,7 @@ public class EditActivity extends Activity {
 	}
 
 	private void updateScaleFactor(float newScaleFactor) {
+		log.i("newScaleFactor: %f", newScaleFactor);
 		sheetParams.setScale(newScaleFactor);
 		MIN_DRAW_SPACING = (int) (minDrawSpacingFactor*sheetParams.getScale());
 		NOTE_DRAW_PADDING = (int) (noteShadow * sheetParams.getScale());

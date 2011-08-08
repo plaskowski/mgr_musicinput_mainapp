@@ -8,7 +8,6 @@ import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.Eleme
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -61,10 +60,7 @@ import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Interpolator;
 import android.widget.HorizontalScrollView;
-import android.widget.RelativeLayout;
 
 public class EditActivity extends Activity {
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
@@ -83,7 +79,7 @@ public class EditActivity extends Activity {
 	
 	private Sheet5LinesView lines;
 	private SheetParams sheetParams;
-	private RelativeLayout sheet;
+	private ViewGroup sheet;
 	private ArrayList<Time> times;
 	private ArrayList<SheetAlignedElementView> elementViews = new ArrayList<SheetAlignedElementView>();
 	private ArrayList<SheetElementView<SheetElement>> overlaysViews = new ArrayList<SheetElementView<SheetElement>>();
@@ -92,7 +88,7 @@ public class EditActivity extends Activity {
 	private HorizontalScrollView hscroll;
 	private ModifiedScrollView vertscroll;
 	private ScaleGestureInterceptor scaleGestureDetector;
-	private LayoutAnimator animator = new LayoutAnimator();
+	private Animator animator = new EditActivity.Animator(this);
 	private SheetAlignedElementView newNote;
 	
 	/**
@@ -150,12 +146,11 @@ public class EditActivity extends Activity {
 		scaleGestureDetector = (ScaleGestureInterceptor) findViewById(R.id.EDIT_scale_detector);
 		hscroll = (HorizontalScrollView) findViewById(R.id.EDIT_outer_hscrollview);
 		vertscroll = (ModifiedScrollView) findViewById(R.id.EDIT_vertscrollview);
-		sheet = (RelativeLayout) findViewById(R.id.EDIT_sheet_container);
-		lines = new Sheet5LinesView(this);
+		sheet = (ViewGroup) findViewById(R.id.EDIT_sheet_container);
+		lines = (Sheet5LinesView) findViewById(R.id.EDIT_sheet_5lines);
 		int hColor = getResources().getColor(R.color.highlightColor);
 		lines.setHiglightColor(hColor);
 		noteHighlightPaint.setColor(hColor);
-		sheet.addView(lines, new LayoutParams(LayoutParams.FILL_PARENT, 100));
 		scaleGestureDetector.setOnScaleListener(scaleListener);
 		// TODO restore
 //		sheet.setOnTouchListener(iaTouchListener);
@@ -662,32 +657,32 @@ public class EditActivity extends Activity {
 		private int elementVisibleX(int elIndex) {
 			SheetAlignedElementView element = elementViews.get(elIndex);
 			int x;
-			LayoutAnimator.LayoutAnimation<?> anim = null;
+			LayoutAnimator.LayoutAnimation<?, ?> anim = null;
 			if((anim = animator.getAnimation(element)) != null) {
 				x = anim.destValue();
 			} else {
-				x = leftMargin(element);
+				x = left(element);
 			}
 			int middle = x - hscroll.getScrollX() + middleX(element);
 			return middle;
 		}
 		
 		private void moveRight(int elIndex) {
-			move(elIndex, 2*delta+inputAreaWidth);
+			move(elIndex, moveDistance());
 		}
 		
 		private void moveLeft(int elIndex) {
-			move(elIndex, -2*delta-inputAreaWidth);
+			move(elIndex, -moveDistance());
 		}
 		
 		private void move(int elIndex, int xDelta) {
 			SheetAlignedElementView element = elementViews.get(elIndex);
-			LayoutAnimator.LayoutAnimation<?> anim = animator.getAnimation(element);
+			LayoutAnimator.LayoutAnimation<EditActivity, ?> anim = animator.getAnimation(element);
 			if(anim != null) {
 				// reverse animation
 				animator.stopAnimation(anim);
-				int dx = anim.startValue()-leftMargin(element);
-//				log.i("Reverse animation %d--[%d]-->", leftMargin(firstToRight), dx);
+				int dx = anim.startValue()-left(element);
+//				log.i("Reverse animation %d--[%d]-->", left(firstToRight), dx);
 				animator.startRLAnimation(element, dx, ANIM_TIME/3);
 			} else {
 				animator.startRLAnimation(element, xDelta, ANIM_TIME);
@@ -756,8 +751,7 @@ public class EditActivity extends Activity {
 						};
 						for(int i = rightToIA; i < elementsCount; i++) {
 							SheetAlignedElementView view = elementViews.get(i);
-//							log.i("onScaleEnd() shifts note[%d] from x: %d", i, leftMargin(view)); 
-							animator.startRLAnimation(view, inputAreaWidth+2*delta, 300, listn);
+							animator.startRLAnimation(view, moveDistance(), 300, listn);
 						}
 					}
 				}
@@ -825,72 +819,37 @@ public class EditActivity extends Activity {
 		    && index-1 > 0 && elementViews.get(index-1).model().getElementSpec().getType() != ElementType.FAKE_PAUSE;
 	}
 
-	private static class LayoutAnimator implements Runnable {
-		private static Interpolator interpolator = new AccelerateDecelerateInterpolator();
-
-		private static abstract class LayoutAnimation<ViewType extends View> {
-			protected int start_value;
-			protected int delta;
-			private long duration;
-			private long elapsed = 0;
-			protected ViewType view;
-			protected Runnable onAnimationEndListener = null;
-			
-			public LayoutAnimation(ViewType view, int start_value, int delta, long duration, Runnable onAnimationEndListener) {
-				this(view, start_value, delta, duration);
-				this.onAnimationEndListener = onAnimationEndListener;
-			}
-			public LayoutAnimation(ViewType view, int start_value, int delta, long duration) {
-				this.view = view;
-				this.start_value = start_value;
-				this.delta = delta;
-				this.duration = duration;
-			}
-			public void apply() {
-				apply(interpolator.getInterpolation(((float) elapsed)/duration));
-			}
-			protected abstract void apply(float state);
-			public int startValue() {
-				return start_value;
-			}
-			public int destValue() {
-				return start_value+delta;
-			}
-			public boolean isFinished() {
-				return elapsed == duration;
-			}
+	private static class Animator extends LayoutAnimator<EditActivity> {
+		public Animator(EditActivity ctx) {
+			super(ctx);
 		}
-		private static class RLAnimation extends LayoutAnimation<View> {
+		
+		private static class RLAnimation extends LayoutAnimation<EditActivity, View> {
 			public RLAnimation(View view, int currentLMargin, int delta, long duration) {
 				super(view, currentLMargin, delta, duration);
 			}
 
-			protected void apply(float state) {
-				updatePosition(view, start_value + (int) (delta*state), null);
+			protected void apply(EditActivity ctx, float state) {
+				ctx.updatePosition(view, start_value + (int) (delta*state), null);
 			}
 		}
-		private static class HScrollAnimation extends LayoutAnimation<HorizontalScrollView> {
+		private static class HScrollAnimation extends LayoutAnimation<EditActivity, HorizontalScrollView> {
 			
 			public HScrollAnimation(HorizontalScrollView view, int scrollStartX, int scrollDelta, 
 					long duration, Runnable onAnimationEndListener) {
 				super(view, scrollStartX, scrollDelta, duration, onAnimationEndListener);
 			}
 
-			protected void apply(float state) {
+			protected void apply(EditActivity ctx, float state) {
 				view.scrollTo(start_value + (int) (delta*state), 0);
 			}
 		}
-		
-		private ArrayList<LayoutAnimation<?>> animations = new ArrayList<LayoutAnimator.LayoutAnimation<?>>();
-		private Handler mHandler = new Handler();
-		private boolean mIsRunning = false;
-		private long lastticktime;
 		
 		public void startRLAnimation(View view, int dx, int duration) {
 			startRLAnimation(view, dx, duration, null);
 		}
 		public void startRLAnimation(View view, int dx, long duration, Runnable listn) {
-			RLAnimation anim = new RLAnimation(view, leftMargin(view), dx, duration);
+			RLAnimation anim = new RLAnimation(view, left(view), dx, duration);
 			anim.onAnimationEndListener = listn;
 //			log.i("startAnimation(): %d --[%d]--> %d, dur: %d", anim.start_value, dx, anim.start_value+dx, duration);
 			mStartAnimation(anim);
@@ -899,71 +858,6 @@ public class EditActivity extends Activity {
 			HScrollAnimation anim = new HScrollAnimation(hscrollView, hscrollView.getScrollX(), scrollDelta, duration, onAnimationEndListener);
 			mStartAnimation(anim);
 		}
-		private void mStartAnimation(LayoutAnimation<?> anim) {
-			animations.add(anim);
-			if(!mIsRunning) {
-				lastticktime = System.currentTimeMillis(); 
-				mHandler.post(this);
-				mIsRunning = true;
-			}
-		}
-		
-		public void forceFinishAll() {
-			if(mIsRunning) {
-				mHandler.removeCallbacks(this);
-				mIsRunning = false;
-			}
-			if(!animations.isEmpty()) {
-				for (LayoutAnimation<?> anim: animations) {
-					anim.elapsed = anim.duration;
-					anim.apply();
-				}
-				animations.clear();
-			}
-		}
-
-		public void stopAnimation(LayoutAnimation<?> anim) {
-			animations.remove(anim);
-			if(animations.isEmpty()) {
-				mHandler.removeCallbacks(this);
-				mIsRunning = false;
-			}
-		}
-
-		public LayoutAnimation<?> getAnimation(View view) {
-			for (LayoutAnimation<?> anim : animations) {
-				if(anim.view == view) return anim;
-			}
-			return null;
-		}
-
-		private ArrayList<LayoutAnimation<?>> temp = new ArrayList<LayoutAnimation<?>>();
-		@Override
-		public void run() {
-			long currTime = System.currentTimeMillis();
-			long tick = currTime-lastticktime;
-			lastticktime = currTime;
-			for (Iterator<LayoutAnimation<?>> it = animations.iterator(); it.hasNext();) {
-				LayoutAnimation<?> anim = (LayoutAnimation<?>) it.next();
-				anim.elapsed = Math.min(anim.elapsed+tick, anim.duration);
-				anim.apply();
-				if(anim.isFinished()) {
-					it.remove();
-					temp.add(anim);
-				}
-			}
-			mIsRunning = !animations.isEmpty();
-			if(mIsRunning) {
-				mHandler.post(this);
-			}
-			for(LayoutAnimation<?> anim: temp) {
-				if(anim.onAnimationEndListener != null) {
-					anim.onAnimationEndListener.run();
-				}
-			}
-			temp.clear();
-		}
-		
 	}
 	
 	protected void onContainerResize(int visibleRectWidth, int visibleRectHeight) {
@@ -1227,7 +1121,7 @@ public class EditActivity extends Activity {
 	}
 	
 	private static int middleAbsoluteX(SheetAlignedElementView view) {
-		return leftMargin(view)+middleX(view);
+		return left(view)+middleX(view);
 	}
 
 	private static int middleX(SheetAlignedElementView view) {
@@ -1242,15 +1136,15 @@ public class EditActivity extends Activity {
 		return length(timeStep.getTempoBaseLength(), measureBaseUnit)*timeStep.getBaseMultiplier();
 	}
 	
-	private static int leftMargin(View view) {
-		return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).leftMargin;
+	private int moveDistance() {
+		return 2*delta+inputAreaWidth-mTouchSlop;
 	}
-
+	
 	private static int declaredWidth(View view) {
 		return view.getLayoutParams().width;
 	}
 	
-	private static Map<SheetAlignedElement, Set<ElementsOverlay>> bindMap = new HashMap<SheetAlignedElement, Set<ElementsOverlay>>(); 
+	private Map<SheetAlignedElement, Set<ElementsOverlay>> bindMap = new HashMap<SheetAlignedElement, Set<ElementsOverlay>>(); 
 	private void bind(ElementsOverlay overlay, SheetAlignedElement model) {
 		if(bindMap.get(model) == null) {
 			bindMap.put(model, new LinkedHashSet<ElementsOverlay>());
@@ -1259,7 +1153,11 @@ public class EditActivity extends Activity {
 		bindMap.get(model).add(overlay);
 	}
 	
-	private static void updatePosition(View v, Integer left, Integer top) {
+	private static int left(View view) {
+		return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).leftMargin;
+	}
+
+	private void updatePosition(View v, Integer left, Integer top) {
 		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
 		if(left != null) params.leftMargin = left;
 		if(top != null) params.topMargin = top;

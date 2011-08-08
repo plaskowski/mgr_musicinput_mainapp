@@ -52,6 +52,11 @@
 			    	android:layout_width="300px"
 			    	android:layout_height="300px"
 			   	>
+			   		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.Sheet5LinesView
+					android:id='@+id/EDIT_sheet_5lines'  
+			    	android:layout_width="fill_parent"
+			    	android:layout_height="100px"
+			   		/>
 			   	</RelativeLayout>
 			</pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView>
 	    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView>

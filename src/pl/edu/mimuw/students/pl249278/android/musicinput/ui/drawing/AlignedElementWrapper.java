@@ -117,9 +117,4 @@ public abstract class AlignedElementWrapper<WrappedType extends SheetAlignedElem
 		wrappedElement.onDraw(canvas, paint);
 		canvas.translate(-elementDrawOffset.x, -elementDrawOffset.y);
 	}
-	
-	@Override
-	public void positionChanged(int newAbsoluteX, int newAbsoluteY) {
-		wrappedElement.positionChanged(elementDrawOffset.x+newAbsoluteX, elementDrawOffset.y+newAbsoluteY);
-	}
 }

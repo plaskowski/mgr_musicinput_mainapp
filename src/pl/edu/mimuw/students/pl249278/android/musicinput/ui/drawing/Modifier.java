@@ -70,6 +70,23 @@ public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement
 			return super.getHorizontalOffset(lineIdentifier);
 		}
 	}
+	
+	@Override
+	public int getVerticalOffset(int lineIdentifier) {
+		if(lineIdentifier == NoteHeadElement.AREA_NOTEHEAD_TOP) {
+			return Math.min(
+				wrapperDrawOffset.y,
+				super.getVerticalOffset(lineIdentifier)
+			);
+		} else if(lineIdentifier == NoteHeadElement.AREA_NOTEHEAD_BOTTOM) {
+			return Math.max(
+				wrapperDrawOffset.y + modifierElement.measureHeight(),
+				super.getVerticalOffset(lineIdentifier)
+			);
+		} else {
+			return super.getVerticalOffset(lineIdentifier);
+		}
+	}
 
 	protected abstract int elementOffsetX(int spacing);
 

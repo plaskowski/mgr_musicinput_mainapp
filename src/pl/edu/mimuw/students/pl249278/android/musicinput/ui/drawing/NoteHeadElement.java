@@ -21,6 +21,8 @@ public class NoteHeadElement extends SheetAlignedElement {
 	static int NOTEHEAD_RIGHT = registerIndex();
 	static int AREA_NOTEHEAD_LEFT = registerIndex();
 	static int AREA_NOTEHEAD_RIGHT = registerIndex();
+	static int AREA_NOTEHEAD_TOP = registerIndex();
+	static int AREA_NOTEHEAD_BOTTOM = registerIndex();
 	static int JOINLINE_Y = SheetAlignedElement.registerIndex();
 
 	private ElementSpec.NormalNote spec;
@@ -93,6 +95,10 @@ public class NoteHeadElement extends SheetAlignedElement {
 		if(lineIdentifier == JOINLINE_Y) {
 			assertJLpresence();
 			return (int) joinLineY();
+		} else if(lineIdentifier == AREA_NOTEHEAD_TOP) {
+			return 0;
+		} else if(lineIdentifier == AREA_NOTEHEAD_BOTTOM) {
+			return measureHeight();
 		} else {
 			throw new UnsupportedOperationException();
 		}

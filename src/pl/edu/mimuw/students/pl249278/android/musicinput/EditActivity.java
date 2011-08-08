@@ -5,12 +5,13 @@ import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart.BOTTOM_EDGE;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart.TOP_EDGE;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.length;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.overallLength;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
@@ -34,10 +35,13 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPa
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementsOverlay;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementsOverlay.Observer;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.JoinArc;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotesGroup;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotesGroup.GroupBuilder;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.TimeDivider;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.Sheet5LinesView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.SheetAlignedElementView;
@@ -82,6 +86,7 @@ public class EditActivity extends Activity {
 	private RelativeLayout sheet;
 	private ArrayList<Time> times;
 	private ArrayList<SheetAlignedElementView> elementViews = new ArrayList<SheetAlignedElementView>();
+	private ArrayList<SheetElementView<SheetElement>> overlaysViews = new ArrayList<SheetElementView<SheetElement>>();
 	private int inputAreaWidth;
 	private View inputArea;
 	private HorizontalScrollView hscroll;
@@ -136,7 +141,7 @@ public class EditActivity extends Activity {
 			getResources().getInteger(R.integer.lineThickness),
 			getResources().getInteger(R.integer.linespaceThickness)
 		);
-		sheetParams.setTimeStep(new TimeSpec.TimeStep(3, 1));
+		sheetParams.setTimeStep(new TimeSpec.TimeStep(3, 2));
 		sheetParams.setClef(NoteConstants.Clef.VIOLIN);
 		sheetParams.setKeySignature(KeySignature.B_DUR);
 		sheetParams.setMinSpaceAnchor(getResources().getInteger(R.integer.minSpaceDefault));
@@ -252,57 +257,43 @@ public class EditActivity extends Activity {
 //		n.setIsGrouped(true);
 //		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 		
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE));
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINE));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
 		n.setHasJoinArc(true);
 		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
+//		n.setHasJoinArc(true);
+		n.setToneModifier(NoteModifier.FLAT);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 		
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE));
+		n.setHasJoinArc(true);
+		n.setIsGrouped(true);
+//		n.setHasDot(true);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
+//		n.setToneModifier(NoteModifier.FLAT);
 //		n.setHasJoinArc(true);
 		n.setIsGrouped(true);
 		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
+		n.setHasJoinArc(true);
+//		n.setIsGrouped(true);
+//		n.setHasDot(true);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
+//		n.setToneModifier(NoteModifier.FLAT);
+		n.setHasJoinArc(true);
+//		n.setIsGrouped(true);
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
 //		n.setHasJoinArc(true);
 		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 		
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINESPACE));
-//		n.setHasJoinArc(true);
+//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE));
+////		n.setHasJoinArc(true);
 //		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(5, NoteConstants.ANCHOR_TYPE_LINESPACE));
-//		n.setHasJoinArc(true);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n4));
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n4));
-//		ns = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(1, NoteConstants.ANCHOR_TYPE_LINE));
-//		ns.setToneModifier(NoteModifier.SHARP);
-//		ns.setHasDot(true);
-//		models.add(new ElementSpec.NormalNote(ns));
-//		models.add(new ElementSpec.NormalNote(
-//			new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE)))
-//		);
-//		models.add(new ElementSpec.NormalNote(
-//			new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE)))
-//		);
-//		models.add(new ElementSpec.NormalNote(
-//			new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE)))
-//		);
-//		models.add(new ElementSpec.NormalNote(
-//			new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE)))
-//		);
-//		models.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE)));
-//		models.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE)));
-//		models.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE)));
-//		models.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINESPACE)));
-		/*
-		models.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINESPACE)));
-//		models.add(new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE)));
-		models.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINESPACE)));
-		models.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE)));
-//		models.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, LINE0_ABSINDEX));
-		models.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE)));
-		models.add(new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(1, NoteConstants.ANCHOR_TYPE_LINE)));
-		*/
+		
 		// re-create times
 		times = new ArrayList<EditActivity.Time>();
 		Time firstTime = new Time(new TimeSpec(
@@ -356,33 +347,40 @@ public class EditActivity extends Activity {
 				));
 				int firstEl = times.get(i).rangeStart;
 				int lastEl = (i+1 < times.size() ? times.get(i+1).rangeStart : rawNotesSequence.size()) - 1; 
-				GroupBuilder gb = null;
+				NotesGroup group = null;
 				for(int elI = firstEl; elI <= lastEl; elI++) {
 					ElementSpec spec = rawNotesSequence.get(elI);
-					if(gb == null && GroupBuilder.canStartGroup(spec)) {
-						gb = new GroupBuilder(sheetParams, spec);
+					if(group == null && GroupBuilder.canStartGroup(spec)) {
+						GroupBuilder gb = new GroupBuilder(sheetParams, spec);
 						for(int groupEl = elI+1; groupEl <= lastEl; groupEl++) {
 							if(!gb.tryExtend(rawNotesSequence.get(groupEl))) {
 								break;
 							}
 						}
-						gb.build(normalPaint);
+						if(gb.isValid()) {
+							group = gb.build(normalPaint);
+						}
 					} 
 					SheetAlignedElement model = createDrawingModel(spec);
-					if(gb != null) {
-						model = gb.wrapNext(model, new GroupObserver(elementViews.size()));
-						 if(!gb.hasNext()) {
-							 gb = null;
+					if(group != null) {
+						group.wrapNext(model);
+						bind(group, model);
+						 if(!group.hasNext()) {
+							 bind(group, model);
+							 addOverlayView(group);
+							 group = null;
 						 }
 					}
 					if(spec.getType() == ElementType.NOTE) {
 						if(arc != null) {
-							model = arc.wrapRightElement(model);
+							arc.setRightElement(model);
+							bind(arc, model);
+							addOverlayView(arc);
 							arc = null;
 						}
 						if(((ElementSpec.NormalNote) spec).noteSpec().hasJoinArc()) {
 							arc = new JoinArc(model);
-							model = arc;
+							bind(arc, model);
 						}
 					} else {
 						arc = null;
@@ -985,6 +983,8 @@ public class EditActivity extends Activity {
 		float scale = ((float) (visibleRectHeight)) / ((float) (
 			sheetParams.getLineFactor() * 5 + sheetParams.getLinespacingFactor() * 6
 		));
+		// TODO remove hardcoded
+		scale = 0.441454f;
 		updateScaleFactor(scale);
 		
 		// TODO calculate sheet start scroll position
@@ -1097,7 +1097,7 @@ public class EditActivity extends Activity {
 			}
 			time.spacingBase = (int) Math.max(
 				time.spacingBase,
-				minSpacing * baseLength / el.model().spacingLength(minPossibleValue)
+				minSpacing * baseLength / el.model().getElementSpec().spacingLength(minPossibleValue)
 			);
 		}
 	}
@@ -1164,6 +1164,30 @@ public class EditActivity extends Activity {
 		mHandler.postDelayed(mHideInfoPopupTask, getResources().getInteger(R.integer.infoPopupLife));
 	}
 	
+	private void addOverlayView(final ElementsOverlay overlay) {
+		SheetElementView<SheetElement> elementView;
+		elementView = new SheetElementView<SheetElement>(this, overlay);
+		elementView.setPaint(normalPaint);
+		elementView.setSheetParams(sheetParams);
+		overlaysViews.add(elementView);
+		sheet.addView(elementView);
+		overlay.setObserver(new Observer() {
+			@Override
+			public void onMeasureInvalidated() {
+				// find view
+				for(SheetElementView<SheetElement> oview: overlaysViews) {
+					if(oview.model() == overlay) {
+						// reposition it
+						updatePosition(oview, overlay.left()-oview.getPaddingLeft(), overlay.top()-oview.getPaddingTop());
+						updateSize(oview, oview.measureWidth(), oview.measureHeight());
+						return;
+					}
+				}
+				throw new RuntimeException("Report from observer from non-existent ElementsOverlay");
+			}
+		});
+	}
+	
 	private void addElementView(SheetAlignedElement model) {
 		SheetAlignedElementView elementView;
 		elementView = new SheetAlignedElementView(this, model);
@@ -1182,7 +1206,7 @@ public class EditActivity extends Activity {
 	}
 
 	private int afterElementSpacing(Time time, SheetAlignedElement sheetAlignedElement) {
-		return length2spacing(time, sheetAlignedElement.spacingLength(minPossibleValue), minPossibleValue);
+		return length2spacing(time, sheetAlignedElement.getElementSpec().spacingLength(minPossibleValue), minPossibleValue);
 	}
 	
 	private static int length2spacing(Time time, double lengthInMU, int measureUnit) {
@@ -1226,43 +1250,28 @@ public class EditActivity extends Activity {
 		return view.getLayoutParams().width;
 	}
 	
-	private class GroupObserver implements NotesGroup.Observer {
-		private int elementViewIndex;
-		
-		public GroupObserver(int elementViewIndex) {
-			this.elementViewIndex = elementViewIndex;
+	private static Map<SheetAlignedElement, Set<ElementsOverlay>> bindMap = new HashMap<SheetAlignedElement, Set<ElementsOverlay>>(); 
+	private void bind(ElementsOverlay overlay, SheetAlignedElement model) {
+		if(bindMap.get(model) == null) {
+			bindMap.put(model, new LinkedHashSet<ElementsOverlay>());
 		}
-
-		@Override
-		public void onMeasurementInvalid() {
-			log.i("onMeasureInvalid() at %d", elementViewIndex);
-			int oldMiddleX = lastMiddleAbsoluteX.get(elementViews.get(elementViewIndex));
-			SheetAlignedElementView view = elementViews.get(elementViewIndex);
-			view.invalidateMeasure();
-			int xpos = oldMiddleX-view.model().getMiddleX()-view.getPaddingLeft();
-			int ypos = sheetElementY(view);
-			updatePosition(
-				view, 
-				xpos,
-				ypos
-			);
-		}
-	}	
+		// FIXME co jeśli więcej niz jeden overlay korzysta z tego elementu?
+		bindMap.get(model).add(overlay);
+	}
 	
-	private static Map<SheetAlignedElementView, Integer> lastMiddleAbsoluteX = new HashMap<SheetAlignedElementView, Integer>();
 	private static void updatePosition(View v, Integer left, Integer top) {
 		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
 		if(left != null) params.leftMargin = left;
 		if(top != null) params.topMargin = top;
 		v.setLayoutParams(params);
 		if(v instanceof SheetAlignedElementView) {
-			SheetAlignedElementView elView = (SheetAlignedElementView) v;
-			SheetAlignedElement elModel = elView.model();
-			lastMiddleAbsoluteX.put(elView, params.leftMargin + v.getPaddingLeft() + elView.model().getMiddleX());
-			elModel.positionChanged(
-				params.leftMargin + v.getPaddingLeft(), 
-				params.topMargin + +v.getPaddingTop()
-			);
+			SheetAlignedElement model = ((SheetAlignedElementView) v).model();
+			Set<ElementsOverlay> overlays = bindMap.get(model);
+			if(overlays != null) {
+				for(ElementsOverlay ov: overlays) {
+					ov.positionChanged(model, params.leftMargin+v.getPaddingLeft(), params.topMargin+v.getPaddingTop());
+				}
+			}
 		}
 	}
 	

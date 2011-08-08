@@ -24,7 +24,6 @@ public abstract class SheetAlignedElement extends SheetElement {
 	}
 	
 	public abstract ElementSpec getElementSpec();
-	public void positionChanged(int newAbsoluteX, int newAbsoluteY) {}
 	
 	private static int sequence = 0;
 	protected synchronized static int registerIndex() {
@@ -34,8 +33,4 @@ public abstract class SheetAlignedElement extends SheetElement {
 		return getHorizontalOffset(MIDDLE_X);
 	}
 	public static int MIDDLE_X = registerIndex();
-	
-	public double spacingLength(int measureUnit) {
-		return ElementSpec.overallLength(getElementSpec().lengthSpec(), measureUnit);
-	}
 }

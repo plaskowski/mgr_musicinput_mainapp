@@ -5,6 +5,7 @@ import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.ORIENT_DOWN;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.ORIENT_UP;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,15 +16,15 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote.SpacingSource;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 
-public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
+public class NotesGroup extends ElementsOverlay {
 	@SuppressWarnings("unused")
 	private static LogUtils log = new LogUtils(NotesGroup.class);
-	private static int METAVAL_ORGINAL_SPACINGLEGTH = registerIndex();
 	private static final int MAX_NOTE_LENGTH = NoteConstants.LEN_QUATERNOTE+1;
 	
 	private SheetAlignedElement[] elements;
@@ -31,30 +32,29 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 	private int groupOrientation;
 	private Paint wrapperPaint;
 
-	private NotesGroup(SheetAlignedElement firstElement, int totalElements, int orientation, Paint wrapperPaint) {
-		super(firstElement);
+	private NotesGroup(int totalElements, int orientation, Paint wrapperPaint) {
 		elements = new SheetAlignedElement[totalElements];
 		xpositions = new int[totalElements];
 		Arrays.fill(xpositions, -1);
 		this.groupOrientation = orientation;
 		this.wrapperPaint = wrapperPaint;
-		
-		elements[0] =  firstElement;
 	}
 	
-	private SheetAlignedElement wrapElement(int index, SheetAlignedElement elementToWrap) {
-		SheetAlignedElement result = new ElementProxy(index, elementToWrap);
-		elements[index] = result;
-		return result;
-	}
-	
-	private void onPositionChanged(int elementIndex, int newAbsoluteX) {
-		if(xpositions[elementIndex] != newAbsoluteX) {
-			xpositions[elementIndex] = newAbsoluteX;
-			recalculate();
-		}
-	}
+	private int buildIndex = 0;
 
+	public void wrapNext(SheetAlignedElement model) {
+		assert buildIndex < elements.length;
+		wrapElement(buildIndex, model);
+		buildIndex++;
+	}
+	public boolean hasNext() {
+		return buildIndex < elements.length;
+	}
+	
+	private void wrapElement(int index, SheetAlignedElement element) {
+		elements[index] = element;
+	}
+	
 	@Override
 	public void setSheetParams(SheetParams params) {
 		super.setSheetParams(params);
@@ -66,8 +66,8 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 	private void recalculate() {
 		assert(elements.length > 1);
 		if(!isValid()) {
-			calcNoVisibleWrapper();
-			log.i("INVALID recalculate(), calculated when invalid %dx%d", totalWidth, totalHeight);
+			makeEmpty();
+			log.i("INVALID recalculate()");
 			return;
 		}
 		
@@ -107,35 +107,27 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 		}
 		
 		int last = elements.length-1;
-		start.x = (int) jLeft(0);
+		int el0JLeft = (int) jLeft(0);
+		start.x = 0;
 		start.y = (int) (stemEndExtremum.y - slope * (stemEndExtremum.x - absJLLeft(0)));
-		end.x = xpositions[last] - xpositions[0] + (int) Math.ceil(jRight(last));
+		end.x = (xpositions[last] + (int) Math.ceil(jRight(last))) - (xpositions[0] + el0JLeft);
 		end.y = (int) (slope * (absJRight(last) - stemEndExtremum.x) + stemEndExtremum.y);
 		
-		int wrappedOffset2line0 = elements[0].getOffsetToAnchor(LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
-		calcDrawOffsets(-start.x, (int) (wrappedOffset2line0 - Math.min(Math.min(
+		offset2line0 = Math.min(Math.min(
 			start.y, end.y), jlYextremum
-		)));
-		calcSize((int) (end.x-start.x), (int) (Math.max(
+		);
+		setPosition(xpositions[0] + el0JLeft, line0absTop + offset2line0);
+		setMeasured((int) (end.x-start.x), (int) (Math.max(
 			Math.abs(end.y-jlYextremum),
 			Math.abs(start.y-jlYextremum)
 		)));
 		
-		log.i("recalculate() result: size %dx%d elOffset %dx%d wrapperOffset %dx%d", 
-			totalWidth, totalHeight,
-			elementDrawOffset.x, elementDrawOffset.y,
-			wrapperDrawOffset.x, wrapperDrawOffset.y
-		);
-		if(measureObserver != null) {
-			measureObserver.onMeasurementInvalid();
-		}
+		onMeasureInvalidated();
 	}
 	
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
-		super.onDraw(canvas, paint);
-		
-		int translateY = -getOffsetToAnchor(LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
+		int translateY = -offset2line0;
 		canvas.translate(0, translateY);
 		
 		Path path = new Path();
@@ -144,7 +136,7 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 		int linesSpacing = 2 * sheetParams.getLineThickness();
 		path.moveTo(end.x, end.y);
 		path.lineTo(start.x, start.y);
-		int absLeft = xpositions[0]-elementDrawOffset.x;
+		int absLeft = this.left();
 		int lastElement = elements.length -1;
 		int prevLength = MAX_NOTE_LENGTH;
 		for (int i = 0; i <= lastElement; i++) {
@@ -197,10 +189,6 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 		canvas.translate(0, -translateY);
 	}
 
-	private int length(int index) {
-		return elements[index].getElementSpec().lengthSpec().length();
-	}
-	
 	private boolean isValid() {
 		int prevX = -1;
 		for (int i = 0; i < elements.length; i++) {
@@ -211,7 +199,9 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 		return true;
 	}
 
-	
+	private int length(int index) {
+		return elements[index].getElementSpec().lengthSpec().length();
+	}
 	private int joinLineY(int index) {
 		SheetAlignedElement current = elements[index];
 		return current.getOffsetToAnchor(LINE0_ABSINDEX, AnchorPart.TOP_EDGE) 
@@ -222,7 +212,7 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 	private int stemTop(int index) {
 		SheetAlignedElement current = elements[index];
 		int stemEndAnchor = current.getElementSpec().positonSpec().positon()+(groupOrientation == ORIENT_DOWN ? 1 : -1)*MIN_STEM_SPAN;
-		return sheetParams.anchorOffset(stemEndAnchor, AnchorPart.TOP_EDGE);
+		return sheetParams.anchorOffset(stemEndAnchor, AnchorPart.MIDDLE);
 	}
 	private int absJMiddeX(int index) {
 		return (absJRight(index)+absJLLeft(index))/2;
@@ -242,32 +232,19 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 		return el.getHorizontalOffset(NoteHeadElement.NOTEHEAD_LEFT)+el.getMetaValue(NoteHeadElement.METAVAL_JOINLINE_RIGHT, 0);
 	}
 	
-	@Override
-	public void positionChanged(int newAbsoluteX, int newAbsoluteY) {
-		super.positionChanged(newAbsoluteX, newAbsoluteY);
-		onPositionChanged(0, newAbsoluteX+elementDrawOffset.x);
-	}
-	
-	private Observer measureObserver = null;
-
 	private float slope;
+	private int line0absTop;
+	private int offset2line0;
 
-	public void setMeasureObserver(Observer measureObserver) {
-		this.measureObserver = measureObserver;
-	}
-	public interface Observer {
-		void onMeasurementInvalid();
-	}
-	
 	int lastMeasureUnit = -1;
-	double minSpacingLength, maxSpacingLength;
-	private double spacingLength(int index, int measureUnit) {
+	int minSpacingLength, maxSpacingLength;
+	private int spacingLength(int index, int measureUnit) {
 		if(measureUnit != lastMeasureUnit) {
 			lastMeasureUnit = measureUnit;
-			maxSpacingLength = elements[0].spacingLength(measureUnit);
+			maxSpacingLength = ((NormalNote) elements[0].getElementSpec()).defaultSpacingLength(measureUnit);
 			minSpacingLength = maxSpacingLength;
 			for (int i = 1; i < elements.length; i++) {
-				double elSpacing = elements[i].getMetaValue(METAVAL_ORGINAL_SPACINGLEGTH, measureUnit);
+				int elSpacing = ((NormalNote) elements[i].getElementSpec()).defaultSpacingLength(measureUnit);
 				maxSpacingLength = Math.max(
 					elSpacing, 
 					maxSpacingLength
@@ -281,54 +258,34 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 		return index < elements.length-1 ? minSpacingLength : maxSpacingLength;
 	}
 	
-	@Override
-	public double spacingLength(int measureUnit) {
-		return spacingLength(0, measureUnit);
+	private void onPositionChanged(int elementIndex, int newAbsoluteX) {
+		if(xpositions[elementIndex] != newAbsoluteX) {
+			xpositions[elementIndex] = newAbsoluteX;
+			recalculate();
+		}
 	}
 	
-	private class ElementProxy extends AlignedElementWrapper<SheetAlignedElement> {
-		private int index;
-
-		public ElementProxy(int index, SheetAlignedElement wrappedElement) {
-			super(wrappedElement);
-			this.index = index;
-		}
-		
-		@Override
-		public void setSheetParams(SheetParams params) {
-			super.setSheetParams(params);
-			calcNoVisibleWrapper();
-		}
-		
-		@Override
-		public void positionChanged(int newAbsoluteX, int newAbsoluteY) {
-			super.positionChanged(newAbsoluteX, newAbsoluteY);
-			onPositionChanged(index, newAbsoluteX);
-		}
-		
-		@Override
-		public float getMetaValue(int valueIndentifier, int param) {
-			if(valueIndentifier == METAVAL_ORGINAL_SPACINGLEGTH) {
-				return (float) wrappedElement.spacingLength(param);
-			} else {
-				return super.getMetaValue(valueIndentifier, param);
+	@Override
+	public void positionChanged(SheetAlignedElement element, int newX, int newY) {
+		for (int i = 0; i < elements.length; i++) {
+			if(elements[i] == element) {
+				line0absTop = newY - element.getOffsetToAnchor(LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
+				onPositionChanged(i, newX);
+				return;
 			}
 		}
-		
-		@Override
-		public double spacingLength(int measureUnit) {
-			return NotesGroup.this.spacingLength(index, measureUnit);
-		}
-		
+		throw new InvalidParameterException();
+	}
+
+	@Override
+	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {
+		throw new UnsupportedOperationException();
 	}
 	
 	public static class GroupBuilder {
 		private List<ElementSpec.NormalNote> specs = new ArrayList<ElementSpec.NormalNote>(5);
 		private boolean closed = false;
-		private int buildIndex = -1;
 		private int orientation = -1;
-		private NotesGroup notesGroup;
-		private Paint wrapperPaint;
 
 		public GroupBuilder(SheetParams params, ElementSpec firstElementSpec) {
 			specs.add((NormalNote) firstElementSpec);
@@ -364,11 +321,17 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 			}
 			return false;
 		}
+		
+		public boolean isValid() {
+			return specs.size() > 1;
+		}
 
 		/**
 		 * Modified accumulated ElementSpec-s accordingly to logic of GroupBuilder
+		 * @return 
 		 */
-		public void build(Paint wrapperPaint) {
+		public NotesGroup build(Paint wrapperPaint) {
+			assert isValid();
 			/**
 			 * czy wiązanie ma być na górze czy na dole,
 			 * orient < 0,  wiązanie na dole
@@ -385,43 +348,27 @@ public class NotesGroup extends AlignedElementWrapper<SheetAlignedElement> {
 			if(this.orientation == -1) {
 				this.orientation = orient == 0 ? specs.get(0).getOrientation() : (orient < 0 ? ORIENT_DOWN : ORIENT_UP);
 			}
-			if(specs.size() > 1) {
-				// update specs
-				for(int i = 0; i < specs.size(); i++) {
-					NormalNote spec = specs.get(i);
-					spec.setNoStem(true);
-					spec.setOrientation(this.orientation);
-				}
+			
+			NotesGroup result = new NotesGroup(specs.size(), orientation, wrapperPaint);
+			
+			// update specs
+			for(int i = 0; i < specs.size(); i++) {
+				NormalNote spec = specs.get(i);
+				spec.setNoStem(true);
+				spec.setOrientation(this.orientation);
+				spec.setForcedSpacing(result.spacingSource(i));
 			}
-			this.buildIndex = 0;
-			this.wrapperPaint = wrapperPaint;
+			return result;
 		}
+	}
 
-		public boolean hasNext() {
-			assert buildIndex >= 0;
-			return buildIndex < specs.size();
-		}
-
-		/**
-		 * @param model model that has been externally built from specs[buildIndex]
-		 * @param groupObserver 
-		 * @return wrapped model
-		 */
-		public SheetAlignedElement wrapNext(SheetAlignedElement model, Observer groupObserver) {
-			assert buildIndex < specs.size();
-			if(buildIndex == 0) {
-				if(specs.size() > 1) {
-					notesGroup = new NotesGroup(model, specs.size(), orientation, wrapperPaint);
-					notesGroup.setMeasureObserver(groupObserver);
-					model = notesGroup;
-				}
-			} else {
-				model = notesGroup.wrapElement(buildIndex, model);
+	public SpacingSource spacingSource(final int i) {
+		return new SpacingSource() {
+			@Override
+			public int spacingLength(int measureUnit) {
+				return NotesGroup.this.spacingLength(i, measureUnit);
 			}
-			buildIndex++;
-			return model;
-		}
-		
+		};
 	}
 
 }

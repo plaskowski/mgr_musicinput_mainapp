@@ -49,9 +49,4 @@ public class FakePauseElement extends SheetAlignedElement {
 	public ElementSpec getElementSpec() {
 		return spec;
 	}
-	
-	@Override
-	public double spacingLength(int measureUnit) {
-		return spec.timeValue(measureUnit);
-	}
 }

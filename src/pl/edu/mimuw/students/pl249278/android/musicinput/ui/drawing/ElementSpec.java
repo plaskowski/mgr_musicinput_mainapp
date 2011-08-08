@@ -49,6 +49,11 @@ public abstract class ElementSpec {
 		public LengthSpec lengthSpec() {
 			return spec;
 		}
+		
+		@Override
+		public int spacingLength(int measureUnit) {
+			return ElementSpec.overallLength(lengthSpec(), measureUnit);
+		}
 	}
 	
 	public static class NormalNote extends ElementWithLength<NoteSpec> {
@@ -83,6 +88,28 @@ public abstract class ElementSpec {
 		public boolean hasNoStem() {
 			return IntUtils.getFlag(flags, FLAG_NOSTEM) == 1;
 		}
+		
+		@Override
+		public int spacingLength(int measureUnit) {
+			if(forcedSpacing != null) {
+				return forcedSpacing.spacingLength(measureUnit);
+			} else {
+				return defaultSpacingLength(measureUnit);
+			}
+		}
+		public int defaultSpacingLength(int measureUnit) {
+			return super.spacingLength(measureUnit);
+		}
+		
+		private SpacingSource forcedSpacing = null;
+		
+		public interface SpacingSource {
+			public int spacingLength(int measureUnit);
+		}
+
+		public void setForcedSpacing(SpacingSource forcedSpacing) {
+			this.forcedSpacing = forcedSpacing;
+		}
 	}
 	
 	public static class Pause extends ElementWithLength<PauseSpec> {
@@ -103,6 +130,10 @@ public abstract class ElementSpec {
 		public int timeValue(int metricUnit) {
 			return length(this.measureUnit, metricUnit) * timeValue;
 		}
+		@Override
+		public int spacingLength(int measureUnit) {
+			return timeValue(measureUnit);
+		}
 	}
 	
 	public static class SpecialSign extends ElementSpec implements PositonSpec {
@@ -116,7 +147,12 @@ public abstract class ElementSpec {
 
 		@Override
 		public int timeValue(int metricUnit) {
-			return length(length, metricUnit);
+			return 0;
+		}
+		
+		@Override
+		public int spacingLength(int measureUnit) {
+			return length(length, measureUnit);
 		}
 		
 		@Override
@@ -144,13 +180,18 @@ public abstract class ElementSpec {
 			throw new UnsupportedOperationException();
 		}
 		
+		@Override
+		public int spacingLength(int measureUnit) {
+			throw new UnsupportedOperationException();
+		}
 	}
 	
-	public static double overallLength(LengthSpec lengthSpec, int measureUnit) {
+	public static int overallLength(LengthSpec lengthSpec, int measureUnit) {
 		int result = length(lengthSpec.length(), measureUnit);
-		return result * (2-Math.pow(0.5f, lengthSpec.dotExtension()));
+		return (int) (result * (2-Math.pow(0.5f, lengthSpec.dotExtension())));
 	}
 	public static int length(int specLength, int measureUnit) {
 		return 1 << (measureUnit-specLength);
 	}
+	public abstract int spacingLength(int measureUnit);
 }

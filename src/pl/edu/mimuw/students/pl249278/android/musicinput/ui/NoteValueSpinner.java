@@ -3,8 +3,8 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.SheetAlignedElementView;
 import android.content.Context;
@@ -57,7 +57,7 @@ public class NoteValueSpinner extends ScrollView {
 		minNoteValue = ctx.getResources().getInteger(R.integer.spinnerDefaultMinNoteValue);
 	}
 	
-	public void setupNoteViews() throws NoteDescriptionLoadingException {
+	public void setupNoteViews() throws CreationException {
         notesContainer = (ViewGroup) findViewById(R.id.EDIT_note_value_container);
         notesContainer.removeAllViews();
         // TODO externalize sheet params

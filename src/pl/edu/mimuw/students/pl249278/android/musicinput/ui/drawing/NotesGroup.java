@@ -278,6 +278,16 @@ public class NotesGroup extends ElementsOverlay {
 	}
 
 	@Override
+	public int elementsCount() {
+		return elements.length;
+	}
+	
+	@Override
+	public SheetAlignedElement getElement(int elementIndex) {
+		return elements[elementIndex];
+	}
+
+	@Override
 	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {
 		throw new UnsupportedOperationException();
 	}
@@ -302,6 +312,10 @@ public class NotesGroup extends ElementsOverlay {
 		public static boolean canStartGroup(ElementSpec spec) {
 			return isShortNote(spec)
 			&& hasFlag(spec);
+		}
+		
+		public static boolean canExtendGroup(ElementSpec spec) {
+			return isShortNote(spec) && hasFlag(spec);
 		}
 
 		private static boolean hasFlag(ElementSpec spec) {

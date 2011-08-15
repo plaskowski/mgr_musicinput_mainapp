@@ -10,17 +10,26 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.
 import android.content.Context;
 
 public class DrawingModelFactory {
-	public static SheetAlignedElement createDrawingModel(Context ctx, ElementSpec elementSpec) throws NoteDescriptionLoadingException {
+	@SuppressWarnings("serial")
+	public static class CreationException extends Exception {
+		ElementSpec spec;
+		public CreationException(Throwable throwable, ElementSpec elementSpec) {
+			super(throwable);
+			this.spec = elementSpec;
+		}
+	}
+	
+	public static SheetAlignedElement createDrawingModel(Context ctx, ElementSpec elementSpec) throws CreationException {
 		switch (elementSpec.getType()) {
 		case NOTE:
-			NormalNote note = (ElementSpec.NormalNote) elementSpec;
-			NoteSpec noteSpec = note.noteSpec();
-			NoteHeadElement head = new NoteHeadElement(ctx, note);
-			SheetAlignedElement model = head;
-			if(!note.hasNoStem() && NoteConstants.hasStem(noteSpec.length())) {
-				model = new NoteStemAndFlag(ctx, head);
-			}
 			try {
+				NormalNote note = (ElementSpec.NormalNote) elementSpec;
+				NoteSpec noteSpec = note.noteSpec();
+				NoteHeadElement head = new NoteHeadElement(ctx, note);
+				SheetAlignedElement model = head;
+				if(!note.hasNoStem() && NoteConstants.hasStem(noteSpec.length())) {
+					model = new NoteStemAndFlag(ctx, head);
+				}
 				if(noteSpec.hasDot()) {
 					model = new Modifier.Suffix(ctx, model, noteSpec.positon(), NoteModifier.DOT);
 				}
@@ -28,20 +37,28 @@ public class DrawingModelFactory {
 				if(toneModifier != null) {
 					model = new Modifier.Prefix(ctx, model, noteSpec.positon(), toneModifier);
 				}
+				int nearestLine = NoteConstants.anchorTypedIndex(noteSpec.positon());
+				if(NoteConstants.anchorType(noteSpec.positon()) == NoteConstants.ANCHOR_TYPE_LINESPACE
+					&& nearestLine < 0) {
+					nearestLine += 1;
+				}
+				if(nearestLine < 0 || nearestLine > 4) {
+					model = new AddedLine(model, nearestLine);
+				}
+				return model;
 			} catch (LoadingSvgException e) {
-				throw new RuntimeException(e);
+				throw new CreationException(e, elementSpec);
+			} catch (NoteDescriptionLoadingException e) {
+				throw new CreationException(e, elementSpec);
 			}
-			int nearestLine = NoteConstants.anchorTypedIndex(noteSpec.positon());
-			if(NoteConstants.anchorType(noteSpec.positon()) == NoteConstants.ANCHOR_TYPE_LINESPACE
-				&& nearestLine < 0) {
-				nearestLine += 1;
-			}
-			if(nearestLine < 0 || nearestLine > 4) {
-				model = new AddedLine(model, nearestLine);
-			}
-			return model;
 		case FAKE_PAUSE:
 			return new FakePauseElement((FakePause) elementSpec);
+		case TIMES_DIVIDER:
+			try {
+				return new TimeDivider(ctx, (pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.TimeDivider) elementSpec);
+			} catch (LoadingSvgException e) {
+				throw new CreationException(e, elementSpec);
+			}
 		case PAUSE:
 		case SPECIAL_SIGN:
 		default:

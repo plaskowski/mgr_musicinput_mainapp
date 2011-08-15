@@ -8,6 +8,8 @@ import java.security.InvalidParameterException;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
@@ -131,5 +133,32 @@ public class JoinArc extends ElementsOverlay {
 	@Override
 	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {
 		throw new UnsupportedOperationException();
+	}
+	
+	public static boolean canStrartJA(ElementSpec elementSpec) {
+		return elementSpec.getType() == ElementType.NOTE && ((NormalNote) elementSpec).noteSpec().hasJoinArc();
+	}
+	public static boolean canEndJA(ElementSpec elementSpec) {
+		return elementSpec.getType() == ElementType.NOTE;
+	}
+	public static boolean canSkipOver(ElementSpec elementSpec) {
+		return elementSpec.getType() == ElementType.TIMES_DIVIDER || elementSpec.getType() == ElementType.FAKE_PAUSE;
+	}
+
+	@Override
+	public int elementsCount() {
+		return 2;
+	}
+	
+	@Override
+	public SheetAlignedElement getElement(int elementIndex) {
+		switch(elementIndex) {
+		case 0:
+			return leftElement;
+		case 1:
+			return rightElement;
+		default:
+			throw new IllegalArgumentException();
+		}
 	}
 }

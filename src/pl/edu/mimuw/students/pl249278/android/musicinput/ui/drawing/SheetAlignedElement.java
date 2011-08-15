@@ -33,4 +33,13 @@ public abstract class SheetAlignedElement extends SheetElement {
 		return getHorizontalOffset(MIDDLE_X);
 	}
 	public static int MIDDLE_X = registerIndex();
+	
+	private Object tag = null;
+	public void setTag(Object tag) {
+		this.tag = tag;
+	}
+	public Object getTag() {
+		return tag;
+	}
+	
 }

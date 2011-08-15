@@ -8,6 +8,13 @@ public class SheetAlignedElementView extends SheetElementView<SheetAlignedElemen
 	
 	public SheetAlignedElementView(Context context, SheetAlignedElement model) {
 		super(context, model);
+		model.setTag(this);
+	}
+	
+	@Override
+	public void setModel(SheetAlignedElement model) {
+		super.setModel(model);
+		model.setTag(this);
 	}
 	
 	public SheetAlignedElementView(Context context) {

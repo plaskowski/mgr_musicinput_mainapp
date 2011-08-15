@@ -23,8 +23,9 @@ public class TimeDivider extends SheetAlignedElement {
 	private List<SheetElement> rightParts = null;
 	private int line0Yoffset, totalWidth, totalHeight;
 	
-	public TimeDivider(Context ctx, TimeSpec leftTime, TimeSpec rightTime) throws LoadingSvgException {
-		spec = new ElementSpec.TimeDivider(leftTime, rightTime);
+	public TimeDivider(Context ctx, pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.TimeDivider elementSpec) throws LoadingSvgException {
+		this.spec = elementSpec;
+		TimeSpec rightTime = this.spec.rightTime;
 		if(rightTime != null) {
 			rightParts = new ArrayList<SheetElement>(3);
 			if(rightTime.getClef() != null) {

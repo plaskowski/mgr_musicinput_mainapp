@@ -50,4 +50,15 @@ public abstract class ElementsOverlay extends SheetElement {
 		return y;
 	}
 
+	public abstract int elementsCount();
+
+	public abstract SheetAlignedElement getElement(int elementIndex);
+	
+	private Object tag = null;
+	public void setTag(Object tag) {
+		this.tag = tag;
+	}
+	public Object getTag() {
+		return tag;
+	}
 }

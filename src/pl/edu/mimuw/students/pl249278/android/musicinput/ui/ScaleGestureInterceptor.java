@@ -31,6 +31,7 @@ public class ScaleGestureInterceptor extends FrameLayout {
 	}
 	
 	public interface OnScaleListener {
+		void onScaleBegin();
 		void onScale(float scaleFactor, PointF focusPoint);
 		void onScaleEnd();
 	}
@@ -42,6 +43,9 @@ public class ScaleGestureInterceptor extends FrameLayout {
 		public boolean onScaleBegin(ScaleGestureDetector det) {
 			logSG("onScaleBegin()", det);
 			dispatchCancel = true;
+			if(onScaleListener != null) {
+				onScaleListener.onScaleBegin();
+			}
 			return true;
 		}
 		

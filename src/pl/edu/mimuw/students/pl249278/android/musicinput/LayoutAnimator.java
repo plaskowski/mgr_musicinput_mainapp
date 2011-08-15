@@ -55,11 +55,15 @@ public class LayoutAnimator<ContextType> implements Runnable {
 	private long lastticktime;
 	
 	protected void mStartAnimation(LayoutAnimation<ContextType, ?> anim) {
-		animations.add(anim);
-		if(!mIsRunning) {
-			lastticktime = System.currentTimeMillis(); 
-			mHandler.post(this);
-			mIsRunning = true;
+		if(IS_APPLY_CALL) {
+			lazyAdded.add(anim);
+		} else {
+			animations.add(anim);
+			if(!mIsRunning) {
+				lastticktime = System.currentTimeMillis(); 
+				mHandler.post(this);
+				mIsRunning = true;
+			}
 		}
 	}
 	
@@ -78,7 +82,11 @@ public class LayoutAnimator<ContextType> implements Runnable {
 	}
 
 	public void stopAnimation(LayoutAnimation<ContextType, ?> anim) {
-		animations.remove(anim);
+		if(IS_APPLY_CALL) {
+			lazyRemoved.add(anim);
+		} else {
+			animations.remove(anim);
+		}
 		if(animations.isEmpty()) {
 			mHandler.removeCallbacks(this);
 			mIsRunning = false;
@@ -92,7 +100,9 @@ public class LayoutAnimator<ContextType> implements Runnable {
 		return null;
 	}
 
-	private ArrayList<LayoutAnimation<ContextType, ?>> temp = new ArrayList<LayoutAnimation<ContextType, ?>>();
+	private ArrayList<LayoutAnimation<ContextType, ?>> lazyAdded = new ArrayList<LayoutAnimation<ContextType, ?>>();
+	private ArrayList<LayoutAnimation<ContextType, ?>> lazyRemoved = new ArrayList<LayoutAnimation<ContextType, ?>>();
+	private boolean IS_APPLY_CALL = false;
 	@Override
 	public void run() {
 		long currTime = System.currentTimeMillis();
@@ -101,22 +111,30 @@ public class LayoutAnimator<ContextType> implements Runnable {
 		for (Iterator<LayoutAnimation<ContextType, ?>> it = animations.iterator(); it.hasNext();) {
 			LayoutAnimation<ContextType, ?> anim = (LayoutAnimation<ContextType, ?>) it.next();
 			anim.elapsed = Math.min(anim.elapsed+tick, anim.duration);
+			IS_APPLY_CALL = true;
 			anim.apply(ctx);
+			if(!mIsRunning) {
+				// forceFinishAll() was called
+				return;
+			}
+			IS_APPLY_CALL = false;
 			if(anim.isFinished()) {
-				it.remove();
-				temp.add(anim);
+				lazyRemoved.add(anim);
 			}
 		}
-		mIsRunning = !animations.isEmpty();
-		if(mIsRunning) {
-			mHandler.post(this);
-		}
-		for(LayoutAnimation<ContextType, ?> anim: temp) {
+		animations.addAll(lazyAdded);
+		lazyAdded.clear();
+		for(LayoutAnimation<ContextType, ?> anim: lazyRemoved) {
+			animations.remove(anim);
 			if(anim.onAnimationEndListener != null) {
 				anim.onAnimationEndListener.run();
 			}
 		}
-		temp.clear();
+		lazyRemoved.clear();
+		mIsRunning = !animations.isEmpty();
+		if(mIsRunning) {
+			mHandler.post(this);
+		}
 	}
 	
 }

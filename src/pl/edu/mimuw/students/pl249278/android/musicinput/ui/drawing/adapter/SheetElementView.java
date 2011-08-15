@@ -32,13 +32,8 @@ public class SheetElementView<ElementType extends SheetElement> extends View {
 	}
 
 	public void setModel(ElementType model) {
-		SheetParams sheetParams = this.model == null ? null : this.model.getSheetParams();
 		this.model = model;
-		if(sheetParams != null) {
-			this.model.setSheetParams(sheetParams);
-		}
-		if(this.model.getSheetParams() != null) 
-			invalidateMeasure();
+		invalidateMeasure();
 	}
 	
 	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {
@@ -49,7 +44,7 @@ public class SheetElementView<ElementType extends SheetElement> extends View {
 	
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		if(model == null) {
+		if(model == null || model.getSheetParams() == null) {
 			super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 			return;
 		}

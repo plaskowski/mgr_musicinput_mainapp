@@ -47,14 +47,17 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.Shee
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.SheetAlignedElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.SheetElementView;
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.CornerPathEffect;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -64,6 +67,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.HorizontalScrollView;
+import android.widget.Toast;
 
 public class EditActivity extends Activity {
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
@@ -628,7 +632,7 @@ public class EditActivity extends Activity {
 		debugTimes();
 		debugViews();
 		assertTimesValidity();
-		int currTime = findTime(insertIndex);
+		int currTime = insertTime(insertIndex);
 		// wstawić element w miejsce insertIndex
 		SheetAlignedElementView newElement = addElementView(insertIndex, createDrawingModel(spec));
 		// przeliczyć czy nie zmieniła się struktura taktów
@@ -665,6 +669,16 @@ public class EditActivity extends Activity {
 		
 		debugViews();
 		return newElement;
+	}
+
+
+	private int insertTime(int insertIndex) {
+		int currTime = findTime(insertIndex);
+		if(times.get(currTime).rangeStart == insertIndex) {
+			// when insertIndex is index of TimeDivider we want to insert into left Time 
+			currTime--;
+		}
+		return currTime;
 	}
 	
 	private void updatePositions(int startIndex, int endIndex) {
@@ -724,7 +738,7 @@ public class EditActivity extends Activity {
 			ngRebuildEnd = jaRebuildEnd = size-1;
 		} else {
 			for(ngRebuildEnd = elementIndex+1; ngRebuildEnd < size; ngRebuildEnd++) {
-				ElementSpec elementSpec = elementViews.get(ngRebuildIndex).model().getElementSpec();
+				ElementSpec elementSpec = elementViews.get(ngRebuildEnd).model().getElementSpec();
 				if(!NotesGroup.GroupBuilder.canExtendGroup(elementSpec)) {
 					break;
 				}
@@ -818,6 +832,37 @@ public class EditActivity extends Activity {
 		private int activePointerId = INVALID_POINTER;
 		private int currentAnchor;
 		private int insertIndex;
+		private int downPointerId = INVALID_POINTER;
+		private Point downCoords = new Point();
+		
+		private Runnable lazyActionDown = new Runnable() {
+			public void run() {
+				if(downPointerId != INVALID_POINTER && insideIA(downCoords.x)) {
+					insertIndex = rightToIA;
+					currentAnchor = nearestAnchor(downCoords.y);
+					ElementSpec.NormalNote newNoteSpec = new ElementSpec.NormalNote(new NoteSpec(currentNoteLength, currentAnchor));
+					if(!willFitInTime(insertIndex, newNoteSpec)) {
+						disrupt(R.string.EDIT_msg_inserterror_notetolong);
+						downPointerId = INVALID_POINTER;
+						return;
+					}
+					lines.highlightAnchor(currentAnchor);
+					try {
+						rightToIA++;
+						activePointerId = downPointerId;
+						downPointerId = INVALID_POINTER;
+						SheetAlignedElementView newNote = insertElement(insertIndex, newNoteSpec);
+						newNote.setPaint(noteHighlightPaint);
+						newNote.setPadding((int) NOTE_DRAW_PADDING);
+						updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
+						vertscroll.setVerticalScrollingLocked(true);
+					} catch (CreationException e) {
+						e.printStackTrace();
+						finish();
+					}
+				}
+			}
+		};
 		
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
@@ -829,39 +874,27 @@ public class EditActivity extends Activity {
 			switch(event.getActionMasked()) {
 			case MotionEvent.ACTION_DOWN:
 				if(insideIA((int) event.getX())) {
-					currentAnchor = nearestAnchor((int) event.getY());
-					lines.highlightAnchor(currentAnchor);
-					activePointerId = event.getPointerId(event.getActionIndex());
-					try {
-						insertIndex = rightToIA;
-						rightToIA++;
-						// FIXME revert to currentNoteLength
-						SheetAlignedElementView newNote = insertElement(insertIndex, new ElementSpec.NormalNote(new NoteSpec(3, currentAnchor)));
-						newNote.setPaint(noteHighlightPaint);
-						newNote.setPadding((int) NOTE_DRAW_PADDING);
-						updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
-						vertscroll.setVerticalScrollingLocked(true);
-						return true;
-					} catch (CreationException e) {
-						e.printStackTrace();
-						finish();
-						return false;
-					}
+					downCoords.set((int) event.getX(), (int) event.getY());
+					downPointerId = event.getPointerId(event.getActionIndex());
+					sheet.postDelayed(lazyActionDown, 100);
+					return true;
 				}
 				break;
 			case MotionEvent.ACTION_MOVE:
-				if(activePointerId == INVALID_POINTER) 
+				if(activePointerId == INVALID_POINTER) {
+					if(downPointerId != INVALID_POINTER) {
+						downCoords.set((int) event.getX(), (int) event.getY());
+						return true;
+					}
 					break;
-				if(!insideIA((int) event.getX())) {
-					cancel();
+				} else if(!insideIA((int) event.getX())) {
 					break;
 				}
 				int newAnchor = nearestAnchor((int) event.getY());
 				if(newAnchor != currentAnchor) {
 					lines.highlightAnchor(newAnchor);
 					try {
-						// FIXME revert to currentNoteLength
-						updateElementSpec(insertIndex, new ElementSpec.NormalNote(new NoteSpec(3, newAnchor)));
+						updateElementSpec(insertIndex, new ElementSpec.NormalNote(new NoteSpec(currentNoteLength, newAnchor)));
 						SheetAlignedElementView newNote = elementViews.get(insertIndex);
 						updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
 					} catch (CreationException e) {
@@ -873,11 +906,11 @@ public class EditActivity extends Activity {
 				}
 				return true;
 			case MotionEvent.ACTION_POINTER_1_UP:
-				if(event.getPointerId(event.getActionIndex()) != activePointerId)
-					break;
+				if(event.getPointerId(event.getActionIndex()) != activePointerId) {
+					return false;
+				}
 			case MotionEvent.ACTION_CANCEL:
-				cancel();
-				return true;
+				break;
 			case MotionEvent.ACTION_UP:
 				if(activePointerId == INVALID_POINTER)
 					break;
@@ -885,9 +918,33 @@ public class EditActivity extends Activity {
 				insertNoteAndClean();
 				return true;
 			}
+			cancel();
 			return false;
 		}
 		
+		private boolean willFitInTime(int insertIndex, ElementSpec spec) {
+			int timeIndex = insertTime(insertIndex);
+			TimeStep currentTimeStep = getCurrentTimeStep(timeIndex);
+			if(currentTimeStep == null) {
+				return true;
+			}
+			int capLeft = timeCapacity(currentTimeStep, minPossibleValue);
+			for(int i = times.get(timeIndex).rangeStart + 1; i < insertIndex; i++) {
+				capLeft -= elementViews.get(i).model().getElementSpec().timeValue(minPossibleValue);
+			}
+			return spec.timeValue(minPossibleValue) <= capLeft;
+		}
+
+		private TimeStep getCurrentTimeStep(int timeIndex) {
+			TimeStep result = null, curr;
+			for(int i = 0; i <= timeIndex; i++) {
+				if((curr = times.get(i).spec.getTimeStep()) != null) {
+					result = curr;
+				}
+			}
+			return result;
+		}
+
 		private void insertNoteAndClean() {
 			animator.forceFinishAll();
 			isPositioning = true;
@@ -948,10 +1005,6 @@ public class EditActivity extends Activity {
 			vertscroll.setVerticalScrollingLocked(false);
 			scaleGestureDetector.setTouchInputLocked(true);
 		}
-
-		private int inIA_noteViewX(SheetAlignedElementView noteView) {
-			return hscroll.getScrollX()+visibleRectWidth-iaRightMargin-inputAreaWidth/2-middleX(noteView);
-		}
 		
 		/**
 		 * Clear all artifacts introduced by touch inside IA box
@@ -960,7 +1013,10 @@ public class EditActivity extends Activity {
 			vertscroll.setVerticalScrollingLocked(false);
 			lines.highlightAnchor(null);
 			
-			if(activePointerId != INVALID_POINTER) {
+			if(downPointerId != INVALID_POINTER) {
+				sheet.removeCallbacks(lazyActionDown);
+				log.i("iaTouchListener::cancel() insert reverted");
+			} else if(activePointerId != INVALID_POINTER) {
 				try {
 					removeElement(insertIndex);
 				} catch (CreationException e) {
@@ -969,6 +1025,11 @@ public class EditActivity extends Activity {
 				}
 			}
 			activePointerId = INVALID_POINTER;
+			downPointerId = INVALID_POINTER;
+		}
+
+		private int inIA_noteViewX(SheetAlignedElementView noteView) {
+			return hscroll.getScrollX()+visibleRectWidth-iaRightMargin-inputAreaWidth/2-middleX(noteView);
 		}
 
 		/**
@@ -1462,6 +1523,18 @@ public class EditActivity extends Activity {
 		popupHideHandler.postDelayed(mHideInfoPopupTask, getResources().getInteger(R.integer.infoPopupLife));
 	}
 	
+	private Toast lastDisruptText = null;
+	protected void disrupt(int stringResId) {
+		Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+		v.vibrate(100);
+		if(lastDisruptText == null) {
+			lastDisruptText = Toast.makeText(this, "", Toast.LENGTH_SHORT);			
+		}
+		lastDisruptText.cancel();
+		lastDisruptText.setText(stringResId);
+		lastDisruptText.show();
+	}
+
 	private void addOverlayView(final ElementsOverlay overlay) {
 		SheetElementView<SheetElement> elementView;
 		elementView = new SheetElementView<SheetElement>(this, overlay);

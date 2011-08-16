@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">Music Input</string>
     <string name="EDIT_current_note_value">Aktualna długość nuty:</string>
+    <string name="EDIT_msg_inserterror_notetolong">This note won\'t fit into current time</string>
 </resources>

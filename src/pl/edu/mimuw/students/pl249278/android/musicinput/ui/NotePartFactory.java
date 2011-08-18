@@ -27,8 +27,8 @@ public class NotePartFactory {
 			super(String.format(
 				"Exception occured while loading note (L: %d, anchorT: %s, orient: %s) parts",
 				noteLength,
-				ReflectionUtils.findConst(NoteConstants.class, "ANCHOR_TYPE_", anchorType),
-				ReflectionUtils.findConst(NotePartFactory.class, "ORIENT_", orientation)
+				ReflectionUtils.findConstName(NoteConstants.class, "ANCHOR_TYPE_", anchorType),
+				ReflectionUtils.findConstName(NotePartFactory.class, "ORIENT_", orientation)
 			), e);
 		}
 	}
@@ -37,7 +37,7 @@ public class NotePartFactory {
 
 		public LoadingSvgException(int xmlResId, Throwable throwable) {
 			super(
-				"Exception while loading EnhancedSvg from xml: " + ReflectionUtils.findConst(R.xml.class, "", xmlResId),
+				"Exception while loading EnhancedSvg from xml: " + ReflectionUtils.findConstName(R.xml.class, "", xmlResId),
 				throwable
 			);
 		}

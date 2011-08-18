@@ -12,6 +12,11 @@ public class PauseSpec implements LengthSpec {
 		this.length = length;
 	}
 	
+	public PauseSpec(PauseSpec source) {
+		this.length = source.length;
+		setFlag(FLAG_DOT, source.getFlag(FLAG_DOT));
+	}
+
 	protected int getFlag(int flag) {
 		return IntUtils.getFlag(flags, flag);
 	}

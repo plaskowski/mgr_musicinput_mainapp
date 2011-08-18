@@ -103,7 +103,7 @@ public class JoinArc extends ElementsOverlay {
 		}
 		
 		int arcThickness = 2*sheetParams.getLineThickness();
-		int arcBoundsHeight = arcThickness+4*sheetParams.getLineThickness();
+		int arcBoundsHeight = arcThickness+6*sheetParams.getLineThickness();
 		path = new Path();
 		path.rMoveTo(0, arcBoundsHeight);
 		path.rQuadTo(horizontalDistance/2, sign*arcBoundsHeight, horizontalDistance, 0);

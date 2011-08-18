@@ -140,7 +140,7 @@ public class ScaleGestureInterceptor extends FrameLayout {
 		log.i(
 			"%s action: %s, index: %d, pos: %fx%f",
 			descr,
-			ReflectionUtils.findConst(MotionEvent.class, "ACTION_", ev.getActionMasked()),
+			ReflectionUtils.findConstName(MotionEvent.class, "ACTION_", ev.getActionMasked()),
 			ev.getActionIndex(),
 			ev.getX(),
 			ev.getY()

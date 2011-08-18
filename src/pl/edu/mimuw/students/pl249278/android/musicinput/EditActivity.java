@@ -19,6 +19,7 @@ import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.CompoundTouchListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView.OnScrollChangedListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView;
@@ -36,6 +37,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModel
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementsOverlay;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementsOverlay.Observer;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.JoinArc;
@@ -55,6 +57,7 @@ import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Vibrator;
@@ -159,8 +162,10 @@ public class EditActivity extends Activity {
 		lines.setHiglightColor(hColor);
 		noteHighlightPaint.setColor(hColor);
 		scaleGestureDetector.setOnScaleListener(scaleListener);
-		sheet.setOnTouchListener(iaTouchListener);
-		
+		sheet.setOnTouchListener(new CompoundTouchListener(
+			iaTouchListener,
+			noteTouchListener
+		));
 		// setup noteValue spinner
 		NoteValueSpinner valueSpinner = (NoteValueSpinner) findViewById(R.id.EDIT_note_value_scroll);
 		try {
@@ -711,8 +716,7 @@ public class EditActivity extends Activity {
 		}
 	}
 	
-	
-	private void updateElementSpec(int elementIndex, ElementSpec newSpec) throws CreationException {
+	private void updateElementSpec(int elementIndex, ElementSpec newSpec, Point rebuildRange) throws CreationException {
 		assertTimesValidity();
 		SheetAlignedElementView view = elementViews.get(elementIndex);
 		boolean timesRebuildRequired = view.model().getElementSpec().timeValue(minPossibleValue) != newSpec.timeValue(minPossibleValue);
@@ -763,9 +767,8 @@ public class EditActivity extends Activity {
 		buildNoteGroups(ngRebuildIndex, ngRebuildEnd);
 		buildJoinArcs(jaRebuildIndex, jaRebuildEnd);
 		
-		updatePositions(ngRebuildIndex, elementIndex-1);
-		updatePositions(elementIndex+1, ngRebuildEnd, hscroll.getScrollX()+visibleRectWidth-iaRightMargin+delta);
 		assertTimesValidity();
+		rebuildRange.set(jaRebuildIndex, jaRebuildEnd);
 	}
 	
 	private SheetAlignedElementView removeElement(int elementIndex) throws CreationException {
@@ -813,19 +816,77 @@ public class EditActivity extends Activity {
 		buildNoteGroups(ngRebuildIndex, lastEl);
 		buildJoinArcs(jaRebuildIndex, lastEl);
 		
-		// aktualizacja rightToIA
-		rightToIA = elementIndex;
-		// przywrócić właściwe pozycje
-		updatePositions(
-			rightToIA, 
-			lastEl,
-			positionAfter(rightToIA-1) + moveDistance()
-		);
-		
 		debugViews();
 		assertTimesValidity();
 		return elView;
 	}
+	
+	private View.OnTouchListener noteTouchListener = new OnTouchListener() {
+		private static final int INVALID_POINTER = -1;
+		private int activePointerId = INVALID_POINTER;
+		
+		Rect hitRect = new Rect();
+		private int selectedIndex;
+		private int touchYoffset;
+		private int currentAnchor;
+		private int absMiddleX;
+		private Point temp = new Point();
+		@Override
+		public boolean onTouch(View v, MotionEvent event) {
+			switch(event.getActionMasked()) {
+			case MotionEvent.ACTION_DOWN:
+				int i = 0;
+				for(; i < elementViews.size(); i++) {
+					elementViews.get(i).getHitRect(hitRect);
+					if(hitRect.contains((int) event.getX(), (int) event.getY())) {
+						break;
+					}
+				}
+				if(i >= elementViews.size() || elementViews.get(i).model().getElementSpec().getType() != ElementType.NOTE) {
+					break;
+				}
+				this.selectedIndex = i;
+				SheetAlignedElementView view = elementViews.get(selectedIndex);
+				view.setPaint(noteHighlightPaint);
+				vertscroll.setVerticalScrollingLocked(true);
+				currentAnchor = view.model().getElementSpec().positonSpec().positon();
+				lines.highlightAnchor(currentAnchor);
+				touchYoffset = (int) event.getY() - line0Top - sheetParams.anchorOffset(currentAnchor, AnchorPart.MIDDLE);
+				activePointerId = event.getPointerId(event.getActionIndex());
+				absMiddleX = middleAbsoluteX(view);
+				return true;
+			case MotionEvent.ACTION_MOVE:
+				if(activePointerId == INVALID_POINTER)
+					break;
+				int newAnchor = nearestAnchor((int) event.getY(event.findPointerIndex(activePointerId)) - touchYoffset);
+				if(newAnchor != currentAnchor) {
+					currentAnchor = newAnchor;
+					lines.highlightAnchor(currentAnchor);
+					try {
+						SheetAlignedElementView elView = elementViews.get(selectedIndex);
+						updateElementSpec(selectedIndex, new ElementSpec.NormalNote(new NoteSpec(((NormalNote) elView.model().getElementSpec()).noteSpec(), currentAnchor)), temp);
+						updatePosition(elView, absMiddleX-middleX(elView), sheetElementY(elView));
+					} catch (CreationException e) {
+						e.printStackTrace();
+						finish();
+						return false;
+					}
+				}
+				return true;
+			case MotionEvent.ACTION_POINTER_1_UP:
+				if(event.getPointerId(event.getActionIndex()) != activePointerId)
+					break;
+			case MotionEvent.ACTION_UP:
+			case MotionEvent.ACTION_CANCEL:
+				activePointerId = INVALID_POINTER;
+				elementViews.get(selectedIndex).setPaint(normalPaint);
+				vertscroll.setVerticalScrollingLocked(false);
+				lines.highlightAnchor(null);
+				return true;
+			}
+			return false;
+		}
+	};
 	
 	private View.OnTouchListener iaTouchListener = new OnTouchListener() {
 		private static final int INVALID_POINTER = -1;
@@ -853,7 +914,6 @@ public class EditActivity extends Activity {
 						downPointerId = INVALID_POINTER;
 						SheetAlignedElementView newNote = insertElement(insertIndex, newNoteSpec);
 						newNote.setPaint(noteHighlightPaint);
-						newNote.setPadding((int) NOTE_DRAW_PADDING);
 						updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
 						vertscroll.setVerticalScrollingLocked(true);
 					} catch (CreationException e) {
@@ -864,6 +924,7 @@ public class EditActivity extends Activity {
 			}
 		};
 		
+		Point temp = new Point();
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
 //			log.i(
@@ -894,9 +955,11 @@ public class EditActivity extends Activity {
 				if(newAnchor != currentAnchor) {
 					lines.highlightAnchor(newAnchor);
 					try {
-						updateElementSpec(insertIndex, new ElementSpec.NormalNote(new NoteSpec(currentNoteLength, newAnchor)));
+						updateElementSpec(insertIndex, new ElementSpec.NormalNote(new NoteSpec(currentNoteLength, newAnchor)), temp);
+						updatePositions(temp.x, insertIndex-1);
 						SheetAlignedElementView newNote = elementViews.get(insertIndex);
 						updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
+						updatePositions(insertIndex+1, temp.y, hscroll.getScrollX()+visibleRectWidth-iaRightMargin+delta);
 					} catch (CreationException e) {
 						e.printStackTrace();
 						finish();
@@ -1019,6 +1082,14 @@ public class EditActivity extends Activity {
 			} else if(activePointerId != INVALID_POINTER) {
 				try {
 					removeElement(insertIndex);
+					// aktualizacja rightToIA
+					rightToIA = insertIndex;
+					// przywrócić właściwe pozycje
+					updatePositions(
+						rightToIA, 
+						elementViews.size()-1,
+						positionAfter(rightToIA-1) + moveDistance()
+					);
 				} catch (CreationException e) {
 					e.printStackTrace();
 					finish();
@@ -1041,27 +1112,28 @@ public class EditActivity extends Activity {
 			return pos >= visibleRectWidth-inputAreaWidth-iaRightMargin && pos <= visibleRectWidth-iaRightMargin;
 		}
 
-		/**
-		 * find which anchor from range <minSpaceAbsIndex, maxSpaceAbsIndex> is nearest to horizontal line y
-		 * @param y in sheet view coordinates
-		 * @return index of anchor
-		 */
-		private int nearestAnchor(int y) {
-			int line0middle = sheetParams.anchorOffset(LINE0_ABSINDEX, AnchorPart.MIDDLE);
-			int delta =
-				sheetParams.anchorOffset(SPACE0_ABSINDEX, AnchorPart.MIDDLE)
-				- line0middle;
-			int indexDeltaHead = y - (line0Top + line0middle - delta/2);
-			int indexDelta = indexDeltaHead/delta;
-			return Math.max( 
-				Math.min(
-				LINE0_ABSINDEX + indexDelta + (indexDeltaHead < 0 ? -1 : 0),
-				NoteConstants.anchorIndex(sheetParams.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
-				),
-				NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
-			);
-		}
 	};
+	
+	/**
+	 * find which anchor from range <minSpaceAbsIndex, maxSpaceAbsIndex> is nearest to horizontal line y
+	 * @param y in sheet view coordinates
+	 * @return index of anchor
+	 */
+	private int nearestAnchor(int y) {
+		int line0middle = sheetParams.anchorOffset(LINE0_ABSINDEX, AnchorPart.MIDDLE);
+		int delta =
+			sheetParams.anchorOffset(SPACE0_ABSINDEX, AnchorPart.MIDDLE)
+			- line0middle;
+		int indexDeltaHead = y - (line0Top + line0middle - delta/2);
+		int indexDelta = indexDeltaHead/delta;
+		return Math.max( 
+			Math.min(
+			LINE0_ABSINDEX + indexDelta + (indexDeltaHead < 0 ? -1 : 0),
+			NoteConstants.anchorIndex(sheetParams.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
+			),
+			NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
+		);
+	}
 	
 	private OnScrollChangedListener horizontalScrollListener = new OnScrollChangedListener() {
 		@Override
@@ -1402,6 +1474,7 @@ public class EditActivity extends Activity {
 		for(int i = 0; i < elementViews.size(); i++) {
 			x += spacingAfter;
 			v = elementViews.get(i);
+			v.setPadding(NOTE_DRAW_PADDING);
 			if(v.model().getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
 				timeIndex++;
 				updateTimeSpacingBase(timeIndex, true);
@@ -1561,6 +1634,7 @@ public class EditActivity extends Activity {
 		SheetAlignedElementView elementView;
 		elementView = new SheetAlignedElementView(this, model);
 		elementView.setPaint(normalPaint);
+		elementView.setPadding((int) NOTE_DRAW_PADDING);
 		elementView.setSheetParams(sheetParams);
 		elementViews.add(index, elementView);
 		sheet.addView(elementView);

@@ -1,7 +1,10 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.model;
 
+import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.HashMap;
 
+import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.NoteModifier;
 
@@ -12,6 +15,19 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 	private static final int FLAG_GROUPED = FLAG_JOINARC+1;
 	private static final int FLAG_TONEMODIFIER_L = FLAG_GROUPED+1;
 	private static final int FLAG_TONEMODIFIER_H = FLAG_TONEMODIFIER_L+1;
+	private static final int[] THIS_FLAGS; 
+	static {
+		Collection<Field> allNoteFlags = ReflectionUtils.findConsts(NoteSpec.class, "FLAG_");
+		THIS_FLAGS = new int[allNoteFlags.size()];
+		int index = 0;
+		for(Field flagField: allNoteFlags) {
+			try {
+				THIS_FLAGS[index++] = (Integer) flagField.get(null);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
 	
 	private static final NoteModifier[] TONE_MODIFIER_REVERSE_MAPPING = new NoteModifier[] {
 		null,
@@ -29,6 +45,15 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 	public NoteSpec(int length, int postion) {
 		super(length);
 		this.postion = postion;
+	}
+
+	public NoteSpec(NoteSpec source, int currentAnchor) {
+		super(source);
+		this.postion = currentAnchor;
+		for(int i = 0; i < THIS_FLAGS.length; i++) {
+			int flag = THIS_FLAGS[i];
+			setFlag(flag, source.getFlag(flag));
+		}
 	}
 	
 	public void setHasJoinArc(boolean hasJoinArc) {

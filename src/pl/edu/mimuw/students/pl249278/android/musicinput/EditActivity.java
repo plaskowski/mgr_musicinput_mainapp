@@ -7,6 +7,7 @@ import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.A
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart.TOP_EDGE;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.length;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -19,6 +20,7 @@ import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ActionBar;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.CompoundTouchListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView.OnScrollChangedListener;
@@ -26,6 +28,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.KeySignature;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.NoteModifier;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.LoadingSvgException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner.OnValueChanged;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.OutlineDrawable;
@@ -48,6 +52,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetElement
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.Sheet5LinesView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.SheetAlignedElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.SheetElementView;
+import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
@@ -63,6 +68,7 @@ import android.os.Handler;
 import android.os.Vibrator;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.MeasureSpec;
 import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
@@ -163,6 +169,7 @@ public class EditActivity extends Activity {
 		noteHighlightPaint.setColor(hColor);
 		scaleGestureDetector.setOnScaleListener(scaleListener);
 		sheet.setOnTouchListener(new CompoundTouchListener(
+			actionBarDismiss,
 			iaTouchListener,
 			noteTouchListener
 		));
@@ -222,6 +229,14 @@ public class EditActivity extends Activity {
 		minPossibleValue = getResources().getInteger(R.integer.minNotePossibleValue) + 1;
 		minDrawSpacingFactor = readParametrizedFactor(R.string.minDrawSpacing);
 		afterTimeDividerVisualSpacingFactor = readParametrizedFactor(R.string.timeDividerDrawAfterSpacingFactor);
+		
+		try {
+			prepareActionBar();
+		} catch (LoadingSvgException e) {
+			e.printStackTrace();
+			finish();
+			return;
+		}
 		
 		// create elements
 		ArrayList<ElementSpec> rawNotesSequence = new ArrayList<ElementSpec>();
@@ -415,7 +430,7 @@ public class EditActivity extends Activity {
 			int lastOldTime = times.size()-1;
 			while(lastOldTime > timeIndex) {
 				Time removedTime = times.remove(lastOldTime--);
-				removeElementView(removedTime.view);
+				removeElementView(removedTime.view, false);
 			}
 		}
 	}
@@ -670,7 +685,7 @@ public class EditActivity extends Activity {
 		buildNoteGroups(ngRebuildIndex, lastEl);
 		buildJoinArcs(jaRebuildIndex, lastEl);
 		
-		updatePositions(insertIndex+1, lastEl, hscroll.getScrollX()+visibleRectWidth-iaRightMargin+delta);
+		updatePositions(insertIndex+1, lastEl, visible2absX(visibleRectWidth-iaRightMargin+delta));
 		
 		debugViews();
 		return newElement;
@@ -771,7 +786,7 @@ public class EditActivity extends Activity {
 		rebuildRange.set(jaRebuildIndex, jaRebuildEnd);
 	}
 	
-	private SheetAlignedElementView removeElement(int elementIndex) throws CreationException {
+	private SheetAlignedElementView removeElement(int elementIndex, Point rebuildRange) throws CreationException {
 		debugTimes();
 		debugViews();
 		assertTimesValidity();
@@ -818,6 +833,13 @@ public class EditActivity extends Activity {
 		
 		debugViews();
 		assertTimesValidity();
+		
+		if(elementIndex < rightToIA) {
+			rightToIA--;
+		}
+		if(rebuildRange != null) {
+			rebuildRange.set(jaRebuildIndex, lastEl);
+		}
 		return elView;
 	}
 	
@@ -828,7 +850,7 @@ public class EditActivity extends Activity {
 		Rect hitRect = new Rect();
 		private int selectedIndex;
 		private int touchYoffset;
-		private int currentAnchor;
+		private int currentAnchor, startAnchor;
 		private int absMiddleX;
 		private Point temp = new Point();
 		@Override
@@ -849,7 +871,7 @@ public class EditActivity extends Activity {
 				SheetAlignedElementView view = elementViews.get(selectedIndex);
 				view.setPaint(noteHighlightPaint);
 				vertscroll.setVerticalScrollingLocked(true);
-				currentAnchor = view.model().getElementSpec().positonSpec().positon();
+				currentAnchor = startAnchor = view.model().getElementSpec().positonSpec().positon();
 				lines.highlightAnchor(currentAnchor);
 				touchYoffset = (int) event.getY() - line0Top - sheetParams.anchorOffset(currentAnchor, AnchorPart.MIDDLE);
 				activePointerId = event.getPointerId(event.getActionIndex());
@@ -877,6 +899,9 @@ public class EditActivity extends Activity {
 				if(event.getPointerId(event.getActionIndex()) != activePointerId)
 					break;
 			case MotionEvent.ACTION_UP:
+				if(startAnchor == currentAnchor) {
+					showActionBar(selectedIndex);
+				}
 			case MotionEvent.ACTION_CANCEL:
 				activePointerId = INVALID_POINTER;
 				elementViews.get(selectedIndex).setPaint(normalPaint);
@@ -959,7 +984,7 @@ public class EditActivity extends Activity {
 						updatePositions(temp.x, insertIndex-1);
 						SheetAlignedElementView newNote = elementViews.get(insertIndex);
 						updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
-						updatePositions(insertIndex+1, temp.y, hscroll.getScrollX()+visibleRectWidth-iaRightMargin+delta);
+						updatePositions(insertIndex+1, temp.y, visible2absX(visibleRectWidth-iaRightMargin+delta));
 					} catch (CreationException e) {
 						e.printStackTrace();
 						finish();
@@ -1081,9 +1106,7 @@ public class EditActivity extends Activity {
 				log.i("iaTouchListener::cancel() insert reverted");
 			} else if(activePointerId != INVALID_POINTER) {
 				try {
-					removeElement(insertIndex);
-					// aktualizacja rightToIA
-					rightToIA = insertIndex;
+					removeElement(insertIndex, null);
 					// przywrócić właściwe pozycje
 					updatePositions(
 						rightToIA, 
@@ -1100,7 +1123,7 @@ public class EditActivity extends Activity {
 		}
 
 		private int inIA_noteViewX(SheetAlignedElementView noteView) {
-			return hscroll.getScrollX()+visibleRectWidth-iaRightMargin-inputAreaWidth/2-middleX(noteView);
+			return visible2absX(visibleRectWidth-iaRightMargin-inputAreaWidth/2)-middleX(noteView);
 		}
 
 		/**
@@ -1108,7 +1131,7 @@ public class EditActivity extends Activity {
 		 * @return if point (x,?) is inside input area box
 		 */
 		private boolean insideIA(int x) {
-			int pos = x-hscroll.getScrollX();
+			int pos = abs2visibleX(x);
 			return pos >= visibleRectWidth-inputAreaWidth-iaRightMargin && pos <= visibleRectWidth-iaRightMargin;
 		}
 
@@ -1181,7 +1204,7 @@ public class EditActivity extends Activity {
 		 */
 		private boolean shouldBeMovedLeft(int elIndex) {
 			int middle = elementMiddleVisibleX(elIndex);
-			return middle < visibleRectWidth - iaRightMargin + delta - mTouchSlop;
+			return middle < moveLeftBorder();
 		}
 		
 		/**
@@ -1190,7 +1213,7 @@ public class EditActivity extends Activity {
 		 */
 		private boolean shouldBeMovedRight(int elIndex) {
 			int middle = elementMiddleVisibleX(elIndex);
-			return middle > visibleRectWidth - inputAreaWidth - iaRightMargin - delta + mTouchSlop;
+			return middle > moveRightBorder();
 		}
 
 		/**
@@ -1199,7 +1222,7 @@ public class EditActivity extends Activity {
 		 */
 		private int elementMiddleVisibleX(int elIndex) {
 			SheetAlignedElementView element = elementViews.get(elIndex);
-			return viewStableX(element) - hscroll.getScrollX() + middleX(element);
+			return abs2visibleX(viewStableX(element)) + middleX(element);
 		}
 		
 		private void moveRight(int elIndex) {
@@ -1270,7 +1293,7 @@ public class EditActivity extends Activity {
 			}
 //			log.i("onScaleEnd(): new right: %d", rightToIA);
 			
-			int leftToIAArea = visibleRectWidth -inputAreaWidth - iaRightMargin - delta + mTouchSlop;
+			int leftToIAArea = moveRightBorder();
 			// scroll sheet so left border of IA matches: 
 			int destScrollX = rightToIA == 1
 				// free place in first Time
@@ -1337,7 +1360,7 @@ public class EditActivity extends Activity {
 		 * @return vertical position of note head middle inside visible rect
 		 */
 		public int middleVisibleX(SheetAlignedElementView view) {
-			return middleAbsoluteX(view)-hscroll.getScrollX();
+			return abs2visibleX(middleAbsoluteX(view));
 		}
 		
 		private void scalingFinished() {
@@ -1345,6 +1368,103 @@ public class EditActivity extends Activity {
 			scaleGestureDetector.setTouchInputLocked(false);
 		}
 	};
+	
+	private void animatedRepositioning(int rebuildStart, int rebuildEnd, int pinnedElementIndex, int pinVisiblePositionX, long animationDuration) {
+		animator.forceFinishAll();
+		isPositioning = true;
+		int startTime = findTime(rebuildStart), endTime = findTime(rebuildEnd);
+		Time timeWrappingPin = times.get(findTime(pinnedElementIndex));
+		int originSpacing = timeWrappingPin.spacingBase;
+		for(int timeI = startTime; timeI <= endTime; timeI++) {
+			updateTimeSpacingBase(timeI, false);
+		}
+		int newSpacing = timeWrappingPin.spacingBase;
+		
+		// find new rightToIA
+		int elementsCount = elementViews.size();
+		if(pinVisiblePositionX >= moveLeftBorder()) {
+			int currX = pinVisiblePositionX;
+			int i = pinnedElementIndex-1;
+			for(; i >= 0; i--) {
+				SheetAlignedElementView view = elementViews.get(i);
+				currX -= afterElementSpacing(times.get(findTime(i)), view.model());
+				if(currX < moveLeftBorder())
+					break;
+			}
+			rightToIA = i+1;
+			if(isStickyTimeDivider(rightToIA)) {
+				rightToIA += newSpacing > originSpacing ? 1 : -1;
+			}
+		} else {
+			int nextX = pinVisiblePositionX;
+			int i = pinnedElementIndex;
+			for(; i < elementsCount-1; i++) {
+				SheetAlignedElementView view = elementViews.get(i);
+				nextX += afterElementSpacing(times.get(findTime(i)), view.model());
+				if(nextX > moveRightBorder())
+					break;
+			}
+			rightToIA = i+1;
+			if(isStickyTimeDivider(rightToIA)) {
+				rightToIA += newSpacing > originSpacing ? -1 : 1;
+			}
+		}
+		
+		Time time = times.get(startTime);
+		int repositioningStart = time.rangeStart;
+		WaitManyRunOnce animationsEndListener = new WaitManyRunOnce(1+elementsCount-repositioningStart) {
+			@Override
+			protected void allFinished() {
+				correctSheetWidth();
+				isPositioning = false;
+				scaleGestureDetector.setTouchInputLocked(false);
+			}
+		};
+		SheetAlignedElementView timeDividerView = elementViews.get(time.rangeStart);
+		int x = middleAbsoluteX(timeDividerView);
+		int timeIndex = startTime-1;
+		int rescrollDest = -1;
+		for(int i = repositioningStart; i < elementsCount; i++) {
+			if(i == rightToIA) {
+				x += moveDistance();
+			}
+			SheetAlignedElementView v = elementViews.get(i);
+			// animate view to it's correct position
+			int dx = (x - middleX(v)) - left(v);
+			animator.startRLAnimation(v, dx, animationDuration, animationsEndListener);
+			if(i == pinnedElementIndex) {
+				rescrollDest = x;
+			}
+			if(v.model().getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
+				timeIndex++;
+			}
+			x += afterElementSpacing(times.get(timeIndex), v.model());
+		}
+		if(rescrollDest == -1) {
+			throw new RuntimeException();
+		}
+		
+		/** destination value of hscroll.scrollX */
+		int destScrollX = rescrollDest-pinVisiblePositionX;
+		/** how long part of resized sheet will remain in visible rect or further to right after scrolling 
+		 *  to destScrollX
+		 */
+		int rest = getValidSheetWidth() - destScrollX;
+		if(rest < visibleRectWidth) {
+			/* if remaining part is to short we correct pinning */
+			pinVisiblePositionX += visibleRectWidth - rest;
+		}
+		
+		animator.startHScrollAnimation(
+			hscroll, 
+			abs2visibleX(rescrollDest)-pinVisiblePositionX, 
+			animationDuration, 
+			animationsEndListener
+		);
+		
+		scaleGestureDetector.setTouchInputLocked(true);		
+	}
+	
 	
 	/**
 	 * @return if elementViews(index) is a TimeDivider that should stick to preceding element.
@@ -1540,6 +1660,12 @@ public class EditActivity extends Activity {
 	 * Resize sheet accordingly to last element position.
 	 */
 	private void correctSheetWidth() {
+		int newSheetWidth = getValidSheetWidth();
+		updateSize(sheet, newSheetWidth, null);
+		updateSize(lines, newSheetWidth, null);
+	}
+
+	private int getValidSheetWidth() {
 		int lastElIndex = elementViews.size()-1;
 		SheetAlignedElementView lastView = elementViews.get(lastElIndex);
 		int lastViewShiftedX = 
@@ -1554,8 +1680,7 @@ public class EditActivity extends Activity {
 				lastView.measureWidth() - middleX(lastView)
 			)
 		);
-		updateSize(sheet, newSheetWidth, null);
-		updateSize(lines, newSheetWidth, null);
+		return newSheetWidth;
 	}
 	
 	private Handler popupHideHandler = new Handler();
@@ -1607,6 +1732,315 @@ public class EditActivity extends Activity {
 		lastDisruptText.setText(stringResId);
 		lastDisruptText.show();
 	}
+	
+	private ElementAction[] possibleActions;
+	private int elementActionIndex;
+	
+	private abstract class ElementAction implements ActionBar.Action {
+		@Override
+		public final void perform() {
+			perform(elementActionIndex);
+			hideActionBar();
+		}
+		
+		protected abstract void perform(int elementIndex);
+		protected abstract boolean isValidOn(int elementIndex);
+		
+		protected boolean isValidIndex(int elementIndex) {
+			return elementIndex >= 0 && elementIndex < elementViews.size();
+		}
+
+		public Boolean getState(int contextElementIndex) {
+			return null;
+		}
+	};
+	
+	private abstract class SvgIconAction extends ElementAction {
+		private SvgImage icon;
+		
+		public SvgIconAction(int svgResId) throws LoadingSvgException {
+			icon = NotePartFactory.prepareSvgImage(EditActivity.this, svgResId);
+		}
+		
+		@Override
+		public SvgImage icon() {
+			return icon;
+		}
+	};
+	
+	private abstract class UpdateElementAction extends SvgIconAction {
+		
+		public UpdateElementAction(int svgResId) throws LoadingSvgException {
+			super(svgResId);
+		}
+
+		@Override
+		protected void perform(int elementIndex) {
+			if(!isValidIndex(elementIndex))
+				throw new InvalidParameterException();
+			try {
+				SheetAlignedElementView view = elementViews.get(elementIndex);
+				int absMiddleX = middleAbsoluteX(view);
+				Point range = new Point();
+				updateElementSpec(elementIndex, updatedSpec(view.model().getElementSpec()), range);
+				updatePosition(view, absMiddleX-middleX(view), sheetElementY(view));
+				animatedRepositioning(range.x, range.y, elementIndex, abs2visibleX(absMiddleX), 500);
+			} catch (CreationException e) {
+				e.printStackTrace();
+				finish();
+				return;
+			}
+		}
+
+		protected abstract ElementSpec updatedSpec(ElementSpec elementSpec);
+	};
+	
+	private class RemoveElementAction extends SvgIconAction {
+		
+		public RemoveElementAction(int svgResId) throws LoadingSvgException {
+			super(svgResId);
+		}
+
+		Point rebuildRange = new Point();
+		@Override
+		protected void perform(int elementIndex) {
+			if(!isValidIndex(elementIndex))
+				throw new InvalidParameterException();
+			try {
+				removeElement(elementIndex, rebuildRange);
+				int pinElIndex = elementIndex-1;
+				animatedRepositioning(
+					rebuildRange.x, rebuildRange.y, 
+					pinElIndex, abs2visibleX(middleAbsoluteX(elementViews.get(pinElIndex))), 
+					500
+				);
+			} catch (CreationException e) {
+				e.printStackTrace();
+				finish();
+				return;
+			}
+		}
+		
+		@Override
+		protected boolean isValidOn(int elementIndex) {
+			return isValidIndex(elementIndex) && specAt(elementIndex).getType() == ElementType.NOTE;
+		}
+	}
+	
+	private class ToggleJoinArc extends UpdateElementAction {
+
+		public ToggleJoinArc(int svgResId) throws LoadingSvgException {
+			super(svgResId);
+		}
+
+		@Override
+		protected ElementSpec updatedSpec(ElementSpec elementSpec) {
+			ElementSpec.NormalNote spec = (NormalNote) elementSpec;
+			return new ElementSpec.NormalNote(new NoteSpec(spec.noteSpec(), NoteSpec.TOGGLE_FIELD.HAS_JOIN_ARC));
+		}
+
+		@Override
+		protected boolean isValidOn(int elementIndex) {
+			if(!isValidIndex(elementIndex))
+				return false;
+			ElementSpec elementSpec = elementViews.get(elementIndex).model().getElementSpec();
+			if(!JoinArc.couldStartWithJA(elementSpec))
+				return false;
+			for(int i = elementIndex+1; i < elementViews.size(); i++) {
+				elementSpec = elementViews.get(i).model().getElementSpec();
+				if(JoinArc.canEndJA(elementSpec)) {
+					return true;
+				} else if(!JoinArc.canSkipOver(elementSpec)) {
+					break;
+				}
+ 			}
+			return false;
+		}
+		
+		@Override
+		public Boolean getState(int elementIndex) {
+			return isValidIndex(elementIndex) 
+			&& ((ElementSpec.NormalNote) elementViews.get(elementIndex).model().getElementSpec()).noteSpec().hasJoinArc();
+		}
+	}
+	
+	private abstract class ElementActionWrapper extends ElementAction {
+		private int startIndex;
+		private int lastElementIndex;
+		private ElementAction wrappedElement;
+
+		public ElementActionWrapper(ElementAction wrappedElement) throws LoadingSvgException {
+			this.wrappedElement = wrappedElement;
+		}
+
+		@Override
+		protected void perform(int elementIndex) {
+			if(elementIndex != lastElementIndex)
+				throw new InvalidParameterException("Called perform() without calling isValidOn() first");
+			wrappedElement.perform(startIndex);
+		}
+
+		@Override
+		protected boolean isValidOn(int elementIndex) {
+			Integer actualIndex = getActualIndex(elementIndex);
+			if(actualIndex == null) {
+				return false;
+			} else {
+				this.startIndex = actualIndex;
+				this.lastElementIndex = elementIndex;
+				return wrappedElement.isValidOn(startIndex);
+			}
+		}
+		
+		protected abstract Integer getActualIndex(int elementIndex);
+
+		@Override
+		public Boolean getState(int elementIndex) {
+			if(elementIndex != lastElementIndex)
+				throw new InvalidParameterException("Called getState() without calling isValidOn() first");
+			return wrappedElement.getState(startIndex);
+		}
+		
+		@Override
+		public SvgImage icon() {
+			return wrappedElement.icon();
+		}
+	}
+
+	private class ToggleJoinArcEnd extends ElementActionWrapper {
+		public ToggleJoinArcEnd(int svgResId)	throws LoadingSvgException {
+			super(new ToggleJoinArc(svgResId));
+		}
+
+		@Override
+		protected Integer getActualIndex(int elementIndex) {
+			if(!isValidIndex(elementIndex))
+				return null;
+			ElementSpec elementSpec = elementViews.get(elementIndex).model().getElementSpec();
+			for(int i = elementIndex-1; i >= 0; i--) {
+				elementSpec = elementViews.get(i).model().getElementSpec();
+				if(JoinArc.couldStartWithJA(elementSpec)) {
+					return i;
+				} else if(!JoinArc.canSkipOver(elementSpec)) {
+					break;
+				}
+			}
+			return null;
+		}
+	}
+	
+	private class ToggleNoteGroup extends UpdateElementAction {
+
+		public ToggleNoteGroup(int svgResId) throws LoadingSvgException {
+			super(svgResId);
+		}
+
+		@Override
+		protected ElementSpec updatedSpec(ElementSpec elementSpec) {
+			ElementSpec.NormalNote spec = (NormalNote) elementSpec;
+			return new ElementSpec.NormalNote(new NoteSpec(spec.noteSpec(), NoteSpec.TOGGLE_FIELD.IS_GROUPED));
+		}
+
+		@Override
+		protected boolean isValidOn(int elementIndex) {
+			if(!isValidIndex(elementIndex) || !isValidIndex(elementIndex+1))
+				return false;
+			ElementSpec elementSpec = elementViews.get(elementIndex).model().getElementSpec();
+			ElementSpec nextElementSpec = elementViews.get(elementIndex+1).model().getElementSpec();
+			return 
+			NotesGroup.GroupBuilder.couldExtendGroup(elementSpec)
+			&& NotesGroup.GroupBuilder.canEndGroup(nextElementSpec);
+		}
+		
+		@Override
+		public Boolean getState(int elementIndex) {
+			return isValidIndex(elementIndex) 
+			&& ((ElementSpec.NormalNote) elementViews.get(elementIndex).model().getElementSpec()).noteSpec().isGrouped();
+		}
+	}
+	
+	private class ToggleNoteGroupEnd extends ElementActionWrapper {
+
+		public ToggleNoteGroupEnd(int svgResId) throws LoadingSvgException {
+			super(new ToggleNoteGroup(svgResId));
+		}
+
+		@Override
+		protected Integer getActualIndex(int elementIndex) {
+			return elementIndex-1;
+		}
+		
+	}
+	
+	private ActionBar actionBar; 
+	private void prepareActionBar() throws LoadingSvgException {
+		actionBar = (ActionBar) findViewById(R.id.EDIT_actionbar);
+		actionBar.setVisibility(View.INVISIBLE);
+		possibleActions = new ElementAction[] {
+			new ToggleJoinArcEnd(R.xml.button_joinarc_left),
+			new ToggleNoteGroupEnd(R.xml.button_notegroup_left),
+			new RemoveElementAction(R.xml.button_trash),
+			new ToggleNoteGroup(R.xml.button_notegroup_right),
+			new ToggleJoinArc(R.xml.button_joinarc_right)
+		};
+	}
+	private View.OnTouchListener actionBarDismiss = new OnTouchListener() {
+		@Override
+		public boolean onTouch(View v, MotionEvent event) {
+			hideActionBar();
+			return false;
+		}
+	};
+	
+	private void showActionBar(int contextElementIndex) {
+		actionBar.clear();
+		boolean empty = true;
+		for(int i = 0; i < possibleActions.length; i++) {
+			ElementAction action = possibleActions[i];
+			if(action.isValidOn(contextElementIndex)) {
+				Boolean state = action.getState(contextElementIndex);
+				if(state == null) {
+					actionBar.addAction(action);
+				} else {
+					actionBar.addToggleAction(action, state);
+				}
+				empty = false;
+			}
+		}
+		if(!empty) {
+			elementActionIndex = contextElementIndex;
+			int middleX, middleY;
+			SheetAlignedElementView view = elementViews.get(contextElementIndex);
+			actionBar.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+			switch(view.model().getElementSpec().getType()) {
+			case NOTE:
+				middleX = middleX(view);
+				middleY = -view.getOffsetToAnchor(view.model().getElementSpec().positonSpec().positon(), AnchorPart.MIDDLE);
+				break;
+			case TIMES_DIVIDER:
+				middleX = middleX(view);
+				middleY = view.measureHeight()/2;
+				break;
+			default:
+				middleX = view.getWidth()/2;
+				middleY = view.measureHeight()/2;
+			}
+			int refPointVisibleX = abs2visibleX(viewStableX(view)) + middleX;
+			int refPointVisibleY = top(view) - vertscroll.getScrollY() + middleY;
+			updateMargins(
+				actionBar,
+				refPointVisibleX - actionBar.getMeasuredWidth()/2,
+				refPointVisibleY - actionBar.getMeasuredHeight()
+			);	
+			actionBar.setVisibility(View.VISIBLE);
+		}
+	}
+
+	private void hideActionBar() {
+		actionBar.clear();
+		actionBar.setVisibility(View.GONE);
+		elementActionIndex = -1;
+	}
 
 	private void addOverlayView(final ElementsOverlay overlay) {
 		SheetElementView<SheetElement> elementView;
@@ -1642,8 +2076,11 @@ public class EditActivity extends Activity {
 	}
 	
 	private void removeElementView(SheetAlignedElementView view) {
+		removeElementView(view, true);
+	}
+	private void removeElementView(SheetAlignedElementView view, boolean assertRemoved) {
 		boolean removed = elementViews.remove(view);
-		if(!removed) {
+		if(assertRemoved && !removed) {
 			throw new RuntimeException("Tried to remove element view that hasn't been in elementViews");
 		}
 		view.model().setTag(null);
@@ -1681,6 +2118,10 @@ public class EditActivity extends Activity {
 			minSpacing += firstTimeEl.model().getMiddleX()-firstTimeEl.model().collisionRegionLeft();
 		}
 		return minSpacing;
+	}
+	
+	private ElementSpec specAt(int elementIndex) {
+		return elementViews.get(elementIndex).model().getElementSpec();
 	}
 	
 	private static int middleAbsoluteX(SheetAlignedElementView view) {
@@ -1736,10 +2177,7 @@ public class EditActivity extends Activity {
 	}
 
 	private void updatePosition(View v, Integer left, Integer top) {
-		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
-		if(left != null) params.leftMargin = left;
-		if(top != null) params.topMargin = top;
-		v.setLayoutParams(params);
+		ViewGroup.MarginLayoutParams params = updateMargins(v, left, top);
 		if(v instanceof SheetAlignedElementView) {
 			SheetAlignedElementView view = (SheetAlignedElementView) v;
 			Set<ElementsOverlay> overlays = bindMap.get(view);
@@ -1749,6 +2187,31 @@ public class EditActivity extends Activity {
 				}
 			}
 		}
+	}
+
+	private int moveLeftBorder() {
+		return visibleRectWidth - iaRightMargin + delta - mTouchSlop;
+	}
+
+
+	private int moveRightBorder() {
+		return visibleRectWidth - inputAreaWidth - iaRightMargin - delta + mTouchSlop;
+	}
+	
+	private int abs2visibleX(int absoluteX) {
+		return absoluteX - hscroll.getScrollX();
+	}
+	
+	private int visible2absX(int visibleX) {
+		return visibleX + hscroll.getScrollX();
+	}
+
+	private static ViewGroup.MarginLayoutParams updateMargins(View v, Integer left, Integer top) {
+		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+		if(left != null) params.leftMargin = left;
+		if(top != null) params.topMargin = top;
+		v.setLayoutParams(params);
+		return params;
 	}
 	
 	private static void updateSize(View v, Integer width, Integer height) {

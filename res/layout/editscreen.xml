@@ -60,15 +60,26 @@
 			   	</RelativeLayout>
 			</pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView>
 	    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView>
+	    
+	    <View
+		    android:id="@+id/EDIT_inputArea"
+		    android:layout_width="@dimen/inputAreaWidth"
+		    android:layout_gravity="right"
+		    android:layout_height="fill_parent"
+		    android:background="#1FFF0000"
+	    />
+	    
+	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.ActionBar
+	    	android:orientation="horizontal"
+	    	android:id="@+id/EDIT_actionbar"
+	    	android:layout_width="wrap_content"
+	    	android:layout_height="wrap_content"
+	    	android:layout_marginLeft="30dip"
+	    	android:layout_marginTop="50dip"
+		    android:layout_gravity="left|top"
+	    /><!-- 
+	     -->
    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor>
-    
-    <View
-	    android:id="@+id/EDIT_inputArea"
-	    android:layout_width="@dimen/inputAreaWidth"
-	    android:layout_alignParentRight="true"
-	    android:layout_height="fill_parent"
-	    android:background="#1FFF0000"
-    />
     
    <LinearLayout
 		android:id="@+id/EDIT_info_popup"   

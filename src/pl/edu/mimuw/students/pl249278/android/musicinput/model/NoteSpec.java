@@ -15,7 +15,18 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 	private static final int FLAG_GROUPED = FLAG_JOINARC+1;
 	private static final int FLAG_TONEMODIFIER_L = FLAG_GROUPED+1;
 	private static final int FLAG_TONEMODIFIER_H = FLAG_TONEMODIFIER_L+1;
-	private static final int[] THIS_FLAGS; 
+	private static final int[] THIS_FLAGS;
+	
+	public static enum TOGGLE_FIELD {
+		HAS_JOIN_ARC(FLAG_JOINARC),
+		IS_GROUPED(FLAG_GROUPED);
+		
+		private int FIELD_FLAG;
+		private TOGGLE_FIELD(int fieldFlag) {
+			FIELD_FLAG = fieldFlag;
+		}
+	};
+	
 	static {
 		Collection<Field> allNoteFlags = ReflectionUtils.findConsts(NoteSpec.class, "FLAG_");
 		THIS_FLAGS = new int[allNoteFlags.size()];
@@ -46,21 +57,31 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 		super(length);
 		this.postion = postion;
 	}
+	
+	public NoteSpec(NoteSpec source, TOGGLE_FIELD fieldToToggle) {
+		this(source);
+		int flag = fieldToToggle.FIELD_FLAG;
+		this.setFlag(flag, asFlagVal(!asBool(getFlag(flag))));
+	}
 
 	public NoteSpec(NoteSpec source, int currentAnchor) {
-		super(source);
+		this(source);
 		this.postion = currentAnchor;
+	}
+	public NoteSpec(NoteSpec source) {
+		super(source);
 		for(int i = 0; i < THIS_FLAGS.length; i++) {
 			int flag = THIS_FLAGS[i];
 			setFlag(flag, source.getFlag(flag));
 		}
+		this.postion = source.postion;
 	}
 	
 	public void setHasJoinArc(boolean hasJoinArc) {
-		setFlag(FLAG_JOINARC, hasJoinArc ? 1 : 0);
+		setFlag(FLAG_JOINARC, asFlagVal(hasJoinArc));
 	}
 	public boolean hasJoinArc() {
-		return getFlag(FLAG_JOINARC) == 1;
+		return asBool(getFlag(FLAG_JOINARC));
 	}
 	
 	/**
@@ -88,18 +109,24 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 		return postion;
 	}
 	public void setHasDot(boolean hasDot) {
-		setFlag(FLAG_DOT, hasDot ? 1 : 0);
+		setFlag(FLAG_DOT, asFlagVal(hasDot));
 	}
 	public boolean hasDot() {
 		return dotExtension() > 0;
 	}
 
 	public boolean isGrouped() {
-		return getFlag(FLAG_GROUPED) == 1;
+		return asBool(getFlag(FLAG_GROUPED));
 	}
 
 	public void setIsGrouped(boolean isGrouped) {
-		setFlag(FLAG_GROUPED, isGrouped ? 1 : 0);
+		setFlag(FLAG_GROUPED, asFlagVal(isGrouped));
 	}
 	
+	private static int asFlagVal(boolean boolVal) {
+		return boolVal ? 1 : 0;
+	}
+	private static boolean asBool(int flagVal) {
+		return flagVal == 1;
+	}
 }

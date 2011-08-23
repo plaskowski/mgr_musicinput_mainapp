@@ -136,10 +136,14 @@ public class JoinArc extends ElementsOverlay {
 	}
 	
 	public static boolean canStrartJA(ElementSpec elementSpec) {
-		return elementSpec.getType() == ElementType.NOTE && ((NormalNote) elementSpec).noteSpec().hasJoinArc();
+		return couldStartWithJA(elementSpec) && ((NormalNote) elementSpec).noteSpec().hasJoinArc();
+	}
+
+	public static boolean couldStartWithJA(ElementSpec elementSpec) {
+		return elementSpec.getType() == ElementType.NOTE;
 	}
 	public static boolean canEndJA(ElementSpec elementSpec) {
-		return elementSpec.getType() == ElementType.NOTE;
+		return couldStartWithJA(elementSpec);
 	}
 	public static boolean canSkipOver(ElementSpec elementSpec) {
 		return elementSpec.getType() == ElementType.TIMES_DIVIDER || elementSpec.getType() == ElementType.FAKE_PAUSE;

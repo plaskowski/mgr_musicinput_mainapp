@@ -13,6 +13,7 @@ import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.Clef;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.AdjustableSizeImage;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.EnhancedSvgImage;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteEnding;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteHead;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
@@ -119,6 +120,21 @@ public class NotePartFactory {
 		return adjustableImages.get(xmlResId);
 	}
 	
+	public static SvgImage prepareSvgImage(Context context, int svgResId) throws LoadingSvgException {
+		if(svgImages.get(svgResId) == null) {
+			SvgParser parser = new SvgParser();
+			XmlPullParser xmlParser = context.getResources().getXml(svgResId);
+			SvgImage svgImg;
+			try {
+				svgImg = parser.parse(xmlParser);
+				svgImages.put(svgResId, new EnhancedSvgImage(svgImg));
+			} catch (Exception e) {
+				throw new LoadingSvgException(svgResId, e);
+			}
+		}
+		return svgImages.get(svgResId);
+	}
+	
 	private static int mappingIndex(int orientation, int anchorType) {
 		return (orientation << 1) | anchorType;
 	}
@@ -130,6 +146,7 @@ public class NotePartFactory {
 	private static Map<Integer, NoteHead> noteHeads = new HashMap<Integer, NoteHead>();
 	private static Map<Integer, NoteEnding> noteEndings = new HashMap<Integer, NoteEnding>();
 	private static Map<Integer, AdjustableSizeImage> adjustableImages = new HashMap<Integer, AdjustableSizeImage>();
+	private static Map<Integer, SvgImage> svgImages = new HashMap<Integer, SvgImage>();
 	
 	static {
 		clefMapping.put(NoteConstants.Clef.VIOLIN, R.xml.key_violin);

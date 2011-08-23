@@ -317,7 +317,14 @@ public class NotesGroup extends ElementsOverlay {
 		public static boolean canExtendGroup(ElementSpec spec) {
 			return isShortNote(spec) && hasFlag(spec);
 		}
+		public static boolean couldExtendGroup(ElementSpec spec) {
+			return isShortNote(spec);
+		}
 
+		public static boolean canEndGroup(ElementSpec spec) {
+			return isShortNote(spec);
+		}
+		
 		private static boolean hasFlag(ElementSpec spec) {
 			return ((ElementSpec.NormalNote) spec).noteSpec().isGrouped();
 		}

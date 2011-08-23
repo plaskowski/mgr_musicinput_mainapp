@@ -10,6 +10,7 @@ public class NoteConstants {
 	public static final int LEN_FULLNOTE = 0;
 	public static final int LEN_HALFNOTE = 1;
 	public static final int LEN_QUATERNOTE = 2;
+	public static final Integer LEN_EIGHTNOTE = 3;
 	
 	public static final int ORIENT_UP = 0;
 	public static final int ORIENT_DOWN = 1;

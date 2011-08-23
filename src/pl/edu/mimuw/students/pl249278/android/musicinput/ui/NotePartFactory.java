@@ -105,6 +105,10 @@ public class NotePartFactory {
 		return prepareAdujstableImage(ctx, clefMapping.get(key), false);
 	}
 	
+	public static AdjustableSizeImage preparePauseImage(Context ctx, int pauseLength) throws LoadingSvgException {
+		return prepareAdujstableImage(ctx, pauseMapping.get(pauseLength), false);
+	}
+	
 	public static AdjustableSizeImage prepareAdujstableImage(Context context, int xmlResId, boolean relativeIMarkers) throws LoadingSvgException {
 		if(adjustableImages.get(xmlResId) == null) {
 			SvgParser parser = new SvgParser();
@@ -143,6 +147,7 @@ public class NotePartFactory {
 	private static Map<Integer, int[]> endingMapping = new HashMap<Integer, int[]>();
 	private static Map<Integer, int[]> modifiersMapping = new HashMap<Integer, int[]>();
 	private static EnumMap<NoteConstants.Clef, Integer> clefMapping = new EnumMap<NoteConstants.Clef, Integer>(NoteConstants.Clef.class);
+	private static Map<Integer, Integer> pauseMapping = new HashMap<Integer, Integer>();
 	private static Map<Integer, NoteHead> noteHeads = new HashMap<Integer, NoteHead>();
 	private static Map<Integer, NoteEnding> noteEndings = new HashMap<Integer, NoteEnding>();
 	private static Map<Integer, AdjustableSizeImage> adjustableImages = new HashMap<Integer, AdjustableSizeImage>();
@@ -150,6 +155,9 @@ public class NotePartFactory {
 	
 	static {
 		clefMapping.put(NoteConstants.Clef.VIOLIN, R.xml.key_violin);
+		
+		pauseMapping.put(NoteConstants.LEN_QUATERNOTE, R.xml.pause_quater);
+		pauseMapping.put(NoteConstants.LEN_EIGHTNOTE, R.xml.pause_eight);
 		
 		declare(modifiersMapping, NoteConstants.NoteModifier.SHARP,
 			anchor(ANCHOR_TYPE_LINE,

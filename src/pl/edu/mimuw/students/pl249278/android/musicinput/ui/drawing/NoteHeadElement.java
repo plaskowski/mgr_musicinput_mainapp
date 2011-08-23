@@ -86,7 +86,7 @@ public class NoteHeadElement extends SheetAlignedElement {
 		} else if(lineIdentifier == SheetAlignedElement.MIDDLE_X) {
 			return (int) (head.getxMiddleMarker() * scale);
 		} else {
-			throw new UnsupportedOperationException();
+			return super.getHorizontalOffset(lineIdentifier);
 		}
 	}
 	

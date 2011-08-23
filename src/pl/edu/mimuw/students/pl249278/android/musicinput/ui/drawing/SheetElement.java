@@ -13,8 +13,8 @@ public abstract class SheetElement {
 	
 	protected SheetParams sheetParams;
 
-	public abstract int measureHeight();
 	public abstract int measureWidth();
+	public abstract int measureHeight();
 	public abstract int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part);
 	
 	public void setSheetParams(SheetParams params) {

@@ -18,6 +18,7 @@ import java.util.Set;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.PauseSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ActionBar;
@@ -171,7 +172,8 @@ public class EditActivity extends Activity {
 		sheet.setOnTouchListener(new CompoundTouchListener(
 			actionBarDismiss,
 			iaTouchListener,
-			noteTouchListener
+			noteTouchListener,
+			elementTouchListener
 		));
 		// setup noteValue spinner
 		NoteValueSpinner valueSpinner = (NoteValueSpinner) findViewById(R.id.EDIT_note_value_scroll);
@@ -318,6 +320,9 @@ public class EditActivity extends Activity {
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE));
 //		n.setHasJoinArc(true);
 		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		
+		rawNotesSequence.add(new ElementSpec.Pause(new PauseSpec(NoteConstants.LEN_QUATERNOTE)));
+		rawNotesSequence.add(new ElementSpec.Pause(new PauseSpec(NoteConstants.LEN_QUATERNOTE+1)));
 		
 		try {
 			for(ElementSpec spec: rawNotesSequence) {
@@ -842,6 +847,46 @@ public class EditActivity extends Activity {
 		}
 		return elView;
 	}
+	
+	private View.OnTouchListener elementTouchListener = new OnTouchListener() {
+		Rect hitRect = new Rect();
+		int selectedIndex = -1;
+		
+		@Override
+		public boolean onTouch(View v, MotionEvent event) {
+			switch(event.getActionMasked()) {
+			case MotionEvent.ACTION_DOWN:
+				int i = 0;
+				for(; i < elementViews.size(); i++) {
+					elementViews.get(i).getHitRect(hitRect);
+					if(hitRect.contains((int) event.getX(), (int) event.getY())) {
+						break;
+					}
+				}
+				if(i < elementViews.size()) {
+					switch(specAt(i).getType()) {
+					case PAUSE:
+						selectedIndex = i;
+						SheetAlignedElementView view = elementViews.get(selectedIndex);
+						view.setPaint(noteHighlightPaint);
+						return true;
+					}
+				}
+				break;
+			case MotionEvent.ACTION_UP:
+				if(selectedIndex != -1) {
+					showActionBar(selectedIndex);
+				}
+			case MotionEvent.ACTION_CANCEL:
+				if(selectedIndex != -1) {
+					SheetAlignedElementView view = elementViews.get(selectedIndex);
+					view.setPaint(normalPaint);
+				}
+				selectedIndex = -1;
+			}
+			return false;
+		}
+	};
 	
 	private View.OnTouchListener noteTouchListener = new OnTouchListener() {
 		private static final int INVALID_POINTER = -1;
@@ -1788,7 +1833,14 @@ public class EditActivity extends Activity {
 		
 		@Override
 		protected boolean isValidOn(int elementIndex) {
-			return isValidIndex(elementIndex) && specAt(elementIndex).getType() == ElementType.NOTE;
+			if(isValidIndex(elementIndex)) {
+				switch(specAt(elementIndex).getType()) { 
+				case NOTE:
+				case PAUSE:
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 	

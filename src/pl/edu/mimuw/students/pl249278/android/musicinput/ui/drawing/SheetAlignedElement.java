@@ -5,12 +5,16 @@ public abstract class SheetAlignedElement extends SheetElement {
 	 * offset of specific vertical line relative to left edge of this element
 	 * @param lineIdentifier specify exact line
 	 */
-	public abstract int getHorizontalOffset(int lineIdentifier);
+	public int getHorizontalOffset(int lineIdentifier) {
+		throw new UnsupportedOperationException();
+	}
 	/**
 	 * offset of specific horizontal line relative to top edge of this element
 	 * @param lineIdentifier specify exact line
 	 */
-	public abstract int getVerticalOffset(int lineIdentifier);
+	public int getVerticalOffset(int lineIdentifier) {
+		throw new UnsupportedOperationException();
+	}
 	
 	public float getMetaValue(int valueIndentifier, int param) {
 		throw new UnsupportedOperationException();

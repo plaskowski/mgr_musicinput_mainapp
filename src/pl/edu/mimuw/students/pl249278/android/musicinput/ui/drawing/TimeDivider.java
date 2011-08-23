@@ -126,7 +126,7 @@ public class TimeDivider extends SheetAlignedElement {
 		if(lineIdentifier == SheetAlignedElement.MIDDLE_X) {
 			return sheetParams.getLineThickness()/2;
 		} else {
-			throw new UnsupportedOperationException();
+			return super.getHorizontalOffset(lineIdentifier);
 		}
 	}
 	

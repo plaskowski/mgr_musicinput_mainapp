@@ -60,6 +60,11 @@ public class DrawingModelFactory {
 				throw new CreationException(e, elementSpec);
 			}
 		case PAUSE:
+			try {
+				return new PauseElement(ctx, (ElementSpec.Pause) elementSpec);
+			} catch (LoadingSvgException e) {
+				throw new CreationException(e, elementSpec);
+			}
 		case SPECIAL_SIGN:
 		default:
 			// TODO implement

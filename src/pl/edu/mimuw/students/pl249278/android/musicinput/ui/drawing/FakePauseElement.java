@@ -41,7 +41,7 @@ public class FakePauseElement extends SheetAlignedElement {
 		if(lineIdentifier == MIDDLE_X) {
 			return 0;
 		} else {
-			throw new UnsupportedOperationException();
+			return super.getHorizontalOffset(lineIdentifier);
 		}
 	}
 	

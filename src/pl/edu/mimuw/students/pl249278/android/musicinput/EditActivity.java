@@ -648,7 +648,7 @@ public class EditActivity extends Activity {
 		return null;
 	}
 
-	private SheetAlignedElementView insertElement(int insertIndex, ElementSpec spec) throws CreationException {
+	private SheetAlignedElementView insertElement(int insertIndex, ElementSpec spec, Point rebuildRange) throws CreationException {
 		debugTimes();
 		debugViews();
 		assertTimesValidity();
@@ -686,7 +686,7 @@ public class EditActivity extends Activity {
 		buildJoinArcs(jaRebuildIndex, lastEl);
 		
 		updatePositions(insertIndex+1, lastEl, visible2absX(visibleRectWidth-iaRightMargin+delta));
-		
+		rebuildRange.set(jaRebuildIndex, lastEl);
 		debugViews();
 		return newElement;
 	}
@@ -925,6 +925,9 @@ public class EditActivity extends Activity {
 			public void run() {
 				if(downPointerId != INVALID_POINTER && insideIA(downCoords.x)) {
 					insertIndex = rightToIA;
+					if(insertIndex > 0 && specAt(insertIndex-1).getType() == ElementType.FAKE_PAUSE) {
+						insertIndex--;
+					}
 					currentAnchor = nearestAnchor(downCoords.y);
 					ElementSpec.NormalNote newNoteSpec = new ElementSpec.NormalNote(new NoteSpec(currentNoteLength, currentAnchor));
 					if(!willFitInTime(insertIndex, newNoteSpec)) {
@@ -934,10 +937,10 @@ public class EditActivity extends Activity {
 					}
 					lines.highlightAnchor(currentAnchor);
 					try {
-						rightToIA++;
+						rightToIA = insertIndex+1;
 						activePointerId = downPointerId;
 						downPointerId = INVALID_POINTER;
-						SheetAlignedElementView newNote = insertElement(insertIndex, newNoteSpec);
+						SheetAlignedElementView newNote = insertElement(insertIndex, newNoteSpec, rebuildRange);
 						newNote.setPaint(noteHighlightPaint);
 						updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
 						vertscroll.setVerticalScrollingLocked(true);
@@ -949,7 +952,7 @@ public class EditActivity extends Activity {
 			}
 		};
 		
-		Point temp = new Point();
+		Point temp = new Point(), rebuildRange = new Point();
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
 //			log.i(
@@ -981,6 +984,7 @@ public class EditActivity extends Activity {
 					lines.highlightAnchor(newAnchor);
 					try {
 						updateElementSpec(insertIndex, new ElementSpec.NormalNote(new NoteSpec(currentNoteLength, newAnchor)), temp);
+						rebuildRange.set(Math.min(temp.x, rebuildRange.x), Math.max(temp.y, rebuildRange.y));
 						updatePositions(temp.x, insertIndex-1);
 						SheetAlignedElementView newNote = elementViews.get(insertIndex);
 						updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
@@ -1034,64 +1038,17 @@ public class EditActivity extends Activity {
 		}
 
 		private void insertNoteAndClean() {
-			animator.forceFinishAll();
-			isPositioning = true;
 			SheetAlignedElementView noteView = elementViews.get(insertIndex);
 			noteView.setPaint(normalPaint);
-			rightToIA = insertIndex+1;
-			if(isStickyTimeDivider(rightToIA)) {
-				rightToIA++;
-			}
-			
-			int currentTimeIndex = findTime(insertIndex);
-			for(int i = currentTimeIndex; i < times.size(); i++) {
-				updateTimeSpacingBase(i, false);
-			}
-			Time currentTime = times.get(currentTimeIndex);
-			int repositioningStart = currentTime.rangeStart+1;
-			long duration = 500;
-			WaitManyRunOnce animationsEndListener = new WaitManyRunOnce(1+elementViews.size()-repositioningStart) {
-				@Override
-				protected void allFinished() {
-					isPositioning = false;
-					scaleGestureDetector.setTouchInputLocked(false);
-				}
-			};
-			SheetAlignedElementView timeDividerView = elementViews.get(currentTime.rangeStart);
-			int x = middleAbsoluteX(timeDividerView) + afterElementSpacing(currentTime, timeDividerView.model());
-			int timeIndex = currentTimeIndex;
-			int rescrollDest = -1;
-			for(int i = repositioningStart; i < elementViews.size(); i++) {
-				if(i == rightToIA) {
-					x += moveDistance();
-				}
-				SheetAlignedElementView v = elementViews.get(i);
-				// animate view to it's correct position
-				int dx = (x - middleX(v)) - left(v);
-				animator.startRLAnimation(v, dx, duration, animationsEndListener);
-				if(i == rightToIA-1) {
-					rescrollDest = x;
-				}
-				if(v.model().getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
-					timeIndex++;
-				}
-				x += afterElementSpacing(times.get(timeIndex), v.model());
-			}
-			if(rescrollDest == -1) {
-				throw new RuntimeException();
-			}
-			
-			correctSheetWidth();
-			animator.startHScrollAnimation(
-				hscroll, 
-				(rescrollDest-hscroll.getScrollX())-((visibleRectWidth - inputAreaWidth - iaRightMargin - delta)), 
-				duration, 
-				animationsEndListener
-			);
-			
 			lines.highlightAnchor(null);
 			vertscroll.setVerticalScrollingLocked(false);
-			scaleGestureDetector.setTouchInputLocked(true);
+			animatedRepositioning(
+				rebuildRange.x, 
+				rebuildRange.y, 
+				isStickyTimeDivider(insertIndex+1) ? insertIndex+1 : insertIndex, 
+				visibleRectWidth - inputAreaWidth - iaRightMargin - delta, 
+				500
+			);
 		}
 		
 		/**
@@ -1406,7 +1363,7 @@ public class EditActivity extends Activity {
 			}
 			rightToIA = i+1;
 			if(isStickyTimeDivider(rightToIA)) {
-				rightToIA += newSpacing > originSpacing ? -1 : 1;
+				rightToIA--;
 			}
 		}
 		
@@ -1449,10 +1406,14 @@ public class EditActivity extends Activity {
 		/** how long part of resized sheet will remain in visible rect or further to right after scrolling 
 		 *  to destScrollX
 		 */
-		int rest = getValidSheetWidth() - destScrollX;
+		int newWidth = getValidSheetWidth();
+		int rest = newWidth - destScrollX;
 		if(rest < visibleRectWidth) {
 			/* if remaining part is to short we correct pinning */
 			pinVisiblePositionX += visibleRectWidth - rest;
+		}
+		if(getCurrentSheetWidth() < newWidth) {
+			correctSheetWidth();
 		}
 		
 		animator.startHScrollAnimation(
@@ -1681,6 +1642,10 @@ public class EditActivity extends Activity {
 			)
 		);
 		return newSheetWidth;
+	}
+	
+	private int getCurrentSheetWidth() {
+		return sheet.getLayoutParams().width;
 	}
 	
 	private Handler popupHideHandler = new Handler();

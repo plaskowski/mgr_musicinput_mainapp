@@ -4,7 +4,7 @@
 	<integer name="maxSpaceDefault">6</integer>
 	
 	<!-- smallest note (1/2^x) that spinner would offset by default, must be >= minNotePossibleValue -->
-	<integer name="spinnerDefaultMinNoteValue">3</integer>
+	<integer name="spinnerDefaultMinNoteValue">4</integer>
 	
 	<!-- indicates that program handles notes from whole note to 1/(2^x) note -->
 	<integer name="minNotePossibleValue">4</integer>

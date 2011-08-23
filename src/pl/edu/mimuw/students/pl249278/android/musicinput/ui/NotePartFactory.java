@@ -158,6 +158,7 @@ public class NotePartFactory {
 		
 		pauseMapping.put(NoteConstants.LEN_QUATERNOTE, R.xml.pause_quater);
 		pauseMapping.put(NoteConstants.LEN_EIGHTNOTE, R.xml.pause_eight);
+		pauseMapping.put(NoteConstants.LEN_SIXTEENNOTE, R.xml.pause_sixteen);
 		
 		declare(modifiersMapping, NoteConstants.NoteModifier.SHARP,
 			anchor(ANCHOR_TYPE_LINE,
@@ -211,10 +212,16 @@ public class NotePartFactory {
 				updown(R.xml.straight_ending_upsd)
 			)
 		);
-		declare(endingMapping, lengths(3, 4),
+		declare(endingMapping, 3,
 			anyAnchor(
 				normal(R.xml.eight_ending),
 				updown(R.xml.eight_ending_updown)
+			)
+		);
+		declare(endingMapping, 4,
+			anyAnchor(
+				normal(R.xml.sixteen_ending),
+				updown(R.xml.sixteen_ending_updown)
 			)
 		);
 	}

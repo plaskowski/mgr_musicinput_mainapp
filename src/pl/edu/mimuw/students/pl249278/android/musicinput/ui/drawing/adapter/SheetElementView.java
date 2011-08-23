@@ -34,6 +34,7 @@ public class SheetElementView<ElementType extends SheetElement> extends View {
 	public void setModel(ElementType model) {
 		this.model = model;
 		invalidateMeasure();
+		invalidate();
 	}
 	
 	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {
@@ -65,6 +66,7 @@ public class SheetElementView<ElementType extends SheetElement> extends View {
 	public void setSheetParams(SheetParams params) {
 		model.setSheetParams(params);
 		invalidateMeasure();
+		invalidate();
 	}
 	
 	public void setPaint(Paint paint) {

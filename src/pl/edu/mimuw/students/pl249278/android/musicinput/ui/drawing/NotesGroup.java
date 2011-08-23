@@ -132,7 +132,7 @@ public class NotesGroup extends ElementsOverlay {
 		
 		Path path = new Path();
 		int sign = groupOrientation == ORIENT_UP ? 1 : -1;
-		int thickness = 4 * sheetParams.getLineThickness() * sign;
+		int thickness = 4 * sheetParams.getLineThickness();
 		int linesSpacing = 2 * sheetParams.getLineThickness();
 		path.moveTo(end.x, end.y);
 		path.lineTo(start.x, start.y);
@@ -143,8 +143,8 @@ public class NotesGroup extends ElementsOverlay {
 			int posRelX = xpositions[i] - absLeft;
 			float x1 = posRelX + jLeft(i);
 			float x2 = posRelX + jRight(i);
-			int y1 = start.y + (int) (slope*(x1-start.x)) + thickness;
-			int y2 = start.y + (int) (slope*(x2-start.x)) + thickness;
+			int y1 = start.y + (int) (slope*(x1-start.x)) + sign*thickness;
+			int y2 = start.y + (int) (slope*(x2-start.x)) + sign*thickness;
 			int jlY = joinLineY(i);
 			path.lineTo(x1, y1);
 			int currLength = length(i);

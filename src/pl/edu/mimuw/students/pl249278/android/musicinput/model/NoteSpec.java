@@ -7,6 +7,8 @@ import java.util.HashMap;
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.NoteModifier;
+import static pl.edu.mimuw.students.pl249278.android.common.IntUtils.asBool;
+import static pl.edu.mimuw.students.pl249278.android.common.IntUtils.asFlagVal;
 
 public class NoteSpec extends PauseSpec implements PositonSpec {
 	private int postion;
@@ -58,18 +60,23 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 		this.postion = postion;
 	}
 	
+	public NoteSpec(NoteSpec source, PauseSpec.TOGGLE_FIELD fieldToToggle) {
+		super(source, fieldToToggle);
+		copyFrom(source);
+	}
+
 	public NoteSpec(NoteSpec source, TOGGLE_FIELD fieldToToggle) {
-		this(source);
-		int flag = fieldToToggle.FIELD_FLAG;
-		this.setFlag(flag, asFlagVal(!asBool(getFlag(flag))));
+		super(source);
+		copyFrom(source);
+		toggleFlag(fieldToToggle.FIELD_FLAG);
 	}
 
 	public NoteSpec(NoteSpec source, int currentAnchor) {
-		this(source);
+		super(source);
+		copyFrom(source);
 		this.postion = currentAnchor;
 	}
-	public NoteSpec(NoteSpec source) {
-		super(source);
+	private void copyFrom(NoteSpec source) {
 		for(int i = 0; i < THIS_FLAGS.length; i++) {
 			int flag = THIS_FLAGS[i];
 			setFlag(flag, source.getFlag(flag));
@@ -123,10 +130,4 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 		setFlag(FLAG_GROUPED, asFlagVal(isGrouped));
 	}
 	
-	private static int asFlagVal(boolean boolVal) {
-		return boolVal ? 1 : 0;
-	}
-	private static boolean asBool(int flagVal) {
-		return flagVal == 1;
-	}
 }

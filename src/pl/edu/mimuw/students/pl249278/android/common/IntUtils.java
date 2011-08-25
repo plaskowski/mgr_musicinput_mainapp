@@ -22,4 +22,11 @@ public class IntUtils {
 		int mask = (1<<(highestBitIndex-lowestBitIndex+1))-1;
 		return (flags & ~(mask << lowestBitIndex)) | ((value & mask) << lowestBitIndex);
 	}
+	
+	public static int asFlagVal(boolean boolVal) {
+		return boolVal ? 1 : 0;
+	}
+	public static boolean asBool(int flagVal) {
+		return flagVal == 1;
+	}
 }

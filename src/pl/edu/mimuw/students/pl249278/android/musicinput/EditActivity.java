@@ -756,39 +756,40 @@ public class EditActivity extends Activity {
 			}
 			                                                                        
 		}
-		int ngRebuildEnd, jaRebuildEnd;
+		int rebuildEnd;
 		int size = elementViews.size();
 		if(timesRebuildRequired) {
-			ngRebuildEnd = jaRebuildEnd = size-1;
+			rebuildEnd = size-1;
 		} else {
-			for(ngRebuildEnd = elementIndex+1; ngRebuildEnd < size; ngRebuildEnd++) {
-				ElementSpec elementSpec = elementViews.get(ngRebuildEnd).model().getElementSpec();
+			for(rebuildEnd = elementIndex+1; rebuildEnd < size; rebuildEnd++) {
+				ElementSpec elementSpec = elementViews.get(rebuildEnd).model().getElementSpec();
 				if(!NotesGroup.GroupBuilder.canExtendGroup(elementSpec)) {
 					break;
 				}
 			}
-			jaRebuildEnd = ngRebuildEnd = Math.min(ngRebuildEnd, size-1);
+			rebuildEnd = Math.min(rebuildEnd, size-1);
 		}
 		
 		log.i(
 			"updateElementSpec(%d) rebuilds ja %d->%d ng %d->%d",
 			elementIndex,
-			jaRebuildIndex, jaRebuildEnd,
-			ngRebuildIndex, ngRebuildEnd
+			jaRebuildIndex, rebuildEnd,
+			ngRebuildIndex, rebuildEnd
 		);
-		clearJoinArcs(jaRebuildIndex, jaRebuildEnd);
-		clearNoteGroups(ngRebuildIndex, ngRebuildEnd);
+		clearJoinArcs(jaRebuildIndex, rebuildEnd);
+		clearNoteGroups(ngRebuildIndex, rebuildEnd);
 		view.setModel(createDrawingModel(newSpec));
 		view.setSheetParams(sheetParams);
 		if(timesRebuildRequired) {
 			int currTime = findTime(elementIndex);
 			rebuildTimes(currTime);
 		}
-		buildNoteGroups(ngRebuildIndex, ngRebuildEnd);
-		buildJoinArcs(jaRebuildIndex, jaRebuildEnd);
+		rebuildEnd = Math.min(rebuildEnd, elementViews.size()-1);
+		buildNoteGroups(ngRebuildIndex, rebuildEnd);
+		buildJoinArcs(jaRebuildIndex, rebuildEnd);
 		
 		assertTimesValidity();
-		rebuildRange.set(jaRebuildIndex, jaRebuildEnd);
+		rebuildRange.set(jaRebuildIndex, rebuildEnd);
 	}
 	
 	private SheetAlignedElementView removeElement(int elementIndex, Point rebuildRange) throws CreationException {
@@ -1058,29 +1059,6 @@ public class EditActivity extends Activity {
 			cancel();
 			return false;
 		}
-		
-		private boolean willFitInTime(int insertIndex, ElementSpec spec) {
-			int timeIndex = insertTime(insertIndex);
-			TimeStep currentTimeStep = getCurrentTimeStep(timeIndex);
-			if(currentTimeStep == null) {
-				return true;
-			}
-			int capLeft = timeCapacity(currentTimeStep, minPossibleValue);
-			for(int i = times.get(timeIndex).rangeStart + 1; i < insertIndex; i++) {
-				capLeft -= elementViews.get(i).model().getElementSpec().timeValue(minPossibleValue);
-			}
-			return spec.timeValue(minPossibleValue) <= capLeft;
-		}
-
-		private TimeStep getCurrentTimeStep(int timeIndex) {
-			TimeStep result = null, curr;
-			for(int i = 0; i <= timeIndex; i++) {
-				if((curr = times.get(i).spec.getTimeStep()) != null) {
-					result = curr;
-				}
-			}
-			return result;
-		}
 
 		private void insertNoteAndClean() {
 			SheetAlignedElementView noteView = elementViews.get(insertIndex);
@@ -1158,6 +1136,29 @@ public class EditActivity extends Activity {
 			),
 			NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
 		);
+	}
+	
+	private boolean willFitInTime(int insertIndex, ElementSpec spec) {
+		int timeIndex = insertTime(insertIndex);
+		TimeStep currentTimeStep = getCurrentTimeStep(timeIndex);
+		if(currentTimeStep == null) {
+			return true;
+		}
+		int capLeft = timeCapacity(currentTimeStep, minPossibleValue);
+		for(int i = times.get(timeIndex).rangeStart + 1; i < insertIndex; i++) {
+			capLeft -= elementViews.get(i).model().getElementSpec().timeValue(minPossibleValue);
+		}
+		return spec.timeValue(minPossibleValue) <= capLeft;
+	}
+	
+	private TimeStep getCurrentTimeStep(int timeIndex) {
+		TimeStep result = null, curr;
+		for(int i = 0; i <= timeIndex; i++) {
+			if((curr = times.get(i).spec.getTimeStep()) != null) {
+				result = curr;
+			}
+		}
+		return result;
 	}
 	
 	private OnScrollChangedListener horizontalScrollListener = new OnScrollChangedListener() {
@@ -1408,7 +1409,7 @@ public class EditActivity extends Activity {
 			}
 			rightToIA = i+1;
 			if(isStickyTimeDivider(rightToIA)) {
-				rightToIA--;
+				rightToIA += rightToIA-1 == pinnedElementIndex ? 1 : -1;
 			}
 		}
 		
@@ -1881,6 +1882,41 @@ public class EditActivity extends Activity {
 		}
 	}
 	
+	
+	private class ToggleNoteDot extends UpdateElementAction {
+
+		public ToggleNoteDot(int svgResId) throws LoadingSvgException {
+			super(svgResId);
+		}
+
+		@Override
+		protected ElementSpec updatedSpec(ElementSpec elementSpec) {
+			ElementSpec.NormalNote spec = (NormalNote) elementSpec;
+			return toggledCopy(spec);
+		}
+
+		private ElementSpec toggledCopy(NormalNote spec) {
+			return new ElementSpec.NormalNote(new NoteSpec(spec.noteSpec(), PauseSpec.TOGGLE_FIELD.DOT));
+		}
+
+		@Override
+		protected boolean isValidOn(int elementIndex) {
+			if(isValidIndex(elementIndex)) {
+				ElementSpec elementSpec = elementViews.get(elementIndex).model().getElementSpec();
+				if(elementSpec.getType() == ElementType.NOTE) {
+					return willFitInTime(elementIndex, toggledCopy((NormalNote) elementSpec));
+				}
+			}
+			return false;
+		}
+		
+		@Override
+		public Boolean getState(int elementIndex) {
+			return isValidIndex(elementIndex) 
+			&& ((ElementSpec.NormalNote) elementViews.get(elementIndex).model().getElementSpec()).noteSpec().hasDot();
+		}
+	}
+	
 	private abstract class ElementActionWrapper extends ElementAction {
 		private int startIndex;
 		private int lastElementIndex;
@@ -1996,6 +2032,7 @@ public class EditActivity extends Activity {
 		possibleActions = new ElementAction[] {
 			new ToggleJoinArcEnd(R.xml.button_joinarc_left),
 			new ToggleNoteGroupEnd(R.xml.button_notegroup_left),
+			new ToggleNoteDot(R.xml.button_dot),
 			new RemoveElementAction(R.xml.button_trash),
 			new ToggleNoteGroup(R.xml.button_notegroup_right),
 			new ToggleJoinArc(R.xml.button_joinarc_right)

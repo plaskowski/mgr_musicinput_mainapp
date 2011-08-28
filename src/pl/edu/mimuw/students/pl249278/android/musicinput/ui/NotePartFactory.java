@@ -156,9 +156,12 @@ public class NotePartFactory {
 	static {
 		clefMapping.put(NoteConstants.Clef.VIOLIN, R.xml.key_violin);
 		
+		pauseMapping.put(NoteConstants.LEN_FULLNOTE, R.xml.pause_whole);
+		pauseMapping.put(NoteConstants.LEN_HALFNOTE, R.xml.pause_half);
 		pauseMapping.put(NoteConstants.LEN_QUATERNOTE, R.xml.pause_quater);
 		pauseMapping.put(NoteConstants.LEN_EIGHTNOTE, R.xml.pause_eight);
 		pauseMapping.put(NoteConstants.LEN_SIXTEENNOTE, R.xml.pause_sixteen);
+		pauseMapping.put(NoteConstants.LEN_SIXTEENNOTE+1, R.xml.pause_32);
 		
 		declare(modifiersMapping, NoteConstants.NoteModifier.SHARP,
 			anchor(ANCHOR_TYPE_LINE,

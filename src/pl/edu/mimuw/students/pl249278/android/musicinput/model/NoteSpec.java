@@ -1,14 +1,12 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.model;
 
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.HashMap;
-
-import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.NoteModifier;
 import static pl.edu.mimuw.students.pl249278.android.common.IntUtils.asBool;
 import static pl.edu.mimuw.students.pl249278.android.common.IntUtils.asFlagVal;
+
+import java.util.HashMap;
+
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.NoteModifier;
 
 public class NoteSpec extends PauseSpec implements PositonSpec {
 	private int postion;
@@ -17,7 +15,7 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 	private static final int FLAG_GROUPED = FLAG_JOINARC+1;
 	private static final int FLAG_TONEMODIFIER_L = FLAG_GROUPED+1;
 	private static final int FLAG_TONEMODIFIER_H = FLAG_TONEMODIFIER_L+1;
-	private static final int[] THIS_FLAGS;
+	private static final int SELF_FLAGS_AMOUNT = FLAG_TONEMODIFIER_H+1;
 	
 	public static enum TOGGLE_FIELD {
 		HAS_JOIN_ARC(FLAG_JOINARC),
@@ -28,19 +26,6 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 			FIELD_FLAG = fieldFlag;
 		}
 	};
-	
-	static {
-		Collection<Field> allNoteFlags = ReflectionUtils.findConsts(NoteSpec.class, "FLAG_");
-		THIS_FLAGS = new int[allNoteFlags.size()];
-		int index = 0;
-		for(Field flagField: allNoteFlags) {
-			try {
-				THIS_FLAGS[index++] = (Integer) flagField.get(null);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		}
-	}
 	
 	private static final NoteModifier[] TONE_MODIFIER_REVERSE_MAPPING = new NoteModifier[] {
 		null,
@@ -60,27 +45,25 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 		this.postion = postion;
 	}
 	
-	public NoteSpec(NoteSpec source, PauseSpec.TOGGLE_FIELD fieldToToggle) {
-		super(source, fieldToToggle);
-		copyFrom(source);
-	}
-
 	public NoteSpec(NoteSpec source, TOGGLE_FIELD fieldToToggle) {
-		super(source);
-		copyFrom(source);
+		this(source);
 		toggleFlag(fieldToToggle.FIELD_FLAG);
 	}
 
 	public NoteSpec(NoteSpec source, int currentAnchor) {
-		super(source);
-		copyFrom(source);
+		this(source);
 		this.postion = currentAnchor;
 	}
-	private void copyFrom(NoteSpec source) {
-		for(int i = 0; i < THIS_FLAGS.length; i++) {
-			int flag = THIS_FLAGS[i];
-			setFlag(flag, source.getFlag(flag));
-		}
+	
+	/** copy constructor */
+	public NoteSpec(NoteSpec source) {
+		super(source);
+		putValue(
+			SELF_FLAGS_AMOUNT-1, FLAGS_AMOUNT, 
+			source.getValue(
+				SELF_FLAGS_AMOUNT-1, FLAGS_AMOUNT
+			)
+		);
 		this.postion = source.postion;
 	}
 	
@@ -114,12 +97,6 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 	
 	public int positon() {
 		return postion;
-	}
-	public void setHasDot(boolean hasDot) {
-		setFlag(FLAG_DOT, asFlagVal(hasDot));
-	}
-	public boolean hasDot() {
-		return dotExtension() > 0;
 	}
 
 	public boolean isGrouped() {

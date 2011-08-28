@@ -54,40 +54,6 @@ public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement
 		);
 	}
 	
-	@Override
-	public int getHorizontalOffset(int lineIdentifier) {
-		if(lineIdentifier == NoteHeadElement.AREA_NOTEHEAD_LEFT) {
-			return Math.min(
-				wrapperDrawOffset.x,
-				super.getHorizontalOffset(lineIdentifier)
-			);
-		} else if(lineIdentifier == NoteHeadElement.AREA_NOTEHEAD_RIGHT) {
-			return Math.max(
-				wrapperDrawOffset.x + modifierElement.measureWidth(),
-				super.getHorizontalOffset(lineIdentifier)
-			);
-		} else {
-			return super.getHorizontalOffset(lineIdentifier);
-		}
-	}
-	
-	@Override
-	public int getVerticalOffset(int lineIdentifier) {
-		if(lineIdentifier == NoteHeadElement.AREA_NOTEHEAD_TOP) {
-			return Math.min(
-				wrapperDrawOffset.y,
-				super.getVerticalOffset(lineIdentifier)
-			);
-		} else if(lineIdentifier == NoteHeadElement.AREA_NOTEHEAD_BOTTOM) {
-			return Math.max(
-				wrapperDrawOffset.y + modifierElement.measureHeight(),
-				super.getVerticalOffset(lineIdentifier)
-			);
-		} else {
-			return super.getVerticalOffset(lineIdentifier);
-		}
-	}
-
 	protected abstract int elementOffsetX(int spacing);
 
 	@Override
@@ -98,7 +64,51 @@ public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement
 		canvas.translate(-wrapperDrawOffset.x, -wrapperDrawOffset.y);
 	}
 	
-	public static class Prefix extends Modifier {
+	private static abstract class NoteModifierElement extends Modifier {
+		
+		public NoteModifierElement(Context context,
+				SheetAlignedElement wrappedElement, int position,
+				NoteModifier modifier) throws LoadingSvgException {
+			super(context, wrappedElement, position, modifier);
+		}
+
+		@Override
+		public int getVerticalOffset(int lineIdentifier) {
+			if(lineIdentifier == NoteHeadElement.AREA_NOTEHEAD_TOP) {
+				return Math.min(
+					wrapperDrawOffset.y,
+					super.getVerticalOffset(lineIdentifier)
+				);
+			} else if(lineIdentifier == NoteHeadElement.AREA_NOTEHEAD_BOTTOM) {
+				return Math.max(
+					wrapperDrawOffset.y + modifierElement.measureHeight(),
+					super.getVerticalOffset(lineIdentifier)
+				);
+			} else {
+				return super.getVerticalOffset(lineIdentifier);
+			}
+		}
+		
+		@Override
+		public int getHorizontalOffset(int lineIdentifier) {
+			if(lineIdentifier == NoteHeadElement.AREA_NOTEHEAD_LEFT) {
+				return Math.min(
+					wrapperDrawOffset.x,
+					super.getHorizontalOffset(lineIdentifier)
+				);
+			} else if(lineIdentifier == NoteHeadElement.AREA_NOTEHEAD_RIGHT) {
+				return Math.max(
+					wrapperDrawOffset.x + modifierElement.measureWidth(),
+					super.getHorizontalOffset(lineIdentifier)
+				);
+			} else {
+				return super.getHorizontalOffset(lineIdentifier);
+			}
+		}
+
+	}
+	
+	public static class Prefix extends NoteModifierElement {
 		public Prefix(Context context, SheetAlignedElement wrappedElement,
 				int position, NoteModifier modifier) throws LoadingSvgException {
 			super(context, wrappedElement, position, modifier);
@@ -109,7 +119,7 @@ public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement
 			return modifierElement.measureWidth() + spacing - wrappedElement.getHorizontalOffset(NoteHeadElement.AREA_NOTEHEAD_LEFT);
 		}
 	}
-	public static class Suffix extends Modifier {
+	public static class Suffix extends NoteModifierElement {
 		public Suffix(Context context, SheetAlignedElement wrappedElement,
 				int position, NoteModifier modifier) throws LoadingSvgException {
 			super(context, wrappedElement, position, modifier);

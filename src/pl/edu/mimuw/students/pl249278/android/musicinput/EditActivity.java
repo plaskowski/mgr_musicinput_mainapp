@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.PauseSpec;
@@ -57,6 +58,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.Shee
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.BlurMaskFilter;
+import android.graphics.BlurMaskFilter.Blur;
 import android.graphics.Color;
 import android.graphics.CornerPathEffect;
 import android.graphics.DashPathEffect;
@@ -84,12 +87,14 @@ public class EditActivity extends Activity {
 
 	private static final int ANIM_TIME = 150;
 	protected Paint noteHighlightPaint = new Paint();
+	protected Paint fakePausePaint = new Paint();
 	private int NOTE_DRAW_PADDING = 0;
 	private int MIN_DRAW_SPACING;
 	protected static final Paint normalPaint = new Paint();
 	{
 		normalPaint.setAntiAlias(true);
 		noteHighlightPaint.setAntiAlias(true);
+		fakePausePaint.setAntiAlias(true);
 	}
 
 	private static LogUtils log = new LogUtils(EditActivity.class);
@@ -128,6 +133,8 @@ public class EditActivity extends Activity {
 	private float minDrawSpacingFactor;
 	private int minPossibleValue;
 	private float afterTimeDividerVisualSpacingFactor;
+	private float noteShadow;
+	private float fakePauseEffectRadius;
 	
 	/** takt muzyki */
 	private class Time {
@@ -231,6 +238,7 @@ public class EditActivity extends Activity {
 		inputArea.setBackgroundDrawable(outlineDrawable);
 		
 		noteShadow = readParametrizedFactor(R.string.noteShadow);
+		fakePauseEffectRadius = readParametrizedFactor(R.string.fakePauseEffectRadius);
 		noteMinDistToIA = readParametrizedFactor(R.string.minDistToIA);
 		defaultSpacingBaseFactor = readParametrizedFactor(R.string.defaultTimeSpacingBaseFactor);
 		minPossibleValue = getResources().getInteger(R.integer.minNotePossibleValue) + 1;
@@ -373,15 +381,7 @@ public class EditActivity extends Activity {
 	}
 	
 	private float readParametrizedFactor(int stringResId) {
-		String rawValue = getResources().getString(stringResId);
-		float factor = Float.parseFloat(rawValue.substring(0, rawValue.length()-1));
-		char c = rawValue.charAt(rawValue.length()-1);
-		if(c == 'l') {
-			return factor*sheetParams.getLineFactor();
-		} else if(c == 's') {
-			return factor*sheetParams.getLinespacingFactor();
-		}
-		throw new UnsupportedOperationException();
+		return sheetParams.readParametrizedFactor(getResources().getString(stringResId));
 	}
 	
 	// TODO co jak nie ma ustalonego metrum?
@@ -432,9 +432,33 @@ public class EditActivity extends Activity {
 					}
 				} else {
 					/** create fake pause with given capLeft */
-//					log.i("rebuildTimes(): element at %d of timeValue %d didnt fit to %d cap of time[%d] so forced fake pause and end", i, timeValue, capLeft, timeIndex); 
-					addElementView(i, createDrawingModel(new ElementSpec.FakePause(currentTime.capLeft, minPossibleValue)));
+//					log.i("rebuildTimes(): element at %d of timeValue %d didnt fit to %d cap of time[%d] so forced fake pause and end", i, timeValue, capLeft, timeIndex);
+					int capLeft = currentTime.capLeft;
+					for(int pLength = 0; pLength <= minPossibleValue; pLength++) {
+						int bitIndex = (minPossibleValue-pLength);
+						if(IntUtils.getFlag(capLeft, bitIndex) == 1) {
+							PauseSpec pause = new PauseSpec(pLength);
+							int dotExt = 0;
+							for(pLength = pLength+1; pLength <= minPossibleValue; pLength++) {
+								bitIndex = (minPossibleValue-pLength);
+								if(IntUtils.getFlag(capLeft, bitIndex) == 1) {
+									dotExt++;
+								} else {
+									break;
+								}
+							}
+							pause.setDotExtension(dotExt);
+							SheetAlignedElementView pauseView = addElementView(
+								i, 
+								createDrawingModel(new ElementSpec.Pause(pause, true))
+							);
+							pauseView.setPaint(fakePausePaint);
+							updatePosition(pauseView, positionAfter(i-1), sheetElementY(pauseView));
+							i++;
+						}
+					}
 					timeIndex++;
+					continue;
 				}
 				i++;
 			}
@@ -462,6 +486,7 @@ public class EditActivity extends Activity {
 				currentTime.spec
 			)));
 			times.add(timeIndex, currentTime);
+			updatePosition(currentTime.view, positionAfter(newRangeStart-1), sheetElementY(currentTime.view));
 		} else {
 			currentTime = times.get(timeIndex); 
 			elementViews.add(newRangeStart, currentTime.view);
@@ -502,7 +527,8 @@ public class EditActivity extends Activity {
 					));
 				}
 			} else if(spec.getType() == ElementType.FAKE_PAUSE) {
-				if(elementViews.get(i+1).model().getElementSpec().getType() != ElementType.TIMES_DIVIDER) {
+				ElementType type = elementViews.get(i+1).model().getElementSpec().getType();
+				if(type != ElementType.TIMES_DIVIDER && type != ElementType.FAKE_PAUSE) {
 					throw new RuntimeException(String.format(
 						"elementViews[%d] of type FAKE_PAUSE doesn't precede TIME_DIVIDER",
 						i
@@ -982,7 +1008,7 @@ public class EditActivity extends Activity {
 			public void run() {
 				if(downPointerId != INVALID_POINTER && insideIA(downCoords.x)) {
 					insertIndex = rightToIA;
-					if(insertIndex > 0 && specAt(insertIndex-1).getType() == ElementType.FAKE_PAUSE) {
+					while(insertIndex > 0 && specAt(insertIndex-1).getType() == ElementType.FAKE_PAUSE) {
 						insertIndex--;
 					}
 					currentAnchor = nearestAnchor(downCoords.y);
@@ -1177,6 +1203,7 @@ public class EditActivity extends Activity {
 	private OnScrollChangedListener horizontalScrollListener = new OnScrollChangedListener() {
 		@Override
 		public void onScrollChanged(int l, int oldl) {
+			hideActionBar();
 //			LogUtils.info("scrollChange (%d, %d)", l, oldl);
 			if(isScaling || isPositioning) return;
 			// skip if there is only TimeDivider of Time_0
@@ -1266,6 +1293,7 @@ public class EditActivity extends Activity {
 		public void onScale(float scaleFactor, PointF focusPoint) {
 			isScaling = true;
 			animator.forceFinishAll();
+			hideActionBar();
 			int fpX = (int) ((focusPoint.x+hscroll.getScrollX()-notesAreaX)*scaleFactor);
 			int fpY = (int) ((focusPoint.y+vertscroll.getScrollY())*scaleFactor);
 			updateScaleFactor(sheetParams.getScale()*scaleFactor);
@@ -1376,12 +1404,9 @@ public class EditActivity extends Activity {
 		animator.forceFinishAll();
 		isPositioning = true;
 		int startTime = findTime(rebuildStart), endTime = findTime(rebuildEnd);
-		Time timeWrappingPin = times.get(findTime(pinnedElementIndex));
-		int originSpacing = timeWrappingPin.spacingBase;
 		for(int timeI = startTime; timeI <= endTime; timeI++) {
 			updateTimeSpacingBase(timeI, false);
 		}
-		int newSpacing = timeWrappingPin.spacingBase;
 		
 		// find new rightToIA
 		int elementsCount = elementViews.size();
@@ -1556,6 +1581,8 @@ public class EditActivity extends Activity {
 		MIN_DRAW_SPACING = (int) (minDrawSpacingFactor*sheetParams.getScale());
 		NOTE_DRAW_PADDING = (int) (noteShadow * sheetParams.getScale());
 		noteHighlightPaint.setShadowLayer(NOTE_DRAW_PADDING, NOTE_DRAW_PADDING/2, NOTE_DRAW_PADDING, Color.BLACK);		
+		fakePausePaint.setMaskFilter(new BlurMaskFilter(fakePauseEffectRadius*sheetParams.getScale(), Blur.OUTER));
+		NOTE_DRAW_PADDING = (int) Math.max(fakePauseEffectRadius*sheetParams.getScale(), NOTE_DRAW_PADDING);
 		lines.setParams(sheetParams);
 		int minLinespaceTopOffset = sheetParams.anchorOffset(
 			NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE), 
@@ -1679,7 +1706,6 @@ public class EditActivity extends Activity {
 		   findViewById(R.id.EDIT_info_popup).setVisibility(View.GONE);
 	   }
 	};
-	private float noteShadow;
 	
 	protected void popupCurrentNoteLength() {
 		View popup = findViewById(R.id.EDIT_info_popup);
@@ -1861,29 +1887,29 @@ public class EditActivity extends Activity {
 		}
 	}
 	
-	
-	private class ToggleNoteDot extends UpdateElementAction {
+	@SuppressWarnings("unchecked")
+	private abstract class ToggleDot<T extends ElementSpec> extends UpdateElementAction {
+		ElementType type;
 
-		public ToggleNoteDot(int svgResId) throws LoadingSvgException {
+		private ToggleDot(int svgResId, ElementType type)
+				throws LoadingSvgException {
 			super(svgResId);
+			this.type = type;
 		}
 
 		@Override
 		protected ElementSpec updatedSpec(ElementSpec elementSpec) {
-			ElementSpec.NormalNote spec = (NormalNote) elementSpec;
-			return toggledCopy(spec);
+			return toggledCopy((T) elementSpec);
 		}
 
-		private ElementSpec toggledCopy(NormalNote spec) {
-			return new ElementSpec.NormalNote(new NoteSpec(spec.noteSpec(), PauseSpec.TOGGLE_FIELD.DOT));
-		}
+		protected abstract ElementSpec toggledCopy(T spec);
 
 		@Override
 		protected boolean isValidOn(int elementIndex) {
 			if(isValidIndex(elementIndex)) {
 				ElementSpec elementSpec = elementViews.get(elementIndex).model().getElementSpec();
-				if(elementSpec.getType() == ElementType.NOTE) {
-					return willFitInTime(elementIndex, toggledCopy((NormalNote) elementSpec));
+				if(elementSpec.getType() == type) {
+					return willFitInTime(elementIndex, toggledCopy((T) elementSpec));
 				}
 			}
 			return false;
@@ -1892,7 +1918,41 @@ public class EditActivity extends Activity {
 		@Override
 		public Boolean getState(int elementIndex) {
 			return isValidIndex(elementIndex) 
-			&& ((ElementSpec.NormalNote) elementViews.get(elementIndex).model().getElementSpec()).noteSpec().hasDot();
+			&& specAt(elementIndex).lengthSpec().dotExtension() > 0;
+		}
+	}
+	
+	private class ToggleNoteDot extends ToggleDot<ElementSpec.NormalNote> {
+
+		public ToggleNoteDot(int svgResId) throws LoadingSvgException {
+			super(svgResId, ElementType.NOTE);
+		}
+
+		protected ElementSpec toggledCopy(NormalNote spec) {
+			NoteSpec copy = new NoteSpec(spec.noteSpec());
+			if(copy.dotExtension() > 0) {
+				copy.setDotExtension(0);
+			} else {
+				copy.setDotExtension(1);
+			}
+			return new ElementSpec.NormalNote(copy);
+		}
+	}
+	
+	private class TogglePauseDot extends ToggleDot<ElementSpec.Pause> {
+
+		public TogglePauseDot(int svgResId) throws LoadingSvgException {
+			super(svgResId, ElementType.PAUSE);
+		}
+
+		protected ElementSpec toggledCopy(ElementSpec.Pause spec) {
+			PauseSpec copy = new PauseSpec(spec.pauseSpec());
+			if(copy.dotExtension() > 0) {
+				copy.setDotExtension(0);
+			} else {
+				copy.setDotExtension(1);
+			}
+			return new ElementSpec.Pause(copy);
 		}
 	}
 	
@@ -2009,6 +2069,7 @@ public class EditActivity extends Activity {
 		actionBar = (ActionBar) findViewById(R.id.EDIT_actionbar);
 		actionBar.setVisibility(View.INVISIBLE);
 		possibleActions = new ElementAction[] {
+			new TogglePauseDot(R.xml.button_dot),
 			new ToggleJoinArcEnd(R.xml.button_joinarc_left),
 			new ToggleNoteGroupEnd(R.xml.button_notegroup_left),
 			new ToggleNoteDot(R.xml.button_dot),

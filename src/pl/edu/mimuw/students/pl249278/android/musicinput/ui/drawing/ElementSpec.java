@@ -127,25 +127,14 @@ public abstract class ElementSpec {
 	
 	public static class Pause extends ElementWithLength<PauseSpec> {
 		public Pause(PauseSpec spec) {
-			super(ElementType.PAUSE, spec);
+			this(spec, false);
 		}
-	}
-	
-	public static class FakePause extends ElementSpec {
-		private int timeValue;
-		private int measureUnit;
-		public FakePause(int timeValue, int measureUnit) {
-			super(ElementType.FAKE_PAUSE);
-			this.timeValue = timeValue;
-			this.measureUnit = measureUnit;
+		public Pause(PauseSpec spec, boolean isFake) {
+			super(isFake ? ElementType.FAKE_PAUSE : ElementType.PAUSE, spec);
 		}
-		@Override
-		public int timeValue(int metricUnit) {
-			return length(this.measureUnit, metricUnit) * timeValue;
-		}
-		@Override
-		public int spacingLength(int measureUnit) {
-			return timeValue(measureUnit);
+		
+		public PauseSpec pauseSpec() {
+			return spec;
 		}
 	}
 	

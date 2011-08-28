@@ -5,7 +5,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.NoteModifier;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.LoadingSvgException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.FakePause;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
 import android.content.Context;
 
@@ -20,17 +19,18 @@ public class DrawingModelFactory {
 	}
 	
 	public static SheetAlignedElement createDrawingModel(Context ctx, ElementSpec elementSpec) throws CreationException {
+		SheetAlignedElement model;
 		switch (elementSpec.getType()) {
 		case NOTE:
 			try {
 				NormalNote note = (ElementSpec.NormalNote) elementSpec;
 				NoteSpec noteSpec = note.noteSpec();
 				NoteHeadElement head = new NoteHeadElement(ctx, note);
-				SheetAlignedElement model = head;
+				model = head;
 				if(!note.hasNoStem() && NoteConstants.hasStem(noteSpec.length())) {
 					model = new NoteStemAndFlag(ctx, head);
 				}
-				if(noteSpec.hasDot()) {
+				for(int i = 0; i < noteSpec.dotExtension(); i++) {
 					model = new Modifier.Suffix(ctx, model, noteSpec.positon(), NoteModifier.DOT);
 				}
 				NoteModifier toneModifier = noteSpec.getToneModifier();
@@ -51,17 +51,21 @@ public class DrawingModelFactory {
 			} catch (NoteDescriptionLoadingException e) {
 				throw new CreationException(e, elementSpec);
 			}
-		case FAKE_PAUSE:
-			return new FakePauseElement((FakePause) elementSpec);
 		case TIMES_DIVIDER:
 			try {
 				return new TimeDivider(ctx, (pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.TimeDivider) elementSpec);
 			} catch (LoadingSvgException e) {
 				throw new CreationException(e, elementSpec);
 			}
+		case FAKE_PAUSE:
 		case PAUSE:
 			try {
-				return new PauseElement(ctx, (ElementSpec.Pause) elementSpec);
+				ElementSpec.Pause pauseSpec = (ElementSpec.Pause) elementSpec;
+				model = new PauseElement(ctx, pauseSpec);
+				for(int i = 0; i < pauseSpec.lengthSpec().dotExtension(); i++) {
+					model = new PauseElement.PauseDot(ctx, model);
+				}
+				return model;
 			} catch (LoadingSvgException e) {
 				throw new CreationException(e, elementSpec);
 			}

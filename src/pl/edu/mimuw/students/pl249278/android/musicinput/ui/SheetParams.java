@@ -2,141 +2,153 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 	
-	public class SheetParams {
+public class SheetParams {
 	
-		private int lineFactor;
-		private int linespacingFactor;
-		private float scale = 1;
-		private int minSpaceAnchor;
-		private int maxSpaceAnchor;
+	private int lineFactor;
+	private int linespacingFactor;
+	private float scale = 1;
+	private int minSpaceAnchor;
+	private int maxSpaceAnchor;
 		
-		private TimeSpec.TimeStep timeStep;
-		private NoteConstants.Clef clef;
-		private NoteConstants.KeySignature keySignature;
-		private DisplayMode displayMode = DisplayMode.NORMAL;
+	private TimeSpec.TimeStep timeStep;
+	private NoteConstants.Clef clef;
+	private NoteConstants.KeySignature keySignature;
+	private DisplayMode displayMode = DisplayMode.NORMAL;
 		
-		public SheetParams(int lineFactor, int linespacingFactor) {
-			super();
-			this.lineFactor = lineFactor;
-			this.linespacingFactor = linespacingFactor;
-		}
-
-		public SheetParams(SheetParams sheetParams) {
-			this.lineFactor = sheetParams.lineFactor;
-			this.linespacingFactor = sheetParams.linespacingFactor;
-		}
-
-		public static enum AnchorPart {
-			MIDDLE,
-			BOTTOM_EDGE,
-			TOP_EDGE
-		}
-		
-		public static enum DisplayMode {
-			NORMAL,
-			UPPER_VOICE,
-			LOWER_VOICE
-		};
-		
-		private static int line0absIndex = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE);
-		
-		/**
-		 * @param anchorAbsIndex absolute index of anchor
-		 * @param part determines exact horizontal line inside anchor we measure distance to
-		 * @return anchor[absIndex][part].y - [line0 (first line from 5lines)][top edge].y
-		 */
-		public int anchorOffset(int anchorAbsIndex, AnchorPart part) {
-			int lineThickness = (int) (lineFactor * scale);
-			int linespacingThickness = (int) (linespacingFactor * scale);
-			int anchorSize = NoteConstants.anchorType(anchorAbsIndex) == NoteConstants.ANCHOR_TYPE_LINE ? lineThickness : linespacingThickness;
-			
-			int dist = anchorAbsIndex-line0absIndex;
-			int linesBetweenSize = ((dist+1)/2)*lineThickness;
-			int spacesetweenSize = (dist/2)*linespacingThickness;
-
-			int partDiff = 0;
-			switch(part) {
-			case BOTTOM_EDGE:
-				partDiff = anchorSize;
-				break;
-			case MIDDLE:
-				partDiff = anchorSize/2;
-				break;
-			}
-			
-			return (linesBetweenSize + spacesetweenSize) + (partDiff - (dist < 0 ? anchorSize : 0));
-		}	
-
-		public float getScale() {
-			return scale;
-		}
-	
-		public void setScale(float scale) {
-			this.scale = scale;
-		}
-
-		public int getLineFactor() {
-			return lineFactor;
-		}
-
-		public int getLinespacingFactor() {
-			return linespacingFactor;
-		}
-
-		public int getLineThickness() {
-			return (int) (lineFactor*scale);
-		}
-
-		public int getLinespacingThickness() {
-			return (int) (linespacingFactor*scale);
-		}
-
-		public int getMinSpaceAnchor() {
-			return minSpaceAnchor;
-		}
-
-		public void setMinSpaceAnchor(int minSpaceAnchor) {
-			this.minSpaceAnchor = minSpaceAnchor;
-		}
-
-		public int getMaxSpaceAnchor() {
-			return maxSpaceAnchor;
-		}
-
-		public void setMaxSpaceAnchor(int maxSpaceAnchor) {
-			this.maxSpaceAnchor = maxSpaceAnchor;
-		}
-
-		public NoteConstants.Clef getClef() {
-			return clef;
-		}
-
-		public void setClef(NoteConstants.Clef clef) {
-			this.clef = clef;
-		}
-		
-		public TimeSpec.TimeStep getTimeStep() {
-			return timeStep;
-		}
-
-		public void setTimeStep(TimeSpec.TimeStep timeStep) {
-			this.timeStep = timeStep;
-		}
-
-		public NoteConstants.KeySignature getKeySignature() {
-			return keySignature;
-		}
-
-		public void setKeySignature(NoteConstants.KeySignature keySignature) {
-			this.keySignature = keySignature;
-		}
-
-		public DisplayMode getDisplayMode() {
-			return displayMode;
-		}
-
-		public void setDisplayMode(DisplayMode displayMode) {
-			this.displayMode = displayMode;
-		}
-
+	public SheetParams(int lineFactor, int linespacingFactor) {
+		super();
+		this.lineFactor = lineFactor;
+		this.linespacingFactor = linespacingFactor;
 	}
+
+	public SheetParams(SheetParams sheetParams) {
+		this.lineFactor = sheetParams.lineFactor;
+		this.linespacingFactor = sheetParams.linespacingFactor;
+	}
+
+	public float readParametrizedFactor(String factorStringRep) {
+		String rawValue = factorStringRep;
+		float factor = Float.parseFloat(rawValue.substring(0, rawValue.length()-1));
+		char c = rawValue.charAt(rawValue.length()-1);
+		if(c == 'l') {
+			return factor*this.getLineFactor();
+		} else if(c == 's') {
+			return factor*this.getLinespacingFactor();
+		}
+		throw new UnsupportedOperationException();
+	}
+	
+	public static enum AnchorPart {
+		MIDDLE,
+		BOTTOM_EDGE,
+		TOP_EDGE
+	}
+		
+	public static enum DisplayMode {
+		NORMAL,
+		UPPER_VOICE,
+		LOWER_VOICE
+	};
+		
+	private static int line0absIndex = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE);
+		
+	/**
+	 * @param anchorAbsIndex absolute index of anchor
+	 * @param part determines exact horizontal line inside anchor we measure distance to
+	 * @return anchor[absIndex][part].y - [line0 (first line from 5lines)][top edge].y
+	 */
+	public int anchorOffset(int anchorAbsIndex, AnchorPart part) {
+		int lineThickness = (int) (lineFactor * scale);
+		int linespacingThickness = (int) (linespacingFactor * scale);
+		int anchorSize = NoteConstants.anchorType(anchorAbsIndex) == NoteConstants.ANCHOR_TYPE_LINE ? lineThickness : linespacingThickness;
+			
+		int dist = anchorAbsIndex-line0absIndex;
+		int linesBetweenSize = ((dist+1)/2)*lineThickness;
+		int spacesetweenSize = (dist/2)*linespacingThickness;
+
+		int partDiff = 0;
+		switch(part) {
+		case BOTTOM_EDGE:
+			partDiff = anchorSize;
+			break;
+		case MIDDLE:
+			partDiff = anchorSize/2;
+			break;
+		}
+			
+		return (linesBetweenSize + spacesetweenSize) + (partDiff - (dist < 0 ? anchorSize : 0));
+	}	
+
+	public float getScale() {
+		return scale;
+	}
+	
+	public void setScale(float scale) {
+		this.scale = scale;
+	}
+
+	public int getLineFactor() {
+		return lineFactor;
+	}
+
+	public int getLinespacingFactor() {
+		return linespacingFactor;
+	}
+
+	public int getLineThickness() {
+		return (int) (lineFactor*scale);
+	}
+
+	public int getLinespacingThickness() {
+		return (int) (linespacingFactor*scale);
+	}
+
+	public int getMinSpaceAnchor() {
+		return minSpaceAnchor;
+	}
+
+	public void setMinSpaceAnchor(int minSpaceAnchor) {
+		this.minSpaceAnchor = minSpaceAnchor;
+	}
+
+	public int getMaxSpaceAnchor() {
+		return maxSpaceAnchor;
+	}
+
+	public void setMaxSpaceAnchor(int maxSpaceAnchor) {
+		this.maxSpaceAnchor = maxSpaceAnchor;
+	}
+
+	public NoteConstants.Clef getClef() {
+		return clef;
+	}
+
+	public void setClef(NoteConstants.Clef clef) {
+		this.clef = clef;
+	}
+		
+	public TimeSpec.TimeStep getTimeStep() {
+		return timeStep;
+	}
+
+	public void setTimeStep(TimeSpec.TimeStep timeStep) {
+		this.timeStep = timeStep;
+	}
+
+	public NoteConstants.KeySignature getKeySignature() {
+		return keySignature;
+	}
+
+	public void setKeySignature(NoteConstants.KeySignature keySignature) {
+		this.keySignature = keySignature;
+	}
+
+	public DisplayMode getDisplayMode() {
+		return displayMode;
+	}
+
+	public void setDisplayMode(DisplayMode displayMode) {
+		this.displayMode = displayMode;
+	}
+
+}

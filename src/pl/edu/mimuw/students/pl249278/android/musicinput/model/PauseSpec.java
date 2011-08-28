@@ -7,29 +7,22 @@ import static pl.edu.mimuw.students.pl249278.android.common.IntUtils.asFlagVal;
 public class PauseSpec implements LengthSpec {
 	private int length;
 	private int flags;
-	protected static final int FLAG_DOT = 0;
-	protected static final int FLAGS_AMOUNT = FLAG_DOT+1;
-	
-	public static enum TOGGLE_FIELD {
-		DOT(FLAG_DOT);
-		private int FIELD_FLAG;
-		private TOGGLE_FIELD(int fieldFlag) {
-			FIELD_FLAG = fieldFlag;
-		}
-	}
+	private static final int FLAG_DOT_L = 0;
+	private static final int FLAG_DOT_H = FLAG_DOT_L+3;
+	protected static final int FLAGS_AMOUNT = FLAG_DOT_H+1;
 	
 	public PauseSpec(int length) {
 		this.length = length;
 	}
 	
-	public PauseSpec(PauseSpec source, TOGGLE_FIELD fieldToToggle) {
-		this(source);
-		toggleFlag(fieldToToggle.FIELD_FLAG);
-	}
-	
 	public PauseSpec(PauseSpec source) {
 		this.length = source.length;
-		setFlag(FLAG_DOT, source.getFlag(FLAG_DOT));
+		int highestBit = FLAGS_AMOUNT-1;
+		// copy all bits that are used by PauseSpec
+		putValue(
+			highestBit, 0,
+			IntUtils.getValue(source.flags, highestBit, 0)
+		);
 	}
 
 	protected int getFlag(int flag) {
@@ -44,7 +37,6 @@ public class PauseSpec implements LengthSpec {
 	
 	/** 
 	 * read positive integer (or 0) written in selected bit sequence
-	 * @return 
 	 */
 	protected int getValue(int highestBitIndex, int lowestBitIndex) {
 		return IntUtils.getValue(flags, highestBitIndex, lowestBitIndex);
@@ -60,7 +52,11 @@ public class PauseSpec implements LengthSpec {
 
 	@Override
 	public int dotExtension() {
-		return getFlag(FLAG_DOT);
+		return getValue(FLAG_DOT_H, FLAG_DOT_L);
+	}
+
+	public void setDotExtension(int dotExt) {
+		putValue(FLAG_DOT_H, FLAG_DOT_L, dotExt);
 	}
 	
 }

@@ -15,6 +15,7 @@
 
 	<color name="highlightColor">#FF73DCFF</color>
 	<string name="noteShadow">0.07s</string>
+	<string name="fakePauseEffectRadius">0.1s</string>
 	
 	<color name="spinnerSelectionColor">#FFFFD700</color>
 </resources>

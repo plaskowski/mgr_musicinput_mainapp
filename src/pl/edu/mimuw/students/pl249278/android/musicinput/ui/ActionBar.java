@@ -41,7 +41,7 @@ public class ActionBar extends LinearLayout {
 	}
 	
 	private void init(Context context) {
-		this.setBackgroundDrawable(new BackgroundDrawable(context.getResources()));
+		rebuildBarBackground(context, IndicatorOrigin.BOTTOM);
 	}
 	
 	public interface Action {
@@ -89,6 +89,29 @@ public class ActionBar extends LinearLayout {
 		this.removeAllViews();
 	}
 	
+
+	public static enum IndicatorOrigin {
+		TOP,
+		BOTTOM,
+		NONE
+	};
+	public void setIndicator(IndicatorOrigin indicator) {
+		rebuildBarBackground(getContext(), indicator);
+	}
+	public int measureHeight() {
+		onMeasure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+		return this.getMeasuredHeight();
+	}
+	
+	public int measureWidth() {
+		onMeasure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+		return this.getMeasuredWidth();
+	}
+	
+	public void measure() {
+		onMeasure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+	}
+	
 	private OnClickListener clickListener = new OnClickListener() {
 		@Override
 		public void onClick(View v) {
@@ -99,6 +122,40 @@ public class ActionBar extends LinearLayout {
 	};
 	
 	// ========== DRAWABLE HELPERS ============== //
+	
+	public int getIndicatorEndX() {
+		return getIndicatorX();
+	}
+	public int getIndicatorEndY() {
+		switch(getIndicatorOrigin()) {
+		case BOTTOM:
+			return getMeasuredHeight();
+		default: 
+			return 0;
+		}
+	}
+	public int getIndicatorOriginMarginLeft() {
+		return ((BackgroundDrawable) getBackground()).getIndicatorOriginMargin();
+	}
+	public int getIndicatorOriginMarginRight() {
+		return ((BackgroundDrawable) getBackground()).getIndicatorOriginMargin();
+	}
+	private IndicatorOrigin getIndicatorOrigin() {
+		return ((BackgroundDrawable) getBackground()).getIndicatorOrigin();
+	}
+	public void setIndicatorOriginX(int indicatorOriginX) {
+		BackgroundDrawable backgroundDrawable = (BackgroundDrawable) getBackground();
+		backgroundDrawable.setIndicatorOriginX(indicatorOriginX - backgroundDrawable.getIndicatorOriginMargin());
+	}
+	private int getIndicatorX() {
+		BackgroundDrawable backgroundDrawable = (BackgroundDrawable) getBackground();
+		return backgroundDrawable.getIndicatorOriginX() + backgroundDrawable.getIndicatorOriginMargin();
+	}
+	private void rebuildBarBackground(Context context, IndicatorOrigin indicator) {
+		BackgroundDrawable backgroundDrawable = new BackgroundDrawable(context.getResources(), indicator);
+		this.setBackgroundDrawable(backgroundDrawable);
+	}
+	
 	private static Drawable buttonBackground(Resources res) {
 		StateListDrawable result = new StateListDrawable();
 		result.addState(
@@ -235,8 +292,10 @@ public class ActionBar extends LinearLayout {
 		private Paint strokePaint;
 		private BlurMaskFilter shadowFilter;
 		private int borderColor;
+		private IndicatorOrigin indicatorOrigin;
+		private int indicatorOriginX;
 	
-		public BackgroundDrawable(Resources resources) {
+		public BackgroundDrawable(Resources resources, IndicatorOrigin indicatorOrigin) {
 			lineThickness = resources.getDimensionPixelSize(R.dimen.actionbar_border);
 			tr = resources.getDimensionPixelSize(R.dimen.actionbar_pointer_height);
 			innerPadding = resources.getDimensionPixelOffset(R.dimen.actionbar_inner_padding);
@@ -252,32 +311,51 @@ public class ActionBar extends LinearLayout {
 			
 			fillPaint = new Paint();
 			fillPaint.setColor(resources.getColor(R.color.actionbar_fill));
+			
+			this.indicatorOrigin = indicatorOrigin;
 		}
 		
 		@Override
 		public boolean getPadding(Rect padding) {
 			int base = drawPadding + innerPadding;
-			padding.set(
-				base + lineThickness/2, 
-				base + lineThickness/2, 
-				base, 
-				base + tr
-			);
+			padding.set(base, base, base, base);
+			switch(indicatorOrigin) {
+			case TOP:
+				padding.top += tr;
+				break;
+			case BOTTOM:
+				padding.bottom += tr;
+			}
 			return true;
 		}
 	
 		@Override
 		public void draw(Canvas canvas) {
 			int w = getBounds().width()-2*drawPadding, h = getBounds().height()-2*drawPadding;
+			int indLeftW = Math.min(tr/2, indicatorOriginX);
+			int indRightW = Math.min(tr/2, w - indicatorOriginX);
 			
 			Path path = new Path();
 			path.moveTo(drawPadding, drawPadding);
-			path.rLineTo(w, 0);
-			path.rLineTo(0, h-tr);
-			path.rLineTo(-w/2+tr/2, 0);
-			path.rLineTo(-tr/2, tr);
-			path.rLineTo(-tr/2, -tr);
-			path.lineTo(drawPadding, h-tr);
+			if(indicatorOrigin == IndicatorOrigin.TOP) {
+				path.rMoveTo(0, tr);
+				path.rLineTo(indicatorOriginX-indLeftW, 0);
+				path.rLineTo(indLeftW, -tr);
+				path.rLineTo(indRightW, tr);
+				path.lineTo(drawPadding+w, drawPadding+tr);
+			} else {
+				path.rLineTo(w, 0);
+			}
+			if(indicatorOrigin == IndicatorOrigin.BOTTOM) {
+				path.rLineTo(0, h-tr);
+				path.rLineTo(-(w-indicatorOriginX-indRightW), 0);
+				path.rLineTo(-indRightW, tr);
+				path.rLineTo(-indLeftW, -tr);
+				path.rLineTo(-(indicatorOriginX-indLeftW), 0);
+			} else {
+				path.lineTo(drawPadding+w, drawPadding+h);
+				path.rLineTo(-w, 0);
+			}
 			path.close();
 			
 			canvas.save();
@@ -297,6 +375,23 @@ public class ActionBar extends LinearLayout {
 			
 			canvas.restore();
 		}
+
+		public IndicatorOrigin getIndicatorOrigin() {
+			return indicatorOrigin;
+		}
+
+		private void setIndicatorOriginX(int indicatorOriginX) {
+			this.indicatorOriginX = indicatorOriginX;
+		}
+
+		private int getIndicatorOriginX() {
+			return indicatorOriginX;
+		}
+		
+		private int getIndicatorOriginMargin() {
+			return drawPadding;
+		}
+
 	}
 
 	private static class ShadowAtEdgeDrawable extends Drawable {

@@ -22,6 +22,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.PauseSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ActionBar;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ActionBar.IndicatorOrigin;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.CompoundTouchListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView.OnScrollChangedListener;
@@ -69,7 +70,6 @@ import android.os.Handler;
 import android.os.Vibrator;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.MeasureSpec;
 import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
@@ -315,14 +315,20 @@ public class EditActivity extends Activity {
 		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
 //		n.setHasJoinArc(true);
+		n.setIsGrouped(true);
+		n.setHasDot(true);
 		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 		
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE));
-//		n.setHasJoinArc(true);
+		n.setIsGrouped(true);
+		n.setHasDot(true);
 		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 		
-		rawNotesSequence.add(new ElementSpec.Pause(new PauseSpec(NoteConstants.LEN_QUATERNOTE)));
-		rawNotesSequence.add(new ElementSpec.Pause(new PauseSpec(NoteConstants.LEN_QUATERNOTE+1)));
+		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+2, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE));
+		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		
+//		rawNotesSequence.add(new ElementSpec.Pause(new PauseSpec(NoteConstants.LEN_QUATERNOTE)));
+//		rawNotesSequence.add(new ElementSpec.Pause(new PauseSpec(NoteConstants.LEN_QUATERNOTE+1)));
 		
 		try {
 			for(ElementSpec spec: rawNotesSequence) {
@@ -2065,7 +2071,6 @@ public class EditActivity extends Activity {
 			elementActionIndex = contextElementIndex;
 			int middleX, middleY;
 			SheetAlignedElementView view = elementViews.get(contextElementIndex);
-			actionBar.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
 			switch(view.model().getElementSpec().getType()) {
 			case NOTE:
 				middleX = middleX(view);
@@ -2080,11 +2085,44 @@ public class EditActivity extends Activity {
 				middleY = view.measureHeight()/2;
 			}
 			int refPointVisibleX = abs2visibleX(viewStableX(view)) + middleX;
-			int refPointVisibleY = top(view) - vertscroll.getScrollY() + middleY;
+			int refPointVisibleY = abs2visibleY(top(view)) + middleY;
+			
+			// validate ref point according to visible rect
+			refPointVisibleX = Math.min(Math.max(0, refPointVisibleX), visibleRectWidth);
+			refPointVisibleY = Math.min(Math.max(0, refPointVisibleY), visibleRectHeight);
+			
+			// validate ref point y-coordinate according to action bar height
+			actionBar.setIndicator(IndicatorOrigin.BOTTOM);
+			int height = actionBar.measureHeight();
+			actionBar.setIndicator(IndicatorOrigin.TOP);
+			int heightUpdown = actionBar.measureHeight();
+			if(refPointVisibleY - height >= 0) {
+				actionBar.setIndicator(IndicatorOrigin.BOTTOM);
+			} else if(refPointVisibleY + heightUpdown <= visibleRectHeight) {
+				actionBar.setIndicator(IndicatorOrigin.TOP);
+			} else {
+				actionBar.setIndicator(IndicatorOrigin.NONE);
+				refPointVisibleY -= actionBar.measureHeight()/2;
+			}
+			
+			// calculate indicator origin horizontal position
+			int mL = actionBar.getIndicatorOriginMarginLeft();
+			int mR = actionBar.getIndicatorOriginMarginRight();
+			int width = actionBar.measureWidth();
+			int defX = mL+(width-mL-mR)/2;
+			int originX = defX;
+			if(refPointVisibleX < defX && width < visibleRectWidth) {
+				originX = Math.max(refPointVisibleX, mL);
+			} else if(refPointVisibleX + (width-defX) > visibleRectWidth && width < visibleRectWidth) {
+				originX = Math.min(refPointVisibleX - (visibleRectWidth - width), width - mR);
+			}
+			actionBar.setIndicatorOriginX(originX);
+			
+			actionBar.measure();
 			updateMargins(
 				actionBar,
-				refPointVisibleX - actionBar.getMeasuredWidth()/2,
-				refPointVisibleY - actionBar.getMeasuredHeight()
+				refPointVisibleX - actionBar.getIndicatorEndX(),
+				refPointVisibleY - actionBar.getIndicatorEndY()
 			);	
 			actionBar.setVisibility(View.VISIBLE);
 		}
@@ -2260,6 +2298,10 @@ public class EditActivity extends Activity {
 		return visibleX + hscroll.getScrollX();
 	}
 
+	private int abs2visibleY(int absoluteY) {
+		return absoluteY - vertscroll.getScrollY();
+	}
+	
 	private static ViewGroup.MarginLayoutParams updateMargins(View v, Integer left, Integer top) {
 		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
 		if(left != null) params.leftMargin = left;

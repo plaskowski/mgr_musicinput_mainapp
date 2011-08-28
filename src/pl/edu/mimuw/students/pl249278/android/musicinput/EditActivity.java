@@ -137,10 +137,15 @@ public class EditActivity extends Activity {
 		int spacingBase = -1;
 		private TimeSpec spec;
 		private SheetAlignedElementView view;
+		private int capLeft;
 		
 		public Time(TimeSpec spec) {
 			super();
 			this.spec = spec;
+		}
+		
+		public boolean isFull() {
+			return capLeft == 0;
 		}
 	}
 
@@ -316,12 +321,12 @@ public class EditActivity extends Activity {
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
 //		n.setHasJoinArc(true);
 		n.setIsGrouped(true);
-		n.setHasDot(true);
+//		n.setHasDot(true);
 		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 		
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE));
 		n.setIsGrouped(true);
-		n.setHasDot(true);
+//		n.setHasDot(true);
 		rawNotesSequence.add(new ElementSpec.NormalNote(n));
 		
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+2, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE));
@@ -393,18 +398,17 @@ public class EditActivity extends Activity {
 					currentMetrum = ts;
 				}
 			}
-			int capLeft = 0;
 			int i = startTimeIndex < times.size() ? times.get(startTimeIndex).rangeStart : 0;
 			int timeIndex = startTimeIndex;
+			Time currentTime = null;
 			int prevHandledTime = timeIndex-1;
 			for(; i < elementViews.size();) {
 				if(timeIndex > prevHandledTime) {
-					Time currentTime = rebuildTime(timeIndex, i);
+					currentTime = rebuildTime(timeIndex, i, currentMetrum);
 					if(currentTime.spec.getTimeStep() != null) {
 						currentMetrum = currentTime.spec.getTimeStep();
 					}
 					prevHandledTime = timeIndex;
-					capLeft = timeCapacity(currentMetrum, minPossibleValue);
 					i++;
 					continue;
 				}
@@ -419,23 +423,23 @@ public class EditActivity extends Activity {
 				}
 				int timeValue = elementSpec.timeValue(minPossibleValue);
 				// FIXME problem when timeValue == 0
-				if(timeValue <= capLeft) {
+				if(timeValue <= currentTime.capLeft) {
 //					log.i("rebuildTimes(): element at %d of timeValue %d will shrink %d cap of time[%d]", i, timeValue, capLeft, timeIndex); 
-					capLeft -= timeValue;
-					if(capLeft == 0) {
+					currentTime.capLeft -= timeValue;
+					if(currentTime.capLeft == 0) {
 //						log.i("rebuildTimes(): and forced it's end", i, timeValue, timeIndex); 
 						timeIndex++;
 					}
 				} else {
 					/** create fake pause with given capLeft */
 //					log.i("rebuildTimes(): element at %d of timeValue %d didnt fit to %d cap of time[%d] so forced fake pause and end", i, timeValue, capLeft, timeIndex); 
-					addElementView(i, createDrawingModel(new ElementSpec.FakePause(capLeft, minPossibleValue)));
+					addElementView(i, createDrawingModel(new ElementSpec.FakePause(currentTime.capLeft, minPossibleValue)));
 					timeIndex++;
 				}
 				i++;
 			}
 			if(timeIndex > prevHandledTime) {
-				rebuildTime(timeIndex, i);
+				rebuildTime(timeIndex, i, currentMetrum);
 			}
 			// usuwam nadmiarowe (względem nowego wyliczenia) obiekty Time
 			int lastOldTime = times.size()-1;
@@ -446,7 +450,7 @@ public class EditActivity extends Activity {
 		}
 	}
 
-	private Time rebuildTime(int timeIndex, int newRangeStart) throws CreationException {
+	private Time rebuildTime(int timeIndex, int newRangeStart, TimeStep prevMetrum) throws CreationException {
 		Time currentTime;
 		if(timeIndex >= times.size()) {
 			currentTime = new Time(timeIndex == 0 ? 
@@ -458,12 +462,13 @@ public class EditActivity extends Activity {
 				currentTime.spec
 			)));
 			times.add(timeIndex, currentTime);
-			updatePosition(currentTime.view, null, sheetElementY(currentTime.view));
 		} else {
 			currentTime = times.get(timeIndex); 
 			elementViews.add(newRangeStart, currentTime.view);
 		}
 		currentTime.rangeStart = newRangeStart;
+		TimeStep metrum = currentTime.spec.getTimeStep();
+		currentTime.capLeft = timeCapacity(metrum != null ? metrum : prevMetrum, minPossibleValue);
 		return currentTime;
 	}
 	
@@ -1071,10 +1076,12 @@ public class EditActivity extends Activity {
 			noteView.setPaint(normalPaint);
 			lines.highlightAnchor(null);
 			vertscroll.setVerticalScrollingLocked(false);
+			int timeIndex = findTime(insertIndex);
+			boolean isLastNoteOfTime = timeIndex+1 < times.size() && insertIndex+1 == times.get(timeIndex+1).rangeStart; 
 			animatedRepositioning(
 				rebuildRange.x, 
 				rebuildRange.y, 
-				isStickyTimeDivider(insertIndex+1) ? insertIndex+1 : insertIndex, 
+				isLastNoteOfTime && times.get(timeIndex).isFull() ? insertIndex+1 : insertIndex, 
 				visibleRectWidth - inputAreaWidth - iaRightMargin - delta, 
 				500
 			);
@@ -1184,11 +1191,6 @@ public class EditActivity extends Activity {
 						break;
 					}
 				}
-				if(isStickyTimeDivider(rightToIA)) {
-					// move also element to the left of TimeDivider to keep sticky constraint 
-					rightToIA--;
-					moveRight(rightToIA);
-				}
 			} else if(l > oldl && rightToIA < elementViews.size()) {
 				// move all elements that crossed "to the right of IA" border 
 				while(rightToIA < elementViews.size()) {
@@ -1198,11 +1200,6 @@ public class EditActivity extends Activity {
 					} else {
 						break;
 					}
-				}
-				if(isStickyTimeDivider(rightToIA)) {
-					// move also sticky TimeDivider to keep sticky constraint 
-					moveLeft(rightToIA);
-					rightToIA++;
 				}
 			}
 		}
@@ -1295,9 +1292,6 @@ public class EditActivity extends Activity {
 					} else {
 						rightToIA = searchRightToBackwards(rightToIA, IAmiddle);
 					}
-				}
-				if(isStickyTimeDivider(rightToIA)) {
-					rightToIA++;
 				}
 			}
 //			log.i("onScaleEnd(): new right: %d", rightToIA);
@@ -1401,9 +1395,6 @@ public class EditActivity extends Activity {
 					break;
 			}
 			rightToIA = i+1;
-			if(isStickyTimeDivider(rightToIA)) {
-				rightToIA += newSpacing > originSpacing ? 1 : -1;
-			}
 		} else {
 			int nextX = pinVisiblePositionX;
 			int i = pinnedElementIndex;
@@ -1414,9 +1405,6 @@ public class EditActivity extends Activity {
 					break;
 			}
 			rightToIA = i+1;
-			if(isStickyTimeDivider(rightToIA)) {
-				rightToIA += rightToIA-1 == pinnedElementIndex ? 1 : -1;
-			}
 		}
 		
 		Time time = times.get(startTime);
@@ -1478,21 +1466,6 @@ public class EditActivity extends Activity {
 		scaleGestureDetector.setTouchInputLocked(true);		
 	}
 	
-	
-	/**
-	 * @return if elementViews(index) is a TimeDivider that should stick to preceding element.
-	 */
-	private boolean isStickyTimeDivider(int index) {
-		return
-			index < elementViews.size() 
-			// if metrum is defined
-			&& sheetParams.getTimeStep() != null  
-			// and element is a TimeDivider
-			&& elementViews.get(index).model().getElementSpec().getType() == ElementType.TIMES_DIVIDER
-			// which closes Time (that has no space left)
-		    && index-1 > 0 && elementViews.get(index-1).model().getElementSpec().getType() != ElementType.FAKE_PAUSE;
-	}
-
 	protected int findTime(int elementIndex) {
 		int i = 0;
 		for(; i < times.size(); i++) {

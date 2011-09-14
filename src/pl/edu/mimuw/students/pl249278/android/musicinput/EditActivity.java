@@ -135,6 +135,7 @@ public class EditActivity extends Activity {
 	private float afterTimeDividerVisualSpacingFactor;
 	private float noteShadow;
 	private float fakePauseEffectRadius;
+	private int maxLinespaceThickness;
 	
 	/** takt muzyki */
 	private class Time {
@@ -244,6 +245,7 @@ public class EditActivity extends Activity {
 		minPossibleValue = getResources().getInteger(R.integer.minNotePossibleValue) + 1;
 		minDrawSpacingFactor = readParametrizedFactor(R.string.minDrawSpacing);
 		afterTimeDividerVisualSpacingFactor = readParametrizedFactor(R.string.timeDividerDrawAfterSpacingFactor);
+		maxLinespaceThickness = getResources().getDimensionPixelSize(R.dimen.maxLinespaceThickness);
 		
 		try {
 			prepareActionBar();
@@ -990,6 +992,14 @@ public class EditActivity extends Activity {
 				elementViews.get(selectedIndex).setPaint(normalPaint);
 				vertscroll.setVerticalScrollingLocked(false);
 				lines.highlightAnchor(null);
+				if(startAnchor != currentAnchor) {
+					animatedRepositioning(
+						selectedIndex, selectedIndex, 
+						selectedIndex, 
+						abs2visibleX(middleAbsoluteX(elementViews.get(selectedIndex))), 
+						300
+					);
+				}				
 				return true;
 			}
 			return false;
@@ -1294,9 +1304,17 @@ public class EditActivity extends Activity {
 			isScaling = true;
 			animator.forceFinishAll();
 			hideActionBar();
+			float oldScale = sheetParams.getScale();
+			float newScale = oldScale*scaleFactor;
+			sheetParams.setScale(newScale);
+			if(sheetParams.getLinespacingThickness() > maxLinespaceThickness ||
+				sheetParams.getLineThickness() < 1) {
+				sheetParams.setScale(oldScale);
+				return;
+			}
+			updateScaleFactor(newScale);
 			int fpX = (int) ((focusPoint.x+hscroll.getScrollX()-notesAreaX)*scaleFactor);
 			int fpY = (int) ((focusPoint.y+vertscroll.getScrollY())*scaleFactor);
-			updateScaleFactor(sheetParams.getScale()*scaleFactor);
 			hscroll.scrollTo((int) (fpX+notesAreaX-focusPoint.x), 0);
 			vertscroll.scrollTo(0, (int) (fpY-focusPoint.y));
 		}
@@ -1559,8 +1577,12 @@ public class EditActivity extends Activity {
 		float scale = ((float) (visibleRectHeight)) / ((float) (
 			sheetParams.getLineFactor() * 5 + sheetParams.getLinespacingFactor() * 6
 		));
-		// TODO remove hardcoded
-		scale = 0.441454f;
+		sheetParams.setScale(scale);
+		int optimal = getResources().getDimensionPixelSize(R.dimen.optimalLinespaceThickness);
+		int current = sheetParams.getLinespacingThickness();
+		if(current > optimal) {
+			scale = scale * optimal / current;
+		}
 		updateScaleFactor(scale);
 		
 		// TODO calculate sheet start scroll position
@@ -1583,6 +1605,8 @@ public class EditActivity extends Activity {
 		noteHighlightPaint.setShadowLayer(NOTE_DRAW_PADDING, NOTE_DRAW_PADDING/2, NOTE_DRAW_PADDING, Color.BLACK);		
 		fakePausePaint.setMaskFilter(new BlurMaskFilter(fakePauseEffectRadius*sheetParams.getScale(), Blur.OUTER));
 		NOTE_DRAW_PADDING = (int) Math.max(fakePauseEffectRadius*sheetParams.getScale(), NOTE_DRAW_PADDING);
+		delta = (int) (sheetParams.getScale()*noteMinDistToIA);
+		log.i("updateScaleFactor(%f): delta = %d", newScaleFactor, delta);
 		lines.setParams(sheetParams);
 		int minLinespaceTopOffset = sheetParams.anchorOffset(
 			NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE), 
@@ -1594,12 +1618,11 @@ public class EditActivity extends Activity {
 		Math.max(
 			lines.getMinPadding(),
 			// assure that when sheet is scrolled to start IA left edge matches start of area where notes are placed
-			visibleRectWidth-inputAreaWidth-iaRightMargin - timeDividerSpacing(times.get(0), true)
+			visibleRectWidth-inputAreaWidth-iaRightMargin + mTouchSlop - timeDividerSpacing(times.get(0), true)
 		);
 		lines.setNotesAreaLeftPadding(paddingLeft);
 		
 		this.notesAreaX = paddingLeft;
-		delta = (int) (sheetParams.getScale()*noteMinDistToIA);
 		int spacingAfter = notesAreaX;
 		int x = 0;
 		int timeIndex = -1;
@@ -2166,6 +2189,15 @@ public class EditActivity extends Activity {
 		actionBar.clear();
 		actionBar.setVisibility(View.GONE);
 		elementActionIndex = -1;
+	}
+	
+	@Override
+	public void onBackPressed() {
+		if(actionBar.getVisibility() == View.VISIBLE) {
+			hideActionBar();
+		} else {
+			super.onBackPressed();
+		}
 	}
 
 	private void addOverlayView(final ElementsOverlay overlay) {

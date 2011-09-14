@@ -3,6 +3,9 @@
 	<integer name="lineThickness">10</integer>
  	<integer name="linespaceThickness">100</integer>
 	<string name="minDrawSpacing">2l</string>
+	
+	<dimen name="optimalLinespaceThickness">60dp</dimen>
+	<dimen name="maxLinespaceThickness">100dp</dimen>
  	
 	<dimen name="inputAreaWidth">88dip</dimen>
 	<dimen name="inputAreaMaxRightMargin">80dip</dimen>

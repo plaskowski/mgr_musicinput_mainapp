@@ -22,10 +22,11 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.PauseSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ActionBar;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ActionBar.IndicatorOrigin;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Action;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.CompoundTouchListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.QuickActionsView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.IndicatorOrigin;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView.OnScrollChangedListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
@@ -183,7 +184,7 @@ public class EditActivity extends Activity {
 		noteHighlightPaint.setColor(hColor);
 		scaleGestureDetector.setOnScaleListener(scaleListener);
 		sheet.setOnTouchListener(new CompoundTouchListener(
-			actionBarDismiss,
+			quickActionsDismiss,
 			iaTouchListener,
 			noteTouchListener,
 			elementTouchListener
@@ -248,7 +249,7 @@ public class EditActivity extends Activity {
 		maxLinespaceThickness = getResources().getDimensionPixelSize(R.dimen.maxLinespaceThickness);
 		
 		try {
-			prepareActionBar();
+			prepareQuickActions();
 		} catch (LoadingSvgException e) {
 			e.printStackTrace();
 			finish();
@@ -915,7 +916,7 @@ public class EditActivity extends Activity {
 				break;
 			case MotionEvent.ACTION_UP:
 				if(selectedIndex != -1) {
-					showActionBar(selectedIndex);
+					showQuickActions(selectedIndex);
 				}
 			case MotionEvent.ACTION_CANCEL:
 				if(selectedIndex != -1) {
@@ -985,7 +986,7 @@ public class EditActivity extends Activity {
 					break;
 			case MotionEvent.ACTION_UP:
 				if(startAnchor == currentAnchor) {
-					showActionBar(selectedIndex);
+					showQuickActions(selectedIndex);
 				}
 			case MotionEvent.ACTION_CANCEL:
 				activePointerId = INVALID_POINTER;
@@ -1775,7 +1776,7 @@ public class EditActivity extends Activity {
 	private ElementAction[] possibleActions;
 	private int elementActionIndex;
 	
-	private abstract class ElementAction implements ActionBar.Action {
+	private abstract class ElementAction implements Action {
 		@Override
 		public final void perform() {
 			perform(elementActionIndex);
@@ -1789,8 +1790,13 @@ public class EditActivity extends Activity {
 			return elementIndex >= 0 && elementIndex < elementViews.size();
 		}
 
-		public Boolean getState(int contextElementIndex) {
+		protected Boolean getState(int contextElementIndex) {
 			return null;
+		}
+		
+		@Override
+		public Boolean getState() {
+			return getState(elementActionIndex);
 		}
 	};
 	
@@ -1904,7 +1910,7 @@ public class EditActivity extends Activity {
 		}
 		
 		@Override
-		public Boolean getState(int elementIndex) {
+		protected Boolean getState(int elementIndex) {
 			return isValidIndex(elementIndex) 
 			&& ((ElementSpec.NormalNote) elementViews.get(elementIndex).model().getElementSpec()).noteSpec().hasJoinArc();
 		}
@@ -1939,7 +1945,7 @@ public class EditActivity extends Activity {
 		}
 		
 		@Override
-		public Boolean getState(int elementIndex) {
+		protected Boolean getState(int elementIndex) {
 			return isValidIndex(elementIndex) 
 			&& specAt(elementIndex).lengthSpec().dotExtension() > 0;
 		}
@@ -2010,7 +2016,7 @@ public class EditActivity extends Activity {
 		protected abstract Integer getActualIndex(int elementIndex);
 
 		@Override
-		public Boolean getState(int elementIndex) {
+		protected Boolean getState(int elementIndex) {
 			if(elementIndex != lastElementIndex)
 				throw new InvalidParameterException("Called getState() without calling isValidOn() first");
 			return wrappedElement.getState(startIndex);
@@ -2068,7 +2074,7 @@ public class EditActivity extends Activity {
 		}
 		
 		@Override
-		public Boolean getState(int elementIndex) {
+		protected Boolean getState(int elementIndex) {
 			return isValidIndex(elementIndex) 
 			&& ((ElementSpec.NormalNote) elementViews.get(elementIndex).model().getElementSpec()).noteSpec().isGrouped();
 		}
@@ -2087,10 +2093,10 @@ public class EditActivity extends Activity {
 		
 	}
 	
-	private ActionBar actionBar; 
-	private void prepareActionBar() throws LoadingSvgException {
-		actionBar = (ActionBar) findViewById(R.id.EDIT_actionbar);
-		actionBar.setVisibility(View.INVISIBLE);
+	private QuickActionsView qActionsView; 
+	private void prepareQuickActions() throws LoadingSvgException {
+		qActionsView = (QuickActionsView) findViewById(R.id.EDIT_quickactions);
+		qActionsView.setVisibility(View.INVISIBLE);
 		possibleActions = new ElementAction[] {
 			new TogglePauseDot(R.xml.button_dot),
 			new ToggleJoinArcEnd(R.xml.button_joinarc_left),
@@ -2101,7 +2107,7 @@ public class EditActivity extends Activity {
 			new ToggleJoinArc(R.xml.button_joinarc_right)
 		};
 	}
-	private View.OnTouchListener actionBarDismiss = new OnTouchListener() {
+	private View.OnTouchListener quickActionsDismiss = new OnTouchListener() {
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
 			hideActionBar();
@@ -2109,23 +2115,17 @@ public class EditActivity extends Activity {
 		}
 	};
 	
-	private void showActionBar(int contextElementIndex) {
-		actionBar.clear();
-		boolean empty = true;
+	private void showQuickActions(int contextElementIndex) {
+		List<Action> model = new ArrayList<Action>(possibleActions.length);
 		for(int i = 0; i < possibleActions.length; i++) {
 			ElementAction action = possibleActions[i];
 			if(action.isValidOn(contextElementIndex)) {
-				Boolean state = action.getState(contextElementIndex);
-				if(state == null) {
-					actionBar.addAction(action);
-				} else {
-					actionBar.addToggleAction(action, state);
-				}
-				empty = false;
+				model.add(action);
 			}
 		}
-		if(!empty) {
+		if(!model.isEmpty()) {
 			elementActionIndex = contextElementIndex;
+			qActionsView.setModel(model);
 			int middleX, middleY;
 			SheetAlignedElementView view = elementViews.get(contextElementIndex);
 			switch(view.model().getElementSpec().getType()) {
@@ -2149,23 +2149,25 @@ public class EditActivity extends Activity {
 			refPointVisibleY = Math.min(Math.max(0, refPointVisibleY), visibleRectHeight);
 			
 			// validate ref point y-coordinate according to action bar height
-			actionBar.setIndicator(IndicatorOrigin.BOTTOM);
-			int height = actionBar.measureHeight();
-			actionBar.setIndicator(IndicatorOrigin.TOP);
-			int heightUpdown = actionBar.measureHeight();
+			qActionsView.setIndicatorOrigin(IndicatorOrigin.BOTTOM);
+			int height = qActionsView.measureHeight();
+			qActionsView.setIndicatorOrigin(IndicatorOrigin.TOP);
+			int heightUpdown = qActionsView.measureHeight();
 			if(refPointVisibleY - height >= 0) {
-				actionBar.setIndicator(IndicatorOrigin.BOTTOM);
+				qActionsView.setIndicatorOrigin(IndicatorOrigin.BOTTOM);
 			} else if(refPointVisibleY + heightUpdown <= visibleRectHeight) {
-				actionBar.setIndicator(IndicatorOrigin.TOP);
+				qActionsView.setIndicatorOrigin(IndicatorOrigin.TOP);
 			} else {
-				actionBar.setIndicator(IndicatorOrigin.NONE);
-				refPointVisibleY -= actionBar.measureHeight()/2;
+				qActionsView.setIndicatorOrigin(IndicatorOrigin.NONE);
+				refPointVisibleY -= qActionsView.measureHeight()/2;
 			}
 			
+			Rect margins = new Rect();
 			// calculate indicator origin horizontal position
-			int mL = actionBar.getIndicatorOriginMarginLeft();
-			int mR = actionBar.getIndicatorOriginMarginRight();
-			int width = actionBar.measureWidth();
+			qActionsView.getOriginPostionMargin(margins);
+			int mL = margins.left;
+			int mR = margins.top;
+			int width = qActionsView.measureWidth();
 			int defX = mL+(width-mL-mR)/2;
 			int originX = defX;
 			if(refPointVisibleX < defX && width < visibleRectWidth) {
@@ -2173,27 +2175,27 @@ public class EditActivity extends Activity {
 			} else if(refPointVisibleX + (width-defX) > visibleRectWidth && width < visibleRectWidth) {
 				originX = Math.min(refPointVisibleX - (visibleRectWidth - width), width - mR);
 			}
-			actionBar.setIndicatorOriginX(originX);
+			qActionsView.setOriginX(originX);
 			
-			actionBar.measure();
+			qActionsView.measure();
 			updateMargins(
-				actionBar,
-				refPointVisibleX - actionBar.getIndicatorEndX(),
-				refPointVisibleY - actionBar.getIndicatorEndY()
+				qActionsView,
+				refPointVisibleX - originX,
+				refPointVisibleY - qActionsView.getIndicatorEndY()
 			);	
-			actionBar.setVisibility(View.VISIBLE);
+			qActionsView.setVisibility(View.VISIBLE);
 		}
 	}
 
 	private void hideActionBar() {
-		actionBar.clear();
-		actionBar.setVisibility(View.GONE);
+		qActionsView.setModel(null);
+		qActionsView.setVisibility(View.GONE);
 		elementActionIndex = -1;
 	}
 	
 	@Override
 	public void onBackPressed() {
-		if(actionBar.getVisibility() == View.VISIBLE) {
+		if(qActionsView.getVisibility() == View.VISIBLE) {
 			hideActionBar();
 		} else {
 			super.onBackPressed();

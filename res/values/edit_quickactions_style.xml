@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+	
+	<style name="BlueLinear" parent="LinearSimpleVertical">
+		<item name="color0">#5CB0CC</item>
+		<item name="color1">#73DCFF</item>
+	</style>
+	
+	<style name="TooltipBg1">
+		<item name="drawableClass">pl.edu.mimuw.students.pl249278.android.musicinput.ui.TooltipDrawable</item>
+		<item name="padding">2dip</item>
+		<item name="cornerRadius">2dip</item>
+		<item name="borderThickness">1dip</item>
+		<item name="borderColor">#458499</item>
+		<item name="fill">@style/BlueLinear</item>
+		<item name="indicatorSize">20dip</item>
+    </style>
+    
+    <style name="QuickActionsButton">
+    	<item name="android:layout_width">50dip</item>
+    	<item name="android:layout_height">50dip</item>
+    	<item name="android:scaleType">fitXY</item>
+    </style>
+    
+    <style name="PaintAntialias">
+    	<item name="color">#458499</item>
+    	<item name="antialias">true</item>
+    </style>
+    
+    <array name="InvertedEmboss">
+    	<item>@style/InvertedEmboss_edge</item>
+    	<item>@style/InvertedEmboss_fill</item>
+    </array>
+    
+    <style name="InvertedEmboss_fill" parent="PaintAntialias">
+    	<item name="color">#40000000</item>
+    </style>
+    <style name="InvertedEmboss_edge" parent="PaintAntialias">
+    	<item name="color">#FF5CB0CC</item>
+    	<item name="offsetX">1px</item>
+    	<item name="offsetY">1px</item>
+    	<item name="drawRadius">1px</item>
+    	<item name="paintStyle">STROKE</item>
+    	<item name="strokeWidth">2px</item>
+    </style>
+    
+</resources>

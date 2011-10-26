@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout 
 	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:custom="http://schemas.android.com/apk/res/pl.edu.mimuw.students.pl249278.android.musicinput"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:id="@+id/EDIT_main_containter"
@@ -69,16 +70,19 @@
 		    android:background="#1FFF0000"
 	    />
 	    
-	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.ActionBar
-	    	android:orientation="horizontal"
-	    	android:id="@+id/EDIT_actionbar"
+	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.QuickActionsView    	android:orientation="horizontal"
+	    	android:id="@+id/EDIT_quickactions"
 	    	android:layout_width="wrap_content"
 	    	android:layout_height="wrap_content"
 	    	android:layout_marginLeft="30dip"
 	    	android:layout_marginTop="50dip"
 		    android:layout_gravity="left|top"
-	    /><!-- 
-	     -->
+		    custom:itemSpacing="1dip"
+		    custom:buttonStyle="@layout/button_template"
+		    custom:toggleButtonStyle="@layout/statebutton_template"
+		    custom:extendedBackground="@style/TooltipBg1"
+    		custom:buttonIconPaintSetup="@array/InvertedEmboss"
+	    />
    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor>
     
    <LinearLayout

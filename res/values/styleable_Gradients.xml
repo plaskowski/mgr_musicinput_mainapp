@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+	
+	<item type="id" name="GradientType_Linear" />
+	
+	<declare-styleable name="Gradient">
+		<attr name="type" format="integer" />
+		<attr name="X0" format="float" />
+		<attr name="Y0" format="float" />
+		<attr name="X1" format="float" />
+		<attr name="Y1" format="float" />
+		<attr name="color0" format="color" />
+		<attr name="color1" format="color" />
+	</declare-styleable>
+	
+		
+	<style name="LinearSimpleVertical">
+		<item name="type">@id/GradientType_Linear</item>
+		<item name="Y0">0</item>
+		<item name="Y1">100</item>
+    </style>
+	
+</resources>

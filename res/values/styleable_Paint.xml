@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+	
+	<declare-styleable name="Paint">
+		<attr name="antialias" format="boolean" />
+		<attr name="color" format="color" />
+		<attr name="paintStyle" format="string" />
+		<attr name="strokeWidth" format="dimension" />
+	</declare-styleable>
+
+	<declare-styleable name="PaintSetup">
+		<attr name="offsetX" format="dimension" />
+		<attr name="offsetY" format="dimension" />
+		<attr name="drawRadius" format="dimension" />
+	</declare-styleable>
+		
+</resources>

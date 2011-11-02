@@ -1,7 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.EnhancedSvgImage;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.EnhancedSvgImage.IMarker;
 import android.graphics.Canvas;
@@ -11,13 +10,13 @@ import android.util.Pair;
 
 public abstract class SheetElement {
 	
-	protected SheetParams sheetParams;
+	protected SheetVisualParams sheetParams;
 
 	public abstract int measureWidth();
 	public abstract int measureHeight();
 	public abstract int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part);
 	
-	public void setSheetParams(SheetParams params) {
+	public void setSheetParams(SheetVisualParams params) {
 		this.sheetParams = params;
 	}
 	
@@ -41,7 +40,7 @@ public abstract class SheetElement {
 		return Math.abs(line.first.x - line.second.x);
 	}
 	public abstract void onDraw(Canvas canvas, Paint paint);
-	public SheetParams getSheetParams() {
+	public SheetVisualParams getSheetParams() {
 		return sheetParams;
 	}
 	

@@ -1,7 +1,7 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.ANCHOR_TYPE_LINE;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.ANCHOR_TYPE_LINESPACE;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ANCHOR_TYPE_LINE;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ANCHOR_TYPE_LINESPACE;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -11,7 +11,8 @@ import org.xmlpull.v1.XmlPullParser;
 
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.Clef;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.Clef;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.AdjustableSizeImage;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.EnhancedSvgImage;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteEnding;
@@ -44,8 +45,8 @@ public class NotePartFactory {
 		}
 		
 	}
-	private static final int ORIENT_NORMAL = 0;
-	private static final int ORIENT_UPSDOWN = 1;
+	private static final int ORIENT_NORMAL = NoteConstants.ORIENT_UP;
+	private static final int ORIENT_UPSDOWN = NoteConstants.ORIENT_DOWN;
 
 	public static NoteHead getHeadImage(Context context, int noteLength, int anchorType, boolean isUpsidedown) throws NoteDescriptionLoadingException {
 		return prepareHeadImage(context, noteLength, anchorType, isUpsidedown ? ORIENT_UPSDOWN : ORIENT_NORMAL);
@@ -96,8 +97,9 @@ public class NotePartFactory {
 		return noteEndings.get(resId);
 	}
 	
-	public static AdjustableSizeImage prepareModifier(Context context, NoteConstants.NoteModifier modifier, boolean isUpsdown, int anchorType) throws LoadingSvgException {
-		int resId = modifiersMapping.get(modifier.ordinal())[mappingIndex(isUpsdown ? ORIENT_UPSDOWN : ORIENT_NORMAL, anchorType)];
+	public static AdjustableSizeImage prepareModifier(Context context, NoteConstants.NoteModifier modifier, int orientation, int positon) throws LoadingSvgException {
+		int anchorType = NoteConstants.anchorType(positon);
+		int resId = modifiersMapping.get(modifier.ordinal())[mappingIndex(orientation, anchorType)];
 		return prepareAdujstableImage(context, resId, true);
 	}
 	

@@ -2,12 +2,10 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
 import static pl.edu.mimuw.students.pl249278.android.svg.SvgRenderer.drawSvgImage;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.NoteDescriptionLoadingException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.EnhancedSvgImage.IMarker;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteHead;
 import android.content.Context;
@@ -46,7 +44,7 @@ public class NoteHeadElement extends SheetAlignedElement {
 		headIM2Anchor = imarkerAnchor(secondM, headAnchor);
 	}
 	
-	public void setSheetParams(SheetParams params) {
+	public void setSheetParams(SheetVisualParams params) {
 		super.setSheetParams(params);
 		sheetParamsCalculations();
 	}

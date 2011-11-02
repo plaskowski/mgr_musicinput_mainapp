@@ -1,7 +1,7 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.model;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.Clef;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.KeySignature;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.Clef;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.KeySignature;
 
 public class TimeSpec {
 	TimeStep timeStep;

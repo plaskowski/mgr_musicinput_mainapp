@@ -1,12 +1,10 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.KeySignature;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.KeySignature.Accidental;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.LoadingSvgException;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.KeySignature;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.KeySignature.Accidental;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.LoadingSvgException;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -32,8 +30,8 @@ public class KeySignatureElement extends SheetElement {
 				NotePartFactory.prepareModifier(
 					ctx, 
 					accidental.accidental, 
-					false, 
-					NoteConstants.anchorType(accidental.anchor)
+					NoteConstants.ORIENT_UP, 
+					accidental.anchor
 				), 
 				accidental.anchor
 			);
@@ -41,7 +39,7 @@ public class KeySignatureElement extends SheetElement {
 	}
 	
 	@Override
-	public void setSheetParams(SheetParams params) {
+	public void setSheetParams(SheetVisualParams params) {
 		super.setSheetParams(params);
 		
 		totalWidth = 0;

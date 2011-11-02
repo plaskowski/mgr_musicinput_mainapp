@@ -1,4 +1,4 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;

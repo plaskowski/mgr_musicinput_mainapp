@@ -8,7 +8,6 @@ import java.util.LinkedList;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.CompoundDrawable.PaintSetup;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
@@ -136,7 +135,7 @@ public class ExtendedResourcesFactory {
 	}
 
 	public static Collection<PaintSetup> createPaintsSetup(Context ctx, AttributeSet attrs, int resId) {
-		LinkedList<PaintSetup> result = new LinkedList<CompoundDrawable.PaintSetup>();
+		LinkedList<PaintSetup> result = new LinkedList<PaintSetup>();
 		TypedArray values = ctx.getResources().obtainTypedArray(resId);
 		for(int i = 0; i < values.length(); i++) {
 			int value = values.getResourceId(i, 0);

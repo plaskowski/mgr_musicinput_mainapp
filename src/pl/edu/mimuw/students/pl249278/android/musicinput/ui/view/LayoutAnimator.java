@@ -1,4 +1,4 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -16,17 +16,17 @@ public class LayoutAnimator<ContextType> implements Runnable {
 		super();
 		this.ctx = ctx;
 	}
-	protected static abstract class LayoutAnimation<ContextType, ViewType extends View> {
+	public static abstract class LayoutAnimation<ContextType, ViewType extends View> {
 		protected int start_value;
 		protected int delta;
 		private long duration;
 		private long elapsed = 0;
 		protected ViewType view;
-		protected Runnable onAnimationEndListener = null;
+		private Runnable onAnimationEndListener = null;
 		
 		public LayoutAnimation(ViewType view, int start_value, int delta, long duration, Runnable onAnimationEndListener) {
 			this(view, start_value, delta, duration);
-			this.onAnimationEndListener = onAnimationEndListener;
+			this.setOnAnimationEndListener(onAnimationEndListener);
 		}
 		public LayoutAnimation(ViewType view, int start_value, int delta, long duration) {
 			this.view = view;
@@ -46,6 +46,12 @@ public class LayoutAnimator<ContextType> implements Runnable {
 		}
 		public boolean isFinished() {
 			return elapsed == duration;
+		}
+		public void setOnAnimationEndListener(Runnable onAnimationEndListener) {
+			this.onAnimationEndListener = onAnimationEndListener;
+		}
+		public Runnable getOnAnimationEndListener() {
+			return onAnimationEndListener;
 		}
 	}
 	
@@ -126,8 +132,8 @@ public class LayoutAnimator<ContextType> implements Runnable {
 		lazyAdded.clear();
 		for(LayoutAnimation<ContextType, ?> anim: lazyRemoved) {
 			animations.remove(anim);
-			if(anim.onAnimationEndListener != null) {
-				anim.onAnimationEndListener.run();
+			if(anim.getOnAnimationEndListener() != null) {
+				anim.getOnAnimationEndListener().run();
 			}
 		}
 		lazyRemoved.clear();

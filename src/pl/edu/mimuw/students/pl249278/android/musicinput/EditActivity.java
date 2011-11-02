@@ -1,10 +1,10 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.ANCHOR_TYPE_LINE;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.LINE0_ABSINDEX;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.LINE4_ABSINDEX;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart.BOTTOM_EDGE;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart.TOP_EDGE;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ANCHOR_TYPE_LINE;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE4_ABSINDEX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.BOTTOM_EDGE;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.TOP_EDGE;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.length;
 
 import java.security.InvalidParameterException;
@@ -18,29 +18,18 @@ import java.util.Set;
 
 import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.PauseSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.KeySignature;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.NoteModifier;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Action;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.CompoundTouchListener;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.QuickActionsView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.IndicatorOrigin;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView.OnScrollChangedListener;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.KeySignature;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.NoteModifier;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.LoadingSvgException;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner.OnValueChanged;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.OutlineDrawable;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor.OnScaleListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.OutlineDrawable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
@@ -49,13 +38,25 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementsOverlay;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementsOverlay.Observer;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.JoinArc;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotesGroup;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.LoadingSvgException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotesGroup.GroupBuilder;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetElement;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.Sheet5LinesView;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.SheetAlignedElementView;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.SheetElementView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.CompoundTouchListener;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ModifiedScrollView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.QuickActionsView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ScaleGestureInterceptor;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetElementView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView.OnScrollChangedListener;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner.OnValueChanged;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ScaleGestureInterceptor.OnScaleListener;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 import android.app.Activity;
 import android.content.Context;
@@ -1551,7 +1552,7 @@ public class EditActivity extends Activity {
 		}
 		public void startRLAnimation(View view, int dx, long duration, Runnable listn) {
 			RLAnimation anim = new RLAnimation(view, left(view), dx, duration);
-			anim.onAnimationEndListener = listn;
+			anim.setOnAnimationEndListener(listn);
 //			log.i("startAnimation(): %d --[%d]--> %d, dur: %d", anim.start_value, dx, anim.start_value+dx, duration);
 			mStartAnimation(anim);
 		}

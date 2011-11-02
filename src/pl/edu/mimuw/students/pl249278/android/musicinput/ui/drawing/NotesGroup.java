@@ -1,9 +1,9 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.LINE0_ABSINDEX;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.MIN_STEM_SPAN;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.ORIENT_DOWN;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.ORIENT_UP;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.MIN_STEM_SPAN;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ORIENT_DOWN;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ORIENT_UP;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -11,19 +11,17 @@ import java.util.Arrays;
 import java.util.List;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote.SpacingSource;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 
 public class NotesGroup extends ElementsOverlay {
-	@SuppressWarnings("unused")
 	private static LogUtils log = new LogUtils(NotesGroup.class);
 	private static final int MAX_NOTE_LENGTH = NoteConstants.LEN_QUATERNOTE+1;
 	
@@ -56,9 +54,8 @@ public class NotesGroup extends ElementsOverlay {
 	}
 	
 	@Override
-	public void setSheetParams(SheetParams params) {
+	public void setSheetParams(SheetVisualParams params) {
 		super.setSheetParams(params);
-		log.i("setSheetParams(), scale: %f", params.getScale());
 		recalculate();
 	}
 
@@ -297,7 +294,7 @@ public class NotesGroup extends ElementsOverlay {
 		private boolean closed = false;
 		private int orientation = -1;
 
-		public GroupBuilder(SheetParams params, ElementSpec firstElementSpec) {
+		public GroupBuilder(SheetVisualParams params, ElementSpec firstElementSpec) {
 			specs.add((NormalNote) firstElementSpec);
 			switch(params.getDisplayMode()) {
 			case LOWER_VOICE:

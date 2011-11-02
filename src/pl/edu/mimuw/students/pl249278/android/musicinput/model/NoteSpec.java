@@ -5,8 +5,7 @@ import static pl.edu.mimuw.students.pl249278.android.common.IntUtils.asFlagVal;
 
 import java.util.HashMap;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.NoteModifier;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.NoteModifier;
 
 public class NoteSpec extends PauseSpec implements PositonSpec {
 	private int postion;

@@ -1,12 +1,10 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.NoteDescriptionLoadingException;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.NoteDescriptionLoadingException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteEnding;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgRenderer;
 import android.content.Context;
@@ -40,7 +38,7 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 		endingIMAnchor = imarkerAnchor(ending.getIMarker(), endingAnchor);
 	}
 	
-	public void setSheetParams(SheetParams params) {
+	public void setSheetParams(SheetVisualParams params) {
 		super.setSheetParams(params);
 		sheetParamsCalculations();
 	}

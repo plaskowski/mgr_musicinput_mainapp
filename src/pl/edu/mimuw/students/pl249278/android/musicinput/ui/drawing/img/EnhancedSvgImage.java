@@ -141,7 +141,6 @@ public class EnhancedSvgImage extends SvgImage {
 	}
 
 	public static int alphaToIndex(int alpha) {
-		//TODO problem with float precision
 		int diff = alpha-125;
 		int sign = diff >= 0 ? 1 : -1;
 		diff = Math.abs(diff);

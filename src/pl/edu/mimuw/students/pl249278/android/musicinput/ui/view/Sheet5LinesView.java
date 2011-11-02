@@ -1,9 +1,9 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -33,7 +33,7 @@ public class Sheet5LinesView extends View {
 	}
 
 
-	SheetParams params;
+	SheetVisualParams params;
 	private int lineThickness;
 	private int totalVerticalSpan;
 	private int notesAreaLeftPadding;
@@ -42,7 +42,7 @@ public class Sheet5LinesView extends View {
 	private Paint lineHighlightedPaint = new Paint();
 	private GradientDrawable linespaceHighlighted;
 	
-	public void setParams(SheetParams params) {
+	public void setParams(SheetVisualParams params) {
 		this.params = params;
 		lineThickness = params.getLineThickness();
 		totalVerticalSpan = params.anchorOffset(LINE4_ABSINDEX, AnchorPart.BOTTOM_EDGE);

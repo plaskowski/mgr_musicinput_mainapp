@@ -1,8 +1,8 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetElement;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -63,7 +63,7 @@ public class SheetElementView<ElementType extends SheetElement> extends View {
 		return model.measureWidth()+getPaddingLeft()+getPaddingRight();
 	}
 	
-	public void setSheetParams(SheetParams params) {
+	public void setSheetParams(SheetVisualParams params) {
 		model.setSheetParams(params);
 		invalidateMeasure();
 		invalidate();

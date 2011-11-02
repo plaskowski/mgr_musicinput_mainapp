@@ -1,13 +1,12 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.ORIENT_UP;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ORIENT_UP;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NoteHeadElement.*;
 
 import java.security.InvalidParameterException;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
 import android.graphics.Canvas;
@@ -31,7 +30,7 @@ public class JoinArc extends ElementsOverlay {
 	
 	public void setRightElement(SheetAlignedElement rightElement) {
 		this.rightElement = rightElement;
-		SheetParams params = getSheetParams();
+		SheetVisualParams params = getSheetParams();
 		if(params != null) {
 			rightElement.setSheetParams(params);
 			recalculate();
@@ -39,7 +38,7 @@ public class JoinArc extends ElementsOverlay {
 	}
 	
 	@Override
-	public void setSheetParams(SheetParams params) {
+	public void setSheetParams(SheetVisualParams params) {
 		super.setSheetParams(params);
 		leftElement.setSheetParams(params);
 		if(rightElement != null) {

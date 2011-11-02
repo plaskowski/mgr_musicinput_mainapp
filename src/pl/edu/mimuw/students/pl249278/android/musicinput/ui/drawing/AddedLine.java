@@ -2,9 +2,8 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
 import java.security.InvalidParameterException;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
@@ -26,7 +25,7 @@ public class AddedLine extends AlignedElementWrapper<SheetAlignedElement> {
 	}
 
 	@Override
-	public void setSheetParams(SheetParams params) {
+	public void setSheetParams(SheetVisualParams params) {
 		super.setSheetParams(params);
 		
 		// calculate total bounds

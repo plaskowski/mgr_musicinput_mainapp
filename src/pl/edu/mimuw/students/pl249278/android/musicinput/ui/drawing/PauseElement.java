@@ -1,12 +1,10 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteConstants.NoteModifier;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.NotePartFactory.LoadingSvgException;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.NoteModifier;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.Pause;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.LoadingSvgException;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -21,7 +19,7 @@ public class PauseElement extends SheetAlignedElement {
 	}
 	
 	@Override
-	public void setSheetParams(SheetParams params) {
+	public void setSheetParams(SheetVisualParams params) {
 		image.setSheetParams(params);
 		super.setSheetParams(params);
 	}

@@ -1,20 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.svg;
 
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_CP1_X;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_CP1_Y;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_CP2_X;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_CP2_Y;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_DEST_X;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_DEST_Y;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_X;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.ARG_Y;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_CLOSE;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_CUBICTO;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_LINETO;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_MOVETO;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RCUBICTO;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RLINETO;
-import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RMOVETO;
+import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.*;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgPath.MemorySaavyIterator;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgPath.SvgPathCommand;
 import android.graphics.Canvas;

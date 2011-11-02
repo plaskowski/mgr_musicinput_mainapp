@@ -1,10 +1,13 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.PaintSetup;
+
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -17,24 +20,12 @@ public abstract class CompoundDrawable extends TranscluentDrawable {
 	/** (-extrems.left, -extrems.top) are coordinates for drawing the base */
 	protected RectF offsetExtremum = new RectF(0, 0, 0, 0);
 	
-	public static class PaintSetup {
-		Paint paint;
-		PointF offsetToBase;
-		float drawRadius;
-		
-		public PaintSetup(Paint paint, PointF offsetToBase, float drawRadius) {
-			this.paint = paint;
-			this.offsetToBase = offsetToBase;
-			this.drawRadius = drawRadius;
-		}
-	}
-	
 	protected void addPaintSetup(Paint paint, float offsetX, float offsetY, float drawRadius) {
 		addPaintSetup(new PaintSetup(
 			paint, new PointF(offsetX, offsetY), drawRadius
 		));
 	}
-	protected void addPaintSetup(PaintSetup ps) {
+	public void addPaintSetup(PaintSetup ps) {
 		paints.add(ps);
 		offsetExtremum.left = min(ps.offsetToBase.x - ps.drawRadius, offsetExtremum.left);
 		offsetExtremum.top = min(ps.offsetToBase.y - ps.drawRadius, offsetExtremum.top);

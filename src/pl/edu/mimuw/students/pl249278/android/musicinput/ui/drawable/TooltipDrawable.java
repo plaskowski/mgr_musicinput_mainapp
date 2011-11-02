@@ -1,7 +1,10 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable;
 
 import pl.edu.mimuw.students.pl249278.android.common.PaintBuilder;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ExtendedResourcesFactory;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.StyleResolver;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;

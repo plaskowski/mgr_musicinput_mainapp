@@ -1,7 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
@@ -17,7 +16,7 @@ public abstract class AlignedElementWrapper<WrappedType extends SheetAlignedElem
 	}
 
 	@Override
-	public void setSheetParams(SheetParams params) {
+	public void setSheetParams(SheetVisualParams params) {
 		super.setSheetParams(params);
 		wrappedElement.setSheetParams(params);
 	}

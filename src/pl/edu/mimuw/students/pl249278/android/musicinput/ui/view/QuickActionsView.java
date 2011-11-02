@@ -1,11 +1,15 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
 
 import java.util.Collection;
 
 import pl.edu.mimuw.students.pl249278.android.common.ContextUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.CompoundDrawable.PaintSetup;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Action;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ExtendedResourcesFactory;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.PaintSetup;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.IndicatorOrigin;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.CompoundDrawable;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgRenderer;
 import android.content.Context;

@@ -7,7 +7,7 @@
 	</style>
 	
 	<style name="TooltipBg1">
-		<item name="drawableClass">pl.edu.mimuw.students.pl249278.android.musicinput.ui.TooltipDrawable</item>
+		<item name="drawableClass">pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.TooltipDrawable</item>
 		<item name="padding">2dip</item>
 		<item name="cornerRadius">2dip</item>
 		<item name="borderThickness">1dip</item>

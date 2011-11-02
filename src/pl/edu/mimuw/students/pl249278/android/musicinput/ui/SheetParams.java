@@ -1,8 +1,10 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams;
 	
-public class SheetParams {
+public class SheetParams implements SheetVisualParams {
 	
 	private int lineFactor;
 	private int linespacingFactor;
@@ -38,25 +40,12 @@ public class SheetParams {
 		throw new UnsupportedOperationException();
 	}
 	
-	public static enum AnchorPart {
-		MIDDLE,
-		BOTTOM_EDGE,
-		TOP_EDGE
-	}
-		
-	public static enum DisplayMode {
-		NORMAL,
-		UPPER_VOICE,
-		LOWER_VOICE
-	};
-		
 	private static int line0absIndex = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE);
 		
-	/**
-	 * @param anchorAbsIndex absolute index of anchor
-	 * @param part determines exact horizontal line inside anchor we measure distance to
-	 * @return anchor[absIndex][part].y - [line0 (first line from 5lines)][top edge].y
+	/* (non-Javadoc)
+	 * @see pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetVisualParams#anchorOffset(int, pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart)
 	 */
+	@Override
 	public int anchorOffset(int anchorAbsIndex, AnchorPart part) {
 		int lineThickness = (int) (lineFactor * scale);
 		int linespacingThickness = (int) (linespacingFactor * scale);
@@ -95,10 +84,18 @@ public class SheetParams {
 		return linespacingFactor;
 	}
 
+	/* (non-Javadoc)
+	 * @see pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetVisualParams#getLineThickness()
+	 */
+	@Override
 	public int getLineThickness() {
 		return (int) (lineFactor*scale);
 	}
 
+	/* (non-Javadoc)
+	 * @see pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetVisualParams#getLinespacingThickness()
+	 */
+	@Override
 	public int getLinespacingThickness() {
 		return (int) (linespacingFactor*scale);
 	}
@@ -143,6 +140,10 @@ public class SheetParams {
 		this.keySignature = keySignature;
 	}
 
+	/* (non-Javadoc)
+	 * @see pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetVisualParams#getDisplayMode()
+	 */
+	@Override
 	public DisplayMode getDisplayMode() {
 		return displayMode;
 	}

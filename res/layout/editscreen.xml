@@ -6,7 +6,7 @@
     android:layout_height="fill_parent"
     android:id="@+id/EDIT_main_containter"
 >
-    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner
+    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner
 		android:layout_alignParentLeft="true" 
 		android:id="@+id/EDIT_note_value_scroll" 
 		android:layout_height="fill_parent" 
@@ -21,7 +21,7 @@
 			android:paddingLeft="5dip"
 			android:paddingRight="5dip"
 		/>
-    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.NoteValueSpinner>
+    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner>
 	<ImageView 
 		android:layout_alignParentLeft="true" 
 		android:layout_height="match_parent" 
@@ -29,20 +29,20 @@
 		android:background="@drawable/ramka"
 		android:scaleType="fitXY"
 	/>
-	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor
+	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ScaleGestureInterceptor
 		android:id="@+id/EDIT_scale_detector"
     	android:layout_toRightOf="@id/EDIT_note_value_scroll" 
 	    android:layout_width="fill_parent"
 	    android:layout_height="fill_parent"
 	>
-	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView
+	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView
 	    	android:id="@+id/EDIT_outer_hscrollview"
 	    	android:layout_width="fill_parent" 
 	    	android:layout_height="fill_parent"
 	    	android:layout_alignParentLeft="true"
 	    	android:layout_alignParentRight="true" 
 	    >
-	    	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView
+	    	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ModifiedScrollView
 	    		android:id="@+id/EDIT_vertscrollview"
 		    	android:layout_width="wrap_content" 
 	    		android:layout_height="fill_parent"
@@ -53,14 +53,14 @@
 			    	android:layout_width="300px"
 			    	android:layout_height="300px"
 			   	>
-			   		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.Sheet5LinesView
-					android:id='@+id/EDIT_sheet_5lines'  
+			   		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView
+			   		android:id='@+id/EDIT_sheet_5lines'  
 			    	android:layout_width="fill_parent"
 			    	android:layout_height="100px"
 			   		/>
 			   	</RelativeLayout>
-			</pl.edu.mimuw.students.pl249278.android.musicinput.ui.ModifiedScrollView>
-	    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.InterceptedHorizontalScrollView>
+			</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ModifiedScrollView>
+	    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView>
 	    
 	    <View
 		    android:id="@+id/EDIT_inputArea"
@@ -70,7 +70,8 @@
 		    android:background="#1FFF0000"
 	    />
 	    
-	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.QuickActionsView    	android:orientation="horizontal"
+	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.QuickActionsView 
+	    	android:orientation="horizontal"
 	    	android:id="@+id/EDIT_quickactions"
 	    	android:layout_width="wrap_content"
 	    	android:layout_height="wrap_content"
@@ -83,7 +84,7 @@
 		    custom:extendedBackground="@style/TooltipBg1"
     		custom:buttonIconPaintSetup="@array/InvertedEmboss"
 	    />
-   </pl.edu.mimuw.students.pl249278.android.musicinput.ui.ScaleGestureInterceptor>
+   </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ScaleGestureInterceptor>
     
    <LinearLayout
 		android:id="@+id/EDIT_info_popup"   
@@ -103,7 +104,7 @@
 			android:textColor="@android:color/white"
 			android:layout_marginBottom="5dip"
 		/>
-		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.adapter.SheetAlignedElementView
+		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView
 			android:id="@+id/EDIT_info_popup_note"
 			android:layout_width="wrap_content" 
 			android:layout_height="wrap_content"

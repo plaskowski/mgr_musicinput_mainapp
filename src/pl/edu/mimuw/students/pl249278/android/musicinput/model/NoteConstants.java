@@ -1,7 +1,5 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
+package pl.edu.mimuw.students.pl249278.android.musicinput.model;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.PositonSpec;
 
 public class NoteConstants {
 	public static final int ANCHOR_TYPE_LINE = 0;
@@ -13,7 +11,9 @@ public class NoteConstants {
 	public static final Integer LEN_EIGHTNOTE = 3;
 	public static final Integer LEN_SIXTEENNOTE = 4;
 	
+	/** stem is drawn above the head */
 	public static final int ORIENT_UP = 0;
+	/** stem is drawn below the head */
 	public static final int ORIENT_DOWN = 1;
 	
 	public static enum NoteModifier {
@@ -93,8 +93,8 @@ public class NoteConstants {
 		return absIndex < 0 ? (absIndex-1)/2 : absIndex/2;
 	}
 
-	public static boolean isUpsdown(int noteHeight) {
-		return noteHeight < anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE);
+	public static int defaultOrientation(int noteHeight) {
+		return noteHeight < anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE) ? ORIENT_DOWN : ORIENT_UP;
 	}
 
 	public static int stemEnd(PositonSpec noteSpec, int orientation) {
@@ -102,14 +102,7 @@ public class NoteConstants {
 		return noteSpec.positon() + (orientation == ORIENT_UP ? -MIN_STEM_SPAN : MIN_STEM_SPAN);
 	}
 
-	public static boolean hasStem(NoteSpec spec) {
-		return hasStem(spec.length());
-	}
 	public static boolean hasStem(int noteLength) {
 		return noteLength != 0;
-	}
-
-	public static int defaultOrientation(NoteSpec spec) {
-		return isUpsdown(spec.positon()) ? ORIENT_DOWN : ORIENT_UP;
 	}
 }

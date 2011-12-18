@@ -20,6 +20,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteHead
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgParser;
 import android.content.Context;
+import android.content.res.Resources;
 import android.util.Pair;
 
 public class NotePartFactory {
@@ -127,9 +128,12 @@ public class NotePartFactory {
 	}
 	
 	public static SvgImage prepareSvgImage(Context context, int svgResId) throws LoadingSvgException {
+		return prepareSvgImage(context.getResources(), svgResId);
+	}
+	public static SvgImage prepareSvgImage(Resources resources, int svgResId) throws LoadingSvgException {
 		if(svgImages.get(svgResId) == null) {
 			SvgParser parser = new SvgParser();
-			XmlPullParser xmlParser = context.getResources().getXml(svgResId);
+			XmlPullParser xmlParser = resources.getXml(svgResId);
 			SvgImage svgImg;
 			try {
 				svgImg = parser.parse(xmlParser);

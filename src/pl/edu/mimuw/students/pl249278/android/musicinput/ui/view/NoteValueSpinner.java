@@ -59,7 +59,11 @@ public class NoteValueSpinner extends ScrollView {
 	}
 	
 	public void setupNoteViews() throws CreationException {
-        notesContainer = (ViewGroup) findViewById(R.id.EDIT_note_value_container);
+		if(getChildCount() == 1) {
+			notesContainer = (ViewGroup) getChildAt(0);
+		} else {
+			throw new RuntimeException("Must contain exactly 1 child");
+		}
         notesContainer.removeAllViews();
         // TODO externalize sheet params
         params = new SheetParams(10, 100);

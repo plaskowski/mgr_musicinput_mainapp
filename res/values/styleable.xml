@@ -1,11 +1,31 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <resources>
+    <style name="StyleResourceMockup" />
+    
+    <declare-styleable name="SheetAlignedElementView">
+		<attr name="paint" format="reference" />
+	</declare-styleable>
+	
 	<declare-styleable name="ExtendedBackground">
 		<attr name="extendedBackground" format="reference" />
 	</declare-styleable>
+
+	<declare-styleable name="ExtendedImage">
+		<attr name="extendedImage" format="reference" />
+	</declare-styleable>
 	
-	<declare-styleable name="ExtendedBackgroundDeclaration">
-		<attr name="drawableClass" format="string" />
+   	<declare-styleable name="CompoundDrawable">
+	    <!-- array of references to PaintSetup styles -->
+		<attr name="paintsSetup" format="reference" />
+		<attr name="additionalPadding" format="dimension" />
+	</declare-styleable>
+	    	
+	<declare-styleable name="SvgDrawable">
+		<attr name="svgResource" format="reference" />
+	</declare-styleable>
+	    	
+	<declare-styleable name="StyleableClassDeclaration">
+		<attr name="className" format="string" />
 	</declare-styleable>
 	
 	<declare-styleable name="QuickActions">
@@ -17,7 +37,7 @@
 	
 	<declare-styleable name="TooltipStyle">
 		<attr name="padding" format="dimension" />
-		<attr name="cornerRadius" format="dimension" />
+		<attr name="outlineCornerRadius" format="dimension" />
 		<attr name="borderThickness" format="dimension" />
 		<attr name="borderColor" format="color" />
 		<attr name="fill" format="reference" />

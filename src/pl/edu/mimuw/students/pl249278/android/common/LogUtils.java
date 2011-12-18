@@ -9,8 +9,8 @@ public class LogUtils {
 		Log.i(TAG, String.format(format, args));
 	}
 	
-	public static void tinfo(String tag, String format, Object... args) {
-		Log.i(tag, String.format(format, args));
+	public static void log(int priority, String tag, String format, Object... args) {
+		Log.println(priority, tag, String.format(format, args));
 	}
 	
 	private String tag;
@@ -22,6 +22,10 @@ public class LogUtils {
 	}
 
 	public void i(String format, Object... args) {
-		tinfo(tag, format, args);
+		log(Log.INFO, tag, format, args);
+	}
+	
+	public void d(String format, Object... args) {
+		log(Log.DEBUG, tag, format, args);
 	}
 }

@@ -7,15 +7,12 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Action;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ExtendedResourcesFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.PaintSetup;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.IndicatorOrigin;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.PaintSetup;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.CompoundDrawable;
-import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
-import pl.edu.mimuw.students.pl249278.android.svg.SvgRenderer;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.SvgCompoundDrawable;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
@@ -47,7 +44,10 @@ public class QuickActionsView extends LinearLayout {
 			toggleButtonStyleId = styledAttributes.getResourceId(R.styleable.QuickActions_toggleButtonStyle, UNDEFINED);
 			int paintsSetupId = styledAttributes.getResourceId(R.styleable.QuickActions_buttonIconPaintSetup, UNDEFINED);
 			if(paintsSetupId != UNDEFINED) {
-				iconPaintSetup = ExtendedResourcesFactory.createPaintsSetup(ctx, attrs, paintsSetupId);
+				iconPaintSetup = ExtendedResourcesFactory.createPaintsSetup(
+					ExtendedResourcesFactory.styleResolver(ctx, attrs), 
+					paintsSetupId
+				);
 			}
 		}
 	}
@@ -92,32 +92,6 @@ public class QuickActionsView extends LinearLayout {
 				button.setTag(action);
 				if(state != null)
 					button.setSelected(state);
-			}
-		}
-	}
-	
-	private static class SvgCompoundDrawable extends CompoundDrawable {
-		private SvgImage svgImage;
-		
-		private SvgCompoundDrawable(SvgImage svgImage) {
-			this.svgImage = svgImage;
-		}
-
-		@Override
-		protected void draw(Canvas canvas, Paint paint, float width, float height) {
-			float Xscale = width/svgImage.getWidth();
-			float Yscale = height/svgImage.getHeight();
-			if(Xscale == Yscale) {
-				SvgRenderer.drawSvgImage(canvas, svgImage, Xscale, paint);
-			} else {
-				canvas.save();
-				if(Xscale < Yscale) {
-					canvas.translate(0, (height-Xscale*svgImage.getHeight())/2f);
-				} else {
-					canvas.translate((width-Yscale*svgImage.getWidth())/2f, 0);
-				}
-				SvgRenderer.drawSvgImage(canvas, svgImage, Math.min(Xscale, Yscale), paint);
-				canvas.restore();
 			}
 		}
 	}

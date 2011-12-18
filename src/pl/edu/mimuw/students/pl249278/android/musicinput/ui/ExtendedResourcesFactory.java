@@ -2,25 +2,31 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import android.content.Context;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Color;
+import android.graphics.CornerPathEffect;
+import android.graphics.DashPathEffect;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
+import android.graphics.PathEffect;
 import android.graphics.PointF;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
+import android.widget.ImageView;
 
 public class ExtendedResourcesFactory {
+	private static LogUtils log = new LogUtils(ExtendedResourcesFactory.class);
 	
 	private static final class SimpleResolver implements StyleResolver {
 		private final int styleId;
@@ -42,49 +48,91 @@ public class ExtendedResourcesFactory {
 		public TypedArray obtainStyledAttributes(int[] styleAttributes, int styleId) {
 			return ctx.obtainStyledAttributes(attrs, styleAttributes, 0, styleId);
 		}
+
+		@Override
+		public Resources getResources() {
+			return ctx.getResources();
+		}
+	}
+	
+
+	public static void loadExtendedImage(ImageView view, Context context, AttributeSet attrs) {
+		Drawable dr = inflateExtendedDrawable(
+			context, attrs,
+			R.styleable.ExtendedImage,
+			R.styleable.ExtendedImage_extendedImage
+		);
+		if(dr != null) {
+			view.setImageDrawable(dr);
+		}
+	}
+	
+	public static void loadExtendedBackground(View view, final Context context, final AttributeSet attrs) {
+		Drawable dr = inflateExtendedDrawable(
+			context, attrs,
+			R.styleable.ExtendedBackground,
+			R.styleable.ExtendedBackground_extendedBackground
+		);
+		if(dr != null) {
+			view.setBackgroundDrawable(dr);
+		}
 	}
 
-	public static void loadExtendedBackground(View view, final Context ctx, final AttributeSet attrs) {
-		TypedArray styledAttributes = ctx.obtainStyledAttributes(attrs,R.styleable.ExtendedBackground);
-		final int styleId = styledAttributes.getResourceId(R.styleable.ExtendedBackground_extendedBackground, -1);
+	private static Drawable inflateExtendedDrawable(Context ctx, AttributeSet attrsSet, int[] attrs, int attribute) {
+		TypedArray styledAttributes = ctx.obtainStyledAttributes(attrsSet, attrs);
+		final int styleId = styledAttributes.getResourceId(attribute, -1);
 		if(styleId != -1) {
-			// load style
-			TypedArray attrsArray = ctx.obtainStyledAttributes(attrs, R.styleable.ExtendedBackgroundDeclaration, 0, styleId);
-			String drClass = attrsArray.getString(R.styleable.ExtendedBackgroundDeclaration_drawableClass);
-			LogUtils.info("drawableClass %s", drClass);
-			if(drClass == null) {
-				throw new RuntimeException("No drawableClass defined in style "+ReflectionUtils.findConstName(R.style.class, "", styleId));
+			Object obj = inflateExtendedObject(ctx, attrsSet, styleId);
+			if(obj instanceof Drawable) {
+				return (Drawable) obj;
+			} else {
+				throw new RuntimeException(
+					"Inflating style "+styleName(styleId)+" expected Drawable object, got "
+					+ obj.getClass()
+				);
 			}
-			try {
-				Class<?> classObj = Class.forName(drClass);
-				Constructor<?> constructor = classObj.getConstructor(StyleResolver.class);
-				Object obj = constructor.newInstance(new SimpleResolver(styleId, attrs, ctx));
-				if (obj instanceof Drawable) {
-					view.setBackgroundDrawable((Drawable) obj);
-				} else {
-					throw new RuntimeException("Class pointed by drawableClass in style "+ReflectionUtils.findConstName(R.style.class, "", styleId)+" doesn't inherit from Drawable.");
-				}
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			} catch (SecurityException e) {
-				throw new RuntimeException(e);
-			} catch (NoSuchMethodException e) {
-				throw new RuntimeException(e);
-			} catch (IllegalArgumentException e) {
-				throw new RuntimeException(e);
-			} catch (InstantiationException e) {
-				throw new RuntimeException(e);
-			} catch (IllegalAccessException e) {
-				throw new RuntimeException(e);
-			} catch (InvocationTargetException e) {
-				throw new RuntimeException(e);
-			}
+		} else {
+			return null;
 		}
+	}
+
+	private static Object inflateExtendedObject(final Context ctx, final AttributeSet attrsSet, int styleId) {
+		// load style
+		TypedArray attrsArray = ctx.obtainStyledAttributes(attrsSet, R.styleable.StyleableClassDeclaration, 0, styleId);
+		String className = attrsArray.getString(R.styleable.StyleableClassDeclaration_className);
+		log.d("Inflating extended class %s", className);
+		if(className == null) {
+			throw new RuntimeException("No className defined in style "+styleName(styleId)+"#"+styleId);
+		}
+		try {
+			Class<?> classObj = Class.forName(className);
+			Constructor<?> constructor = classObj.getConstructor(StyleResolver.class);
+			Object obj = constructor.newInstance(new SimpleResolver(styleId, attrsSet, ctx));
+			return obj;
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		} catch (SecurityException e) {
+			throw new RuntimeException(e);
+		} catch (NoSuchMethodException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalArgumentException e) {
+			throw new RuntimeException(e);
+		} catch (InstantiationException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		} catch (InvocationTargetException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private static String styleName(int styleId) {
+		return ReflectionUtils.findConstName(R.style.class, "", styleId);
 	}
 	
 	public static Shader createGradient(StyleResolver resolver, int gradientStyleId) {
 		TypedArray values = resolver.obtainStyledAttributes(R.styleable.Gradient, gradientStyleId);
-		int type = values.getResourceId(R.styleable.Gradient_type, -1);
+		int type = values.getResourceId(R.styleable.Gradient_gradientType, -1);
 		switch(type) {
 		case R.id.GradientType_Linear:
 			return new LinearGradient(
@@ -100,13 +148,13 @@ public class ExtendedResourcesFactory {
 			throw new RuntimeException(String.format(
 				"Uknown gradient type %d in gradient style %s",
 				type,
-				ReflectionUtils.findConstName(R.style.class, "", gradientStyleId)
+				styleName(gradientStyleId)
 			));
 		}
 	}
 
-	public static Paint createPaint(Context ctx, AttributeSet attrsSet, int paintStyleId) {
-		TypedArray values = ctx.obtainStyledAttributes(attrsSet, R.styleable.Paint, 0, paintStyleId);
+	public static Paint createPaint(StyleResolver resolver, int paintStyleId) {
+		TypedArray values = resolver.obtainStyledAttributes(R.styleable.Paint, paintStyleId);
 		Paint result = new Paint();
 		result.setAntiAlias(values.getBoolean(R.styleable.Paint_antialias, result.isAntiAlias()));
 		result.setColor(values.getColor(R.styleable.Paint_color, result.getColor()));
@@ -116,14 +164,91 @@ public class ExtendedResourcesFactory {
 		if(values.hasValue(R.styleable.Paint_strokeWidth)) {
 			result.setStrokeWidth(values.getDimension(R.styleable.Paint_strokeWidth, 0));
 		}
+		if(hasAll(values, paint_shadowLayer)) {
+			result.setShadowLayer(
+				values.getDimension(R.styleable.Paint_shadowLayer_radius, 0),
+				values.getDimension(R.styleable.Paint_shadowLayer_dx, 0),
+				values.getDimension(R.styleable.Paint_shadowLayer_dy, 0),
+				values.getColor(R.styleable.Paint_shadowLayer_color, Color.BLACK)
+			);
+		}
+		if(values.hasValue(R.styleable.Paint_pathEffect)) {
+			result.setPathEffect(createPathEffect(
+				resolver, 
+				values.getResourceId(R.styleable.Paint_pathEffect, 0)
+			));
+		}
 		values.recycle();
 		return result;
 	}
 	
-	private static PaintSetup createPaintSetup(Context ctx, AttributeSet attrs, int paintSetupStyleId) {
-		TypedArray values = ctx.obtainStyledAttributes(attrs, R.styleable.PaintSetup, 0, paintSetupStyleId);
+	private static PathEffect createPathEffect(StyleResolver resolver, int pathEffectStyleId) {
+		TypedArray values = resolver.obtainStyledAttributes(R.styleable.PathEffect, pathEffectStyleId);
+		try {
+			switch(values.getResourceId(R.styleable.PathEffect_effectType, -1)) {
+			case R.id.PathEffectType_Corner:
+				if(values.hasValue(R.styleable.PathEffect_cornerRadius)) {
+					return new CornerPathEffect(
+						values.getDimension(R.styleable.PathEffect_cornerRadius, 0)
+					);
+				} else {
+					throw new RuntimeException("Style  "
+						+ styleName(pathEffectStyleId)
+						+ " doesn't specify cornerRadius attribute.");
+				}
+			case R.id.PathEffectType_Dash:
+				if(!values.hasValue(R.styleable.PathEffect_intervals)) {
+					throw new RuntimeException("Style  "
+						+ styleName(pathEffectStyleId)
+						+ " doesn't specify intervals attribute.");
+				}
+				return new DashPathEffect(
+					parseFloatArray(resolver, values.getResourceId(R.styleable.PathEffect_intervals, 0)),
+					values.getResourceId(R.styleable.PathEffect_phase, 0)
+				);
+			default:
+				throw new RuntimeException("Style  "
+					+ styleName(pathEffectStyleId)
+					+ ".effectType points to unknown id.");
+			}
+		} finally {
+			values.recycle();
+		}
+	}
+
+	private static float[] parseFloatArray(StyleResolver resolver, int arrayResId) {
+		TypedArray array = resolver.getResources().obtainTypedArray(arrayResId);
+		try {
+			int size = array.length();
+			float[] result = new float[size];
+			for(int i = 0; i < size; i++) {
+				result[i] = array.getDimension(i, 0);
+			}
+			return result;
+		} finally {
+			array.recycle();
+		}
+	}
+
+	private static final int[] paint_shadowLayer = new int[] {
+		R.styleable.Paint_shadowLayer_radius,
+		R.styleable.Paint_shadowLayer_dx,
+		R.styleable.Paint_shadowLayer_dy,
+		R.styleable.Paint_shadowLayer_color
+	};
+	
+	private static boolean hasAll(TypedArray values, int[] ids) {
+		boolean result = true;
+		for (int i = 0; i < ids.length; i++) {
+			result &= values.hasValue(ids[i]);
+		}
+		return result;
+	}
+	
+	private static PaintSetup createPaintSetup(StyleResolver resolver, int paintSetupStyleId) {
+		TypedArray values = resolver.obtainStyledAttributes(R.styleable.PaintSetup, paintSetupStyleId);
 		PaintSetup result = new PaintSetup(
-			createPaint(ctx, attrs, paintSetupStyleId),
+			createPaint(resolver, paintSetupStyleId),
 			new PointF(
 				values.getDimension(R.styleable.PaintSetup_offsetX, 0),
 				values.getDimension(R.styleable.PaintSetup_offsetY, 0)
@@ -134,17 +259,35 @@ public class ExtendedResourcesFactory {
 		return result;
 	}
 
-	public static Collection<PaintSetup> createPaintsSetup(Context ctx, AttributeSet attrs, int resId) {
+	public static List<PaintSetup> createPaintsSetup(StyleResolver resolver, int paintsSetupResId) {
 		LinkedList<PaintSetup> result = new LinkedList<PaintSetup>();
-		TypedArray values = ctx.getResources().obtainTypedArray(resId);
-		for(int i = 0; i < values.length(); i++) {
-			int value = values.getResourceId(i, 0);
-			if(value != 0) {
-				result.add(createPaintSetup(ctx, attrs, value));
+		Resources resources = resolver.getResources();
+		if(resources.getResourceTypeName(paintsSetupResId).equals(
+			resources.getResourceTypeName(R.style.StyleResourceMockup))) {
+			result.add(createPaintSetup(resolver, paintsSetupResId));
+		} else {
+			TypedArray values = resources.obtainTypedArray(paintsSetupResId);
+			try {
+			for(int i = 0; i < values.length(); i++) {
+				int value = values.getResourceId(i, 0);
+				if(value != 0) {
+					result.add(createPaintSetup(resolver, value));
+				}
+			}
+			} finally {
+			values.recycle();
 			}
 		}
-		values.recycle();
 		return result;
 	}
-	
+
+	public static StyleResolver styleResolver(Context ctx, AttributeSet attrs) {
+		return new SimpleResolver(0, attrs, ctx);
+	}
+
+	public static StyleResolver styleResolver(Context context, AttributeSet attrs,
+			int defStyle) {
+		return new SimpleResolver(defStyle, attrs, context);
+	}
+
 }

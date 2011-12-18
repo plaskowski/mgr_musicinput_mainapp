@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+    
+	<declare-styleable name="PathEffect">
+	    <attr name="effectType" format="integer" />
+		<attr name="cornerRadius" format="dimension" />
+		<attr name="intervals" format="reference" />
+		<attr name="phase" format="reference" />
+	</declare-styleable>
+	
+	<item type="id" name="PathEffectType_Corner" />
+	<item type="id" name="PathEffectType_Dash" />
+	
+</resources>

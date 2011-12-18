@@ -8,10 +8,8 @@
 	<dimen name="maxLinespaceThickness">100dp</dimen>
  	
 	<dimen name="inputAreaWidth">88dip</dimen>
-	<dimen name="inputAreaMaxRightMargin">80dip</dimen>
+	<dimen name="inputAreaRightMargin">80dip</dimen>
 	<string name="minDistToIA">1.5s</string>
-	<color name="iaFrameColor">#FF73DCFF</color>
-	<dimen name="iaFrameStrokeWidth">3dip</dimen>
 	
 	<string name="timeDividerDrawAfterSpacingFactor">1s</string>
 	<string name="defaultTimeSpacingBaseFactor">8s</string>

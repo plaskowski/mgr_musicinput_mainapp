@@ -82,6 +82,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 public class EditActivity extends Activity {
@@ -207,38 +208,10 @@ public class EditActivity extends Activity {
 			}
 		});
 		
-		// setup info popup
-		SheetAlignedElementView popupIcon = (SheetAlignedElementView) findViewById(R.id.EDIT_info_popup_note);
-		Paint iconPaint = new Paint();
-		iconPaint.setColor(getResources().getColor(R.color.infoPopupIconColor));
-		iconPaint.setAntiAlias(true);
-		popupIcon.setPaint(iconPaint);
-		Paint ipopupBgPaint = new Paint();
-		ipopupBgPaint.setStyle(Style.FILL);
-		ipopupBgPaint.setColor(getResources().getColor(R.color.infoPopupBgColor));
-		ipopupBgPaint.setAntiAlias(true);
-		int ipopupShadow = getResources().getDimensionPixelSize(R.dimen.infoPoupBgShadow);
-		ipopupBgPaint.setShadowLayer(ipopupShadow, ipopupShadow/3, ipopupShadow/3, Color.BLACK);
-		ipopupBgPaint.setPathEffect(new CornerPathEffect(getResources().getDimensionPixelSize(R.dimen.infoPoupBgCorner)));
-		OutlineDrawable ipopupBg = new OutlineDrawable();
-		ipopupBg.addPaint(ipopupBgPaint, ipopupShadow*2);
-		findViewById(R.id.EDIT_info_popup).setBackgroundDrawable(ipopupBg);
-		
 		this.inputArea = findViewById(R.id.EDIT_inputArea);
 		this.inputAreaWidth = getResources().getDimensionPixelSize(R.dimen.inputAreaWidth);
 		ViewConfiguration configuration = ViewConfiguration.get(this);
         this.mTouchSlop = configuration.getScaledTouchSlop();
-        Paint iaPaint = new Paint();
-        iaPaint.setColor(getResources().getColor(R.color.iaFrameColor));
-        int iaSWidth = getResources().getDimensionPixelSize(R.dimen.iaFrameStrokeWidth);
-		iaPaint.setStyle(Style.STROKE);
-		iaPaint.setStrokeWidth(iaSWidth);
-		int iaSShadow = iaSWidth/2;
-		iaPaint.setShadowLayer(iaSShadow, iaSShadow, iaSShadow, Color.BLACK);
-		iaPaint.setPathEffect(new DashPathEffect(new float[] {4*iaSWidth, 2*iaSWidth, 6*iaSWidth, 2*iaSWidth}, 0));
-        OutlineDrawable outlineDrawable = new OutlineDrawable();
-        outlineDrawable.addPaint(iaPaint, iaSWidth);
-		inputArea.setBackgroundDrawable(outlineDrawable);
 		
 		noteShadow = readParametrizedFactor(R.string.noteShadow);
 		fakePauseEffectRadius = readParametrizedFactor(R.string.fakePauseEffectRadius);
@@ -1567,13 +1540,8 @@ public class EditActivity extends Activity {
 			return;
 		this.visibleRectWidth = visibleRectWidth;
 		this.visibleRectHeight = visibleRectHeight;
-		// position IA
-		MarginLayoutParams params = (MarginLayoutParams) inputArea.getLayoutParams();
-		iaRightMargin = params.rightMargin = Math.min(
-			getResources().getDimensionPixelSize(R.dimen.inputAreaMaxRightMargin),
-			(int) (visibleRectWidth*0.4 - inputAreaWidth)
-		);
-		inputArea.setLayoutParams(params);
+		
+		iaRightMargin = ((View) inputArea.getParent()).getWidth() - inputArea.getRight();
 		
 		// calculate default scale so spaces/lines (from space -1 to space 5) fit visible height
 		float scale = ((float) (visibleRectHeight)) / ((float) (

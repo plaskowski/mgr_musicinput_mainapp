@@ -1,45 +1,26 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.StyleResolver;
 import android.graphics.Canvas;
-import android.graphics.ColorFilter;
 import android.graphics.Paint;
-import android.graphics.PixelFormat;
-import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
-import android.util.Pair;
 
-public class OutlineDrawable extends Drawable {
-	List<Pair<Paint, Integer>> customPaints = new ArrayList<Pair<Paint,Integer>>();
-
-	@Override
-	public void draw(Canvas canvas) {
-		Rect cbounds = getBounds();
-		for(Pair<Paint, Integer> paint: customPaints) {
-			int padding = paint.second;
-			canvas.drawRect(cbounds.left+padding, cbounds.top+padding, cbounds.right-padding, cbounds.bottom-padding, paint.first);
-		}
-	}
+public class OutlineDrawable extends CompoundDrawable {
 	
+	public OutlineDrawable() {
+	}
+
+	public OutlineDrawable(StyleResolver resolver) {
+		super(resolver);
+	}
+
+	// TODO remove this
 	public void addPaint(Paint paint, Integer padding) {
-		customPaints.add(new Pair<Paint, Integer>(paint, padding));
+		addPaintSetup(paint, padding, padding, padding);
 	}
 
 	@Override
-	public int getOpacity() {
-		return PixelFormat.TRANSLUCENT;
-	}
-
-	@Override
-	public void setAlpha(int alpha) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setColorFilter(ColorFilter cf) {
-		throw new UnsupportedOperationException();
+	protected void draw(Canvas canvas, Paint paint, float width, float height) {
+		canvas.drawRect(0, 0, width, height, paint);
 	}
 
 }

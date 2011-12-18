@@ -25,7 +25,7 @@ public class TooltipDrawable extends CompoundDrawable implements IndicatorAware 
 		shape = new TooltipShape(styledAttributes.getDimensionPixelSize(R.styleable.TooltipStyle_indicatorSize, 0));
 		
 		PaintBuilder paintB = PaintBuilder.init().antialias(true);
-		int cornerR = styledAttributes.getDimensionPixelSize(R.styleable.TooltipStyle_cornerRadius, 0);
+		int cornerR = styledAttributes.getDimensionPixelSize(R.styleable.TooltipStyle_outlineCornerRadius, 0);
 		if(cornerR != 0) {
 			paintB.pathEffect(new CornerPathEffect(cornerR));
 		}

@@ -4,7 +4,7 @@
 	<item type="id" name="GradientType_Linear" />
 	
 	<declare-styleable name="Gradient">
-		<attr name="type" format="integer" />
+		<attr name="gradientType" format="integer" />
 		<attr name="X0" format="float" />
 		<attr name="Y0" format="float" />
 		<attr name="X1" format="float" />
@@ -15,7 +15,7 @@
 	
 		
 	<style name="LinearSimpleVertical">
-		<item name="type">@id/GradientType_Linear</item>
+		<item name="gradientType">@id/GradientType_Linear</item>
 		<item name="Y0">0</item>
 		<item name="Y1">100</item>
     </style>

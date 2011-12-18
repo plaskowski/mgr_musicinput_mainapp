@@ -8,9 +8,9 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.OnScaleGestureListener;
-import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
 
-public class ScaleGestureInterceptor extends FrameLayout {
+public class ScaleGestureInterceptor extends RelativeLayout {
 	protected static final float MIN_SCALE_STEP = 0.05f;
 	protected static final float MAX_SCALE_STEP = 0.5f;
 	protected 

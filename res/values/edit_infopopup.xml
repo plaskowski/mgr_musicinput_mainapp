@@ -1,9 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<color name="infoPopupIconColor">#FFFFFFFF</color>
 	<dimen name="infoPopupIconHeight">70dip</dimen>
 	<integer name="infoPopupLife">1500</integer>
-	<color name="infoPopupBgColor">#FF73DCFF</color>
-	<dimen name="infoPoupBgShadow">5dip</dimen>
-	<dimen name="infoPoupBgCorner">8dip</dimen>
+	
+	<style name="infoPopupIconPaint" parent="PaintAntialias">
+	    <item name="color">#FFFFFFFF</item>
+	</style>
+ 
+	<style name="infoPopupBg" parent="OutlineDrawable">
+		<item name="paintsSetup">@style/infoPopupBgPaint</item>
+		<item name="additionalPadding">6dip</item>
+    </style>
+    
+	<style name="infoPopupBgPaint" parent="PaintAntialias">
+	    <!-- PaintSetup -->
+    	<item name="offsetX">0dip</item>
+    	<item name="offsetY">0dip</item>
+    	<item name="drawRadius">5dip</item>
+    	<!-- Paint -->
+       	<item name="paintStyle">FILL</item>
+    	<item name="color">#FF73DCFF</item>
+    	<item name="shadowLayer_radius">5dip</item>
+    	<item name="shadowLayer_dx">1.67dip</item>
+    	<item name="shadowLayer_dy">1.67dip</item>
+    	<item name="shadowLayer_color">#000000</item>
+ 	   	<item name="pathEffect">@style/infoPopupBgPE</item>
+    </style>
+    
+	<style name="infoPopupBgPE">
+	    <item name="effectType">@id/PathEffectType_Corner</item>
+	    <item name="cornerRadius">8dip</item>
+	</style>
+    
 </resources>

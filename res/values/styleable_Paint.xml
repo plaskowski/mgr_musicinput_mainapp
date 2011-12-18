@@ -6,7 +6,16 @@
 		<attr name="color" format="color" />
 		<attr name="paintStyle" format="string" />
 		<attr name="strokeWidth" format="dimension" />
+		<attr name="shadowLayer_radius" format="dimension" />
+		<attr name="shadowLayer_dx" format="dimension" />
+		<attr name="shadowLayer_dy" format="dimension" />
+		<attr name="shadowLayer_color" format="color" />
+		<attr name="pathEffect" format="reference" />
 	</declare-styleable>
+	
+    <style name="PaintAntialias">
+    	<item name="antialias">true</item>
+    </style>
 
 	<declare-styleable name="PaintSetup">
 		<attr name="offsetX" format="dimension" />

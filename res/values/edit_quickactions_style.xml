@@ -6,10 +6,9 @@
 		<item name="color1">#73DCFF</item>
 	</style>
 	
-	<style name="TooltipBg1">
-		<item name="drawableClass">pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.TooltipDrawable</item>
+	<style name="TooltipBg1" parent="TooltipDrawable">
 		<item name="padding">2dip</item>
-		<item name="cornerRadius">2dip</item>
+		<item name="outlineCornerRadius">2dip</item>
 		<item name="borderThickness">1dip</item>
 		<item name="borderColor">#458499</item>
 		<item name="fill">@style/BlueLinear</item>
@@ -22,11 +21,6 @@
     	<item name="android:scaleType">fitXY</item>
     </style>
     
-    <style name="PaintAntialias">
-    	<item name="color">#458499</item>
-    	<item name="antialias">true</item>
-    </style>
-    
     <array name="InvertedEmboss">
     	<item>@style/InvertedEmboss_edge</item>
     	<item>@style/InvertedEmboss_fill</item>
@@ -34,6 +28,7 @@
     
     <style name="InvertedEmboss_fill" parent="PaintAntialias">
     	<item name="color">#40000000</item>
+    	<item name="drawRadius">3px</item>
     </style>
     <style name="InvertedEmboss_edge" parent="PaintAntialias">
     	<item name="color">#FF5CB0CC</item>

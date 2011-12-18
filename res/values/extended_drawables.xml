@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+	<style name="OutlineDrawable">
+		<item name="className">pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.OutlineDrawable</item>
+	</style>
+	
+	<style name="TooltipDrawable">
+		<item name="className">pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.TooltipDrawable</item>
+	</style>
+	
+	<style name="SvgCompoundDrawable">
+		<item name="className">pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.SvgCompoundDrawable</item>
+	</style>
+	
+</resources>

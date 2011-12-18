@@ -6,9 +6,11 @@ import static java.lang.Math.min;
 import java.util.ArrayList;
 import java.util.List;
 
+import pl.edu.mimuw.students.pl249278.android.musicinput.R;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ExtendedResourcesFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.PaintSetup;
-
-
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.StyleResolver;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PointF;
@@ -16,9 +18,34 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 
 public abstract class CompoundDrawable extends TranscluentDrawable {
-	private List<PaintSetup> paints = new ArrayList<PaintSetup>(2);
+	private static final int UNDEFINED = -1;
+	private List<PaintSetup> paints;
+	private int addPadding = 0;
 	/** (-extrems.left, -extrems.top) are coordinates for drawing the base */
 	protected RectF offsetExtremum = new RectF(0, 0, 0, 0);
+	
+	public CompoundDrawable() {
+		paints = new ArrayList<PaintSetup>(2);
+	}
+	
+	public CompoundDrawable(StyleResolver resolver) {
+		TypedArray styledAttributes = resolver.obtainStyledAttributes(R.styleable.CompoundDrawable);
+		try {
+			int paintsSetupId = styledAttributes.getResourceId(R.styleable.CompoundDrawable_paintsSetup, UNDEFINED);
+			if(paintsSetupId != UNDEFINED) {
+				List<PaintSetup> temp = ExtendedResourcesFactory.createPaintsSetup(resolver, paintsSetupId);
+				paints = new ArrayList<PaintSetup>(temp.size());
+				for (PaintSetup paintSetup : temp) {
+					addPaintSetup(paintSetup);
+				}
+			} else {
+				paints = new ArrayList<PaintSetup>(0);
+			}
+			addPadding = styledAttributes.getDimensionPixelOffset(R.styleable.CompoundDrawable_additionalPadding, 0);
+		} finally {
+			styledAttributes.recycle();
+		}
+	}
 	
 	protected void addPaintSetup(Paint paint, float offsetX, float offsetY, float drawRadius) {
 		addPaintSetup(new PaintSetup(
@@ -36,10 +63,10 @@ public abstract class CompoundDrawable extends TranscluentDrawable {
 	@Override
 	public boolean getPadding(Rect padding) {
 		padding.set(
-			round(-offsetExtremum.left),
-			round(-offsetExtremum.top),
-			round(offsetExtremum.right),
-			round(offsetExtremum.bottom)
+			round(-offsetExtremum.left)+this.addPadding,
+			round(-offsetExtremum.top)+this.addPadding,
+			round(offsetExtremum.right)+this.addPadding,
+			round(offsetExtremum.bottom)+this.addPadding
 		);
 		return true;
 	}

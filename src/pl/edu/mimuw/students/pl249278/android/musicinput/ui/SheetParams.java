@@ -23,6 +23,7 @@ public class SheetParams implements SheetVisualParams {
 		this.linespacingFactor = linespacingFactor;
 	}
 
+	/** Copy constructor */
 	public SheetParams(SheetParams sheetParams) {
 		this.lineFactor = sheetParams.lineFactor;
 		this.linespacingFactor = sheetParams.linespacingFactor;

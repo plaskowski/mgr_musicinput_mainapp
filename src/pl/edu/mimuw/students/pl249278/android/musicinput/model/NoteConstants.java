@@ -43,7 +43,7 @@ public class NoteConstants {
 		F_DUR(F(LINE2_ABSINDEX)),
 		B_DUR(F(LINE2_ABSINDEX), F(SPACE0_ABSINDEX)),
 		ES_DUR(F(LINE2_ABSINDEX), F(SPACE0_ABSINDEX), F(SPACE2_ABSINDEX))
-		// TODO add rest
+		// TODO dodać resztę tonacji
 		;
 		
 		private KeySignature(Accidental... accidentals) {

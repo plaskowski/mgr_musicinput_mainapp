@@ -6,6 +6,11 @@
 		<attr name="paint" format="reference" />
 	</declare-styleable>
 	
+    <declare-styleable name="NoteValueSpinner">
+		<attr name="itemPaint" format="reference" />
+		<attr name="selectedItemPaint" format="reference" />
+	</declare-styleable>
+    	
 	<declare-styleable name="ExtendedBackground">
 		<attr name="extendedBackground" format="reference" />
 	</declare-styleable>

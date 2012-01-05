@@ -71,7 +71,7 @@ public class DrawingModelFactory {
 			}
 		case SPECIAL_SIGN:
 		default:
-			// TODO implement
+			// TODO impelementacja dla innych SheetElement
 			throw new UnsupportedOperationException("Unhandled type: "+elementSpec.getType().name());
 				
 		}

@@ -13,11 +13,6 @@ public class OutlineDrawable extends CompoundDrawable {
 		super(resolver);
 	}
 
-	// TODO remove this
-	public void addPaint(Paint paint, Integer padding) {
-		addPaintSetup(paint, padding, padding, padding);
-	}
-
 	@Override
 	protected void draw(Canvas canvas, Paint paint, float width, float height) {
 		canvas.drawRect(0, 0, width, height, paint);

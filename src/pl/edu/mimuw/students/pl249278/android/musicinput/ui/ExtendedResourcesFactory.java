@@ -164,7 +164,7 @@ public class ExtendedResourcesFactory {
 		if(values.hasValue(R.styleable.Paint_strokeWidth)) {
 			result.setStrokeWidth(values.getDimension(R.styleable.Paint_strokeWidth, 0));
 		}
-		if(hasAll(values, paint_shadowLayer)) {
+		if(hasAll(values, paint_shadowLayer_required)) {
 			result.setShadowLayer(
 				values.getDimension(R.styleable.Paint_shadowLayer_radius, 0),
 				values.getDimension(R.styleable.Paint_shadowLayer_dx, 0),
@@ -230,10 +230,9 @@ public class ExtendedResourcesFactory {
 		}
 	}
 
-	private static final int[] paint_shadowLayer = new int[] {
+	/** attributes of Paint.shadowLayer that are required */
+	private static final int[] paint_shadowLayer_required = new int[] {
 		R.styleable.Paint_shadowLayer_radius,
-		R.styleable.Paint_shadowLayer_dx,
-		R.styleable.Paint_shadowLayer_dy,
 		R.styleable.Paint_shadowLayer_color
 	};
 	
@@ -245,7 +244,7 @@ public class ExtendedResourcesFactory {
 		return result;
 	}
 	
-	private static PaintSetup createPaintSetup(StyleResolver resolver, int paintSetupStyleId) {
+	public static PaintSetup createPaintSetup(StyleResolver resolver, int paintSetupStyleId) {
 		TypedArray values = resolver.obtainStyledAttributes(R.styleable.PaintSetup, paintSetupStyleId);
 		PaintSetup result = new PaintSetup(
 			createPaint(resolver, paintSetupStyleId),

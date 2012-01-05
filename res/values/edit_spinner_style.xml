@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+   	<style name="spinnerNoSelection" parent="PaintAntialias">
+	    <!-- PaintSetup -->
+    	<item name="drawRadius">1dip</item>
+    	<!-- Paint -->
+       	<item name="paintStyle">FILL</item>
+    	<item name="color">#FFFFFF</item>
+    	<item name="shadowLayer_radius">2dip</item>
+    	<item name="shadowLayer_color">#FFFFFF</item>
+   	</style>
+    
+   	<style name="spinnerSelection" parent="PaintAntialias">
+	    <!-- PaintSetup -->
+    	<item name="drawRadius">3dip</item>
+    	<!-- Paint -->
+       	<item name="paintStyle">FILL</item>
+    	<item name="color">@color/spinnerSelectionColor</item>
+    	<item name="shadowLayer_radius">3dip</item>
+    	<item name="shadowLayer_color">@color/spinnerSelectionColor</item>
+   	</style>
+   	
+</resources>

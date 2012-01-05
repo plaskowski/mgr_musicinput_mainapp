@@ -11,7 +11,10 @@
 		android:id="@+id/EDIT_note_value_scroll" 
 		android:layout_height="fill_parent" 
 		android:layout_width="50dip" 
-		android:scrollbars="none">
+		android:scrollbars="none"
+		custom:itemPaint="@style/spinnerNoSelection"
+		custom:selectedItemPaint="@style/spinnerSelection"
+	>
 		<LinearLayout
 			android:layout_height="wrap_content"
 			android:layout_width="50dip"
@@ -44,17 +47,18 @@
 	    		android:id="@+id/EDIT_vertscrollview"
 		    	android:layout_width="wrap_content" 
 	    		android:layout_height="fill_parent"
+	    		android:fillViewport="true"
 	    	>
 				<RelativeLayout
 					android:id='@+id/EDIT_sheet_container'  
 			    	android:background="@android:color/white"
-			    	android:layout_width="300px"
-			    	android:layout_height="300px"
+			    	android:layout_width="fill_parent"
+			    	android:layout_height="wrap_content"
 			   	>
 			   		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView
 			   		android:id='@+id/EDIT_sheet_5lines'  
 			    	android:layout_width="fill_parent"
-			    	android:layout_height="100px"
+			    	android:layout_height="fill_parent"
 			   		/>
 			   	</RelativeLayout>
 			</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ModifiedScrollView>
@@ -110,7 +114,7 @@
 		android:layout_height="wrap_content" 
 		android:background="@drawable/info_popup"
 		android:layout_centerInParent="true"
-		android:visibility="invisible"
+		android:visibility="gone"
 		custom:extendedBackground="@style/infoPopupBg"
 	><!-- popup view displaying note value -->
 		<TextView

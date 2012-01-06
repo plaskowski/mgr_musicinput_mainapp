@@ -31,11 +31,11 @@ public class DrawingModelFactory {
 					model = new NoteStemAndFlag(ctx, head);
 				}
 				for(int i = 0; i < noteSpec.dotExtension(); i++) {
-					model = new Modifier.Suffix(ctx, model, noteSpec.positon(), NoteModifier.DOT);
+					model = new Modifier.Suffix(ctx, model, noteSpec.positon(), ElementModifier.DOT);
 				}
 				NoteModifier toneModifier = noteSpec.getToneModifier();
 				if(toneModifier != null) {
-					model = new Modifier.Prefix(ctx, model, noteSpec.positon(), toneModifier);
+					model = new Modifier.Prefix(ctx, model, noteSpec.positon(), ElementModifier.map(toneModifier));
 				}
 				int nearestLine = NoteConstants.anchorTypedIndex(noteSpec.positon());
 				if(NoteConstants.anchorType(noteSpec.positon()) == NoteConstants.ANCHOR_TYPE_LINESPACE

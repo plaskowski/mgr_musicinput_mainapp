@@ -26,6 +26,7 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 		}
 	};
 	
+	/** mapping tone modifier flag value to enum value, 0 means no tone modifier is set */
 	private static final NoteModifier[] TONE_MODIFIER_REVERSE_MAPPING = new NoteModifier[] {
 		null,
 		NoteModifier.FLAT,

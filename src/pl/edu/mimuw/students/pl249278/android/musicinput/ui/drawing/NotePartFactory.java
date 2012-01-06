@@ -98,7 +98,7 @@ public class NotePartFactory {
 		return noteEndings.get(resId);
 	}
 	
-	public static AdjustableSizeImage prepareModifier(Context context, NoteConstants.NoteModifier modifier, int orientation, int positon) throws LoadingSvgException {
+	public static AdjustableSizeImage prepareModifier(Context context, ElementModifier modifier, int orientation, int positon) throws LoadingSvgException {
 		int anchorType = NoteConstants.anchorType(positon);
 		int resId = modifiersMapping.get(modifier.ordinal())[mappingIndex(orientation, anchorType)];
 		return prepareAdujstableImage(context, resId, true);
@@ -169,7 +169,7 @@ public class NotePartFactory {
 		pauseMapping.put(NoteConstants.LEN_SIXTEENNOTE, R.xml.pause_sixteen);
 		pauseMapping.put(NoteConstants.LEN_SIXTEENNOTE+1, R.xml.pause_32);
 		
-		declare(modifiersMapping, NoteConstants.NoteModifier.SHARP,
+		declare(modifiersMapping, ElementModifier.SHARP,
 			anchor(ANCHOR_TYPE_LINE,
 				anyOrient(R.xml.sharp_online)
 			),
@@ -177,12 +177,12 @@ public class NotePartFactory {
 				anyOrient(R.xml.sharp_onspace)
 			)
 		);
-		declare(modifiersMapping, NoteConstants.NoteModifier.FLAT,
+		declare(modifiersMapping, ElementModifier.FLAT,
 			anyAnchor(
 				anyOrient(R.xml.flat)
 			)
 		);
-		declare(modifiersMapping, NoteConstants.NoteModifier.DOT,
+		declare(modifiersMapping, ElementModifier.DOT,
 			anchor(ANCHOR_TYPE_LINE,
 				anyOrient(R.xml.dot_online)
 			),

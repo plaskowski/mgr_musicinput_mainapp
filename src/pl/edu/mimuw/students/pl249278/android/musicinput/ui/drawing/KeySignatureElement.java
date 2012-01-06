@@ -29,7 +29,7 @@ public class KeySignatureElement extends SheetElement {
 			images[i] = new SimpleSheetElement(
 				NotePartFactory.prepareModifier(
 					ctx, 
-					accidental.accidental, 
+					ElementModifier.map(accidental.accidental), 
 					NoteConstants.ORIENT_UP, 
 					accidental.anchor
 				), 

@@ -1,9 +1,8 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.NoteModifier;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.LoadingSvgException;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.AdjustableSizeImage;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -12,7 +11,7 @@ import android.graphics.Paint;
 public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement> {
 	protected SimpleSheetElement modifierElement;
 	
-	public Modifier(Context context, SheetAlignedElement wrappedElement, int position, NoteModifier modifier) throws LoadingSvgException {
+	public Modifier(Context context, SheetAlignedElement wrappedElement, int position, ElementModifier modifier) throws LoadingSvgException {
 		super(wrappedElement);
 		AdjustableSizeImage modifierImg = NotePartFactory.prepareModifier(context, modifier, NoteConstants.defaultOrientation(position), position); 
 		modifierElement = new SimpleSheetElement(modifierImg, position);
@@ -66,7 +65,7 @@ public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement
 		
 		public NoteModifierElement(Context context,
 				SheetAlignedElement wrappedElement, int position,
-				NoteModifier modifier) throws LoadingSvgException {
+				ElementModifier modifier) throws LoadingSvgException {
 			super(context, wrappedElement, position, modifier);
 		}
 
@@ -108,7 +107,7 @@ public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement
 	
 	public static class Prefix extends NoteModifierElement {
 		public Prefix(Context context, SheetAlignedElement wrappedElement,
-				int position, NoteModifier modifier) throws LoadingSvgException {
+				int position, ElementModifier modifier) throws LoadingSvgException {
 			super(context, wrappedElement, position, modifier);
 		}
 
@@ -119,7 +118,7 @@ public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement
 	}
 	public static class Suffix extends NoteModifierElement {
 		public Suffix(Context context, SheetAlignedElement wrappedElement,
-				int position, NoteModifier modifier) throws LoadingSvgException {
+				int position, ElementModifier modifier) throws LoadingSvgException {
 			super(context, wrappedElement, position, modifier);
 		}
 

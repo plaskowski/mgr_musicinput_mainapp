@@ -17,7 +17,6 @@ public class NoteConstants {
 	public static final int ORIENT_DOWN = 1;
 	
 	public static enum NoteModifier {
-		DOT,
 		SHARP, // krzyżyk
 		FLAT, // bemol
 		NATURAL // kasownik

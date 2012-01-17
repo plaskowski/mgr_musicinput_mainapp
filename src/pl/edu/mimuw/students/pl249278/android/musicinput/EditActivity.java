@@ -884,7 +884,7 @@ public class EditActivity extends Activity {
 				break;
 			case MotionEvent.ACTION_UP:
 				if(selectedIndex != -1) {
-					showQuickActions(selectedIndex);
+					showQuickActions(selectedIndex, possibleActions);
 				}
 			case MotionEvent.ACTION_CANCEL:
 				if(selectedIndex != -1) {
@@ -954,7 +954,7 @@ public class EditActivity extends Activity {
 					break;
 			case MotionEvent.ACTION_UP:
 				if(startAnchor == currentAnchor) {
-					showQuickActions(selectedIndex);
+					showQuickActions(selectedIndex, possibleActions);
 				}
 			case MotionEvent.ACTION_CANCEL:
 				activePointerId = INVALID_POINTER;
@@ -1737,13 +1737,16 @@ public class EditActivity extends Activity {
 	}
 	
 	private ElementAction[] possibleActions;
+	private ElementAction[]	modifiersActions;
 	private int elementActionIndex;
 	
 	private abstract class ElementAction implements Action {
+		protected boolean mPostHide = true; 
 		@Override
 		public final void perform() {
 			perform(elementActionIndex);
-			hideActionBar();
+			if(mPostHide)
+				hideActionBar();
 		}
 		
 		protected abstract void perform(int elementIndex);
@@ -2056,6 +2059,43 @@ public class EditActivity extends Activity {
 		
 	}
 	
+	private class ToggleNoteModifier extends UpdateElementAction {
+		private NoteModifier modifier;
+		
+		public ToggleNoteModifier(int svgResId, NoteModifier modifier)
+				throws LoadingSvgException {
+			super(svgResId);
+			this.modifier = modifier;
+		}
+
+		@Override
+		protected ElementSpec updatedSpec(ElementSpec elementSpec) {
+			NoteSpec newSpec = new NoteSpec(((NormalNote) elementSpec).noteSpec());
+			if(modifier == newSpec.getToneModifier()) {
+				newSpec.clearToneModifier();
+			} else {
+				newSpec.setToneModifier(modifier);
+			}
+			return new ElementSpec.NormalNote(newSpec);
+		}
+
+		@Override
+		protected boolean isValidOn(int elementIndex) {
+			if(!isValidIndex(elementIndex))
+				return false;
+			ElementSpec elementSpec = elementViews.get(elementIndex).model().getElementSpec();
+			return elementSpec.getType() == ElementType.NOTE;
+		}
+		
+		@Override
+		protected Boolean getState(int elementIndex) {
+			return isValidIndex(elementIndex) 
+			&& modifier ==
+				((ElementSpec.NormalNote) elementViews.get(elementIndex).model().getElementSpec()).noteSpec().getToneModifier()
+			;
+		}
+	}
+	
 	private QuickActionsView qActionsView; 
 	private void prepareQuickActions() throws LoadingSvgException {
 		qActionsView = (QuickActionsView) findViewById(R.id.EDIT_quickactions);
@@ -2066,8 +2106,29 @@ public class EditActivity extends Activity {
 			new ToggleNoteGroupEnd(R.xml.button_notegroup_left),
 			new ToggleNoteDot(R.xml.button_dot),
 			new RemoveElementAction(R.xml.button_trash),
+			new SvgIconAction(R.xml.button_tonemodifiers) {
+				{ 	this.mPostHide = false; }
+				@Override
+				protected void perform(int elementIndex) {
+					if(!isValidIndex(elementIndex))
+						throw new InvalidParameterException();
+					showQuickActions(elementIndex, modifiersActions);
+				}
+				@Override
+				protected boolean isValidOn(int elementIndex) {
+					if(!isValidIndex(elementIndex))
+						return false;
+					SheetAlignedElementView view = elementViews.get(elementIndex);
+					return view.model().getElementSpec().getType().equals(ElementType.NOTE);
+				}
+			},
 			new ToggleNoteGroup(R.xml.button_notegroup_right),
 			new ToggleJoinArc(R.xml.button_joinarc_right)
+		};
+		modifiersActions = new ElementAction[] {
+			new ToggleNoteModifier(R.xml.flat, NoteModifier.FLAT),
+			new ToggleNoteModifier(R.xml.sharp_online, NoteModifier.SHARP),
+			new ToggleNoteModifier(R.xml.natural_online, NoteModifier.NATURAL)
 		};
 	}
 	private View.OnTouchListener quickActionsDismiss = new OnTouchListener() {
@@ -2078,7 +2139,7 @@ public class EditActivity extends Activity {
 		}
 	};
 	
-	private void showQuickActions(int contextElementIndex) {
+	private void showQuickActions(int contextElementIndex, ElementAction[] possibleActions) {
 		List<Action> model = new ArrayList<Action>(possibleActions.length);
 		for(int i = 0; i < possibleActions.length; i++) {
 			ElementAction action = possibleActions[i];
@@ -2145,7 +2206,7 @@ public class EditActivity extends Activity {
 				qActionsView,
 				refPointVisibleX - originX,
 				refPointVisibleY - qActionsView.getIndicatorEndY()
-			);	
+			);
 			qActionsView.setVisibility(View.VISIBLE);
 		}
 	}

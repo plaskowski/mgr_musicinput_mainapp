@@ -190,6 +190,11 @@ public class NotePartFactory {
 				anyOrient(R.xml.dot_onspace)
 			)
 		);
+		declare(modifiersMapping, ElementModifier.NATURAL,
+			anyAnchor(
+				anyOrient(R.xml.natural_online)
+			)
+		);
 		declare(headMapping, 0, 
 			anyAnchor(
 				anyOrient(R.xml.whole)

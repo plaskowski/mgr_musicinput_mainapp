@@ -182,6 +182,7 @@ public class SvgParser {
 		
 	}
 
+	private static final Pattern argPattern = Pattern.compile("\\s*,?\\s*(-?(?:\\d*\\.\\d+|\\d+))(?:[eE](-?\\d+))?");
 	private class SVGPathParser {
 		
 		private String source;
@@ -287,12 +288,16 @@ public class SvgParser {
 		
 		private Float tryReadArgument() {
 			int i = index;
-			Pattern argPattern = Pattern.compile("\\s*,?\\s*(-?(\\d*\\.\\d+|\\d+))");
 			Matcher matcher = argPattern.matcher(source);
 			boolean found = matcher.find(i);
 			if(found && matcher.start() == index) {
 				index = matcher.end(0);
-				return new Float(Float.parseFloat(matcher.group(1)));
+				float value = Float.parseFloat(matcher.group(1));
+				String exponent = matcher.group(2);
+				if(exponent != null) {
+					value *= Math.pow(10, Float.parseFloat(exponent));
+				}
+				return new Float(value);
 			} else {
 				return null;
 			}

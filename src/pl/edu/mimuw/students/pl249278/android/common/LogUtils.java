@@ -28,4 +28,13 @@ public class LogUtils {
 	public void d(String format, Object... args) {
 		log(Log.DEBUG, tag, format, args);
 	}
+	
+	public void v(String format, Object... args) {
+		log(Log.VERBOSE, tag, format, args);
+	}
+	
+	public void e(String msg, Throwable tr) {
+		Log.e(TAG, msg, tr);
+	}
+
 }

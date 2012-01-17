@@ -46,7 +46,7 @@ public class SvgParser {
         while (eventType != XmlPullParser.END_DOCUMENT) {
          if(eventType == XmlPullParser.START_TAG) {
         	 if(!SVG_NS.equals(xmlParser.getNamespace())) {
-        		 log.i("Ignoring element %s:%s not from SVG NS", xmlParser.getNamespace(), xmlParser.getName());
+        		 log.v("Ignoring element %s:%s not from SVG NS", xmlParser.getNamespace(), xmlParser.getName());
         	 } else {
         		 String name = xmlParser.getName();
 	             if(TAG_ROOT.equals(name)) {
@@ -60,7 +60,7 @@ public class SvgParser {
         			 SvgRect rect = parseRectNode(xmlParser);
         			 result.objects.add(rect);
         		 } else {
-        			 log.i("Ignoring not supported element %s:%s", xmlParser.getNamespace(), xmlParser.getName());
+        			 log.v("Ignoring not supported element %s:%s", xmlParser.getNamespace(), xmlParser.getName());
         		 }
         	 }
          } else if(eventType == XmlPullParser.END_TAG) {

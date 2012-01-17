@@ -133,9 +133,9 @@ public class NotePartFactory {
 	public static SvgImage prepareSvgImage(Resources resources, int svgResId) throws LoadingSvgException {
 		if(svgImages.get(svgResId) == null) {
 			SvgParser parser = new SvgParser();
-			XmlPullParser xmlParser = resources.getXml(svgResId);
-			SvgImage svgImg;
 			try {
+				XmlPullParser xmlParser = resources.getXml(svgResId);
+				SvgImage svgImg;
 				svgImg = parser.parse(xmlParser);
 				svgImages.put(svgResId, new EnhancedSvgImage(svgImg));
 			} catch (Exception e) {

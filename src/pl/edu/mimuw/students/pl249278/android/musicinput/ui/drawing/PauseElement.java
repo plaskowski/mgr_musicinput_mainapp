@@ -1,6 +1,8 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.R;
+import pl.edu.mimuw.students.pl249278.android.musicinput.StaticConfigurationError;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.LengthSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.Pause;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.LoadingSvgException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
@@ -63,8 +65,19 @@ public class PauseElement extends SheetAlignedElement {
 	}
 	
 	public static class PauseDot extends Modifier {
+		private static int[] positionsMapping;
+		private static int getPosition(Context context, LengthSpec lengthSpec) {
+			if(positionsMapping == null) {
+				positionsMapping = context.getResources().getIntArray(R.array.pauseDotPositions);
+			}
+			if(lengthSpec.length() >= positionsMapping.length) {
+				throw new StaticConfigurationError("Mapping of pause length to dot positions doesn't cover used length: "+lengthSpec);
+			}
+			return positionsMapping[lengthSpec.length()];
+		}
+		
 		public PauseDot(Context context, SheetAlignedElement wrappedElement) throws LoadingSvgException {
-			super(context, wrappedElement, NoteConstants.LINE2_ABSINDEX, ElementModifier.DOT);
+			super(context, wrappedElement, getPosition(context, wrappedElement.getElementSpec().lengthSpec()), ElementModifier.DOT);
 		}
 
 		@Override

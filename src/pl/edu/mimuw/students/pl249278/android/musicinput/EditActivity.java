@@ -59,6 +59,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetElementVie
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.BlurMaskFilter;
 import android.graphics.BlurMaskFilter.Blur;
 import android.graphics.Color;
@@ -71,6 +72,7 @@ import android.os.Handler;
 import android.os.Vibrator;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
@@ -199,6 +201,13 @@ public class EditActivity extends Activity {
 			public void onValueChanged(Integer newValue, Integer oldValue) {
 				currentNoteLength = newValue;
 				popupCurrentNoteLength();
+			}
+		});
+		// setup insert button
+		findViewById(R.id.EDIT_button_insert).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				showQuickActionsAbove(findViewById(R.id.EDIT_button_insert), rightToIA, insertActions);
 			}
 		});
 		
@@ -662,6 +671,7 @@ public class EditActivity extends Activity {
 	}
 
 	private SheetAlignedElementView insertElement(int insertIndex, ElementSpec spec, Point rebuildRange) throws CreationException {
+		// TODO wywalić debugowanie w kodzie produkcyjnym
 		debugTimes();
 		debugViews();
 		assertTimesValidity();
@@ -884,7 +894,7 @@ public class EditActivity extends Activity {
 				break;
 			case MotionEvent.ACTION_UP:
 				if(selectedIndex != -1) {
-					showQuickActions(selectedIndex, possibleActions);
+					showElementQuickActions(selectedIndex, possibleActions);
 				}
 			case MotionEvent.ACTION_CANCEL:
 				if(selectedIndex != -1) {
@@ -954,7 +964,7 @@ public class EditActivity extends Activity {
 					break;
 			case MotionEvent.ACTION_UP:
 				if(startAnchor == currentAnchor) {
-					showQuickActions(selectedIndex, possibleActions);
+					showElementQuickActions(selectedIndex, possibleActions);
 				}
 			case MotionEvent.ACTION_CANCEL:
 				activePointerId = INVALID_POINTER;
@@ -1081,15 +1091,7 @@ public class EditActivity extends Activity {
 			noteView.setPaint(normalPaint);
 			lines.highlightAnchor(null);
 			vertscroll.setVerticalScrollingLocked(false);
-			int timeIndex = findTime(insertIndex);
-			boolean isLastNoteOfTime = timeIndex+1 < times.size() && insertIndex+1 == times.get(timeIndex+1).rangeStart; 
-			animatedRepositioning(
-				rebuildRange.x, 
-				rebuildRange.y, 
-				isLastNoteOfTime && times.get(timeIndex).isFull() ? insertIndex+1 : insertIndex, 
-				visibleRectWidth - inputAreaWidth - iaRightMargin - delta, 
-				500
-			);
+			postInsert(insertIndex, rebuildRange);
 		}
 		
 		/**
@@ -1118,10 +1120,6 @@ public class EditActivity extends Activity {
 			}
 			activePointerId = INVALID_POINTER;
 			downPointerId = INVALID_POINTER;
-		}
-
-		private int inIA_noteViewX(SheetAlignedElementView noteView) {
-			return visible2absX(visibleRectWidth-iaRightMargin-inputAreaWidth/2)-middleX(noteView);
 		}
 
 		/**
@@ -1386,6 +1384,18 @@ public class EditActivity extends Activity {
 			scaleGestureDetector.setTouchInputLocked(false);
 		}
 	};
+	
+	private void postInsert(int insertIndex, Point rebuildRange) {
+		int timeIndex = findTime(insertIndex);
+		boolean isLastNoteOfTime = timeIndex+1 < times.size() && insertIndex+1 == times.get(timeIndex+1).rangeStart; 
+		animatedRepositioning(
+			rebuildRange.x, 
+			rebuildRange.y, 
+			isLastNoteOfTime && times.get(timeIndex).isFull() ? insertIndex+1 : insertIndex, 
+			visibleRectWidth - inputAreaWidth - iaRightMargin - delta, 
+			500
+		);
+	}
 	
 	private void animatedRepositioning(int rebuildStart, int rebuildEnd, int pinnedElementIndex, int pinVisiblePositionX, long animationDuration) {
 		animator.forceFinishAll();
@@ -1738,6 +1748,7 @@ public class EditActivity extends Activity {
 	
 	private ElementAction[] possibleActions;
 	private ElementAction[]	modifiersActions;
+	private ElementAction[] insertActions;
 	private int elementActionIndex;
 	
 	private abstract class ElementAction implements Action {
@@ -2096,6 +2107,41 @@ public class EditActivity extends Activity {
 		}
 	}
 	
+	private class InsertPause extends SvgIconAction {
+		private int pauseLength;
+
+		public InsertPause(int svgResId, int pauseLength)
+				throws LoadingSvgException {
+			super(svgResId);
+			this.pauseLength = pauseLength;
+		}
+
+		@Override
+		protected void perform(int elementIndex) {
+			try {
+				SheetAlignedElementView newNote = insertElement(elementIndex, spec, rebuildRange);
+				updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
+				postInsert(elementIndex, rebuildRange);
+				spec = null;
+			} catch (CreationException e) {
+				log.e("Cannot instantiate graphics for pause", e);
+				finish();
+			}
+		}
+		
+		private Point rebuildRange = new Point();
+		private ElementSpec.Pause spec;
+
+		@Override
+		protected boolean isValidOn(int elementIndex) {
+			if(spec == null) {
+				spec = new ElementSpec.Pause(new PauseSpec(pauseLength));
+			}
+			return willFitInTime(elementIndex, spec);
+		}
+		
+	};
+	
 	private QuickActionsView qActionsView; 
 	private void prepareQuickActions() throws LoadingSvgException {
 		qActionsView = (QuickActionsView) findViewById(R.id.EDIT_quickactions);
@@ -2112,7 +2158,7 @@ public class EditActivity extends Activity {
 				protected void perform(int elementIndex) {
 					if(!isValidIndex(elementIndex))
 						throw new InvalidParameterException();
-					showQuickActions(elementIndex, modifiersActions);
+					showElementQuickActions(elementIndex, modifiersActions);
 				}
 				@Override
 				protected boolean isValidOn(int elementIndex) {
@@ -2130,6 +2176,18 @@ public class EditActivity extends Activity {
 			new ToggleNoteModifier(R.xml.sharp_online, NoteModifier.SHARP),
 			new ToggleNoteModifier(R.xml.natural_online, NoteModifier.NATURAL)
 		};
+		insertActions = new ElementAction[(minPossibleValue-1)+1];
+		TypedArray iconsMapping = getResources().obtainTypedArray(R.array.insertPauseIcons);
+		if(iconsMapping.length() < minPossibleValue) {
+			log.e("InsertPause svg icons mapping doesn't cover whole range", null);
+			finish();
+			// TODO handle this gracefully
+			return;
+		}
+		for(int i = 0; i < minPossibleValue; i++) {
+			insertActions[i] = new InsertPause(iconsMapping.getResourceId(i, 0), i);
+		}
+		iconsMapping.recycle();
 	}
 	private View.OnTouchListener quickActionsDismiss = new OnTouchListener() {
 		@Override
@@ -2139,7 +2197,37 @@ public class EditActivity extends Activity {
 		}
 	};
 	
-	private void showQuickActions(int contextElementIndex, ElementAction[] possibleActions) {
+	private void showQuickActionsAbove(View view, int actionsTargetIndex, ElementAction[] possibleActions) {
+		showQuickActions(
+			actionsTargetIndex, possibleActions,
+			view.getLeft() + view.getWidth()/2,
+			view.getTop()
+		);
+	}
+	
+	private void showElementQuickActions(int contextElementIndex, ElementAction[] possibleActions) {
+		int middleX, middleY;
+		SheetAlignedElementView view = elementViews.get(contextElementIndex);
+		switch(view.model().getElementSpec().getType()) {
+		case NOTE:
+			middleX = middleX(view);
+			middleY = -view.getOffsetToAnchor(view.model().getElementSpec().positonSpec().positon(), AnchorPart.MIDDLE);
+			break;
+		case TIMES_DIVIDER:
+			middleX = middleX(view);
+			middleY = view.measureHeight()/2;
+			break;
+		default:
+			middleX = view.getWidth()/2;
+			middleY = view.measureHeight()/2;
+		}
+		int refPointVisibleX = abs2visibleX(viewStableX(view)) + middleX;
+		int refPointVisibleY = abs2visibleY(top(view)) + middleY;
+		
+		showQuickActions(contextElementIndex, possibleActions, refPointVisibleX, refPointVisibleY);
+	}
+	
+	private void showQuickActions(int contextElementIndex, ElementAction[] possibleActions, int refPointVisibleX, int refPointVisibleY) {
 		List<Action> model = new ArrayList<Action>(possibleActions.length);
 		for(int i = 0; i < possibleActions.length; i++) {
 			ElementAction action = possibleActions[i];
@@ -2150,24 +2238,7 @@ public class EditActivity extends Activity {
 		if(!model.isEmpty()) {
 			elementActionIndex = contextElementIndex;
 			qActionsView.setModel(model);
-			int middleX, middleY;
-			SheetAlignedElementView view = elementViews.get(contextElementIndex);
-			switch(view.model().getElementSpec().getType()) {
-			case NOTE:
-				middleX = middleX(view);
-				middleY = -view.getOffsetToAnchor(view.model().getElementSpec().positonSpec().positon(), AnchorPart.MIDDLE);
-				break;
-			case TIMES_DIVIDER:
-				middleX = middleX(view);
-				middleY = view.measureHeight()/2;
-				break;
-			default:
-				middleX = view.getWidth()/2;
-				middleY = view.measureHeight()/2;
-			}
-			int refPointVisibleX = abs2visibleX(viewStableX(view)) + middleX;
-			int refPointVisibleY = abs2visibleY(top(view)) + middleY;
-			
+
 			// validate ref point according to visible rect
 			refPointVisibleX = Math.min(Math.max(0, refPointVisibleX), visibleRectWidth);
 			refPointVisibleY = Math.min(Math.max(0, refPointVisibleY), visibleRectHeight);
@@ -2394,6 +2465,10 @@ public class EditActivity extends Activity {
 		return absoluteY - vertscroll.getScrollY();
 	}
 	
+	private int inIA_noteViewX(SheetAlignedElementView noteView) {
+		return visible2absX(visibleRectWidth-iaRightMargin-inputAreaWidth/2)-middleX(noteView);
+	}
+
 	private static ViewGroup.MarginLayoutParams updateMargins(View v, Integer left, Integer top) {
 		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
 		if(left != null) params.leftMargin = left;

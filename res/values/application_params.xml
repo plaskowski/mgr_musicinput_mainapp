@@ -8,4 +8,20 @@
 	
 	<!-- indicates that program handles notes from whole note to 1/(2^x) note -->
 	<integer name="minNotePossibleValue">4</integer>
+	
+	<array name="insertPauseIcons">
+	    <item>@xml/pause_whole</item>
+	    <item>@xml/pause_half</item>
+	    <item>@xml/pause_quater</item>
+   	    <item>@xml/pause_eight</item>
+	    <item>@xml/pause_sixteen</item>
+   	</array>
+	<integer-array name="pauseDotPositions">
+	    <item>3</item>
+	    <item>4</item>
+	    <item>5</item>
+   	    <item>4</item>
+	    <item>5</item>
+	    <item>4</item>
+   	</integer-array>
 </resources>

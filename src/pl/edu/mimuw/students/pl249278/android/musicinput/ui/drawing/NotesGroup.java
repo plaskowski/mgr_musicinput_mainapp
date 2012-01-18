@@ -292,18 +292,9 @@ public class NotesGroup extends ElementsOverlay {
 	public static class GroupBuilder {
 		private List<ElementSpec.NormalNote> specs = new ArrayList<ElementSpec.NormalNote>(5);
 		private boolean closed = false;
-		private int orientation = -1;
 
-		public GroupBuilder(SheetVisualParams params, ElementSpec firstElementSpec) {
+		public GroupBuilder(ElementSpec firstElementSpec) {
 			specs.add((NormalNote) firstElementSpec);
-			switch(params.getDisplayMode()) {
-			case LOWER_VOICE:
-				orientation = ORIENT_DOWN;
-				break;
-			case UPPER_VOICE:
-				orientation = ORIENT_UP;
-				break;
-			}
 		}
 
 		public static boolean canStartGroup(ElementSpec spec) {
@@ -362,18 +353,14 @@ public class NotesGroup extends ElementsOverlay {
 				orient += current.getOrientation() == NoteConstants.ORIENT_DOWN ? -1 : 1;
 				prev = current;
 			}
-			// if not forced by external conditions
-			if(this.orientation == -1) {
-				this.orientation = orient == 0 ? specs.get(0).getOrientation() : (orient < 0 ? ORIENT_DOWN : ORIENT_UP);
-			}
-			
+			int orientation = orient == 0 ? specs.get(0).getOrientation() : (orient < 0 ? ORIENT_DOWN : ORIENT_UP);
 			NotesGroup result = new NotesGroup(specs.size(), orientation, wrapperPaint);
 			
 			// update specs
 			for(int i = 0; i < specs.size(); i++) {
 				NormalNote spec = specs.get(i);
 				spec.setNoStem(true);
-				spec.setOrientation(this.orientation);
+				spec.setOrientation(orientation);
 				spec.setForcedSpacing(result.spacingSource(i));
 			}
 			return result;

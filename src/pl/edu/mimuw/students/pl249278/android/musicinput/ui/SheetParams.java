@@ -5,6 +5,11 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams;
 	
 public class SheetParams implements SheetVisualParams {
+	public static enum DisplayMode {
+		NORMAL,
+		UPPER_VOICE,
+		LOWER_VOICE
+	}
 	
 	private int lineFactor;
 	private int linespacingFactor;
@@ -141,10 +146,6 @@ public class SheetParams implements SheetVisualParams {
 		this.keySignature = keySignature;
 	}
 
-	/* (non-Javadoc)
-	 * @see pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetVisualParams#getDisplayMode()
-	 */
-	@Override
 	public DisplayMode getDisplayMode() {
 		return displayMode;
 	}

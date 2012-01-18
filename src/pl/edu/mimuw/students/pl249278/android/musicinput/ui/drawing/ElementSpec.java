@@ -2,7 +2,6 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
 import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.LengthSpec;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.PauseSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.PositonSpec;
@@ -62,9 +61,6 @@ public abstract class ElementSpec {
 		private static final int FLAG_ORIGINAL_ORIENT = FLAG_ORIENT+1;
 		private static final int FLAG_NOSTEM = FLAG_ORIGINAL_ORIENT+1;
 		
-		public NormalNote(NoteSpec spec) {
-			this(spec, NoteConstants.defaultOrientation(spec.positon()));
-		}
 		public NormalNote(NoteSpec spec, int orientation) {
 			super(ElementType.NOTE, spec);
 			setOrientation(orientation);

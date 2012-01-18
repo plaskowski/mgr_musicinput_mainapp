@@ -28,6 +28,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Action;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.IndicatorOrigin;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.DisplayMode;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
@@ -276,49 +277,49 @@ public class EditActivity extends Activity {
 		
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
 		n.setHasJoinArc(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		rawNotesSequence.add(elementSpecNN(n));
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
 //		n.setHasJoinArc(true);
 		n.setToneModifier(NoteModifier.FLAT);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		rawNotesSequence.add(elementSpecNN(n));
 		
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE));
 		n.setHasJoinArc(true);
 		n.setIsGrouped(true);
 //		n.setHasDot(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		rawNotesSequence.add(elementSpecNN(n));
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
 //		n.setToneModifier(NoteModifier.FLAT);
 //		n.setHasJoinArc(true);
 		n.setIsGrouped(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		rawNotesSequence.add(elementSpecNN(n));
 		
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
 		n.setHasJoinArc(true);
 //		n.setIsGrouped(true);
 //		n.setHasDot(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		rawNotesSequence.add(elementSpecNN(n));
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
 //		n.setToneModifier(NoteModifier.FLAT);
 		n.setHasJoinArc(true);
 		n.setIsGrouped(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		rawNotesSequence.add(elementSpecNN(n));
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
 //		n.setHasJoinArc(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		rawNotesSequence.add(elementSpecNN(n));
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
 //		n.setHasJoinArc(true);
 		n.setIsGrouped(true);
 //		n.setHasDot(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		rawNotesSequence.add(elementSpecNN(n));
 		
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE));
 		n.setIsGrouped(true);
 //		n.setHasDot(true);
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		rawNotesSequence.add(elementSpecNN(n));
 		
 		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+2, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE));
-		rawNotesSequence.add(new ElementSpec.NormalNote(n));
+		rawNotesSequence.add(elementSpecNN(n));
 		
 //		rawNotesSequence.add(new ElementSpec.Pause(new PauseSpec(NoteConstants.LEN_QUATERNOTE)));
 //		rawNotesSequence.add(new ElementSpec.Pause(new PauseSpec(NoteConstants.LEN_QUATERNOTE+1)));
@@ -518,7 +519,7 @@ public class EditActivity extends Activity {
 		}
 		for(int i = 0; i < times.size(); i++) {
 			int rangeStart = times.get(i).rangeStart;
-			ElementSpec elementSpec = elementViews.get(rangeStart).model().getElementSpec();
+			ElementSpec elementSpec = specAt(rangeStart);
 			ElementType type = elementSpec.getType();
 			if(type != ElementType.TIMES_DIVIDER) {
 				throw new RuntimeException(String.format(
@@ -541,10 +542,10 @@ public class EditActivity extends Activity {
 			SheetAlignedElementView view = elementViews.get(elementI);
 			ElementSpec spec = view.model().getElementSpec();
 			if(group == null && GroupBuilder.canStartGroup(spec)) {
-				GroupBuilder gb = new GroupBuilder(sheetParams, spec);
+				GroupBuilder gb = new GroupBuilder(spec);
 				int groupEl = elementI+1;
 				for(; groupEl < totalSize; groupEl++) {
-					if(!gb.tryExtend(elementViews.get(groupEl).model().getElementSpec())) {
+					if(!gb.tryExtend(specAt(groupEl))) {
 						break;
 					}
 				}
@@ -686,7 +687,7 @@ public class EditActivity extends Activity {
 		// find NotesGroup start that could be affected by inserted element
 		int i = insertIndex - 1;
 		for(;i > 0; i--) {
-			ElementSpec elementSpec = elementViews.get(i).model().getElementSpec();
+			ElementSpec elementSpec = specAt(i);
 			if(!NotesGroup.GroupBuilder.canExtendGroup(elementSpec)) {
 				break;
 			}
@@ -694,7 +695,7 @@ public class EditActivity extends Activity {
 		int ngRebuildIndex = i;
 		// find possible JoinArc that will be affected by rebuild of NotesGroup at ngRebuildIndex
 		for(i = i-1; i > 0; i--) {
-			ElementSpec elementSpec = elementViews.get(i).model().getElementSpec();
+			ElementSpec elementSpec = specAt(i);
 			if(JoinArc.canEndJA(elementSpec) || JoinArc.canStrartJA(elementSpec) || !JoinArc.canSkipOver(elementSpec)) {
 				break;
 			}
@@ -760,14 +761,14 @@ public class EditActivity extends Activity {
 		
 		int ngRebuildIndex = elementIndex-1;
 		for(;ngRebuildIndex > 0; ngRebuildIndex--) {
-			ElementSpec elementSpec = elementViews.get(ngRebuildIndex).model().getElementSpec();
+			ElementSpec elementSpec = specAt(ngRebuildIndex);
 			if(!NotesGroup.GroupBuilder.canExtendGroup(elementSpec)) {
 				break;
 			}
 		}
 		int jaRebuildIndex = Math.max(ngRebuildIndex-1, 0);
 		for(; jaRebuildIndex > 0; jaRebuildIndex--) {
-			ElementSpec elementSpec = elementViews.get(jaRebuildIndex).model().getElementSpec();
+			ElementSpec elementSpec = specAt(jaRebuildIndex);
 			if(JoinArc.canEndJA(elementSpec) || JoinArc.canStrartJA(elementSpec) || !JoinArc.canSkipOver(elementSpec)) {
 				break;
 			}
@@ -779,7 +780,7 @@ public class EditActivity extends Activity {
 			rebuildEnd = size-1;
 		} else {
 			for(rebuildEnd = elementIndex+1; rebuildEnd < size; rebuildEnd++) {
-				ElementSpec elementSpec = elementViews.get(rebuildEnd).model().getElementSpec();
+				ElementSpec elementSpec = specAt(rebuildEnd);
 				if(!NotesGroup.GroupBuilder.canExtendGroup(elementSpec)) {
 					break;
 				}
@@ -821,7 +822,7 @@ public class EditActivity extends Activity {
 		// find NotesGroup start that could be affected by removal
 		int i = elementIndex - 1;
 		for(;i > 0; i--) {
-			ElementSpec elementSpec = elementViews.get(i).model().getElementSpec();
+			ElementSpec elementSpec = specAt(i);
 			if(!NotesGroup.GroupBuilder.canExtendGroup(elementSpec)) {
 				break;
 			}
@@ -829,7 +830,7 @@ public class EditActivity extends Activity {
 		int ngRebuildIndex = i;
 		// find possible JoinArc that will be affected by rebuild of NotesGroup at ngRebuildIndex
 		for(i = i-1; i > 0; i--) {
-			ElementSpec elementSpec = elementViews.get(i).model().getElementSpec();
+			ElementSpec elementSpec = specAt(i);
 			if(JoinArc.canEndJA(elementSpec) || JoinArc.canStrartJA(elementSpec) || !JoinArc.canSkipOver(elementSpec)) {
 				break;
 			}
@@ -962,7 +963,7 @@ public class EditActivity extends Activity {
 						break;
 					}
 				}
-				if(i >= elementViews.size() || elementViews.get(i).model().getElementSpec().getType() != ElementType.NOTE) {
+				if(i >= elementViews.size() || specAt(i).getType() != ElementType.NOTE) {
 					break;
 				}
 				this.selectedIndex = i;
@@ -984,7 +985,7 @@ public class EditActivity extends Activity {
 					lines.highlightAnchor(currentAnchor);
 					try {
 						SheetAlignedElementView elView = elementViews.get(selectedIndex);
-						updateElementSpec(selectedIndex, new ElementSpec.NormalNote(new NoteSpec(((NormalNote) elView.model().getElementSpec()).noteSpec(), currentAnchor)), temp);
+						updateElementSpec(selectedIndex, elementSpecNN(new NoteSpec(((NormalNote) elView.model().getElementSpec()).noteSpec(), currentAnchor)), temp);
 						updatePosition(elView, absMiddleX-middleX(elView), sheetElementY(elView));
 					} catch (CreationException e) {
 						e.printStackTrace();
@@ -1026,6 +1027,7 @@ public class EditActivity extends Activity {
 		private int insertIndex;
 		private int downPointerId = INVALID_POINTER;
 		private Point downCoords = new Point();
+		private boolean addGroupFlag;
 		
 		private Runnable lazyActionDown = new Runnable() {
 			public void run() {
@@ -1035,7 +1037,7 @@ public class EditActivity extends Activity {
 						insertIndex--;
 					}
 					currentAnchor = nearestAnchor(downCoords.y);
-					ElementSpec.NormalNote newNoteSpec = new ElementSpec.NormalNote(new NoteSpec(currentNoteLength, currentAnchor));
+					ElementSpec.NormalNote newNoteSpec = elementSpecNN(new NoteSpec(currentNoteLength, currentAnchor));
 					if(!willFitInTime(insertIndex, newNoteSpec)) {
 						disrupt(R.string.EDIT_msg_inserterror_notetolong);
 						downPointerId = INVALID_POINTER;
@@ -1046,6 +1048,21 @@ public class EditActivity extends Activity {
 						rightToIA = insertIndex+1;
 						activePointerId = downPointerId;
 						downPointerId = INVALID_POINTER;
+						// <!-- check if we insert inside NoteGroup. If so, automatically add GROUP flag.
+						addGroupFlag = GroupBuilder.couldExtendGroup(newNoteSpec);
+						for(int index = insertIndex-1; addGroupFlag && index > 0; index--) {
+							ElementSpec spec = specAt(index);
+							if(GroupBuilder.canStartGroup(spec)) {
+								addGroupFlag = true;
+								break;
+							} else if(!GroupBuilder.canExtendGroup(spec)) {
+								addGroupFlag = false;
+								break;
+							}
+						}
+						addGroupFlag &= insertIndex < elementViews.size() && GroupBuilder.canEndGroup(specAt(insertIndex));
+						newNoteSpec.noteSpec().setIsGrouped(addGroupFlag);
+						// -->
 						SheetAlignedElementView newNote = insertElement(insertIndex, newNoteSpec, rebuildRange);
 						newNote.setPaint(noteHighlightPaint);
 						updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
@@ -1089,7 +1106,9 @@ public class EditActivity extends Activity {
 				if(newAnchor != currentAnchor) {
 					lines.highlightAnchor(newAnchor);
 					try {
-						updateElementSpec(insertIndex, new ElementSpec.NormalNote(new NoteSpec(currentNoteLength, newAnchor)), temp);
+						NoteSpec spec = new NoteSpec(currentNoteLength, newAnchor);
+						spec.setIsGrouped(addGroupFlag);
+						updateElementSpec(insertIndex, elementSpecNN(spec), temp);
 						rebuildRange.set(Math.min(temp.x, rebuildRange.x), Math.max(temp.y, rebuildRange.y));
 						updatePositions(temp.x, insertIndex-1);
 						SheetAlignedElementView newNote = elementViews.get(insertIndex);
@@ -1196,7 +1215,7 @@ public class EditActivity extends Activity {
 		}
 		int capLeft = timeCapacity(currentTimeStep, minPossibleValue);
 		for(int i = times.get(timeIndex).rangeStart + 1; i < insertIndex; i++) {
-			capLeft -= elementViews.get(i).model().getElementSpec().timeValue(minPossibleValue);
+			capLeft -= specAt(i).timeValue(minPossibleValue);
 		}
 		return spec.timeValue(minPossibleValue) <= capLeft;
 	}
@@ -1899,7 +1918,7 @@ public class EditActivity extends Activity {
 		@Override
 		protected ElementSpec updatedSpec(ElementSpec elementSpec) {
 			ElementSpec.NormalNote spec = (NormalNote) elementSpec;
-			return new ElementSpec.NormalNote(new NoteSpec(spec.noteSpec(), NoteSpec.TOGGLE_FIELD.HAS_JOIN_ARC));
+			return elementSpecNN(new NoteSpec(spec.noteSpec(), NoteSpec.TOGGLE_FIELD.HAS_JOIN_ARC));
 		}
 
 		@Override
@@ -1975,7 +1994,7 @@ public class EditActivity extends Activity {
 			} else {
 				copy.setDotExtension(1);
 			}
-			return new ElementSpec.NormalNote(copy);
+			return elementSpecNN(copy);
 		}
 	}
 	
@@ -2070,7 +2089,7 @@ public class EditActivity extends Activity {
 		@Override
 		protected ElementSpec updatedSpec(ElementSpec elementSpec) {
 			ElementSpec.NormalNote spec = (NormalNote) elementSpec;
-			return new ElementSpec.NormalNote(new NoteSpec(spec.noteSpec(), NoteSpec.TOGGLE_FIELD.IS_GROUPED));
+			return elementSpecNN(new NoteSpec(spec.noteSpec(), NoteSpec.TOGGLE_FIELD.IS_GROUPED));
 		}
 
 		@Override
@@ -2121,7 +2140,7 @@ public class EditActivity extends Activity {
 			} else {
 				newSpec.setToneModifier(modifier);
 			}
-			return new ElementSpec.NormalNote(newSpec);
+			return elementSpecNN(newSpec);
 		}
 
 		@Override
@@ -2395,6 +2414,25 @@ public class EditActivity extends Activity {
 	
 	private SheetAlignedElement createDrawingModel(ElementSpec elementSpec) throws CreationException {
 		return DrawingModelFactory.createDrawingModel(this, elementSpec);
+	}
+	
+	private ElementSpec.NormalNote elementSpecNN(NoteSpec spec) {
+		int orientation;
+		DisplayMode mode = sheetParams.getDisplayMode();
+		switch (mode) {
+		case LOWER_VOICE:
+			orientation = NoteConstants.ORIENT_DOWN;
+			break;
+		case UPPER_VOICE:
+			orientation = NoteConstants.ORIENT_UP;
+			break;
+		case NORMAL:
+			orientation = NoteConstants.defaultOrientation(spec.positon());
+			break;
+		default:
+			throw CodeLogicError.unhandledEnumValue(mode);
+		}
+		return new ElementSpec.NormalNote(spec, orientation);
 	}
 
 	private int afterElementSpacing(Time time, SheetAlignedElement sheetAlignedElement) {

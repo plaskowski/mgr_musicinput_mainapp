@@ -12,15 +12,7 @@ public interface SheetVisualParams {
 	public int getLineThickness();
 
 	public int getLinespacingThickness();
-
-	public DisplayMode getDisplayMode();
 	
-	public static enum DisplayMode {
-		NORMAL,
-		UPPER_VOICE,
-		LOWER_VOICE
-	}
-
 	public static enum AnchorPart {
 		MIDDLE,
 		BOTTOM_EDGE,

@@ -675,7 +675,7 @@ public class EditActivity extends Activity {
 		debugTimes();
 		debugViews();
 		assertTimesValidity();
-		int currTime = insertTime(insertIndex);
+		int currTime = findTimeToInsertTo(insertIndex);
 		// wstawić element w miejsce insertIndex
 		SheetAlignedElementView newElement = addElementView(insertIndex, createDrawingModel(spec));
 		// przeliczyć czy nie zmieniła się struktura taktów
@@ -709,13 +709,12 @@ public class EditActivity extends Activity {
 		buildJoinArcs(jaRebuildIndex, lastEl);
 		
 		updatePositions(insertIndex+1, lastEl, visible2absX(visibleRectWidth-iaRightMargin+delta));
-		rebuildRange.set(jaRebuildIndex, lastEl);
+		if(rebuildRange != null) rebuildRange.set(jaRebuildIndex, lastEl);
 		debugViews();
 		return newElement;
 	}
 
-
-	private int insertTime(int insertIndex) {
+	private int findTimeToInsertTo(int insertIndex) {
 		int currTime = findTime(insertIndex);
 		if(times.get(currTime).rangeStart == insertIndex) {
 			// when insertIndex is index of TimeDivider we want to insert into left Time 
@@ -865,6 +864,41 @@ public class EditActivity extends Activity {
 			rebuildRange.set(jaRebuildIndex, lastEl);
 		}
 		return elView;
+	}
+	
+	private Point rebuildRange = new Point();
+	private void forceCloseTime(int insertIndex) {
+		Time time = times.get(findTimeToInsertTo(insertIndex));
+		int capLeft = time.capLeft;
+		int totalInserted = 0;
+		try {
+			for(int pLength = 0; pLength <= minPossibleValue; pLength++) {
+				int bitIndex = (minPossibleValue-pLength);
+				if(IntUtils.getFlag(capLeft, bitIndex) == 1) {
+					PauseSpec pause = new PauseSpec(pLength);
+					if(++pLength <= minPossibleValue) {
+						bitIndex = (minPossibleValue-pLength);
+						if(IntUtils.getFlag(capLeft, bitIndex) == 1) {
+							pause.setDotExtension(1);
+						}
+					}
+					SheetAlignedElementView newElement = insertElement(
+						insertIndex+(totalInserted++), 
+						new ElementSpec.Pause(pause), 
+						totalInserted != 1 ? null : rebuildRange
+					);
+					updatePosition(newElement, inIA_noteViewX(newElement), sheetElementY(newElement));
+				}
+			}
+			if(totalInserted > 0) {
+				rebuildRange.y += totalInserted-1;
+				postInsert(insertIndex+totalInserted-1, rebuildRange);
+			}
+		} catch(CreationException e) {
+			log.e(null, e);
+			// TODO handle exception gracefully
+			finish();
+		}
 	}
 	
 	private View.OnTouchListener elementTouchListener = new OnTouchListener() {
@@ -1155,7 +1189,7 @@ public class EditActivity extends Activity {
 	}
 	
 	private boolean willFitInTime(int insertIndex, ElementSpec spec) {
-		int timeIndex = insertTime(insertIndex);
+		int timeIndex = findTimeToInsertTo(insertIndex);
 		TimeStep currentTimeStep = getCurrentTimeStep(timeIndex);
 		if(currentTimeStep == null) {
 			return true;
@@ -2176,7 +2210,20 @@ public class EditActivity extends Activity {
 			new ToggleNoteModifier(R.xml.sharp_online, NoteModifier.SHARP),
 			new ToggleNoteModifier(R.xml.natural_online, NoteModifier.NATURAL)
 		};
-		insertActions = new ElementAction[(minPossibleValue-1)+1];
+		ArrayList<ElementAction> insertActions = new ArrayList<EditActivity.ElementAction>();
+		insertActions.add(new SvgIconAction(R.xml.button_timedivider) {
+			@Override
+			protected void perform(int elementIndex) {
+				forceCloseTime(elementIndex);
+			}
+			@Override
+			protected boolean isValidOn(int elementIndex) {
+				return 
+				(rightToIA >= elementViews.size() || elementViews.get(rightToIA).model().getElementSpec().getType() != ElementType.TIMES_DIVIDER)
+				&&
+				(rightToIA-1 < 0 || elementViews.get(rightToIA-1).model().getElementSpec().getType() != ElementType.TIMES_DIVIDER);
+			}
+		});
 		TypedArray iconsMapping = getResources().obtainTypedArray(R.array.insertPauseIcons);
 		if(iconsMapping.length() < minPossibleValue) {
 			log.e("InsertPause svg icons mapping doesn't cover whole range", null);
@@ -2185,8 +2232,9 @@ public class EditActivity extends Activity {
 			return;
 		}
 		for(int i = 0; i < minPossibleValue; i++) {
-			insertActions[i] = new InsertPause(iconsMapping.getResourceId(i, 0), i);
+			insertActions.add(new InsertPause(iconsMapping.getResourceId(i, 0), i));
 		}
+		this.insertActions = insertActions.toArray(new ElementAction[0]);
 		iconsMapping.recycle();
 	}
 	private View.OnTouchListener quickActionsDismiss = new OnTouchListener() {

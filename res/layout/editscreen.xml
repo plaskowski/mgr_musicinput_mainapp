@@ -83,6 +83,7 @@
 		    android:layout_alignBottom="@id/EDIT_inputArea"
 		    android:layout_marginRight="-45dip"
 		    custom:extendedImage="@style/insertButton"
+		    android:scaleType="fitXY"
 	    /><!-- 
 		    android:layout_gravity="right|bottom"
 		    android:layout_toRightOf="@id/EDIT_inputArea"

@@ -9,7 +9,10 @@ public class TimeSpec {
 	KeySignature keySignature;
 	
 	public static class TimeStep {
-		int baseMultiplier, tempoBaseLength;
+		public static final TimeStep commonTime = new TimeStep(4, NoteConstants.LEN_QUATERNOTE);
+		public static final TimeStep cutCommonTime = new TimeStep(2, NoteConstants.LEN_HALFNOTE);
+		
+		private int baseMultiplier, tempoBaseLength;
 
 		public TimeStep(int baseMultiplier, int tempoBaseLength) {
 			super();

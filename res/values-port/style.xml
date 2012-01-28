@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="dialog_timestep_container">
+	   	<item name="android:layout_marginTop">5dip</item>
+	   	<item name="android:paddingBottom">5dip</item>
+	   	<item name="android:background">@drawable/bottomdivider_dark</item>
+	   	<item name="android:layout_width">fill_parent</item>
+		<item name="android:layout_height">wrap_content</item>
+	</style>
+    <style name="dialog_timestep_container_last" parent="dialog_timestep_container">
+	   	<item name="android:background">@null</item>
+	</style>
+</resources>

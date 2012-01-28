@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableRow xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res/pl.edu.mimuw.students.pl249278.android.musicinput"
+    android:id="@+id/aaaa"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:gravity="center" >
+
+    <Button
+        android:id="@+id/numberspinner_button_less"
+        android:layout_width="50dip"
+        android:layout_height="match_parent"
+        android:text="-"
+        android:textSize="20dip" />
+
+    <TextView
+        android:id="@+id/numberspinner_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:background="#ffffff"
+        android:clickable="false"
+        android:editable="false"
+        android:gravity="center"
+        android:inputType="number"
+        android:maxLength="2"
+        android:minWidth="40dip"
+        android:text="2"
+        android:textColor="#000000"
+        android:textSize="40dip"
+        android:typeface="monospace" />
+
+    <Button
+        android:id="@+id/numberspinner_button_more"
+        android:layout_width="50dip"
+        android:layout_height="match_parent"
+        android:text="+"
+        android:textSize="20dip" />
+
+</TableRow>

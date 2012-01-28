@@ -49,4 +49,14 @@ public class SvgCompoundDrawable extends CompoundDrawable {
 			canvas.restore();
 		}
 	}
+	
+	@Override
+	public int getIntrinsicWidth() {
+		return (int) svgImage.getWidth();
+	}
+	
+	@Override
+	public int getIntrinsicHeight() {
+		return (int) svgImage.getHeight();
+	}
 }

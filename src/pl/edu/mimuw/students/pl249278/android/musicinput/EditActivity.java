@@ -29,6 +29,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Action;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.IndicatorOrigin;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.DisplayMode;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TimeStepDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
@@ -58,7 +59,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetElementView;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.BlurMaskFilter;
@@ -71,6 +71,8 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Vibrator;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -82,7 +84,7 @@ import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.HorizontalScrollView;
 import android.widget.Toast;
 
-public class EditActivity extends Activity {
+public class EditActivity extends FragmentActivity {
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
 
 	private static final int ANIM_TIME = 150;
@@ -869,17 +871,31 @@ public class EditActivity extends Activity {
 	
 	private Point rebuildRange = new Point();
 	private void forceCloseTime(int insertIndex) {
-		Time time = times.get(findTimeToInsertTo(insertIndex));
-		int capLeft = time.capLeft;
+		int timeIndex = findTimeToInsertTo(insertIndex);
+		Time time = times.get(timeIndex);
+		int capToFill = timeCapacity(getCurrentTimeStep(timeIndex), minPossibleValue);
+		for(int i = time.rangeStart+1; i < insertIndex; i++) {
+			ElementSpec spec = specAt(i);
+			switch(spec.getType()) {
+			case NOTE:
+			case PAUSE:
+				capToFill -= spec.timeValue(minPossibleValue);
+				break;
+			case FAKE_PAUSE:
+				break;
+			default:
+				throw new CodeLogicError("Unexpected type of element: "+spec.getType().name());
+			}
+		}
 		int totalInserted = 0;
 		try {
 			for(int pLength = 0; pLength <= minPossibleValue; pLength++) {
 				int bitIndex = (minPossibleValue-pLength);
-				if(IntUtils.getFlag(capLeft, bitIndex) == 1) {
+				if(IntUtils.getFlag(capToFill, bitIndex) == 1) {
 					PauseSpec pause = new PauseSpec(pLength);
 					if(++pLength <= minPossibleValue) {
 						bitIndex = (minPossibleValue-pLength);
-						if(IntUtils.getFlag(capLeft, bitIndex) == 1) {
+						if(IntUtils.getFlag(capToFill, bitIndex) == 1) {
 							pause.setDotExtension(1);
 						}
 					}
@@ -1221,7 +1237,7 @@ public class EditActivity extends Activity {
 	}
 	
 	private TimeStep getCurrentTimeStep(int timeIndex) {
-		TimeStep result = null, curr;
+		TimeStep result = sheetParams.getTimeStep(), curr;
 		for(int i = 0; i <= timeIndex; i++) {
 			if((curr = times.get(i).spec.getTimeStep()) != null) {
 				result = curr;
@@ -1799,12 +1815,12 @@ public class EditActivity extends Activity {
 		lastDisruptText.show();
 	}
 	
-	private ElementAction[] possibleActions;
-	private ElementAction[]	modifiersActions;
-	private ElementAction[] insertActions;
+	private IndexAwareAction[] possibleActions;
+	private IndexAwareAction[]	modifiersActions;
+	private IndexAwareAction[] insertActions;
 	private int elementActionIndex;
 	
-	private abstract class ElementAction implements Action {
+	private abstract class IndexAwareAction implements Action {
 		protected boolean mPostHide = true; 
 		@Override
 		public final void perform() {
@@ -1830,7 +1846,7 @@ public class EditActivity extends Activity {
 		}
 	};
 	
-	private abstract class SvgIconAction extends ElementAction {
+	private abstract class SvgIconAction extends IndexAwareAction {
 		private SvgImage icon;
 		
 		public SvgIconAction(int svgResId) throws LoadingSvgException {
@@ -2015,12 +2031,12 @@ public class EditActivity extends Activity {
 		}
 	}
 	
-	private abstract class ElementActionWrapper extends ElementAction {
+	private abstract class IndexAwareActionWrapper extends IndexAwareAction {
 		private int startIndex;
 		private int lastElementIndex;
-		private ElementAction wrappedElement;
+		private IndexAwareAction wrappedElement;
 
-		public ElementActionWrapper(ElementAction wrappedElement) throws LoadingSvgException {
+		public IndexAwareActionWrapper(IndexAwareAction wrappedElement) throws LoadingSvgException {
 			this.wrappedElement = wrappedElement;
 		}
 
@@ -2058,7 +2074,7 @@ public class EditActivity extends Activity {
 		}
 	}
 
-	private class ToggleJoinArcEnd extends ElementActionWrapper {
+	private class ToggleJoinArcEnd extends IndexAwareActionWrapper {
 		public ToggleJoinArcEnd(int svgResId)	throws LoadingSvgException {
 			super(new ToggleJoinArc(svgResId));
 		}
@@ -2110,7 +2126,7 @@ public class EditActivity extends Activity {
 		}
 	}
 	
-	private class ToggleNoteGroupEnd extends ElementActionWrapper {
+	private class ToggleNoteGroupEnd extends IndexAwareActionWrapper {
 
 		public ToggleNoteGroupEnd(int svgResId) throws LoadingSvgException {
 			super(new ToggleNoteGroup(svgResId));
@@ -2195,11 +2211,39 @@ public class EditActivity extends Activity {
 		
 	};
 	
+	private static final String DIALOGTAG_TIMESTEP = "timestep";
+	
+	private class AlterTimeStep extends SvgIconAction {
+
+		public AlterTimeStep(int svgResId) throws LoadingSvgException {
+			super(svgResId);
+		}
+
+		@Override
+		protected void perform(int elementIndex) {
+			// TODO Auto-generated method stub
+			try {
+				DialogFragment newFragment = TimeStepDialog.newInstance(EditActivity.this, 
+					times.get(findTimeToInsertTo(elementIndex)).spec.getTimeStep());
+			    newFragment.show(getSupportFragmentManager(), DIALOGTAG_TIMESTEP);
+			} catch (LoadingSvgException e) {
+				log.e("Failed to initialize TimeStep dialog.", e);
+				// TODO display some kind of info to user
+			}
+		}
+
+		@Override
+		protected boolean isValidOn(int elementIndex) {
+			return findTimeToInsertTo(elementIndex) != 0;
+		}
+		
+	}
+	
 	private QuickActionsView qActionsView; 
 	private void prepareQuickActions() throws LoadingSvgException {
 		qActionsView = (QuickActionsView) findViewById(R.id.EDIT_quickactions);
 		qActionsView.setVisibility(View.INVISIBLE);
-		possibleActions = new ElementAction[] {
+		possibleActions = new IndexAwareAction[] {
 			new TogglePauseDot(R.xml.button_dot),
 			new ToggleJoinArcEnd(R.xml.button_joinarc_left),
 			new ToggleNoteGroupEnd(R.xml.button_notegroup_left),
@@ -2224,12 +2268,12 @@ public class EditActivity extends Activity {
 			new ToggleNoteGroup(R.xml.button_notegroup_right),
 			new ToggleJoinArc(R.xml.button_joinarc_right)
 		};
-		modifiersActions = new ElementAction[] {
+		modifiersActions = new IndexAwareAction[] {
 			new ToggleNoteModifier(R.xml.flat, NoteModifier.FLAT),
 			new ToggleNoteModifier(R.xml.sharp_online, NoteModifier.SHARP),
 			new ToggleNoteModifier(R.xml.natural_online, NoteModifier.NATURAL)
 		};
-		ArrayList<ElementAction> insertActions = new ArrayList<EditActivity.ElementAction>();
+		ArrayList<IndexAwareAction> insertActions = new ArrayList<EditActivity.IndexAwareAction>();
 		insertActions.add(new SvgIconAction(R.xml.button_timedivider) {
 			@Override
 			protected void perform(int elementIndex) {
@@ -2243,6 +2287,7 @@ public class EditActivity extends Activity {
 				(rightToIA-1 < 0 || elementViews.get(rightToIA-1).model().getElementSpec().getType() != ElementType.TIMES_DIVIDER);
 			}
 		});
+		insertActions.add(new AlterTimeStep(R.xml.button_timestep));
 		TypedArray iconsMapping = getResources().obtainTypedArray(R.array.insertPauseIcons);
 		if(iconsMapping.length() < minPossibleValue) {
 			log.e("InsertPause svg icons mapping doesn't cover whole range", null);
@@ -2253,7 +2298,7 @@ public class EditActivity extends Activity {
 		for(int i = 0; i < minPossibleValue; i++) {
 			insertActions.add(new InsertPause(iconsMapping.getResourceId(i, 0), i));
 		}
-		this.insertActions = insertActions.toArray(new ElementAction[0]);
+		this.insertActions = insertActions.toArray(new IndexAwareAction[0]);
 		iconsMapping.recycle();
 	}
 	private View.OnTouchListener quickActionsDismiss = new OnTouchListener() {
@@ -2264,7 +2309,7 @@ public class EditActivity extends Activity {
 		}
 	};
 	
-	private void showQuickActionsAbove(View view, int actionsTargetIndex, ElementAction[] possibleActions) {
+	private void showQuickActionsAbove(View view, int actionsTargetIndex, IndexAwareAction[] possibleActions) {
 		showQuickActions(
 			actionsTargetIndex, possibleActions,
 			view.getLeft() + view.getWidth()/2,
@@ -2272,7 +2317,7 @@ public class EditActivity extends Activity {
 		);
 	}
 	
-	private void showElementQuickActions(int contextElementIndex, ElementAction[] possibleActions) {
+	private void showElementQuickActions(int contextElementIndex, IndexAwareAction[] possibleActions) {
 		int middleX, middleY;
 		SheetAlignedElementView view = elementViews.get(contextElementIndex);
 		switch(view.model().getElementSpec().getType()) {
@@ -2294,10 +2339,10 @@ public class EditActivity extends Activity {
 		showQuickActions(contextElementIndex, possibleActions, refPointVisibleX, refPointVisibleY);
 	}
 	
-	private void showQuickActions(int contextElementIndex, ElementAction[] possibleActions, int refPointVisibleX, int refPointVisibleY) {
+	private void showQuickActions(int contextElementIndex, IndexAwareAction[] possibleActions, int refPointVisibleX, int refPointVisibleY) {
 		List<Action> model = new ArrayList<Action>(possibleActions.length);
 		for(int i = 0; i < possibleActions.length; i++) {
-			ElementAction action = possibleActions[i];
+			IndexAwareAction action = possibleActions[i];
 			if(action.isValidOn(contextElementIndex)) {
 				model.add(action);
 			}

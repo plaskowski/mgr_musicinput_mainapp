@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<style name="dialog_timestep_iconPaint" parent="@style/PaintAntialias">
+	    <item name="paintStyle">FILL</item>
+	    <item name="color">#FFFFFF</item>
+	</style>
+	
+	<dimen name="dialog_timestep_icon_linethickness">2dip</dimen>
+	<string name="dialog_timestep_icon_horizontalpadding">0.5s</string>
+    
+    <string name="dialog_timestep_radiotag">radioButton</string>
+</resources>

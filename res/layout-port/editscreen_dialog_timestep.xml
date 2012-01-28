@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res/pl.edu.mimuw.students.pl249278.android.musicinput"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+	android:id="@+id/EDIT_dialog_timestep_scroll"
+>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <LinearLayout
+            android:id="@+id/EDIT_dialog_timestep_noneSet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+			style="@style/dialog_timestep_container"
+        >
+            <RadioButton
+                android:tag="@string/dialog_timestep_radiotag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/no_timestep" />
+        </LinearLayout>
+
+        <include
+            android:id="@+id/EDIT_dialog_timestep_commonTime"
+            layout="@layout/edit_dialog_timestep_special"
+		/>
+
+        <include
+            android:id="@+id/EDIT_dialog_timestep_cutCommonTime"
+            layout="@layout/edit_dialog_timestep_special"
+		/>
+        
+		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout
+            android:id="@+id/EDIT_dialog_timestep_custom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+			style="@style/dialog_timestep_container"
+		>
+            <RadioButton
+                android:tag="@string/dialog_timestep_radiotag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/dialog_timestep_custom" />
+
+            <include
+                android:id="@+id/EDIT_dialog_timestep_spinnertop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                layout="@layout/number_spinner" />
+
+            <include
+                android:id="@+id/EDIT_dialog_timestep_spinnerbottom"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                layout="@layout/number_spinner" />
+        </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

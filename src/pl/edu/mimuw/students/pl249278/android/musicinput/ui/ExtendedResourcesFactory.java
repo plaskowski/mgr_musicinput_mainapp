@@ -10,6 +10,7 @@ import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import android.content.Context;
 import android.content.res.Resources;
+import android.content.res.Resources.Theme;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.CornerPathEffect;
@@ -100,7 +101,7 @@ public class ExtendedResourcesFactory {
 		// load style
 		TypedArray attrsArray = ctx.obtainStyledAttributes(attrsSet, R.styleable.StyleableClassDeclaration, 0, styleId);
 		String className = attrsArray.getString(R.styleable.StyleableClassDeclaration_className);
-		log.d("Inflating extended class %s", className);
+		log.v("Inflating extended class %s", className);
 		if(className == null) {
 			throw new RuntimeException("No className defined in style "+styleName(styleId)+"#"+styleId);
 		}
@@ -288,5 +289,34 @@ public class ExtendedResourcesFactory {
 			int defStyle) {
 		return new SimpleResolver(defStyle, attrs, context);
 	}
+	
+	public static StyleResolver styleResolver(Resources resources) {
+		return new NoAttrSetResolver(resources);
+	}
 
+	private static class NoAttrSetResolver implements StyleResolver {
+		private Resources resources;
+		
+		public NoAttrSetResolver(Resources resources) {
+			this.resources = resources;
+		}
+
+		@Override
+		public TypedArray obtainStyledAttributes(int[] attrs) {
+			Theme theme = resources.newTheme();
+			return theme.obtainStyledAttributes(attrs);
+		}
+
+		@Override
+		public TypedArray obtainStyledAttributes(int[] attrs, int styleId) {
+			Theme theme = resources.newTheme();
+			return theme.obtainStyledAttributes(styleId, attrs);
+		}
+
+		@Override
+		public Resources getResources() {
+			return resources;
+		}
+		
+	}
 }

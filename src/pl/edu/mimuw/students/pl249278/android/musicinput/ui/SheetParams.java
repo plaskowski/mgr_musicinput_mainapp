@@ -33,6 +33,10 @@ public class SheetParams implements SheetVisualParams {
 		this.lineFactor = sheetParams.lineFactor;
 		this.linespacingFactor = sheetParams.linespacingFactor;
 	}
+	
+	public float readParametrizedValue(String stringRep) {
+		return readParametrizedFactor(stringRep)*scale;
+	}
 
 	public float readParametrizedFactor(String factorStringRep) {
 		String rawValue = factorStringRep;
@@ -42,8 +46,12 @@ public class SheetParams implements SheetVisualParams {
 			return factor*this.getLineFactor();
 		} else if(c == 's') {
 			return factor*this.getLinespacingFactor();
+		} else {
+			throw new UnsupportedOperationException(String.format(
+				"Uknown char %c in parametrized factor",
+				c
+			));
 		}
-		throw new UnsupportedOperationException();
 	}
 	
 	private static int line0absIndex = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE);

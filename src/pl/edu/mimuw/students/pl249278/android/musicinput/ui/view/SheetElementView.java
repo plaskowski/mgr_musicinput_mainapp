@@ -12,7 +12,7 @@ import android.view.View;
 public class SheetElementView<ElementType extends SheetElement> extends View {
 //	private static LogUtils log = new LogUtils(SheetElementView.class);
 	protected ElementType model;
-	private Paint paint;
+	protected Paint paint;
 
 	public SheetElementView(Context context, ElementType model) {
 		super(context);
@@ -85,11 +85,13 @@ public class SheetElementView<ElementType extends SheetElement> extends View {
 	
 	@Override
 	protected void onDraw(Canvas canvas) {
+		canvas.save();
 		canvas.translate(
 			getPaddingLeft(), 
 			getPaddingTop()
 		);
 		model.onDraw(canvas, paint);
+		canvas.restore();
 	}
 	
 	public ElementType model() {

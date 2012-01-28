@@ -15,6 +15,13 @@ public class SvgRenderer {
 			if(obj instanceof SvgPath) {
 				Path path = generate((SvgPath) obj, scale);
 				c.drawPath(path, paint);
+			} else if(obj instanceof SvgRect) {
+				SvgRect rect = (SvgRect) obj;
+				c.drawRect(
+					scale*rect.x, scale*rect.y,
+					scale*(rect.x+rect.width), scale*(rect.y+rect.hegiht),
+					paint
+				);
 			} else {
 				throw new RuntimeException("Supported type not handled: "+obj.getClass().getName());
 			}

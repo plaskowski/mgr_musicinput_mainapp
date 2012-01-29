@@ -58,5 +58,9 @@ public class PauseSpec implements LengthSpec {
 	public void setDotExtension(int dotExt) {
 		putValue(FLAG_DOT_H, FLAG_DOT_L, dotExt);
 	}
+
+	public void setLength(int length) {
+		this.length = length;
+	}
 	
 }

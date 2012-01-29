@@ -84,7 +84,7 @@ import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.HorizontalScrollView;
 import android.widget.Toast;
 
-public class EditActivity extends FragmentActivity {
+public class EditActivity extends FragmentActivity implements TimeStepDialog.OnPromptResult {
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
 
 	private static final int ANIM_TIME = 150;
@@ -194,6 +194,7 @@ public class EditActivity extends FragmentActivity {
 		NoteValueSpinner valueSpinner = (NoteValueSpinner) findViewById(R.id.EDIT_note_value_scroll);
 		try {
 			valueSpinner.setupNoteViews(sheetParams);
+			currentNoteLength = valueSpinner.getCurrentValue();
 		} catch (CreationException e) {
 			e.printStackTrace();
 			finish();
@@ -374,16 +375,11 @@ public class EditActivity extends FragmentActivity {
 //		log.i("rebuildTimes(%d)", startTimeIndex);
 		
 		if(sheetParams.getTimeStep() != null) {
-			TimeSpec.TimeStep currentMetrum = sheetParams.getTimeStep();
-			for(int ti = 0; ti <= startTimeIndex && ti < times.size(); ti++) {
-				TimeStep ts = times.get(ti).spec.getTimeStep();
-				if(ts != null) {
-					currentMetrum = ts;
-				}
-			}
+			TimeSpec.TimeStep currentMetrum = getCurrentTimeStep(startTimeIndex);
 			int i = startTimeIndex < times.size() ? times.get(startTimeIndex).rangeStart : 0;
 			int timeIndex = startTimeIndex;
 			Time currentTime = null;
+			int currentTimeCapcity = 0;
 			int prevHandledTime = timeIndex-1;
 			for(; i < elementViews.size();) {
 				if(timeIndex > prevHandledTime) {
@@ -391,6 +387,7 @@ public class EditActivity extends FragmentActivity {
 					if(currentTime.spec.getTimeStep() != null) {
 						currentMetrum = currentTime.spec.getTimeStep();
 					}
+					currentTimeCapcity = timeCapacity(currentMetrum, minPossibleValue);
 					prevHandledTime = timeIndex;
 					i++;
 					continue;
@@ -413,33 +410,27 @@ public class EditActivity extends FragmentActivity {
 //						log.i("rebuildTimes(): and forced it's end", i, timeValue, timeIndex); 
 						timeIndex++;
 					}
-				} else {
-					/** create fake pause with given capLeft */
-//					log.i("rebuildTimes(): element at %d of timeValue %d didnt fit to %d cap of time[%d] so forced fake pause and end", i, timeValue, capLeft, timeIndex);
-					int capLeft = currentTime.capLeft;
-					for(int pLength = 0; pLength <= minPossibleValue; pLength++) {
-						int bitIndex = (minPossibleValue-pLength);
-						if(IntUtils.getFlag(capLeft, bitIndex) == 1) {
-							PauseSpec pause = new PauseSpec(pLength);
-							int dotExt = 0;
-							for(pLength = pLength+1; pLength <= minPossibleValue; pLength++) {
-								bitIndex = (minPossibleValue-pLength);
-								if(IntUtils.getFlag(capLeft, bitIndex) == 1) {
-									dotExt++;
-								} else {
-									break;
-								}
-							}
-							pause.setDotExtension(dotExt);
-							SheetAlignedElementView pauseView = addElementView(
-								i, 
-								createDrawingModel(new ElementSpec.Pause(pause, true))
-							);
-							pauseView.setPaint(fakePausePaint);
-							updatePosition(pauseView, positionAfter(i-1), sheetElementY(pauseView));
-							i++;
-						}
+				} 
+				else if(timeValue > currentTimeCapcity) { 
+					// try to divide element to fit
+					if(elementSpec.getType() != ElementType.NOTE) {
+						// drop because no possibility of dividing
+						removeElementView(view);
+						continue;
+					} else {
+						ElementSpec.NormalNote note = (NormalNote) elementSpec;
+						int capLeft = currentTime.capLeft;
+						removeElementView(view);
+						insertDiviedNote.insertDivided(i, capLeft, note.noteSpec(), true);
+						insertDiviedNote.insertDivided(
+							i+insertDiviedNote.getTotal(), 
+							timeValue - capLeft, note.noteSpec(), false);
+						continue;
 					}
+				} 
+				else {
+					fillWithFakePauses.insertDivided(i, currentTime.capLeft, true);
+					i += fillWithFakePauses.getTotal();
 					timeIndex++;
 					continue;
 				}
@@ -456,7 +447,118 @@ public class EditActivity extends FragmentActivity {
 			}
 		}
 	}
+	
+	private InsertDivided fillWithFakePauses = new InsertDivided() {
+		@Override
+		protected void handle(int atIndex, int baseLength, int dotExt) throws CreationException {
+			PauseSpec pause = new PauseSpec(baseLength);
+			pause.setDotExtension(dotExt);
+			SheetAlignedElementView pauseView = addElementView(
+				atIndex, 
+				createDrawingModel(new ElementSpec.Pause(pause, true))
+			);
+			pauseView.setPaint(fakePausePaint);
+			updatePosition(pauseView, positionAfter(atIndex-1), sheetElementY(pauseView));
+		}
+	};
+	
+	private class FillWithPauses extends InsertDivided {
+		private Point rebuildRange = new Point();
+		
+		@Override
+		protected void handle(int atIndex, int baseLength, int dotExt) throws CreationException {
+			PauseSpec pause = new PauseSpec(baseLength);
+			pause.setDotExtension(dotExt);
+			SheetAlignedElementView newElement = insertElement(
+				atIndex, 
+				new ElementSpec.Pause(pause), 
+				getTotal() != 1 ? null : rebuildRange
+			);
+			updatePosition(newElement, inIA_noteViewX(newElement), sheetElementY(newElement));
+		}
+	}
+	private FillWithPauses fillWithPauses = new FillWithPauses();
+	
+	private class InsertDiviedNote extends InsertDivided {
+		private NoteSpec template;
+		private List<NoteSpec> specs = new ArrayList<NoteSpec>();
 
+		void insertDivided(int insertIndex, int capToFill, NoteSpec template, boolean addJoinArcAtEnd) throws CreationException {
+			this.template = template;
+			specs.clear();
+			super.insertDivided(insertIndex, capToFill, false);
+			int total = specs.size();
+			for(int i = 0; i < total; i++) {
+				NoteSpec spec = specs.get(i);
+				if(addJoinArcAtEnd || i != total-1) {
+					spec.setHasJoinArc(true);
+				}
+				SheetAlignedElementView view = addElementView(
+					insertIndex+i,
+					createDrawingModel(elementSpecNN(spec))
+				);
+				updatePosition(view, positionAfter(insertIndex-1), sheetElementY(view));
+			}
+		}
+		
+		@Override
+		protected void handle(int atIndex, int baseLength, int dotExt) throws CreationException {
+			NoteSpec spec = new NoteSpec(template);
+			spec.setLength(baseLength);
+			spec.setDotExtension(dotExt);
+			specs.add(spec);
+		}
+		
+	}
+	private InsertDiviedNote insertDiviedNote = new InsertDiviedNote();
+	
+	private abstract class InsertDivided extends DivideLengthStrategy {
+		private int insertIndex;
+		private int total;
+
+		void insertDivided(int insertIndex, int capToFill, boolean multipleDots) throws CreationException {
+			this.insertIndex = insertIndex;
+			this.total = 0;
+			divide(capToFill, multipleDots);
+		}
+		
+		@Override
+		protected void handle(int baseLength, int dotExt) throws CreationException {
+			handle(insertIndex+(total++), baseLength, dotExt);
+		}
+		
+		protected abstract void handle(int atIndex, int baseLength, int dotExt) throws CreationException;
+
+		int getTotal() {
+			return total;
+		}
+	}
+	
+	private abstract class DivideLengthStrategy {
+		void divide(int capToFill, boolean multipleDots) throws CreationException {
+			for(int pLength = 0; pLength <= minPossibleValue; pLength++) {
+				int bitIndex = (minPossibleValue-pLength);
+				if(IntUtils.getFlag(capToFill, bitIndex) == 1) {
+					int baseLength = pLength;
+					int dotExt = 0;
+					for(pLength = pLength+1; pLength <= minPossibleValue; pLength++) {
+						bitIndex = (minPossibleValue-pLength);
+						if(IntUtils.getFlag(capToFill, bitIndex) == 1) {
+							dotExt++;
+							if(!multipleDots)
+								break;
+						} else {
+							break;
+						}
+					}
+					handle(baseLength, dotExt);
+				}
+			}
+		}
+
+		protected abstract void handle(int baseLength, int dotExt) throws CreationException;
+	}
+	
 	private Time rebuildTime(int timeIndex, int newRangeStart, TimeStep prevMetrum) throws CreationException {
 		Time currentTime;
 		if(timeIndex >= times.size()) {
@@ -869,7 +971,6 @@ public class EditActivity extends FragmentActivity {
 		return elView;
 	}
 	
-	private Point rebuildRange = new Point();
 	private void forceCloseTime(int insertIndex) {
 		int timeIndex = findTimeToInsertTo(insertIndex);
 		Time time = times.get(timeIndex);
@@ -887,29 +988,11 @@ public class EditActivity extends FragmentActivity {
 				throw new CodeLogicError("Unexpected type of element: "+spec.getType().name());
 			}
 		}
-		int totalInserted = 0;
 		try {
-			for(int pLength = 0; pLength <= minPossibleValue; pLength++) {
-				int bitIndex = (minPossibleValue-pLength);
-				if(IntUtils.getFlag(capToFill, bitIndex) == 1) {
-					PauseSpec pause = new PauseSpec(pLength);
-					if(++pLength <= minPossibleValue) {
-						bitIndex = (minPossibleValue-pLength);
-						if(IntUtils.getFlag(capToFill, bitIndex) == 1) {
-							pause.setDotExtension(1);
-						}
-					}
-					SheetAlignedElementView newElement = insertElement(
-						insertIndex+(totalInserted++), 
-						new ElementSpec.Pause(pause), 
-						totalInserted != 1 ? null : rebuildRange
-					);
-					updatePosition(newElement, inIA_noteViewX(newElement), sheetElementY(newElement));
-				}
-			}
-			if(totalInserted > 0) {
-				rebuildRange.y += totalInserted-1;
-				postInsert(insertIndex+totalInserted-1, rebuildRange);
+			fillWithPauses.insertDivided(insertIndex, capToFill, false);
+			if(fillWithPauses.getTotal() > 0) {
+				fillWithPauses.rebuildRange.y += fillWithPauses.getTotal()-1;
+				postInsert(insertIndex+fillWithPauses.getTotal()-1, fillWithPauses.rebuildRange);
 			}
 		} catch(CreationException e) {
 			log.e(null, e);
@@ -1238,6 +1321,7 @@ public class EditActivity extends FragmentActivity {
 	
 	private TimeStep getCurrentTimeStep(int timeIndex) {
 		TimeStep result = sheetParams.getTimeStep(), curr;
+		timeIndex = Math.min(timeIndex, times.size()-1);
 		for(int i = 0; i <= timeIndex; i++) {
 			if((curr = times.get(i).spec.getTimeStep()) != null) {
 				result = curr;
@@ -2237,6 +2321,51 @@ public class EditActivity extends FragmentActivity {
 			return findTimeToInsertTo(elementIndex) != 0;
 		}
 		
+	}
+	
+	@Override
+	/**
+	 * Result of prompt for new TimeStep for current Time
+	 */
+	public void onResult(TimeStep enteredValue) {
+		int timeIndex = findTimeToInsertTo(rightToIA);
+		if(timeIndex == 0 || timeIndex >= times.size()) {
+			log.w("Tried to alter timestep of incorrect time %d", timeIndex);
+		} else try {
+			Time time = times.get(timeIndex);
+			time.spec.setTimeStep(enteredValue);
+			int pinVisiblePositionX = abs2visibleX(viewStableX(time.view) + middleX(time.view));
+			time.view.setModel(createDrawingModel(new ElementSpec.TimeDivider(
+				timeIndex > 0 ? times.get(timeIndex-1).spec : null,
+				time.spec
+			)));
+			updatePosition(time.view, null, sheetElementY(time.view));
+			if(timeIndex + 1 < times.size()) {
+				Time nextTime = times.get(timeIndex+1);
+				nextTime.view.setModel(createDrawingModel(new ElementSpec.TimeDivider(
+					time.spec,
+					nextTime.spec
+				)));
+				updatePosition(nextTime.view, null, sheetElementY(nextTime.view));
+			}
+			int endIndex = elementViews.size()-1;
+			clearJoinArcs(0, endIndex);
+			clearNoteGroups(0, endIndex);
+			rebuildTimes(timeIndex-1);
+			endIndex = elementViews.size()-1;
+			buildNoteGroups(0, endIndex);
+			buildJoinArcs(0, endIndex);
+			animatedRepositioning(
+				0, elementViews.size()-1, 
+				times.get(Math.min(timeIndex, times.size()-1)).rangeStart, 
+				pinVisiblePositionX, 
+				300
+			);
+		} catch(CreationException e) {
+			log.e("", e);
+			// TODO exit gracefully
+			finish();
+		}
 	}
 	
 	private QuickActionsView qActionsView; 

@@ -32,6 +32,9 @@ public class SheetElementView<ElementType extends SheetElement> extends View {
 	}
 
 	public void setModel(ElementType model) {
+		if(model.getSheetParams() == null && this.model != null && this.model.getSheetParams() != null) {
+			model.setSheetParams(this.model.getSheetParams());
+		}
 		this.model = model;
 		invalidateMeasure();
 		invalidate();

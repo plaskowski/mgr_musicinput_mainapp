@@ -198,6 +198,10 @@ public class NoteValueSpinner extends ScrollView {
 			OnValueChanged<Integer> onValueChangedListener) {
 		this.onValueChangedListener = onValueChangedListener;
 	}
+
+	public int getCurrentValue() {
+		return currentValue;
+	}
 	
 	
 }

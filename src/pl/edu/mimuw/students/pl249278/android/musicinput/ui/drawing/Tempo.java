@@ -15,12 +15,10 @@ public class Tempo extends SheetElement {
 	private static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
 	
 	private String upper, lower;
-	private Paint fontPaint;
 	
 	public Tempo(int upper, int lower) {
 		this.upper = ""+upper;
 		this.lower = ""+lower;
-		setPaint(new Paint());
 	}
 
 	@Override
@@ -31,12 +29,11 @@ public class Tempo extends SheetElement {
 		}
 	}
 	
-	public void setPaint(Paint fontPaint) {
-		fontPaint.setTypeface(Typeface.SERIF);
-		fontPaint.setTextAlign(Align.CENTER);
-		fontPaint.setTextSize(textSize);
-		fontPaint.setAntiAlias(true);
-		this.fontPaint = fontPaint;
+	private void setPaintTextAttributes(Paint paint) {
+		paint.setTypeface(Typeface.SERIF);
+		paint.setTextAlign(Align.CENTER);
+		paint.setTextSize(textSize);
+		paint.setAntiAlias(true);
 	}
 
 	private int upperY;
@@ -48,22 +45,27 @@ public class Tempo extends SheetElement {
 		int horizontalSpace = sheetParams.anchorOffset(LINE2_ABSINDEX, AnchorPart.TOP_EDGE)-start;
 		
 		// find such text size that upper char will fill vertically entire horizontalSpace
-		fontPaint.setTextSize(horizontalSpace);
+		textPaint.setTextSize(horizontalSpace);
 		Rect bounds = new Rect();
-		fontPaint.getTextBounds(upper, 0, 1, bounds);
+		textPaint.getTextBounds(upper, 0, 1, bounds);
 		textSize = ((float) horizontalSpace)/bounds.height() * horizontalSpace;
-		fontPaint.setTextSize(textSize);
+		textPaint.setTextSize(textSize);
 		
-		width = Math.max(fontPaint.measureText(upper), fontPaint.measureText(lower));
+		width = Math.max(textPaint.measureText(upper), textPaint.measureText(lower));
 		upperY = start + horizontalSpace;
-		fontPaint.getTextBounds(lower, 0, 1, bounds);
+		textPaint.getTextBounds(lower, 0, 1, bounds);
 		lowerY = sheetParams.anchorOffset(LINE2_ABSINDEX, AnchorPart.BOTTOM_EDGE) + bounds.height();
 	}
 	
+	Paint textPaint = new Paint();
+	
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
-		canvas.drawText(upper, width/2, upperY, fontPaint);
-		canvas.drawText(lower, width/2, lowerY, fontPaint);
+		textPaint.reset();
+		textPaint.set(paint);
+		setPaintTextAttributes(textPaint);
+		canvas.drawText(upper, width/2, upperY, textPaint);
+		canvas.drawText(lower, width/2, lowerY, textPaint);
 	}
 
 	@Override

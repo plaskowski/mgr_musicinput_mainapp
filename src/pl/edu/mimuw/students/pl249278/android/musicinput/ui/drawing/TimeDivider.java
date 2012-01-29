@@ -6,6 +6,7 @@ import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConsta
 import java.util.ArrayList;
 import java.util.List;
 
+import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
@@ -36,7 +37,25 @@ public class TimeDivider extends SheetAlignedElement {
 			}
 			TimeStep rTS = rightTime.getTimeStep();
 			if(rTS != null) {
-				rightParts.add(new Tempo(rTS.getBaseMultiplier(), 1 << rTS.getTempoBaseLength()));
+				SheetElement metrum;
+				if(rTS == TimeStep.commonTime) {
+					metrum = new SimpleSheetElement(
+						NotePartFactory.prepareAdujstableImage(
+							ctx, 
+							R.xml.timesignature_commontime, 
+							false
+					));
+				} else if(rTS == TimeStep.cutCommonTime) {
+					metrum = new SimpleSheetElement(
+						NotePartFactory.prepareAdujstableImage(
+							ctx, 
+							R.xml.timesignature_cutcommontime, 
+							false
+					));
+				} else {
+					metrum = new Tempo(rTS.getBaseMultiplier(), 1 << rTS.getTempoBaseLength());
+				}
+				rightParts.add(metrum);
 			}
 		}
 	}

@@ -4,6 +4,7 @@ import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConsta
 import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE4_ABSINDEX;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.length;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType.TIMES_DIVIDER;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.BOTTOM_EDGE;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.TOP_EDGE;
 
@@ -1004,6 +1005,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private View.OnTouchListener elementTouchListener = new OnTouchListener() {
 		Rect hitRect = new Rect();
 		int selectedIndex = -1;
+		IndexAwareAction[] actions;
 		
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
@@ -1019,16 +1021,23 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				if(i < elementViews.size()) {
 					switch(specAt(i).getType()) {
 					case PAUSE:
-						selectedIndex = i;
-						SheetAlignedElementView view = elementViews.get(selectedIndex);
-						view.setPaint(noteHighlightPaint);
-						return true;
+						actions = possibleActions;
+						break;
+					case TIMES_DIVIDER:
+						actions = timedividerActions;
+						break;
+					default:
+						return false;
 					}
+					selectedIndex = i;
+					SheetAlignedElementView view = elementViews.get(selectedIndex);
+					view.setPaint(noteHighlightPaint);
+					return true;
 				}
 				break;
 			case MotionEvent.ACTION_UP:
 				if(selectedIndex != -1) {
-					showElementQuickActions(selectedIndex, possibleActions);
+					showElementQuickActions(selectedIndex, actions);
 				}
 			case MotionEvent.ACTION_CANCEL:
 				if(selectedIndex != -1) {
@@ -1902,6 +1911,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private IndexAwareAction[] possibleActions;
 	private IndexAwareAction[]	modifiersActions;
 	private IndexAwareAction[] insertActions;
+	private IndexAwareAction[] timedividerActions;
 	private int elementActionIndex;
 	
 	private abstract class IndexAwareAction implements Action {
@@ -2307,8 +2317,9 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		protected void perform(int elementIndex) {
 			// TODO Auto-generated method stub
 			try {
+				contextTimeIndex = getTimeIndex(elementIndex);
 				DialogFragment newFragment = TimeStepDialog.newInstance(EditActivity.this, 
-					times.get(findTimeToInsertTo(elementIndex)).spec.getTimeStep());
+					times.get(contextTimeIndex).spec.getTimeStep());
 			    newFragment.show(getSupportFragmentManager(), DIALOGTAG_TIMESTEP);
 			} catch (LoadingSvgException e) {
 				log.e("Failed to initialize TimeStep dialog.", e);
@@ -2316,19 +2327,26 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			}
 		}
 
+		protected int getTimeIndex(int elementIndex) {
+			return findTimeToInsertTo(elementIndex);
+		}
+
 		@Override
 		protected boolean isValidOn(int elementIndex) {
-			return findTimeToInsertTo(elementIndex) != 0;
+			return getTimeIndex(elementIndex) != 0;
 		}
 		
 	}
+	
+	// TODO persist in onSaveInstance
+	private int contextTimeIndex = -1;
 	
 	@Override
 	/**
 	 * Result of prompt for new TimeStep for current Time
 	 */
 	public void onResult(TimeStep enteredValue) {
-		int timeIndex = findTimeToInsertTo(rightToIA);
+		int timeIndex = contextTimeIndex;
 		if(timeIndex == 0 || timeIndex >= times.size()) {
 			log.w("Tried to alter timestep of incorrect time %d", timeIndex);
 		} else try {
@@ -2429,6 +2447,15 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		}
 		this.insertActions = insertActions.toArray(new IndexAwareAction[0]);
 		iconsMapping.recycle();
+		
+		timedividerActions = new IndexAwareAction[] {
+			new AlterTimeStep(R.xml.qab_button_timestep) {
+				@Override
+				protected int getTimeIndex(int elementIndex) {
+					return findTime(elementIndex);
+				}
+			}
+		};
 	}
 	private View.OnTouchListener quickActionsDismiss = new OnTouchListener() {
 		@Override

@@ -1,5 +1,7 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.model;
 
+import java.util.EnumSet;
+
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.Clef;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.KeySignature;
 
@@ -7,6 +9,11 @@ public class TimeSpec {
 	TimeStep timeStep;
 	Clef clef;
 	KeySignature keySignature;
+	EnumSet<AdditionalMark> marks;
+	public static enum AdditionalMark {
+		BEGIN_REPEAT,
+		END_REPEAT
+	}
 	
 	public static class TimeStep {
 		public static final TimeStep commonTime = new TimeStep(4, NoteConstants.LEN_QUATERNOTE);
@@ -31,13 +38,17 @@ public class TimeSpec {
 	}
 	
 	public TimeSpec(TimeStep timeStep, Clef clef, KeySignature keySignature) {
+		this(timeStep, clef, keySignature, null);
+	}
+	public TimeSpec(TimeStep timeStep, Clef clef, KeySignature keySignature, EnumSet<AdditionalMark> marks) {
 		this.timeStep = timeStep;
 		this.clef = clef;
 		this.keySignature = keySignature;
+		this.marks = marks != null ? EnumSet.copyOf(marks) : EnumSet.noneOf(AdditionalMark.class);
 	}
 
 	public TimeSpec() {
-		this(null, null, null);
+		this(null, null, null, null);
 	}
 
 	public TimeStep getTimeStep() {
@@ -62,6 +73,17 @@ public class TimeSpec {
 
 	public void setKeySignature(KeySignature keySignature) {
 		this.keySignature = keySignature;
+	}
+	
+	public boolean addMark(AdditionalMark mark) {
+		return marks.add(mark);
+	}
+	
+	public boolean hasMark(AdditionalMark mark) {
+		return marks.contains(mark);
+	}
+	public boolean removeMark(AdditionalMark mark) {
+		return marks.remove(mark);
 	}
 	
 }

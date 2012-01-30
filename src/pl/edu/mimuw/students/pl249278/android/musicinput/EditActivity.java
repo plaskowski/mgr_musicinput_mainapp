@@ -4,7 +4,6 @@ import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConsta
 import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE4_ABSINDEX;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.length;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType.TIMES_DIVIDER;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.BOTTOM_EDGE;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.TOP_EDGE;
 
@@ -25,6 +24,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.Not
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.PauseSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.AdditionalMark;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Action;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.IndicatorOrigin;
@@ -1601,8 +1601,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				scaleGestureDetector.setTouchInputLocked(false);
 			}
 		};
-		SheetAlignedElementView timeDividerView = elementViews.get(time.rangeStart);
-		int x = middleAbsoluteX(timeDividerView);
+		int x = positionAfter(time.rangeStart-1);
 		int timeIndex = startTime-1;
 		int rescrollDest = -1;
 		for(int i = repositioningStart; i < elementsCount; i++) {
@@ -1732,6 +1731,17 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		    } 
 		});
 	}
+	
+	private void onFirstTimeDividerChanged() {
+		int paddingLeft = 
+		Math.max(
+			lines.getMinPadding() + middleX(elementViews.get(0)),
+			// assure that when sheet is scrolled to start IA left edge matches start of area where notes are placed
+			visibleRectWidth-inputAreaWidth-iaRightMargin + mTouchSlop - timeDividerSpacing(times.get(0), true)
+		);
+		lines.setNotesAreaLeftPadding(paddingLeft);
+		this.notesAreaX = paddingLeft;
+	}	
 
 	private void updateScaleFactor(float newScaleFactor) {
 		log.i("newScaleFactor: %f", newScaleFactor);
@@ -1971,6 +1981,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				updatePosition(view, absMiddleX-middleX(view), sheetElementY(view));
 				animatedRepositioning(range.x, range.y, elementIndex, abs2visibleX(absMiddleX), 500);
 			} catch (CreationException e) {
+				// TODO more gracefully
 				e.printStackTrace();
 				finish();
 				return;
@@ -2338,6 +2349,77 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		
 	}
 	
+	private abstract class ToggleTimebarMark extends SvgIconAction {
+		private AdditionalMark mark;
+
+		public ToggleTimebarMark(int svgResId, AdditionalMark mark)
+				throws LoadingSvgException {
+			super(svgResId);
+			this.mark = mark;
+		}
+
+		@Override
+		protected void perform(int elementIndex) {
+			try {
+				int timeIndex = getTimeIndex(elementIndex);
+				Time time = times.get(timeIndex);
+				if(time.spec.hasMark(mark)) {
+					time.spec.removeMark(mark);
+				} else {
+					time.spec.addMark(mark);
+				}
+				SheetAlignedElementView pinView = elementViews.get(elementIndex);
+				int pinVisiblePositionX = abs2visibleX(viewStableX(pinView) + middleX(pinView));
+				int oldAbsMiddleX = viewStableX(time.view) + middleX(time.view);
+				time.view.setModel(createDrawingModel(new ElementSpec.TimeDivider(
+					timeIndex > 0 ? times.get(timeIndex-1).spec : null,
+					time.spec
+				)));
+				updatePosition(time.view, oldAbsMiddleX - middleX(time.view), sheetElementY(time.view));
+				if(timeIndex + 1 < times.size()) {
+					Time nextTime = times.get(timeIndex+1);
+					oldAbsMiddleX = viewStableX(nextTime.view) + middleX(nextTime.view);
+					nextTime.view.setModel(createDrawingModel(new ElementSpec.TimeDivider(
+						time.spec,
+						nextTime.spec
+					)));
+					updatePosition(
+						nextTime.view, 
+						oldAbsMiddleX - middleX(nextTime.view), 
+						sheetElementY(nextTime.view)
+					);
+				}
+				if(timeIndex == 0) {
+					onFirstTimeDividerChanged();
+				}
+				animatedRepositioning(
+					// TODO not from 0
+					0, elementViews.size()-1, 
+					elementIndex, 
+					pinVisiblePositionX, 
+					300
+				);				
+			} catch (CreationException e) {
+				log.e("", e);
+				// TODO more gracefully
+				finish();
+			}
+		}
+		
+		protected abstract int getTimeIndex(int elementIndex);
+
+		@Override
+		protected boolean isValidOn(int elementIndex) {
+			return isValidIndex(elementIndex);
+		}
+		
+		@Override
+		protected Boolean getState(int contextElementIndex) {
+			return times.get(getTimeIndex(contextElementIndex)).spec.hasMark(mark);			
+		}
+		
+	}
+	
 	// TODO persist in onSaveInstance
 	private int contextTimeIndex = -1;
 	
@@ -2449,7 +2531,23 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		iconsMapping.recycle();
 		
 		timedividerActions = new IndexAwareAction[] {
+			new ToggleTimebarMark(R.xml.button_timebar_endrepeat, AdditionalMark.END_REPEAT) {
+				@Override
+				protected int getTimeIndex(int elementIndex) {
+					return findTimeToInsertTo(elementIndex);
+				}
+				@Override
+				protected boolean isValidOn(int elementIndex) {
+					return super.isValidOn(elementIndex) && getTimeIndex(elementIndex) >= 0;
+				}
+			},
 			new AlterTimeStep(R.xml.qab_button_timestep) {
+				@Override
+				protected int getTimeIndex(int elementIndex) {
+					return findTime(elementIndex);
+				}
+			},
+			new ToggleTimebarMark(R.xml.button_timebar_beginrepeat, AdditionalMark.BEGIN_REPEAT) {
 				@Override
 				protected int getTimeIndex(int elementIndex) {
 					return findTime(elementIndex);

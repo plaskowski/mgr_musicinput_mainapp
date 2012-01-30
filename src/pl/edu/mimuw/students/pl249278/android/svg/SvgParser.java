@@ -7,6 +7,7 @@ import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_MOVETO
 import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RCUBICTO;
 import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RLINETO;
 import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.PATH_CMD_RMOVETO;
+import static android.graphics.Matrix.*;
 
 import java.io.IOException;
 import java.text.NumberFormat;
@@ -63,12 +64,16 @@ public class SvgParser {
 		            	 result.width = parseFloat(attrValue(xmlParser, ROOT_ATTR_WIDTH));
 		            	 result.height =  parseFloat(attrValue(xmlParser, ROOT_ATTR_HEIGHT));
 		             } else if(TAG_PATH.equals(name)) {
+		            	 handleTransformAttribute(xmlParser);
 	        			 SvgPath path = parsePathNode(xmlParser);
 	        			 result.objects.add(path);
+	        			 handleNodeEnd(xmlParser);
 	        		 } else if(TAG_RECT.equals(name)) {
+	        			 handleTransformAttribute(xmlParser);
 	        			 result.objects.add(parseRectNode(xmlParser));
+	        			 handleNodeEnd(xmlParser);
 	        		 } else if(TAG_GROUP.equals(name)) {
-	        			 handleGroupNode(xmlParser);
+	        			 handleTransformAttribute(xmlParser);
 	        		 } else {
 	        			 log.v("Ignoring not supported element %s:%s", xmlParser.getNamespace(), xmlParser.getName());
 	        		 }
@@ -76,7 +81,7 @@ public class SvgParser {
 	         } else if(eventType == XmlPullParser.END_TAG) {
 	    		 String name = xmlParser.getName();
 	        	 if(TAG_GROUP.equals(name)) {
-	        		 handleGroupNodeEnd(xmlParser);
+	        		 handleNodeEnd(xmlParser);
 	        	 }
 	//             System.out.println("End tag "+xmlParser.getName());
 	        	 depth--;
@@ -108,7 +113,7 @@ public class SvgParser {
 		return currentTransformationMatrix;
 	}
 	
-	private void handleGroupNode(XmlPullParser xmlParser) throws ParseException {
+	private void handleTransformAttribute(XmlPullParser xmlParser) throws ParseException {
 		String transform = attrValue(xmlParser, ATTR_TRANSFORM);
 		if(transform != null) {
 			/* przygotować matrycę dla tej transformacji, odłożyć ją na stos wraz z zapisanym poziomem zaglebienia */
@@ -120,7 +125,7 @@ public class SvgParser {
 		}
 	}
 	
-	private void handleGroupNodeEnd(XmlPullParser xmlParser) {
+	private void handleNodeEnd(XmlPullParser xmlParser) {
 		/* sprawdzic czy grupa z aktualnego poziomu zaglebienia wprowadzala transformacje. Jesli tak to trzeba je wycofac */
 		if(!introLevels.empty() && introLevels.peek().equals(depth)) {
 			introLevels.pop();
@@ -282,8 +287,9 @@ public class SvgParser {
 	
 	private static final String WS_CHARS = "\u0020\0009\000D\000A";
 	private static final Pattern tPattern = Pattern.compile("["+WS_CHARS+"|,]*(matrix|translate|scale|rotate|skewX|skewY)["+WS_CHARS+"]*\\(([^\\)]+)\\)");
+	private float[] temporaryRawMatrix = new float[9];
 	
-	private static void parseTransformString(String attrValue, Matrix out) throws ParseException {
+	private void parseTransformString(String attrValue, Matrix out) throws ParseException {
 		Matcher matcher = tPattern.matcher(attrValue);
 		NumberArgumentParser nParser = new NumberArgumentParser();
 		while(matcher.find()) {
@@ -306,6 +312,30 @@ public class SvgParser {
 					nParser.tryReadArgument(0f),
 					nParser.tryReadArgument(0f)
 				);
+			} else if("matrix".equals(label)) {
+				float[] m = temporaryRawMatrix;
+				/*
+				 Svg defines matrix (a b c d e f) as:
+				 | a c e |
+				 | b d f |
+				 | 0 0 1 |
+				 where 
+				 a - scale x
+				 b - skew Y
+				 c - skew X
+				 d - scale y
+				 e - transl x
+				 f - transl y
+				 */
+				m[MSCALE_X] = nParser.readArgument();
+				m[MSKEW_Y] = nParser.readArgument();
+				m[MSKEW_X] = nParser.readArgument();
+				m[MSCALE_Y] = nParser.readArgument();
+				m[MTRANS_X] = nParser.readArgument();
+				m[MTRANS_Y] = nParser.readArgument();
+				m[MPERSP_0] = m[MPERSP_1] = 0;
+				m[MPERSP_2] = 1;
+				out.setValues(m);
 			} else {
 				log.v("Ignoring unsupported transformation %s", label);
 			}

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   width="744.09448"
+   height="1052.3622"
+   id="svg2">
+  <defs
+     id="defs4" />
+  <rect
+     width="15.402083"
+     height="43.444611"
+     x="28.856476"
+     y="21.677532"
+     id="rect3705"
+     style="fill:#ff0000;fill-opacity:0.19607843;stroke:none" />
+  <path
+     d="m 11.197029,27.606929 75.306872,0"
+     id="path3709"
+     style="fill:none;stroke:#0000ff;stroke-width:0.13715945;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.50980392;stroke-dasharray:none" />
+  <path
+     d="m 7.4298854,38.131725 75.3068766,0"
+     id="path3709-6"
+     style="fill:none;stroke:#0000ff;stroke-width:0.12760623;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.54901961;stroke-dasharray:none" />
+  <path
+     d="m 42.433714,14.613482 0,53.512931"
+     id="path3643"
+     style="fill:none;stroke:#00ff00;stroke-width:1.94212162px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0.19607843" />
+  <rect
+     width="43.015663"
+     height="3.8271985"
+     x="21.866131"
+     y="-44.147587"
+     transform="matrix(0,1,-1,0,0,0)"
+     id="rect3637"
+     style="fill:#008000;fill-opacity:1;stroke:none" />
+  <rect
+     width="43.015663"
+     height="0.95679963"
+     x="21.866131"
+     y="-36.926868"
+     transform="matrix(0,1,-1,0,0,0)"
+     id="rect3641"
+     style="fill:#008000;fill-opacity:1;stroke:none" />
+  <path
+     d="m 56.059378,39.165241 c 0,1.283645 -1.040599,2.324244 -2.324244,2.324244 -1.283644,0 -2.324244,-1.040599 -2.324244,-2.324244 0,-1.283644 1.0406,-2.324244 2.324244,-2.324244 1.283645,0 2.324244,1.0406 2.324244,2.324244 z"
+     transform="matrix(0.90298507,0,0,0.90298507,-17.352965,2.6721812)"
+     id="path2923"
+     style="fill:#000000;fill-opacity:1;stroke:none" />
+  <path
+     d="m 56.059378,39.165241 c 0,1.283645 -1.040599,2.324244 -2.324244,2.324244 -1.283644,0 -2.324244,-1.040599 -2.324244,-2.324244 0,-1.283644 1.0406,-2.324244 2.324244,-2.324244 1.283645,0 2.324244,1.0406 2.324244,2.324244 z"
+     transform="matrix(0.90298507,0,0,0.90298507,-17.352965,13.1475)"
+     id="path2925"
+     style="fill:#000000;fill-opacity:1;stroke:none" />
+</svg>

@@ -1,16 +1,17 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
 import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE4_ABSINDEX;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.AdditionalMark;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.LoadingSvgException;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.EnhancedSvgImage.InvalidMetaException;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -24,9 +25,31 @@ public class TimeDivider extends SheetAlignedElement {
 	
 	public TimeDivider(Context ctx, pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.TimeDivider elementSpec) throws LoadingSvgException {
 		this.spec = elementSpec;
-		TimeSpec rightTime = this.spec.rightTime;
+		rightParts = new ArrayList<SheetElement>(4);
+		
+		TimeSpec rightTime = this.spec.rightTime, leftTime = this.spec.leftTime;
+		boolean endRepeat = leftTime != null && leftTime.hasMark(AdditionalMark.END_REPEAT);
+		boolean beginRepeat = rightTime != null && rightTime.hasMark(AdditionalMark.BEGIN_REPEAT);
+		int xmlId;
+		if(beginRepeat && endRepeat) {
+			xmlId = R.xml.timebar_both_repeat;
+		} else if(beginRepeat) {
+			xmlId = R.xml.timebar_begin_repeat;
+		} else if(endRepeat) {
+			xmlId = R.xml.timebar_end_repeat;
+		} else {
+			xmlId = R.xml.timebar_single;
+		}
+		try {
+			rightParts.add(new SheetAlignedImage(NotePartFactory.prepareAdujstableImage(
+				ctx, xmlId, 
+				true
+			)));
+		} catch (InvalidMetaException e) {
+			throw new NotePartFactory.LoadingSvgException(xmlId, e);
+		}
+		
 		if(rightTime != null) {
-			rightParts = new ArrayList<SheetElement>(3);
 			if(rightTime.getClef() != null) {
 				rightParts.add(new SimpleSheetElement(
 					NotePartFactory.prepareClefImage(ctx, rightTime.getClef())
@@ -68,10 +91,10 @@ public class TimeDivider extends SheetAlignedElement {
 	
 	private void recalculate() {
 		line0Yoffset = 0;
-		totalWidth = sheetParams.getLineThickness();
-		totalHeight = sheetParams.anchorOffset(LINE4_ABSINDEX, AnchorPart.BOTTOM_EDGE);
 		int elementsSpacing = EL_SPACING*sheetParams.getLineThickness();
-		if(rightParts != null) for(SheetElement el: rightParts) {
+		totalWidth = -elementsSpacing;
+		totalHeight = 0;
+		for(SheetElement el: rightParts) {
 			el.setSheetParams(sheetParams);
 			totalWidth += elementsSpacing+el.measureWidth();
 			int off = el.getOffsetToAnchor(LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
@@ -104,17 +127,13 @@ public class TimeDivider extends SheetAlignedElement {
 //		debugElementDrawArea(canvas, this);
 		canvas.translate(0, line0Yoffset);
 		int lineThickness = sheetParams.getLineThickness();
-		canvas.drawRect(
-			0, 0,
-			lineThickness, sheetParams.anchorOffset(LINE4_ABSINDEX, AnchorPart.BOTTOM_EDGE),
-			paint
-		);
+		int spacing = EL_SPACING*lineThickness;
 		int totalDX = 0;
 		int dy2line0 = 0;
-		int xLazyShift = lineThickness;
-		if(rightParts != null) for(SheetElement el: rightParts) {
+		int xLazyShift = -spacing;
+		for(SheetElement el: rightParts) {
 			int eldY = el.getOffsetToAnchor(LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
-			int dx = xLazyShift+EL_SPACING*lineThickness;
+			int dx = xLazyShift+spacing;
 			canvas.translate(dx, eldY-dy2line0);
 //			debugElementDrawArea(canvas, el);
 			el.onDraw(canvas, paint);
@@ -141,7 +160,7 @@ public class TimeDivider extends SheetAlignedElement {
 	@Override
 	public int getHorizontalOffset(int lineIdentifier) {
 		if(lineIdentifier == SheetAlignedElement.MIDDLE_X) {
-			return sheetParams.getLineThickness()/2;
+			return (int) ((SheetAlignedImage) rightParts.get(0)).getxMiddleMarker();
 		} else {
 			return super.getHorizontalOffset(lineIdentifier);
 		}

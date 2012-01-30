@@ -9,7 +9,7 @@ import android.graphics.Paint;
 
 public class SimpleSheetElement extends SheetElement {
 
-	private float scale;
+	protected float scale;
 	private AdjustableSizeImage image;
 	
 	private int IM1Anchor;

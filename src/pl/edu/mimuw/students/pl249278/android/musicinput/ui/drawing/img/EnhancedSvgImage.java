@@ -75,7 +75,7 @@ public class EnhancedSvgImage extends SvgImage {
 	
 	@SuppressWarnings("serial")
 	public static class InvalidMetaException extends Exception {
-		protected InvalidMetaException(String detailMessage) {
+		public InvalidMetaException(String detailMessage) {
 			super(detailMessage);
 		}
 	}
@@ -223,11 +223,11 @@ public class EnhancedSvgImage extends SvgImage {
 					throw new InvalidMetaException("Expected vertical line, got "+line);
 			}
 
-	protected boolean isLineHorizontal(Pair<PointF, PointF> line) {
+	public static boolean isLineHorizontal(Pair<PointF, PointF> line) {
 		return line.first.y ==  line.second.y;
 	}
 
-	protected boolean isLineVertical(Pair<PointF, PointF> line) {
+	public static boolean isLineVertical(Pair<PointF, PointF> line) {
 		return line.first.x ==  line.second.x;
 	}
 

@@ -182,6 +182,14 @@ public abstract class ElementSpec {
 		public int spacingLength(int measureUnit) {
 			throw new UnsupportedOperationException();
 		}
+
+		public TimeSpec getLeftTime() {
+			return leftTime;
+		}
+
+		public TimeSpec getRightTime() {
+			return rightTime;
+		}
 	}
 	
 	/**

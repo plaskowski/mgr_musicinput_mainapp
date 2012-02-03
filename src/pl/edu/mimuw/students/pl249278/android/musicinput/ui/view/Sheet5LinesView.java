@@ -11,6 +11,7 @@ import android.graphics.Paint;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.GradientDrawable.Orientation;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 // TODO should I extract logic to SheetElement object?
@@ -42,15 +43,19 @@ public class Sheet5LinesView extends View {
 	private Paint lineHighlightedPaint = new Paint();
 	private GradientDrawable linespaceHighlighted;
 	
-	public void setParams(SheetVisualParams params) {
+	public void setParams(SheetVisualParams params, int topPaddingMin, int bottomPaddingMin) {
 		this.params = params;
 		lineThickness = params.getLineThickness();
 		totalVerticalSpan = params.anchorOffset(LINE4_ABSINDEX, AnchorPart.BOTTOM_EDGE);
 		int shadowThickness = params.getLineThickness()/2;
 		lineHighlightedPaint.setShadowLayer(shadowThickness, 0, params.getLineThickness()/4, Color.BLACK);
-		setPadding(0, shadowThickness, 0, shadowThickness);
+		setPadding(0, Math.max(shadowThickness, topPaddingMin), 0, Math.max(shadowThickness, bottomPaddingMin));
 		setMeasuredDimension(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+		requestLayout();
 		invalidate();
+		LogUtils.debug("5::setParams(..., topM: %d, bottomM: %d) vSpan %d vPadding %d, %d",
+			topPaddingMin, bottomPaddingMin, totalVerticalSpan, getPaddingTop(), getPaddingBottom()
+		);
 	}
 	
 	public void setHiglightColor(int color) {
@@ -100,7 +105,7 @@ public class Sheet5LinesView extends View {
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		if(params == null) {
-			LogUtils.info("Sheet5LinesView::onMeasure when sheet params not yet set.");
+			LogUtils.log(Log.VERBOSE, LogUtils.COMMON_TAG, "Sheet5LinesView::onMeasure when sheet params not yet set.");
 			super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 			return;
 		}
@@ -115,7 +120,7 @@ public class Sheet5LinesView extends View {
 		setMeasuredDimension(width, totalVerticalSpan+getPaddingTop()+getPaddingBottom());
 	}
 
-	public int getMinPadding() {
+	public int getMinNotesAreaLeftPadding() {
 		return 2*lineThickness;
 	}
 

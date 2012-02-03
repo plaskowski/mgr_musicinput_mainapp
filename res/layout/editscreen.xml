@@ -43,25 +43,31 @@
 	    	android:layout_width="fill_parent" 
 	    	android:layout_height="fill_parent"
 	    >
-	    	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ModifiedScrollView
+	    	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollView
 	    		android:id="@+id/EDIT_vertscrollview"
 		    	android:layout_width="wrap_content" 
 	    		android:layout_height="fill_parent"
-	    		android:fillViewport="true"
 	    	>
-				<RelativeLayout
-					android:id='@+id/EDIT_sheet_container'  
-			    	android:background="@android:color/white"
-			    	android:layout_width="fill_parent"
-			    	android:layout_height="wrap_content"
-			   	>
-			   		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView
-			   		android:id='@+id/EDIT_sheet_5lines'  
-			    	android:layout_width="fill_parent"
-			    	android:layout_height="fill_parent"
-			   		/>
-			   	</RelativeLayout>
-			</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ModifiedScrollView>
+	    		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollViewChild
+			    	android:layout_width="wrap_content" 
+		    		android:layout_height="wrap_content"
+		    		android:orientation="vertical"
+    		    >
+					<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.MarginDrivenLayout
+						android:id='@+id/EDIT_sheet_container'  
+				    	android:background="@android:color/white"
+				    	android:layout_width="fill_parent"
+				    	android:layout_height="wrap_content"
+				    	android:visibility="invisible"
+				   	>
+				   		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView
+				   		android:id='@+id/EDIT_sheet_5lines'  
+				    	android:layout_width="fill_parent"
+				    	android:layout_height="fill_parent"
+				   		/>
+				   	</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.MarginDrivenLayout>
+			   	</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollViewChild>
+			</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollView>
 	    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView>
 	    
 	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.View

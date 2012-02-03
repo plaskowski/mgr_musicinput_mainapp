@@ -9,6 +9,10 @@ public class LogUtils {
 		Log.i(COMMON_TAG, String.format(format, args));
 	}
 	
+	public static void debug(String format, Object... args) {
+		Log.d(COMMON_TAG, String.format(format, args));
+	}
+	
 	public static void log(int priority, String tag, String format, Object... args) {
 		Log.println(priority, tag, String.format(format, args));
 	}

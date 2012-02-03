@@ -16,6 +16,7 @@ public class ReflectionUtils {
 			Field field = fields[i];
 			int modifiers = field.getModifiers();
 			if(field.getName().startsWith(constNamePrefix) && Modifier.isStatic(modifiers) 
+			&& !Modifier.isPrivate(modifiers) && !Modifier.isProtected(modifiers)
 			&& Modifier.isFinal(modifiers) && field.getDeclaringClass().equals(constWrapperClass)) {
 				result.add(field);
 			}

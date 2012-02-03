@@ -6,6 +6,8 @@ import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConsta
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.length;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.BOTTOM_EDGE;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.TOP_EDGE;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSize;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateMargins;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -47,6 +49,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAligned
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.CompoundTouchListener;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollViewChild;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView.OnScrollChangedListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
@@ -80,7 +83,6 @@ import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.HorizontalScrollView;
 import android.widget.Toast;
@@ -127,7 +129,6 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private int visibleRectWidth;
 	private int visibleRectHeight;
 	private int notesAreaX;
-	private int line0Top;
 
 	protected int currentNoteLength = 0;
 	
@@ -181,6 +182,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		vertscroll = (ModifiedScrollView) findViewById(R.id.EDIT_vertscrollview);
 		sheet = (ViewGroup) findViewById(R.id.EDIT_sheet_container);
 		lines = (Sheet5LinesView) findViewById(R.id.EDIT_sheet_5lines);
+		((HackedScrollViewChild) vertscroll.getChildAt(0)).setRuler(lines);
 		int hColor = getResources().getColor(R.color.highlightColor);
 		lines.setHiglightColor(hColor);
 		noteHighlightPaint.setColor(hColor);
@@ -660,7 +662,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 					// extends endIndex so we reach all grouped elements
 					int groupEndIndex = elementI + group.elementsCount() - 1;
 					endIndex = Math.max(endIndex, groupEndIndex);
-					log.i("buildNoteGroup(): %d -> %d", elementI, groupEndIndex);
+					log.v("buildNoteGroup(): %d -> %d", elementI, groupEndIndex);
 				}
 			} 
 			if(group != null) {
@@ -698,7 +700,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 					bind(arc, arcStart);
 					bind(arc, view);
 					addOverlayView(arc);
-					log.i("buildJoinArc(): %d -> %d", elementViews.indexOf(arcStart), elementI);
+					log.v("buildJoinArc(): %d -> %d", elementViews.indexOf(arcStart), elementI);
 					arc.positionChanged(arcStart.model(), left(arcStart), top(arcStart));
 					arc.positionChanged(view.model(), left(view), top(view));
 					arcStart = null;
@@ -1077,10 +1079,10 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				this.selectedIndex = i;
 				SheetAlignedElementView view = elementViews.get(selectedIndex);
 				view.setPaint(noteHighlightPaint);
-				vertscroll.setVerticalScrollingLocked(true);
+				setVerticalScrollingLocked(true);
 				currentAnchor = startAnchor = view.model().getElementSpec().positonSpec().positon();
-				lines.highlightAnchor(currentAnchor);
-				touchYoffset = (int) event.getY() - line0Top - sheetParams.anchorOffset(currentAnchor, AnchorPart.MIDDLE);
+				highlightAnchor(currentAnchor);
+				touchYoffset = (int) event.getY() - line0Top() - sheetParams.anchorOffset(currentAnchor, AnchorPart.MIDDLE);
 				activePointerId = event.getPointerId(event.getActionIndex());
 				absMiddleX = middleAbsoluteX(view);
 				return true;
@@ -1090,7 +1092,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				int newAnchor = nearestAnchor((int) event.getY(event.findPointerIndex(activePointerId)) - touchYoffset);
 				if(newAnchor != currentAnchor) {
 					currentAnchor = newAnchor;
-					lines.highlightAnchor(currentAnchor);
+					highlightAnchor(currentAnchor);
 					try {
 						SheetAlignedElementView elView = elementViews.get(selectedIndex);
 						updateElementSpec(selectedIndex, elementSpecNN(new NoteSpec(((NormalNote) elView.model().getElementSpec()).noteSpec(), currentAnchor)), temp);
@@ -1112,8 +1114,8 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			case MotionEvent.ACTION_CANCEL:
 				activePointerId = INVALID_POINTER;
 				elementViews.get(selectedIndex).setPaint(normalPaint);
-				vertscroll.setVerticalScrollingLocked(false);
-				lines.highlightAnchor(null);
+				setVerticalScrollingLocked(false);
+				highlightAnchor(null);
 				if(startAnchor != currentAnchor) {
 					animatedRepositioning(
 						selectedIndex, selectedIndex, 
@@ -1151,7 +1153,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 						downPointerId = INVALID_POINTER;
 						return;
 					}
-					lines.highlightAnchor(currentAnchor);
+					highlightAnchor(currentAnchor);
 					try {
 						rightToIA = insertIndex+1;
 						activePointerId = downPointerId;
@@ -1174,7 +1176,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 						SheetAlignedElementView newNote = insertElement(insertIndex, newNoteSpec, rebuildRange);
 						newNote.setPaint(noteHighlightPaint);
 						updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
-						vertscroll.setVerticalScrollingLocked(true);
+						setVerticalScrollingLocked(true);
 					} catch (CreationException e) {
 						e.printStackTrace();
 						finish();
@@ -1196,7 +1198,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				if(insideIA((int) event.getX())) {
 					downCoords.set((int) event.getX(), (int) event.getY());
 					downPointerId = event.getPointerId(event.getActionIndex());
-					sheet.postDelayed(lazyActionDown, 100);
+					v.postDelayed(lazyActionDown, 100);
 					return true;
 				}
 				break;
@@ -1212,7 +1214,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				}
 				int newAnchor = nearestAnchor((int) event.getY());
 				if(newAnchor != currentAnchor) {
-					lines.highlightAnchor(newAnchor);
+					highlightAnchor(newAnchor);
 					try {
 						NoteSpec spec = new NoteSpec(currentNoteLength, newAnchor);
 						spec.setIsGrouped(addGroupFlag);
@@ -1250,8 +1252,8 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		private void insertNoteAndClean() {
 			SheetAlignedElementView noteView = elementViews.get(insertIndex);
 			noteView.setPaint(normalPaint);
-			lines.highlightAnchor(null);
-			vertscroll.setVerticalScrollingLocked(false);
+			highlightAnchor(null);
+			setVerticalScrollingLocked(false);
 			postInsert(insertIndex, rebuildRange);
 		}
 		
@@ -1259,11 +1261,11 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		 * Clear all artifacts introduced by touch inside IA box
 		 */
 		private void cancel() {
-			vertscroll.setVerticalScrollingLocked(false);
-			lines.highlightAnchor(null);
+			setVerticalScrollingLocked(false);
+			highlightAnchor(null);
 			
 			if(downPointerId != INVALID_POINTER) {
-				sheet.removeCallbacks(lazyActionDown);
+				hscroll.removeCallbacks(lazyActionDown);
 				log.i("iaTouchListener::cancel() insert reverted");
 			} else if(activePointerId != INVALID_POINTER) {
 				try {
@@ -1304,7 +1306,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		int delta =
 			sheetParams.anchorOffset(SPACE0_ABSINDEX, AnchorPart.MIDDLE)
 			- line0middle;
-		int indexDeltaHead = y - (line0Top + line0middle - delta/2);
+		int indexDeltaHead = y - (line0Top() + line0middle - delta/2);
 		int indexDelta = indexDeltaHead/delta;
 		return Math.max( 
 			Math.min(
@@ -1441,11 +1443,11 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				sheetParams.setScale(oldScale);
 				return;
 			}
+			int fpNewRelX = (int) ((visible2absX((int) focusPoint.x)-notesAreaX)*scaleFactor);
+			int line0NewVisibleY = (int) (focusPoint.y + (abs2visibleY(line0Top()) - focusPoint.y)*scaleFactor);
 			updateScaleFactor(newScale);
-			int fpX = (int) ((focusPoint.x+hscroll.getScrollX()-notesAreaX)*scaleFactor);
-			int fpY = (int) ((focusPoint.y+vertscroll.getScrollY())*scaleFactor);
-			hscroll.scrollTo((int) (fpX+notesAreaX-focusPoint.x), 0);
-			vertscroll.scrollTo(0, (int) (fpY-focusPoint.y));
+			hscroll.scrollTo((int) (fpNewRelX+notesAreaX-focusPoint.x), 0);
+			fixLine0VisibleY(line0NewVisibleY);
 		}
 
 		@Override
@@ -1718,16 +1720,19 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		if(current > optimal) {
 			scale = scale * optimal / current;
 		}
+		// FIXME uwzględnić minimalną skalę
 		updateScaleFactor(scale);
+		
+		int vis2 = visibleRectHeight/2;
+		int linesHalf = sheetParams.anchorOffset(NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE), AnchorPart.MIDDLE);
+		fixLine0VisibleY(vis2 - linesHalf);
 		
 		// TODO calculate sheet start scroll position
 		hscroll.post(new Runnable() {
 		    @Override
 		    public void run() {
 				hscroll.scrollTo(declaredWidth(sheet), 0);
-				vertscroll.scrollTo(0,
-					line0Top + sheetParams.anchorOffset(NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINESPACE), AnchorPart.TOP_EDGE)
-				);
+				sheet.setVisibility(View.VISIBLE);
 		    } 
 		});
 	}
@@ -1735,13 +1740,17 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private void onFirstTimeDividerChanged() {
 		int paddingLeft = 
 		Math.max(
-			lines.getMinPadding() + middleX(elementViews.get(0)),
+			lines.getMinNotesAreaLeftPadding() + middleX(elementViews.get(0)),
 			// assure that when sheet is scrolled to start IA left edge matches start of area where notes are placed
 			visibleRectWidth-inputAreaWidth-iaRightMargin + mTouchSlop - timeDividerSpacing(times.get(0), true)
 		);
 		lines.setNotesAreaLeftPadding(paddingLeft);
 		this.notesAreaX = paddingLeft;
-	}	
+	}
+	
+	private void fixLine0VisibleY(int visY) {
+		((HackedScrollViewChild) vertscroll.getChildAt(0)).fixRulerVisibleY(visY - lines.getPaddingTop());
+	}
 
 	private void updateScaleFactor(float newScaleFactor) {
 		log.i("newScaleFactor: %f", newScaleFactor);
@@ -1753,22 +1762,27 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		NOTE_DRAW_PADDING = (int) Math.max(fakePauseEffectRadius*sheetParams.getScale(), NOTE_DRAW_PADDING);
 		delta = (int) (sheetParams.getScale()*noteMinDistToIA);
 		log.i("updateScaleFactor(%f): delta = %d", newScaleFactor, delta);
-		lines.setParams(sheetParams);
+		// <!-- correct "5 lines" View to assure that min/maxSpaceAnchor is visible
 		int minLinespaceTopOffset = sheetParams.anchorOffset(
 			NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE), 
 			AnchorPart.TOP_EDGE
 		);
-		line0Top = Math.abs(minLinespaceTopOffset);
-
-		int paddingLeft = 
-		Math.max(
-			lines.getMinPadding(),
-			// assure that when sheet is scrolled to start IA left edge matches start of area where notes are placed
-			visibleRectWidth-inputAreaWidth-iaRightMargin + mTouchSlop - timeDividerSpacing(times.get(0), true)
+		int maxLinespaceBottomOffset = sheetParams.anchorOffset(
+			NoteConstants.anchorIndex(sheetParams.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE),
+			AnchorPart.BOTTOM_EDGE
 		);
-		lines.setNotesAreaLeftPadding(paddingLeft);
+		int line4bottomOffset = sheetParams.anchorOffset(
+			NoteConstants.LINE4_ABSINDEX,
+			AnchorPart.BOTTOM_EDGE
+		);
+		lines.setParams(sheetParams, 
+			Math.abs(minLinespaceTopOffset), 
+			Math.abs(maxLinespaceBottomOffset - line4bottomOffset)
+		);
+		updatePosition(lines, null, 0);
+		// -->
+		onFirstTimeDividerChanged();
 		
-		this.notesAreaX = paddingLeft;
 		int spacingAfter = notesAreaX;
 		int x = 0;
 		int timeIndex = -1;
@@ -1793,19 +1807,6 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		}
 		
 		correctSheetWidth();
-		int maxLinespaceBottomOffset = sheetParams.anchorOffset(
-			NoteConstants.anchorIndex(sheetParams.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE),
-			AnchorPart.BOTTOM_EDGE
-		);
-		updateSize(sheet, null, maxLinespaceBottomOffset - minLinespaceTopOffset);
-		updatePosition(lines, 0, line0Top-lines.getPaddingTop());
-		updateSize(
-			lines, 
-			null, 
-			sheetParams.anchorOffset(NoteConstants.anchorIndex(4, ANCHOR_TYPE_LINE), BOTTOM_EDGE)
-			+ lines.getPaddingTop() + lines.getPaddingBottom()
-		);
-		
 	}
 
 	private void updateTimeSpacingBase(int timeIndex, boolean refreshSheetParams) {
@@ -1836,6 +1837,10 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				minSpacing * baseLength / el.model().getElementSpec().spacingLength(minPossibleValue)
 			);
 		}
+	}
+	
+	private void setVerticalScrollingLocked(boolean verticalScrollingLocked) {
+		vertscroll.setVerticalScrollingLocked(verticalScrollingLocked);
 	}
 
 	/**
@@ -2786,8 +2791,16 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	}
 	
 	private int sheetElementY(SheetElementView<?> v) {
-		return line0Top + v.getOffsetToAnchor(NoteConstants.anchorIndex(0, ANCHOR_TYPE_LINE), TOP_EDGE);
-	}	
+		return line0Top() + v.getOffsetToAnchor(NoteConstants.anchorIndex(0, ANCHOR_TYPE_LINE), TOP_EDGE);
+	}
+	
+	private int line0Top() {
+		return top(lines) + lines.getPaddingTop();
+	}
+
+	private void highlightAnchor(Integer anchorAbsIndex) {
+		lines.highlightAnchor(anchorAbsIndex);
+	}
 	
 	private static int timeCapacity(TimeStep timeStep, int measureBaseUnit) {
 		return length(timeStep.getTempoBaseLength(), measureBaseUnit)*timeStep.getBaseMultiplier();
@@ -2823,7 +2836,8 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			Set<ElementsOverlay> overlays = bindMap.get(view);
 			if(overlays != null) {
 				for(ElementsOverlay ov: overlays) {
-					ov.positionChanged(view.model(), params.leftMargin+v.getPaddingLeft(), params.topMargin+v.getPaddingTop());
+					int newTop = params.topMargin+v.getPaddingTop();
+					ov.positionChanged(view.model(), params.leftMargin+v.getPaddingLeft(), newTop);
 				}
 			}
 		}
@@ -2846,29 +2860,18 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		return visibleX + hscroll.getScrollX();
 	}
 
+	/**
+	 * @param absoluteY y-axis value in "sheet" ViewGroup coordinates
+	 * @return y-axis value in "vertscroll" View coordinates
+	 */
 	private int abs2visibleY(int absoluteY) {
-		return absoluteY - vertscroll.getScrollY();
+		return absoluteY + sheet.getTop() - vertscroll.getScrollY();
 	}
 	
 	private int inIA_noteViewX(SheetAlignedElementView noteView) {
 		return visible2absX(visibleRectWidth-iaRightMargin-inputAreaWidth/2)-middleX(noteView);
 	}
 
-	private static ViewGroup.MarginLayoutParams updateMargins(View v, Integer left, Integer top) {
-		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
-		if(left != null) params.leftMargin = left;
-		if(top != null) params.topMargin = top;
-		v.setLayoutParams(params);
-		return params;
-	}
-	
-	private static void updateSize(View v, Integer width, Integer height) {
-		LayoutParams params = v.getLayoutParams();
-		if(width != null) params.width = width;
-		if(height != null) params.height = height;
-		v.setLayoutParams(params);
-	}
-	
 	private static abstract class WaitManyRunOnce implements Runnable {
 		private int amount;
 		public WaitManyRunOnce(int amount) {

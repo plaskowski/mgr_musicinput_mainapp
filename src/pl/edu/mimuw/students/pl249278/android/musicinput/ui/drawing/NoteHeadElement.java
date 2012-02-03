@@ -1,11 +1,10 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
 import static pl.edu.mimuw.students.pl249278.android.svg.SvgRenderer.drawSvgImage;
-import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.NoteDescriptionLoadingException;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.EnhancedSvgImage.IMarker;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteHead;
 import android.content.Context;
@@ -49,13 +48,12 @@ public class NoteHeadElement extends SheetAlignedElement {
 		sheetParamsCalculations();
 	}
 
-	private static LogUtils log = new LogUtils("Note");
 	private void sheetParamsCalculations() {
 		IMarker firstM = head.getImarkers().get(0), secondM = head.getImarkers().get(1);
 		int headIM1RelativeOffset = sheetParams.anchorOffset(headIM1Anchor, headIM1AnchorPart);
     	int headIM2RelativeOffset = sheetParams.anchorOffset(headIM2Anchor, part(secondM));
     	scale = ((float) (headIM1RelativeOffset-headIM2RelativeOffset))/(firstM.getLine().first.y - secondM.getLine().first.y);
-    	log.i("scaleH: %f", scale);
+//    	log.i("scaleH: %f", scale);
 	}
 	
 	@Override

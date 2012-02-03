@@ -20,6 +20,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.util.Log;
 
 public class NotesGroup extends ElementsOverlay {
 	private static LogUtils log = new LogUtils(NotesGroup.class);
@@ -64,7 +65,7 @@ public class NotesGroup extends ElementsOverlay {
 		assert(elements.length > 1);
 		if(!isValid()) {
 			makeEmpty();
-			log.i("INVALID recalculate()");
+			LogUtils.log(Log.VERBOSE, LogUtils.COMMON_TAG, "INVALID recalculate()");
 			return;
 		}
 		
@@ -256,10 +257,10 @@ public class NotesGroup extends ElementsOverlay {
 	}
 	
 	private void onPositionChanged(int elementIndex, int newAbsoluteX) {
-		if(xpositions[elementIndex] != newAbsoluteX) {
+//		if(xpositions[elementIndex] != newAbsoluteX) {
 			xpositions[elementIndex] = newAbsoluteX;
 			recalculate();
-		}
+//		}
 	}
 	
 	@Override
@@ -267,6 +268,7 @@ public class NotesGroup extends ElementsOverlay {
 		for (int i = 0; i < elements.length; i++) {
 			if(elements[i] == element) {
 				line0absTop = newY - element.getOffsetToAnchor(LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
+				// FIXME uwzględnić, że Y wpływa
 				onPositionChanged(i, newX);
 				return;
 			}

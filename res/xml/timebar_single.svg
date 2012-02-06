@@ -10,31 +10,30 @@
    id="svg2">
   <defs
      id="defs4" />
+  <path
+     d="m 48.486773,14.613482 0,53.512931"
+     id="path3643"
+     style="fill:none;stroke:#00ff00;stroke-width:1.88114035px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0.19607843" />
   <rect
-     width="1.49621"
-     height="43.444611"
-     x="47.660542"
-     y="21.677532"
+     width="1.4037253"
+     height="43"
+     x="47.80978"
+     y="21"
      id="rect3705"
      style="fill:#ff0000;fill-opacity:0.19607843;stroke:none" />
   <path
-     d="m 11.197029,27.606929 75.306872,0"
+     d="m 11.197029,21 75.306872,0"
      id="path3709"
-     style="fill:none;stroke:#0000ff;stroke-width:0.13715945;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.50980392;stroke-dasharray:none" />
-  <path
-     d="m 7.4298854,38.131725 75.3068766,0"
-     id="path3709-6"
-     style="fill:none;stroke:#0000ff;stroke-width:0.12760623;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.54901961;stroke-dasharray:none" />
-  <path
-     d="m 48.408648,14.613482 0,53.512931"
-     id="path3643"
-     style="fill:none;stroke:#00ff00;stroke-width:1.94212162px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0.19607843" />
+     style="fill:none;stroke:#ff00ff;stroke-width:0.80000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.47058824;stroke-dasharray:none" />
   <rect
-     width="43.015663"
-     height="0.95679963"
-     x="21.866131"
-     y="-48.887047"
-     transform="matrix(0,1,-1,0,0,0)"
+     width="0.898"
+     height="43"
+     x="48.062641"
+     y="21"
      id="rect3639"
      style="fill:#008000;fill-opacity:1;stroke:none" />
+  <path
+     d="m 7.5219262,64.0 75.2477948,0"
+     id="path3709-6"
+     style="fill:none;stroke:#ff00ff;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.64705882;stroke-dasharray:none" />
 </svg>

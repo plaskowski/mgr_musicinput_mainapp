@@ -130,6 +130,7 @@ public class SvgParser {
 		if(!introLevels.empty() && introLevels.peek().equals(depth)) {
 			introLevels.pop();
 			transformations.pop();
+			isCTMdirty = true;
 		}
 	}
 

@@ -28,6 +28,7 @@ public class EnhancedSvgImage extends SvgImage {
 	protected static final int MARKER_ALPHA = 50;
 	protected static final int IMARKER_MIDDLE_REL_COLOR = 0x0000FF;
 	protected static final int IMARKER_MIDDLE_COLOR = 0x00FFFF;
+	/** bottom edge */
 	protected static final int IMARKER_EDGE_REL_COLOR = 0xFF00FF;
 	protected static final int IMARKER_EDGE_COLOR = 0x0FF0FF;
 	private static final ArrayIntList IMARKERS = new ArrayIntList(new int[] {

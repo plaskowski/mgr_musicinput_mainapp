@@ -22,7 +22,7 @@ public class JoinArc extends ElementsOverlay {
 	private SheetAlignedElement leftElement, rightElement;
 	private Point leftpos = new Point(), rightpos = new Point();
 
-	private Path path;
+	private Path path = new Path();
 
 	public JoinArc(SheetAlignedElement leftElement) {
 		this.leftElement = leftElement;
@@ -103,7 +103,7 @@ public class JoinArc extends ElementsOverlay {
 		
 		int arcThickness = 2*sheetParams.getLineThickness();
 		int arcBoundsHeight = arcThickness+6*sheetParams.getLineThickness();
-		path = new Path();
+		path.reset();
 		path.rMoveTo(0, arcBoundsHeight);
 		path.rQuadTo(horizontalDistance/2, sign*arcBoundsHeight, horizontalDistance, 0);
 		path.rQuadTo(-horizontalDistance/2, sign*(arcBoundsHeight-arcThickness), -horizontalDistance, 0);

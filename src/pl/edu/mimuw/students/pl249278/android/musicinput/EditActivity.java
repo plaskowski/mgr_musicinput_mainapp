@@ -2684,7 +2684,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				ovView.invalidateMeasure();
 				ovView.invalidate();
 				// reposition it
-				updatePosition(ovView, overlay.left()-ovView.getPaddingLeft(), overlay.top()-ovView.getPaddingTop());
+				updatePosition(ovView, overlay.left()-ovView.getPaddingLeft(), line0Top() + overlay.top()-ovView.getPaddingTop());
 				updateSize(ovView, ovView.measureWidth(), ovView.measureHeight());
 			}
 		});
@@ -2837,7 +2837,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			if(overlays != null) {
 				for(ElementsOverlay ov: overlays) {
 					int newTop = params.topMargin+v.getPaddingTop();
-					ov.positionChanged(view.model(), params.leftMargin+v.getPaddingLeft(), newTop);
+					ov.positionChanged(view.model(), params.leftMargin+v.getPaddingLeft(), newTop - line0Top());
 				}
 			}
 		}

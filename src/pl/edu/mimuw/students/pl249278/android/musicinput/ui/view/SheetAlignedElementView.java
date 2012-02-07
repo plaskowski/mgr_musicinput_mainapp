@@ -2,6 +2,7 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
 
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ExtendedResourcesFactory;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.PaintSetup;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.StyleResolver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
 import android.content.Context;
@@ -35,7 +36,8 @@ public class SheetAlignedElementView extends SheetElementView<SheetAlignedElemen
 		try {
 			int paintId = values.getResourceId(R.styleable.SheetAlignedElementView_paint, -1);
 			if(paintId != -1) {
-				setPaint(ExtendedResourcesFactory.createPaint(styleResolver, paintId));
+				PaintSetup paint = ExtendedResourcesFactory.createPaintSetup(styleResolver, paintId);
+				setPaint(paint.paint, paint.drawRadius);
 			}
 		} finally {
 			values.recycle();

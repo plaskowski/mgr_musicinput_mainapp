@@ -2,6 +2,10 @@
 <resources>
     <style name="StyleResourceMockup" />
     
+    <declare-styleable name="CustomizableView">
+		<attr name="maxHeight" format="dimension" />
+	</declare-styleable>
+    
     <declare-styleable name="SheetAlignedElementView">
 		<attr name="paint" format="reference" />
 	</declare-styleable>

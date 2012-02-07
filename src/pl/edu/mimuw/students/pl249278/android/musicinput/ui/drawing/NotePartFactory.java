@@ -241,17 +241,17 @@ public class NotePartFactory {
 	}
 	
 	// ALL METHODS BELOW SERVE ONLY FOR STATIC DECLARATION PURPOSES
-	private static <T extends Enum<T>> void declare(Map<Integer, int[]> lenght2mapping, T value, int[]... partialMappings) {
-		declare(lenght2mapping, value.ordinal(), partialMappings);
+	private static <T extends Enum<T>> void declare(Map<Integer, int[]> length2mapping, T value, int[]... partialMappings) {
+		declare(length2mapping, value.ordinal(), partialMappings);
 	}
 
-	private static void declare(Map<Integer, int[]> lenght2mapping, int lenght, int[]... partialMappings) {
-		declare(lenght2mapping, new int[] { lenght }, partialMappings);
+	private static void declare(Map<Integer, int[]> length2mapping, int length, int[]... partialMappings) {
+		declare(length2mapping, new int[] { length }, partialMappings);
 	}
 	private static int[] lengths(int... lengths) {
 		return lengths;
 	}
-	private static void declare(Map<Integer, int[]> lenght2mapping, int[] lenghts, int[]... partialMappings) {
+	private static void declare(Map<Integer, int[]> length2mapping, int[] lengths, int[]... partialMappings) {
 		int[] atypeAndOrientationMapping = new int[4];
 		for (int i = 0; i < partialMappings.length; i++) {
 			int[] mapping = partialMappings[i];
@@ -259,8 +259,8 @@ public class NotePartFactory {
 				atypeAndOrientationMapping[mapping[j]] = mapping[j+1];
 			}
 		}
-		for (int i = 0; i < lenghts.length; i++) {
-			lenght2mapping.put(lenghts[i], atypeAndOrientationMapping);
+		for (int i = 0; i < lengths.length; i++) {
+			length2mapping.put(lengths[i], atypeAndOrientationMapping);
 		}
 	}
 	private static class Mapping extends Pair<Integer, Integer> {

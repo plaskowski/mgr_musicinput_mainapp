@@ -29,14 +29,12 @@ public class NotesGroup extends ElementsOverlay {
 	private SheetAlignedElement[] elements;
 	private int[] xpositions;
 	private int groupOrientation;
-	private Paint wrapperPaint;
 
-	private NotesGroup(int totalElements, int orientation, Paint wrapperPaint) {
+	private NotesGroup(int totalElements, int orientation) {
 		elements = new SheetAlignedElement[totalElements];
 		xpositions = new int[totalElements];
 		Arrays.fill(xpositions, -1);
 		this.groupOrientation = orientation;
-		this.wrapperPaint = wrapperPaint;
 	}
 	
 	private int buildIndex = 0;
@@ -182,7 +180,7 @@ public class NotesGroup extends ElementsOverlay {
 			prevLength = currLength;
 		}
 		path.close();
-		canvas.drawPath(path, wrapperPaint);
+		canvas.drawPath(path, paint);
 		
 		canvas.translate(0, -translateY);
 	}
@@ -341,7 +339,7 @@ public class NotesGroup extends ElementsOverlay {
 		 * Modified accumulated ElementSpec-s accordingly to logic of GroupBuilder
 		 * @return 
 		 */
-		public NotesGroup build(Paint wrapperPaint) {
+		public NotesGroup build() {
 			assert isValid();
 			/**
 			 * czy wiązanie ma być na górze czy na dole,
@@ -356,7 +354,7 @@ public class NotesGroup extends ElementsOverlay {
 				prev = current;
 			}
 			int orientation = orient == 0 ? specs.get(0).getOrientation() : (orient < 0 ? ORIENT_DOWN : ORIENT_UP);
-			NotesGroup result = new NotesGroup(specs.size(), orientation, wrapperPaint);
+			NotesGroup result = new NotesGroup(specs.size(), orientation);
 			
 			// update specs
 			for(int i = 0; i < specs.size(); i++) {

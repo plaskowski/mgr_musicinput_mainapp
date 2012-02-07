@@ -24,6 +24,7 @@ public class NoteValueSpinner extends ScrollView {
 	private Paint itemPaint = new Paint();
 	private Paint itemSelectedPaint = new Paint();
 	private int maxPaintRadius = 0;
+	private int mMaxHeight = Integer.MAX_VALUE;
 	
 	private static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
 
@@ -65,6 +66,10 @@ public class NoteValueSpinner extends ScrollView {
 		} finally {
 			values.recycle();
 		}
+		
+		values = resolver.obtainStyledAttributes(R.styleable.CustomizableView);
+		mMaxHeight = values.getDimensionPixelSize(R.styleable.CustomizableView_maxHeight, mMaxHeight);
+		values.recycle();
 	}
 	
 	public void setupNoteViews(SheetParams globalParams) throws CreationException {
@@ -83,8 +88,7 @@ public class NoteValueSpinner extends ScrollView {
 				new ElementSpec.NormalNote(new NoteSpec(i, LINE4_ABSINDEX), NoteConstants.ORIENT_UP)
 			));
 			noteView.setSheetParams(params);
-			noteView.setPaint(itemPaint);
-			noteView.setPadding(maxPaintRadius);
+			noteView.setPaint(itemPaint, maxPaintRadius);
 			maxNoteHorizontalHalfWidth = Math.max(maxNoteHorizontalHalfWidth, Math.max(
 				middleX(noteView),
 				noteView.measureWidth()-middleX(noteView)
@@ -190,7 +194,7 @@ public class NoteValueSpinner extends ScrollView {
 	
 	private void setIsSelected(int value, boolean isSelected) {
 		((SheetAlignedElementView) notesContainer.getChildAt(value)).setPaint(
-			isSelected ? itemSelectedPaint : itemPaint
+			isSelected ? itemSelectedPaint : itemPaint, maxPaintRadius
 		);
 	}
 
@@ -203,5 +207,9 @@ public class NoteValueSpinner extends ScrollView {
 		return currentValue;
 	}
 	
-	
+	@Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+		setMeasuredDimension(getMeasuredWidth(), Math.min(mMaxHeight, getMeasuredHeight()));
+	}
 }

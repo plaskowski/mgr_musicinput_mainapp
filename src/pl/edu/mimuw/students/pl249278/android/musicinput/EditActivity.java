@@ -53,7 +53,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollVie
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView.OnScrollChangedListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ModifiedScrollView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LockableScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner.OnValueChanged;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.QuickActionsView;
@@ -113,7 +113,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private int inputAreaWidth;
 	private View inputArea;
 	private HorizontalScrollView hscroll;
-	private ModifiedScrollView vertscroll;
+	private LockableScrollView vertscroll;
 	private ScaleGestureInterceptor scaleGestureDetector;
 	private Animator animator = new EditActivity.Animator(this);
 	
@@ -178,8 +178,11 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		sheetParams.setMaxSpaceAnchor(getResources().getInteger(R.integer.maxSpaceDefault));
 		
 		scaleGestureDetector = (ScaleGestureInterceptor) findViewById(R.id.EDIT_scale_detector);
+		scaleGestureDetector.setOnTouchListener(quickActionsDismiss);
 		hscroll = (HorizontalScrollView) findViewById(R.id.EDIT_outer_hscrollview);
-		vertscroll = (ModifiedScrollView) findViewById(R.id.EDIT_vertscrollview);
+		hscroll.setOnTouchListener(quickActionsDismiss);
+		vertscroll = (LockableScrollView) findViewById(R.id.EDIT_vertscrollview);
+		vertscroll.setOnTouchListener(quickActionsDismiss);
 		sheet = (ViewGroup) findViewById(R.id.EDIT_sheet_container);
 		lines = (Sheet5LinesView) findViewById(R.id.EDIT_sheet_5lines);
 		((HackedScrollViewChild) vertscroll.getChildAt(0)).setRuler(lines);
@@ -460,7 +463,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				atIndex, 
 				createDrawingModel(new ElementSpec.Pause(pause, true))
 			);
-			pauseView.setPaint(fakePausePaint);
+			pauseView.setPaint(fakePausePaint, fakePauseEffectRadius*sheetParams.getScale());
 			updatePosition(pauseView, positionAfter(atIndex-1), sheetElementY(pauseView));
 		}
 	};
@@ -657,7 +660,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 					}
 				}
 				if(gb.isValid()) {
-					group = gb.build(normalPaint);
+					group = gb.build();
 					addOverlayView(group);
 					// extends endIndex so we reach all grouped elements
 					int groupEndIndex = elementI + group.elementsCount() - 1;
@@ -1033,7 +1036,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 					}
 					selectedIndex = i;
 					SheetAlignedElementView view = elementViews.get(selectedIndex);
-					view.setPaint(noteHighlightPaint);
+					view.setPaint(noteHighlightPaint, NOTE_DRAW_PADDING);
 					return true;
 				}
 				break;
@@ -1044,7 +1047,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			case MotionEvent.ACTION_CANCEL:
 				if(selectedIndex != -1) {
 					SheetAlignedElementView view = elementViews.get(selectedIndex);
-					view.setPaint(normalPaint);
+					view.setPaint(normalPaint, NOTE_DRAW_PADDING);
 				}
 				selectedIndex = -1;
 			}
@@ -1078,7 +1081,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				}
 				this.selectedIndex = i;
 				SheetAlignedElementView view = elementViews.get(selectedIndex);
-				view.setPaint(noteHighlightPaint);
+				view.setPaint(noteHighlightPaint, NOTE_DRAW_PADDING);
 				setVerticalScrollingLocked(true);
 				currentAnchor = startAnchor = view.model().getElementSpec().positonSpec().positon();
 				highlightAnchor(currentAnchor);
@@ -1113,7 +1116,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				}
 			case MotionEvent.ACTION_CANCEL:
 				activePointerId = INVALID_POINTER;
-				elementViews.get(selectedIndex).setPaint(normalPaint);
+				elementViews.get(selectedIndex).setPaint(normalPaint, NOTE_DRAW_PADDING);
 				setVerticalScrollingLocked(false);
 				highlightAnchor(null);
 				if(startAnchor != currentAnchor) {
@@ -1174,7 +1177,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 						newNoteSpec.noteSpec().setIsGrouped(addGroupFlag);
 						// -->
 						SheetAlignedElementView newNote = insertElement(insertIndex, newNoteSpec, rebuildRange);
-						newNote.setPaint(noteHighlightPaint);
+						newNote.setPaint(noteHighlightPaint, NOTE_DRAW_PADDING);
 						updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
 						setVerticalScrollingLocked(true);
 					} catch (CreationException e) {
@@ -1251,7 +1254,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 
 		private void insertNoteAndClean() {
 			SheetAlignedElementView noteView = elementViews.get(insertIndex);
-			noteView.setPaint(normalPaint);
+			noteView.setPaint(normalPaint, NOTE_DRAW_PADDING);
 			highlightAnchor(null);
 			setVerticalScrollingLocked(false);
 			postInsert(insertIndex, rebuildRange);
@@ -1344,7 +1347,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private OnScrollChangedListener horizontalScrollListener = new OnScrollChangedListener() {
 		@Override
 		public void onScrollChanged(int l, int oldl) {
-			hideActionBar();
+			hideQuickActionsPopup();
 //			LogUtils.info("scrollChange (%d, %d)", l, oldl);
 			if(isScaling || isPositioning) return;
 			// skip if there is only TimeDivider of Time_0
@@ -1424,17 +1427,20 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	};
 	
 	private ScaleGestureInterceptor.OnScaleListener scaleListener = new OnScaleListener() {
-		int originalRightToIA;
+		private int originalRightToIA;
+		private boolean scalingOccured = false;
+		
 		public void onScaleBegin() {
 			originalRightToIA = rightToIA;
 			rightToIA = elementViews.size();
+			scalingOccured = false;
 		}
 		
 		@Override
 		public void onScale(float scaleFactor, PointF focusPoint) {
 			isScaling = true;
 			animator.forceFinishAll();
-			hideActionBar();
+			hideQuickActionsPopup();
 			float oldScale = sheetParams.getScale();
 			float newScale = oldScale*scaleFactor;
 			sheetParams.setScale(newScale);
@@ -1448,10 +1454,15 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			updateScaleFactor(newScale);
 			hscroll.scrollTo((int) (fpNewRelX+notesAreaX-focusPoint.x), 0);
 			fixLine0VisibleY(line0NewVisibleY);
+			scalingOccured = true;
 		}
 
 		@Override
 		public void onScaleEnd() {
+			if(!scalingOccured) {
+				rightToIA = originalRightToIA;
+				return;
+			}
 			scaleGestureDetector.setTouchInputLocked(true);
 			// find new rightToIA
 			int IAmiddle = visibleRectWidth - iaRightMargin -inputAreaWidth/2;
@@ -1720,7 +1731,10 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		if(current > optimal) {
 			scale = scale * optimal / current;
 		}
-		// FIXME uwzględnić minimalną skalę
+		sheetParams.setScale(scale);
+		if(sheetParams.getLineThickness() < 1) {
+			scale = scale * 1 / sheetParams.getLineThickness();
+		}
 		updateScaleFactor(scale);
 		
 		int vis2 = visibleRectHeight/2;
@@ -1753,7 +1767,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	}
 
 	private void updateScaleFactor(float newScaleFactor) {
-		log.i("newScaleFactor: %f", newScaleFactor);
+		log.d("newScaleFactor: %f", newScaleFactor);
 		sheetParams.setScale(newScaleFactor);
 		MIN_DRAW_SPACING = (int) (minDrawSpacingFactor*sheetParams.getScale());
 		NOTE_DRAW_PADDING = (int) (noteShadow * sheetParams.getScale());
@@ -1761,7 +1775,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		fakePausePaint.setMaskFilter(new BlurMaskFilter(fakePauseEffectRadius*sheetParams.getScale(), Blur.OUTER));
 		NOTE_DRAW_PADDING = (int) Math.max(fakePauseEffectRadius*sheetParams.getScale(), NOTE_DRAW_PADDING);
 		delta = (int) (sheetParams.getScale()*noteMinDistToIA);
-		log.i("updateScaleFactor(%f): delta = %d", newScaleFactor, delta);
+		log.d("updateScaleFactor(%f): delta = %d", newScaleFactor, delta);
 		// <!-- correct "5 lines" View to assure that min/maxSpaceAnchor is visible
 		int minLinespaceTopOffset = sheetParams.anchorOffset(
 			NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE), 
@@ -1790,7 +1804,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		for(int i = 0; i < elementViews.size(); i++) {
 			x += spacingAfter;
 			v = elementViews.get(i);
-			v.setPadding(NOTE_DRAW_PADDING);
+			v.updateDrawRadius(NOTE_DRAW_PADDING);
 			if(v.model().getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
 				timeIndex++;
 				updateTimeSpacingBase(timeIndex, true);
@@ -1935,7 +1949,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		public final void perform() {
 			perform(elementActionIndex);
 			if(mPostHide)
-				hideActionBar();
+				hideQuickActionsPopup();
 		}
 		
 		protected abstract void perform(int elementIndex);
@@ -2563,7 +2577,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private View.OnTouchListener quickActionsDismiss = new OnTouchListener() {
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
-			hideActionBar();
+			hideQuickActionsPopup();
 			return false;
 		}
 	};
@@ -2653,7 +2667,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		}
 	}
 
-	private void hideActionBar() {
+	private void hideQuickActionsPopup() {
 		qActionsView.setModel(null);
 		qActionsView.setVisibility(View.GONE);
 		elementActionIndex = -1;
@@ -2662,7 +2676,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	@Override
 	public void onBackPressed() {
 		if(qActionsView.getVisibility() == View.VISIBLE) {
-			hideActionBar();
+			hideQuickActionsPopup();
 		} else {
 			super.onBackPressed();
 		}
@@ -2671,7 +2685,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private void addOverlayView(final ElementsOverlay overlay) {
 		SheetElementView<SheetElement> elementView;
 		elementView = new SheetElementView<SheetElement>(this, overlay);
-		elementView.setPaint(normalPaint);
+		elementView.setPaint(normalPaint, NOTE_DRAW_PADDING);
 		elementView.setSheetParams(sheetParams);
 		overlay.setTag(elementView);
 		overlaysViews.add(elementView);
@@ -2693,8 +2707,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private SheetAlignedElementView addElementView(int index, SheetAlignedElement model) {
 		SheetAlignedElementView elementView;
 		elementView = new SheetAlignedElementView(this, model);
-		elementView.setPaint(normalPaint);
-		elementView.setPadding((int) NOTE_DRAW_PADDING);
+		elementView.setPaint(normalPaint, NOTE_DRAW_PADDING);
 		elementView.setSheetParams(sheetParams);
 		elementViews.add(index, elementView);
 		sheet.addView(elementView);

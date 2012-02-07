@@ -71,7 +71,7 @@ public class ScaleGestureInterceptor extends RelativeLayout {
 		}
 		
 		private void logSG(String label, ScaleGestureDetector det) {
-			log.i(
+			log.v(
 				"%s detector state: (scaleF: %f, focusPoint: %fx%f)",
 				label,
 				det.getScaleFactor(),
@@ -112,7 +112,7 @@ public class ScaleGestureInterceptor extends RelativeLayout {
 				logEv("dispatchDown := false, ignoring", ev);
 				dispatchDown = false;
 				break;
-			case MotionEvent.ACTION_POINTER_1_UP:
+			case MotionEvent.ACTION_POINTER_UP:
 				// we ignore this and wait for other event
 				logEv("dispatchDown = true, ignoring", ev);
 				break;
@@ -137,7 +137,7 @@ public class ScaleGestureInterceptor extends RelativeLayout {
 	}
 
 	private static void logEv(String descr, MotionEvent ev) {
-		log.i(
+		log.v(
 			"%s action: %s, index: %d, pos: %fx%f",
 			descr,
 			ReflectionUtils.findConstName(MotionEvent.class, "ACTION_", ev.getActionMasked()),

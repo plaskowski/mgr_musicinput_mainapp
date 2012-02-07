@@ -18,7 +18,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.res.Resources;
-import android.graphics.Paint;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
@@ -172,7 +171,7 @@ public class TimeStepDialog extends DialogFragment {
 		);
 		int destLineThickness = resources.getDimensionPixelSize(R.dimen.dialog_timestep_icon_linethickness);
 		params.setScale(params.getScale()*destLineThickness/params.getLineThickness());
-		Paint paint = ExtendedResourcesFactory.createPaint(
+		PaintSetup paint = ExtendedResourcesFactory.createPaintSetup(
 			ExtendedResourcesFactory.styleResolver(ctx.getResources()),
 			R.style.dialog_timestep_iconPaint
 		);
@@ -279,10 +278,10 @@ public class TimeStepDialog extends DialogFragment {
 	}
 	
 
-	private static void setupSheetElement(ViewGroup wrapper, Paint paint, SheetParams params, int containerId, AdjustableSizeImage image) {
+	private static void setupSheetElement(ViewGroup wrapper, PaintSetup paint, SheetParams params, int containerId, AdjustableSizeImage image) {
 		LinedSheetElementView view = (LinedSheetElementView) (wrapper.findViewById(containerId)
 			.findViewById(R.id.EDIT_dialog_timestep_special_sheetelement));
-		view.setPaint(paint);
+		view.setPaint(paint.paint, paint.drawRadius);
 		String padding = wrapper.getContext().getResources().getString(R.string.dialog_timestep_icon_horizontalpadding);
 		view.setLinesHorizontalPadding((int) params.readParametrizedValue(padding));
 		view.setSheetParams(params);

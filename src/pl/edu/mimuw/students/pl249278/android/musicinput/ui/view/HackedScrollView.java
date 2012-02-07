@@ -3,7 +3,7 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
 import android.content.Context;
 import android.util.AttributeSet;
 
-public class HackedScrollView extends ModifiedScrollView {
+public class HackedScrollView extends LockableScrollView {
 
 	public HackedScrollView(Context context, AttributeSet attrs) {
 		super(context, attrs);

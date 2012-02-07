@@ -5,17 +5,17 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.ScrollView;
 
-public class ModifiedScrollView extends ScrollView {
+public class LockableScrollView extends ScrollView {
 
-	public ModifiedScrollView(Context context, AttributeSet attrs, int defStyle) {
+	public LockableScrollView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 	}
 
-	public ModifiedScrollView(Context context, AttributeSet attrs) {
+	public LockableScrollView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 	}
 
-	public ModifiedScrollView(Context context) {
+	public LockableScrollView(Context context) {
 		super(context);
 	}
 	

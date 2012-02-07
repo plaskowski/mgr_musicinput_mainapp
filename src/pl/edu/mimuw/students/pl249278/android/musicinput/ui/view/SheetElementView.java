@@ -72,12 +72,17 @@ public class SheetElementView<ElementType extends SheetElement> extends View {
 		invalidate();
 	}
 	
-	public void setPaint(Paint paint) {
+	public void setPaint(Paint paint, float drawRadius) {
 		this.paint = paint;
 		invalidate();
+		updateDrawRadius(drawRadius);
 	}
 
-	public void setPadding(int padding) {
+	public void updateDrawRadius(float drawRadius) {
+		setPadding((int) Math.ceil(drawRadius));
+	}
+
+	private void setPadding(int padding) {
 		this.setPadding(padding, padding, padding, padding);
 		invalidateMeasure();
 	}

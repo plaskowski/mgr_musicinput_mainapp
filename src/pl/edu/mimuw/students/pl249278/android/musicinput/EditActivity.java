@@ -704,8 +704,6 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 					bind(arc, view);
 					addOverlayView(arc);
 					log.v("buildJoinArc(): %d -> %d", elementViews.indexOf(arcStart), elementI);
-					arc.positionChanged(arcStart.model(), left(arcStart), top(arcStart));
-					arc.positionChanged(view.model(), left(view), top(view));
 					arcStart = null;
 				} else if(JoinArc.canSkipOver(spec)) {
 					if(elementI == extendedEndIndex) {
@@ -1774,6 +1772,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		noteHighlightPaint.setShadowLayer(NOTE_DRAW_PADDING, NOTE_DRAW_PADDING/2, NOTE_DRAW_PADDING, Color.BLACK);		
 		fakePausePaint.setMaskFilter(new BlurMaskFilter(fakePauseEffectRadius*sheetParams.getScale(), Blur.OUTER));
 		NOTE_DRAW_PADDING = (int) Math.max(fakePauseEffectRadius*sheetParams.getScale(), NOTE_DRAW_PADDING);
+		NOTE_DRAW_PADDING = Math.max(MIN_DRAW_SPACING, NOTE_DRAW_PADDING);
 		delta = (int) (sheetParams.getScale()*noteMinDistToIA);
 		log.d("updateScaleFactor(%f): delta = %d", newScaleFactor, delta);
 		// <!-- correct "5 lines" View to assure that min/maxSpaceAnchor is visible
@@ -1800,10 +1799,12 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		int spacingAfter = notesAreaX;
 		int x = 0;
 		int timeIndex = -1;
-		SheetAlignedElementView v = null;
+		for(int i = 0; i < overlaysViews.size(); i++) {
+			overlaysViews.get(i).updateDrawRadius(NOTE_DRAW_PADDING);
+		}
 		for(int i = 0; i < elementViews.size(); i++) {
 			x += spacingAfter;
-			v = elementViews.get(i);
+			SheetAlignedElementView v = elementViews.get(i);
 			v.updateDrawRadius(NOTE_DRAW_PADDING);
 			if(v.model().getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
 				timeIndex++;
@@ -1819,7 +1820,6 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			);
 //			log.i("onScaleFactor() note[%d] at: %dx%d", i, xpos, ypos);
 		}
-		
 		correctSheetWidth();
 	}
 
@@ -2690,6 +2690,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		overlay.setTag(elementView);
 		overlaysViews.add(elementView);
 		sheet.addView(elementView);
+		updateOverlayPosition(overlay, elementView);
 		overlay.setObserver(new Observer() {
 			@Override
 			public void onMeasureInvalidated() {
@@ -2698,7 +2699,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				ovView.invalidateMeasure();
 				ovView.invalidate();
 				// reposition it
-				updatePosition(ovView, overlay.left()-ovView.getPaddingLeft(), line0Top() + overlay.top()-ovView.getPaddingTop());
+				updateOverlayPosition(overlay, ovView);
 				updateSize(ovView, ovView.measureWidth(), ovView.measureHeight());
 			}
 		});
@@ -2833,6 +2834,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			bindMap.put(view, new LinkedHashSet<ElementsOverlay>());
 		}
 		bindMap.get(view).add(overlay);
+		dispatchPositionChanged(overlay, view);
 	}
 	
 	private static int left(View view) {
@@ -2849,11 +2851,18 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			Set<ElementsOverlay> overlays = bindMap.get(view);
 			if(overlays != null) {
 				for(ElementsOverlay ov: overlays) {
-					int newTop = params.topMargin+v.getPaddingTop();
-					ov.positionChanged(view.model(), params.leftMargin+v.getPaddingLeft(), newTop - line0Top());
+					dispatchPositionChanged(ov, view);
 				}
 			}
 		}
+	}
+	
+	private void dispatchPositionChanged(ElementsOverlay overlay, SheetAlignedElementView view) {
+		overlay.positionChanged(
+			view.model(), 
+			left(view) + view.getPaddingLeft(), 
+			top(view) + view.getPaddingTop() - line0Top()
+		);
 	}
 
 	private int moveLeftBorder() {
@@ -2883,6 +2892,10 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	
 	private int inIA_noteViewX(SheetAlignedElementView noteView) {
 		return visible2absX(visibleRectWidth-iaRightMargin-inputAreaWidth/2)-middleX(noteView);
+	}
+
+	private void updateOverlayPosition(ElementsOverlay overlay, SheetElementView<SheetElement> ovView) {
+		updatePosition(ovView, overlay.left()-ovView.getPaddingLeft(), line0Top() + overlay.top()-ovView.getPaddingTop());
 	}
 
 	private static abstract class WaitManyRunOnce implements Runnable {

@@ -60,7 +60,7 @@ public class JoinArc extends ElementsOverlay {
 	}
 
 	private void recalculate() {
-		if(rightElement == null) {
+		if(rightElement == null || sheetParams == null) {
 			makeEmpty();
 			return;
 		}

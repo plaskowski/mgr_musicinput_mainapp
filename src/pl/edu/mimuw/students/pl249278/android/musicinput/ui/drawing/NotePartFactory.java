@@ -105,14 +105,14 @@ public class NotePartFactory {
 	}
 	
 	public static AdjustableSizeImage prepareClefImage(Context ctx, Clef key) throws LoadingSvgException {
-		return prepareAdujstableImage(ctx, clefMapping.get(key), false);
+		return prepareAdujstableImage(ctx, clefMapping.get(key), null);
 	}
 	
 	public static AdjustableSizeImage preparePauseImage(Context ctx, int pauseLength) throws LoadingSvgException {
 		return prepareAdujstableImage(ctx, pauseMapping.get(pauseLength), false);
 	}
 	
-	public static AdjustableSizeImage prepareAdujstableImage(Context context, int xmlResId, boolean relativeIMarkers) throws LoadingSvgException {
+	public static AdjustableSizeImage prepareAdujstableImage(Context context, int xmlResId, Boolean relativeIMarkers) throws LoadingSvgException {
 		if(adjustableImages.get(xmlResId) == null) {
 			SvgParser parser = new SvgParser();
 			XmlPullParser xmlParser = context.getResources().getXml(xmlResId);
@@ -161,6 +161,8 @@ public class NotePartFactory {
 	
 	static {
 		clefMapping.put(NoteConstants.Clef.VIOLIN, R.xml.key_violin);
+		clefMapping.put(NoteConstants.Clef.ALTO, R.xml.clef_alto);
+		clefMapping.put(NoteConstants.Clef.BASS, R.xml.clef_bass);
 		
 		pauseMapping.put(NoteConstants.LEN_FULLNOTE, R.xml.pause_whole);
 		pauseMapping.put(NoteConstants.LEN_HALFNOTE, R.xml.pause_half);

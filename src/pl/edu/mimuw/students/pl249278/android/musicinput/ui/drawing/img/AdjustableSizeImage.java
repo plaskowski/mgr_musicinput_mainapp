@@ -4,7 +4,7 @@ import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 
 public class AdjustableSizeImage extends EnhancedSvgImage {
 
-	public AdjustableSizeImage(SvgImage source, boolean realtiveIMarkers) throws InvalidMetaException {
+	public AdjustableSizeImage(SvgImage source, Boolean realtiveIMarkers) throws InvalidMetaException {
 		super(source);
 		
 		// check if we have 2 horizontal imarkers
@@ -13,7 +13,9 @@ public class AdjustableSizeImage extends EnhancedSvgImage {
 		}
 		for (IMarker iMarker : imarkers) {
 			assertLineIsHorizontal(iMarker.line);
-			if(realtiveIMarkers)
+			if(realtiveIMarkers == null)
+				continue;
+			else if(realtiveIMarkers)
 				assertTypeRelative(iMarker);
 			else 
 				assertTypeAbsolute(iMarker);

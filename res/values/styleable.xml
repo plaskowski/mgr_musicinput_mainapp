@@ -6,10 +6,15 @@
 		<attr name="maxHeight" format="dimension" />
 	</declare-styleable>
     
-    <declare-styleable name="SheetAlignedElementView">
+    <declare-styleable name="SheetElementView">
 		<attr name="paint" format="reference" />
 	</declare-styleable>
 	
+    <declare-styleable name="LinedSheetElementView">
+		<attr name="minLinesWidth" format="dimension" />
+		<attr name="linesHorizontalPadding" format="dimension" />
+	</declare-styleable>
+    
     <declare-styleable name="NoteValueSpinner">
 		<attr name="itemPaint" format="reference" />
 		<attr name="selectedItemPaint" format="reference" />

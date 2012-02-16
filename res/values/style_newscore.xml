@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="NEWSCORE_h1">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:background">@drawable/bottomdivider_dark</item>
+        <item name="android:layout_marginBottom">5sp</item>
+	</style>
+    
+    <style name="NEWSCORE_wrapperscroll">
+        <item name="android:layout_marginBottom">10sp</item>
+    </style>
+    
+    <dimen name="NEWSCORE_thumbs_lineThickness">2dip</dimen>
+    
+	<style name="NEWSCORE_thumbsPaint" parent="@style/PaintAntialias">
+	    <item name="paintStyle">FILL</item>
+	    <item name="color">#FFFFFF</item>
+	</style>
+    
+    <style name="NEWSCORE_timesignature_button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minWidth">50dip</item>
+        <item name="android:minHeight">50dip</item>
+        </style>
+		
+</resources>

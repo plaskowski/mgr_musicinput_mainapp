@@ -1,11 +1,15 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
 
+import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ExtendedResourcesFactory;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.StyleResolver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.Lines;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
 
@@ -13,10 +17,25 @@ public class LinedSheetElementView extends SheetElementView<Lines> {
 	private SheetElement frontModel;
 	private int offsetDiff;
 	private int linesHorizontalPadding;
+	private int minLinesWidth = 0;
 	
 	public LinedSheetElementView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		setModel(new Lines());
+		setupVisualConf(ExtendedResourcesFactory.styleResolver(context, attrs));
+	}
+	
+	public LinedSheetElementView(Context context, AttributeSet attrs,
+			int defStyle) {
+		super(context, attrs, defStyle);
+		setupVisualConf(ExtendedResourcesFactory.styleResolver(context, attrs, defStyle));
+	}
+
+	private void setupVisualConf(StyleResolver styleResolver) {
+		TypedArray values = styleResolver.obtainStyledAttributes(R.styleable.LinedSheetElementView);
+		minLinesWidth = values.getDimensionPixelOffset(R.styleable.LinedSheetElementView_minLinesWidth, minLinesWidth);
+		linesHorizontalPadding = values.getDimensionPixelOffset(R.styleable.LinedSheetElementView_linesHorizontalPadding, linesHorizontalPadding);
+		values.recycle();
 	}
 
 	public LinedSheetElementView(Context context) {
@@ -27,10 +46,18 @@ public class LinedSheetElementView extends SheetElementView<Lines> {
 	public void setSheetParams(SheetVisualParams params) {
 		if(frontModel != null) {
 			frontModel.setSheetParams(params);
-			if(model != null)
-				model.setForcedWidth(frontModel.measureWidth()+2*linesHorizontalPadding);
+			refreshWidth();
 		}
 		super.setSheetParams(params);
+	}
+
+	private void refreshWidth() {
+		if(model != null && frontModel != null && frontModel.getSheetParams() != null) {
+			model.setForcedWidth(Math.max(
+				frontModel.measureWidth()+2*linesHorizontalPadding,
+				minLinesWidth
+			));
+		}
 	}
 	
 	public void setFrontModel(SheetElement frontModel) {
@@ -39,9 +66,9 @@ public class LinedSheetElementView extends SheetElementView<Lines> {
 			SheetVisualParams sheetParams = model.getSheetParams();
 			if(sheetParams != null) {
 				frontModel.setSheetParams(sheetParams);
-				model.setForcedWidth(frontModel.measureWidth()+2*linesHorizontalPadding);
-				invalidateMeasure();
+				refreshWidth();
 				invalidate();
+				requestLayout();
 			}
 		}
 	}
@@ -66,7 +93,7 @@ public class LinedSheetElementView extends SheetElementView<Lines> {
 			canvas.translate(0, -offsetDiff);
 		}
 		super.onDraw(canvas);
-		canvas.translate(linesHorizontalPadding, offsetDiff);
+		canvas.translate((getWidth()-getPaddingLeft()-getPaddingRight()-frontModel.measureWidth())/2, offsetDiff);
 		canvas.translate(
 			getPaddingLeft(), 
 			getPaddingTop()
@@ -74,8 +101,19 @@ public class LinedSheetElementView extends SheetElementView<Lines> {
 		frontModel.onDraw(canvas, paint);
 		canvas.restore();
 	}
+	
+	@Override
+	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {
+		return super.getOffsetToAnchor(anchorAbsIndex, part) - Math.min(offsetDiff, 0);
+	}
 
 	public void setLinesHorizontalPadding(int linesHorizontalPadding) {
 		this.linesHorizontalPadding = linesHorizontalPadding;
+		refreshWidth();
+	}
+
+	public void setMinLinesWidth(int minLinesWidth) {
+		this.minLinesWidth = minLinesWidth;
+		refreshWidth();
 	}
 }

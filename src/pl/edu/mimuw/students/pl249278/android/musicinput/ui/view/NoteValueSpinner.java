@@ -11,6 +11,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.StyleResolver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Paint;
@@ -83,10 +84,10 @@ public class NoteValueSpinner extends ScrollView {
         params.setScale(1);
         maxNoteHorizontalHalfWidth = 0;
         for (int i = 0; i <= minNoteValue; i++) {
-			SheetAlignedElementView noteView = new SheetAlignedElementView(getContext());
-			noteView.setModel(DrawingModelFactory.createDrawingModel(getContext(), 
+			SheetAlignedElement model = DrawingModelFactory.createDrawingModel(getContext(), 
 				new ElementSpec.NormalNote(new NoteSpec(i, LINE4_ABSINDEX), NoteConstants.ORIENT_UP)
-			));
+			);
+			SheetAlignedElementView noteView = new SheetAlignedElementView(getContext(), model);
 			noteView.setSheetParams(params);
 			noteView.setPaint(itemPaint, maxPaintRadius);
 			maxNoteHorizontalHalfWidth = Math.max(maxNoteHorizontalHalfWidth, Math.max(

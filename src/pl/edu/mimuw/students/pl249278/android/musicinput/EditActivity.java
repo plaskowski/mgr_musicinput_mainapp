@@ -51,6 +51,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualP
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.CompoundTouchListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollViewChild;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView.OnScrollChangedListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LockableScrollView;
@@ -62,6 +63,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ScaleGestureInt
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetElementView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils.OnLayoutListener;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -358,16 +360,13 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	@Override
 	protected void onResume() {
 		super.onResume();
-		
-		OnGlobalLayoutListener listener = new OnGlobalLayoutListener() {
+		ViewUtils.setupActivityOnLayout(this, new OnLayoutListener() {
 			@Override
-			public void onGlobalLayout() {
-				hscroll.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-				LogUtils.info("onGlobalLayout() >> HSCROLL %dx%d", hscroll.getWidth(), hscroll.getHeight());
+			public void onFirstLayoutPassed() {
+				log.v("onGlobalLayout() >> HSCROLL %dx%d", hscroll.getWidth(), hscroll.getHeight());
 				onContainerResize(hscroll.getWidth(), hscroll.getHeight());
 			}
-		};
-		hscroll.getViewTreeObserver().addOnGlobalLayoutListener(listener);
+		});
 	}
 	
 	private float readParametrizedFactor(int stringResId) {

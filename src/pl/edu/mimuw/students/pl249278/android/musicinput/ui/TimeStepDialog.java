@@ -8,6 +8,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFact
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.LoadingSvgException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SimpleSheetElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.AdjustableSizeImage;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptableView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptableView.InterceptTouchDelegate;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinedSheetElementView;
@@ -30,6 +31,7 @@ import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner.*;
 
 public class TimeStepDialog extends DialogFragment {
 	
@@ -190,7 +192,9 @@ public class TimeStepDialog extends DialogFragment {
 		);
 		setupNumberSpinner(
 			wrapper.findViewById(R.id.EDIT_dialog_timestep_spinnerbottom),
-			new MultiplyModel(2).setValue(1).setMinValue(1)
+			new MultiplyModel(2).setValue(1).setMinValue(1).setMaxValue(
+				1 << resources.getInteger(R.integer.minNotePossibleValue)
+			)
 		);
 		
 		getController(wrapper, R.id.EDIT_dialog_timestep_spinnertop)
@@ -276,7 +280,6 @@ public class TimeStepDialog extends DialogFragment {
 			}
 		}
 	}
-	
 
 	private static void setupSheetElement(ViewGroup wrapper, PaintSetup paint, SheetParams params, int containerId, AdjustableSizeImage image) {
 		LinedSheetElementView view = (LinedSheetElementView) (wrapper.findViewById(containerId)
@@ -302,98 +305,11 @@ public class TimeStepDialog extends DialogFragment {
 		return (IntegerSpinnerController) wrapper.findViewById(spinnerViewId).getTag();
 	}
 	
-	private static class MultiplyModel extends IntegerSpinnerModel {
-		private int factor;
-
-		public MultiplyModel(int factor) {
-			this.factor = factor;
-		}
-
-		@Override
-		protected Integer prevValue(int value) {
-			return value/factor;
-		}
-
-		@Override
-		protected Integer nextValue(int value) {
-			return value*factor;
-		}
-		
-	}
-	
-	private static class IncrementModel extends IntegerSpinnerModel {
-		private int step;
-
-		public IncrementModel(int step) {
-			this.step = step;
-		}
-
-		@Override
-		protected Integer prevValue(int value) {
-			return value-step;
-		}
-
-		@Override
-		protected Integer nextValue(int value) {
-			return value+step;
-		}
-	}
-	
-	private static abstract class IntegerSpinnerModel {
-		private int value;
-		private Integer minValue;
-
-		protected abstract Integer prevValue(int value);
-		protected abstract Integer nextValue(int value);
-		
-		public void nextValue() {
-			value = nextValue(value);
-		}
-		
-		public void prevValue() {
-			if(hasPrev())
-				value = prevValue(value);
-		}
-		public boolean hasPrev() {
-			return minValue == null || prevValue(value) >= minValue;
-		}
-		
-		/**
-		 * @return self
-		 */
-		public IntegerSpinnerModel setMinValue(Integer minValue) {
-			this.minValue = minValue;
-			if(minValue != null)
-				value = Math.max(minValue, value);
-			return this;
-		}
-		
-		/**
-		 * @return self
-		 */
-		public IntegerSpinnerModel setValue(int value) {
-			this.value = value;
-			if(minValue != null) 
-				this.value = Math.max(minValue, value);
-			return this;
-		}
-		
-		public int getValue() {
-			return value;
-		}
-	}
-	
-	private static class IntegerSpinnerController implements View.OnClickListener {
+	private static class IntegerSpinnerController extends IntegerSpinner.IntegerSpinnerController {
 		private TextView label;
-		private View less, more;
-		private IntegerSpinnerModel model;
 
 		IntegerSpinnerController(IntegerSpinnerModel model, View wrapper) {
-			this.model = model;
-			less = wrapper.findViewById(R.id.numberspinner_button_less);
-			less.setOnClickListener(this);
-			more = wrapper.findViewById(R.id.numberspinner_button_more);
-			more.setOnClickListener(this);
+			super(model, wrapper, R.id.numberspinner_button_more, R.id.numberspinner_button_less);
 			this.label = (TextView) wrapper.findViewById(R.id.numberspinner_label);
 			updateViews();
 		}
@@ -408,23 +324,11 @@ public class TimeStepDialog extends DialogFragment {
 		}
 
 		@Override
-		public void onClick(View v) {
-			switch(v.getId()) {
-			case R.id.numberspinner_button_less:
-				model.prevValue();
-				break;
-			case R.id.numberspinner_button_more:
-				model.nextValue();
-				break;
-			default:
-				throw new RuntimeException();
+		protected void updateViews() {
+			if(model != null && model.getValue() != null && label != null) {
+				label.setText(Integer.toString(model.getValue()));
 			}
-			updateViews();
-		}
-
-		private void updateViews() {
-			label.setText(Integer.toString(model.getValue()));
-			less.setEnabled(model.hasPrev());
+			super.updateViews();
 		}
 
 	}

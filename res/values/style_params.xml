@@ -19,4 +19,6 @@
 	<string name="fakePauseEffectRadius">0.1s</string>
 	
 	<color name="spinnerSelectionColor">#FFFFD700</color>
+	
+	<dimen name="horizontalScrollBarConflict">4dip</dimen>
 </resources>

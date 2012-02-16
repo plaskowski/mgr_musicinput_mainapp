@@ -8,4 +8,10 @@
     <string name="dialog_button_cancel">Cancel</string>
     <string name="dialog_timestep_custom">custom:</string>
     <string name="EDIT_timestepdialog_title">Choose current metrum</string>
+    <string name="NEWSCORE_title">Create new score</string>
+    <string name="label_choose_clef">Clef:</string>
+    <string name="label_choose_key_signature">Key signature:</string>
+    <string name="label_choose_meter_signature">Meter signature:</string>
+    <string name="label_cancel">Cancel</string>
+    <string name="label_create_new_score">Create</string>
 </resources>

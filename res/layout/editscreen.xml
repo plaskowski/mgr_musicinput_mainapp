@@ -76,7 +76,7 @@
 			</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollView>
 	    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView>
 	    
-	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.View
+	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ExtendedView
 		    android:id="@+id/EDIT_inputArea"
 		    android:layout_width="@dimen/inputAreaWidth"
 		    android:layout_gravity="right"

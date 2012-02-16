@@ -4,9 +4,9 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ExtendedResourcesFac
 import android.content.Context;
 import android.util.AttributeSet;
 
-public class View extends android.view.View {
+public class ExtendedView extends android.view.View {
 
-	public View(Context context, AttributeSet attrs) {
+	public ExtendedView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		ExtendedResourcesFactory.loadExtendedBackground(this, context, attrs);
 	}

@@ -135,7 +135,10 @@ public class NewScoreActivity extends Activity {
 			return;
 		Rect rectangle = threadLocal.get();
 		selectedChild.getHitRect(rectangle);
-		wrapper.requestRectangleOnScreen(rectangle, true);
+		rectangle.offset(wrapper.getPaddingLeft(), wrapper.getPaddingTop());
+		View scroll = (View) wrapper.getParent();
+		rectangle.offset(-scroll.getHorizontalFadingEdgeLength(), -scroll.getVerticalFadingEdgeLength());
+		scroll.scrollTo(rectangle.left, rectangle.top);
 	}
 	
 	private static final String INSTANCE_EXTRA_BASE = "metrum_base";

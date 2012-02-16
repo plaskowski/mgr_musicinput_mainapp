@@ -6,8 +6,8 @@ import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConsta
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.length;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.BOTTOM_EDGE;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.TOP_EDGE;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSize;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateMargins;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSize;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -51,7 +51,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualP
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.CompoundTouchListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollViewChild;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView.OnScrollChangedListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LockableScrollView;
@@ -63,6 +62,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ScaleGestureInt
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetElementView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils.OnLayoutListener;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 import android.content.Context;
@@ -85,7 +85,6 @@ import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.HorizontalScrollView;
 import android.widget.Toast;
 
@@ -2844,7 +2843,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	}
 
 	private void updatePosition(View v, Integer left, Integer top) {
-		ViewGroup.MarginLayoutParams params = updateMargins(v, left, top);
+		updateMargins(v, left, top);
 		if(v instanceof SheetAlignedElementView) {
 			SheetAlignedElementView view = (SheetAlignedElementView) v;
 			Set<ElementsOverlay> overlays = bindMap.get(view);

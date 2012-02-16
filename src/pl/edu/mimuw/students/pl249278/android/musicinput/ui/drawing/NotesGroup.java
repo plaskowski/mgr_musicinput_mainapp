@@ -23,6 +23,7 @@ import android.graphics.Point;
 import android.util.Log;
 
 public class NotesGroup extends ElementsOverlay {
+	@SuppressWarnings("unused")
 	private static LogUtils log = new LogUtils(NotesGroup.class);
 	private static final int MAX_NOTE_LENGTH = NoteConstants.LEN_QUATERNOTE+1;
 	

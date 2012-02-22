@@ -35,7 +35,7 @@
             layout="@layout/edit_dialog_timestep_special"
 		/>
         
-		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout
+		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_InterceptTouch
             android:id="@+id/EDIT_dialog_timestep_custom"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -61,7 +61,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 layout="@layout/number_spinner" />
-        </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout>
+        </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_InterceptTouch>
 
     </LinearLayout>
 

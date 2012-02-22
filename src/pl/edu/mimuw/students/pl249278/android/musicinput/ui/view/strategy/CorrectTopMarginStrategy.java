@@ -1,19 +1,18 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.topMargin;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.RelativeLayout;
 
-public class MarginDrivenLayout extends RelativeLayout {
+public abstract class CorrectTopMarginStrategy extends ViewGroup {
 
-	public MarginDrivenLayout(Context context, AttributeSet attrs) {
+	public CorrectTopMarginStrategy(Context context, AttributeSet attrs) {
 		super(context, attrs);
 	}
 
-	public MarginDrivenLayout(Context context, AttributeSet attrs, int defStyle) {
+	public CorrectTopMarginStrategy(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 	}
 

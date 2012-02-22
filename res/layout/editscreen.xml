@@ -38,13 +38,13 @@
 		android:layout_width="0dip"
 	/><!-- shadow over spinner -->    
 	
-	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ScaleGestureInterceptor
+	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.RelativeLayout_InterceptScale_LockTouchInput
 		android:id="@+id/EDIT_scale_detector"
     	android:layout_toRightOf="@id/EDIT_note_value_scroll" 
 	    android:layout_width="fill_parent"
 	    android:layout_height="fill_parent"
 	>
-	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView
+	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HorizontalScrollView_InterceptOnScrollChanged
 	    	android:id="@+id/EDIT_outer_hscrollview"
 	    	android:layout_width="fill_parent" 
 	    	android:layout_height="fill_parent"
@@ -59,7 +59,7 @@
 		    		android:layout_height="wrap_content"
 		    		android:orientation="vertical"
     		    >
-					<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.MarginDrivenLayout
+					<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.RelativeLayout_CorrectTopMargin
 						android:id='@+id/EDIT_sheet_container'  
 				    	android:background="@android:color/white"
 				    	android:layout_width="fill_parent"
@@ -71,12 +71,12 @@
 				    	android:layout_width="fill_parent"
 				    	android:layout_height="fill_parent"
 				   		/>
-				   	</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.MarginDrivenLayout>
+				   	</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.RelativeLayout_CorrectTopMargin>
 			   	</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollViewChild>
 			</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollView>
-	    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView>
+	    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HorizontalScrollView_InterceptOnScrollChanged>
 	    
-	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ExtendedView
+	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.View_ExtendedBackground
 		    android:id="@+id/EDIT_inputArea"
 		    android:layout_width="@dimen/inputAreaWidth"
 		    android:layout_gravity="right"
@@ -86,7 +86,7 @@
 		    custom:extendedBackground="@style/iaFrame"
 	    />
 	    
-	   	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton
+	   	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage
 		    android:id="@+id/EDIT_button_insert"
 		    android:layout_width="44dip"
 		    android:layout_height="44dip"
@@ -118,14 +118,13 @@
 		    custom:extendedBackground="@style/TooltipBg1"
     		custom:buttonIconPaintSetup="@array/InvertedEmboss"
 	    />
-   </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ScaleGestureInterceptor>
+   </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.RelativeLayout_InterceptScale_LockTouchInput>
     
-   <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout
+   <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_ExtendedBackground
 		android:id="@+id/EDIT_info_popup"   
    		android:orientation="vertical"
 		android:layout_width="wrap_content" 
 		android:layout_height="wrap_content" 
-		android:background="@drawable/info_popup"
 		android:layout_centerInParent="true"
 		android:visibility="gone"
 		custom:extendedBackground="@style/infoPopupBg"
@@ -147,6 +146,6 @@
 			custom:paint="@style/infoPopupIconPaint"
 			android:layout_marginBottom="4dip"
 		/>
-	</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout>
+	</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_ExtendedBackground>
     
 </RelativeLayout>

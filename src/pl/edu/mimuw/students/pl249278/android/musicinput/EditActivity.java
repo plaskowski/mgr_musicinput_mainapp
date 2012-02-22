@@ -50,20 +50,20 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetElement
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.CompoundTouchListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollViewChild;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptedHorizontalScrollView.OnScrollChangedListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LockableScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner.OnValueChanged;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.QuickActionsView;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ScaleGestureInterceptor;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ScaleGestureInterceptor.OnScaleListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils.OnLayoutListener;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptableOnScrollChanged;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptableOnScrollChanged.OnScrollChangedListener;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptsScaleGesture;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.ScrollingLockable;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.TouchInputLockable;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -86,6 +86,7 @@ import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.HorizontalScrollView;
+import android.widget.ScrollView;
 import android.widget.Toast;
 
 public class EditActivity extends FragmentActivity implements TimeStepDialog.OnPromptResult {
@@ -114,8 +115,8 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private int inputAreaWidth;
 	private View inputArea;
 	private HorizontalScrollView hscroll;
-	private LockableScrollView vertscroll;
-	private ScaleGestureInterceptor scaleGestureDetector;
+	private ScrollView vertscroll;
+	private ViewGroup scaleGestureDetector;
 	private Animator animator = new EditActivity.Animator(this);
 	
 	/**
@@ -178,11 +179,11 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		sheetParams.setMinSpaceAnchor(getResources().getInteger(R.integer.minSpaceDefault));
 		sheetParams.setMaxSpaceAnchor(getResources().getInteger(R.integer.maxSpaceDefault));
 		
-		scaleGestureDetector = (ScaleGestureInterceptor) findViewById(R.id.EDIT_scale_detector);
+		scaleGestureDetector = (ViewGroup) findViewById(R.id.EDIT_scale_detector);
 		scaleGestureDetector.setOnTouchListener(quickActionsDismiss);
 		hscroll = (HorizontalScrollView) findViewById(R.id.EDIT_outer_hscrollview);
 		hscroll.setOnTouchListener(quickActionsDismiss);
-		vertscroll = (LockableScrollView) findViewById(R.id.EDIT_vertscrollview);
+		vertscroll = (ScrollView) findViewById(R.id.EDIT_vertscrollview);
 		vertscroll.setOnTouchListener(quickActionsDismiss);
 		sheet = (ViewGroup) findViewById(R.id.EDIT_sheet_container);
 		lines = (Sheet5LinesView) findViewById(R.id.EDIT_sheet_5lines);
@@ -190,7 +191,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		int hColor = getResources().getColor(R.color.highlightColor);
 		lines.setHiglightColor(hColor);
 		noteHighlightPaint.setColor(hColor);
-		scaleGestureDetector.setOnScaleListener(scaleListener);
+		((InterceptsScaleGesture) scaleGestureDetector).setOnScaleListener(scaleListener);
 		sheet.setOnTouchListener(new CompoundTouchListener(
 			quickActionsDismiss,
 			iaTouchListener,
@@ -350,7 +351,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			return;
 		}
 		
-		((InterceptedHorizontalScrollView) hscroll).setListener(horizontalScrollListener);
+		((InterceptableOnScrollChanged) hscroll).setListener(horizontalScrollListener);
 		
 		rightToIA = elementViews.size();
 	}
@@ -1422,7 +1423,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			
 	};
 	
-	private ScaleGestureInterceptor.OnScaleListener scaleListener = new OnScaleListener() {
+	private InterceptsScaleGesture.OnScaleListener scaleListener = new InterceptsScaleGesture.OnScaleListener() {
 		private int originalRightToIA;
 		private boolean scalingOccured = false;
 		
@@ -1459,7 +1460,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				rightToIA = originalRightToIA;
 				return;
 			}
-			scaleGestureDetector.setTouchInputLocked(true);
+			setTouchInputLocked(true);
 			// find new rightToIA
 			int IAmiddle = visibleRectWidth - iaRightMargin -inputAreaWidth/2;
 			final int elementsCount = elementViews.size();
@@ -1552,7 +1553,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		
 		private void scalingFinished() {
 			isScaling = false;
-			scaleGestureDetector.setTouchInputLocked(false);
+			setTouchInputLocked(false);
 		}
 	};
 	
@@ -1607,7 +1608,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			protected void allFinished() {
 				correctSheetWidth();
 				isPositioning = false;
-				scaleGestureDetector.setTouchInputLocked(false);
+				setTouchInputLocked(false);
 			}
 		};
 		int x = positionAfter(time.rangeStart-1);
@@ -1655,7 +1656,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			animationsEndListener
 		);
 		
-		scaleGestureDetector.setTouchInputLocked(true);		
+		setTouchInputLocked(true);
 	}
 	
 	protected int findTime(int elementIndex) {
@@ -1852,7 +1853,11 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	}
 	
 	private void setVerticalScrollingLocked(boolean verticalScrollingLocked) {
-		vertscroll.setVerticalScrollingLocked(verticalScrollingLocked);
+		((ScrollingLockable) vertscroll).setScrollingLocked(verticalScrollingLocked);
+	}
+	
+	private void setTouchInputLocked(boolean setLocked) {
+		((TouchInputLockable) scaleGestureDetector).setTouchInputLocked(setLocked);
 	}
 
 	/**

@@ -9,8 +9,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFact
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SimpleSheetElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.AdjustableSizeImage;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptableView;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.InterceptableView.InterceptTouchDelegate;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptableTouch;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptableTouch.InterceptTouchDelegate;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinedSheetElementView;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -158,8 +158,8 @@ public class TimeStepDialog extends DialogFragment {
 		for (int i = 0; i < RadioGroup.containers.length; i++) {
 			int id = RadioGroup.containers[i];
 			View container = wrapper.findViewById(id);
-			if(container instanceof InterceptableView) {
-				((InterceptableView) container).setInterceptTouchDelegate(group);
+			if(container instanceof InterceptableTouch) {
+				((InterceptableTouch) container).setInterceptTouchDelegate(group);
 			}
 			container.setOnClickListener(group);
 			radioButton(container).setOnCheckedChangeListener(group);

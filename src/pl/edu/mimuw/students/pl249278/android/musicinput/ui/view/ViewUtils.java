@@ -9,7 +9,7 @@ public class ViewUtils {
 		void onFirstLayoutPassed();
 	}
 	
-	public static void setupActivityOnLayout(Activity activity, OnLayoutListener listener) {
+	public static void addActivityOnLayout(Activity activity, OnLayoutListener listener) {
 		View rootView = activity.findViewById(android.R.id.content);
 		rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ContextViewListener(rootView, listener));
 	}

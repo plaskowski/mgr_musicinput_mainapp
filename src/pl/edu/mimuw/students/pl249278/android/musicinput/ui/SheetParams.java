@@ -1,16 +1,11 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams;
 	
 public class SheetParams implements SheetVisualParams {
-	public static enum DisplayMode {
-		NORMAL,
-		UPPER_VOICE,
-		LOWER_VOICE
-	}
-	
 	private int lineFactor;
 	private int linespacingFactor;
 	private float scale = 1;
@@ -20,7 +15,7 @@ public class SheetParams implements SheetVisualParams {
 	private TimeSpec.TimeStep timeStep;
 	private NoteConstants.Clef clef;
 	private NoteConstants.KeySignature keySignature;
-	private DisplayMode displayMode = DisplayMode.NORMAL;
+	private Score.DisplayMode displayMode = Score.DisplayMode.NORMAL;
 		
 	public SheetParams(int lineFactor, int linespacingFactor) {
 		super();
@@ -154,11 +149,11 @@ public class SheetParams implements SheetVisualParams {
 		this.keySignature = keySignature;
 	}
 
-	public DisplayMode getDisplayMode() {
+	public Score.DisplayMode getDisplayMode() {
 		return displayMode;
 	}
 
-	public void setDisplayMode(DisplayMode displayMode) {
+	public void setDisplayMode(Score.DisplayMode displayMode) {
 		this.displayMode = displayMode;
 	}
 

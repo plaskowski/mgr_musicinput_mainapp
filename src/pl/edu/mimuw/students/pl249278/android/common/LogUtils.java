@@ -14,7 +14,13 @@ public class LogUtils {
 	}
 	
 	public static void log(int priority, String tag, String format, Object... args) {
-		Log.println(priority, tag, String.format(format, args));
+		String msg;
+		if(args.length > 0) {
+			msg = String.format(format, args);
+		} else {
+			msg = format;
+		}
+		Log.println(priority, tag, msg);
 	}
 	
 	private String tag;
@@ -41,8 +47,12 @@ public class LogUtils {
 		log(Log.WARN, tag, format, args);
 	}
 	
+	public void e(String msg) {
+		Log.e(tag, msg);
+	}
+	
 	public void e(String msg, Throwable tr) {
-		Log.e(COMMON_TAG, msg, tr);
+		Log.e(tag, msg, tr);
 	}
 
 }

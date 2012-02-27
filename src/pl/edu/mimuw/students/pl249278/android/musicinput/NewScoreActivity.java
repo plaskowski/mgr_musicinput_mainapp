@@ -1,10 +1,20 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
+import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
+import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.Clef;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.KeySignature;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score.DisplayMode;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreContentFactory;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.SerializationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
+import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
+import pl.edu.mimuw.students.pl249278.android.musicinput.services.FilterByRequestIdReceiver;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ErrorDialog;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ErrorDialog.ErrorDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.KeySignatureElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory;
@@ -21,21 +31,32 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner.
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinedSheetElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils.OnLayoutListener;
-import android.app.Activity;
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 
-public class NewScoreActivity extends Activity {
+public class NewScoreActivity extends FragmentActivity implements ErrorDialogListener {
 	private static LogUtils log = new LogUtils(NewScoreActivity.class);
 	private static final Clef defaultClef = Clef.VIOLIN;
 	private static final KeySignature defaultKeySign = KeySignature.C_DUR;
 	private static final TimeStep defaultCustomTimeSign = new TimeStep(1 << NoteConstants.LEN_QUATERNOTE, NoteConstants.LEN_QUATERNOTE);
 	private static final TimeSignatureType defaultTimeSignatureType = TimeSignatureType.CUSTOM;
+	private static final String DIALOGTAG_ERROR = "dialog_error";
+	private static final int ERRORDIALOG_CALLBACK_DO_FINISH = 1;
+	private InsertRequestReceiver insertRequestReceiver;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -62,8 +83,7 @@ public class NewScoreActivity extends Activity {
 				sheetElementView.setTag(clef);
 			} catch (LoadingSvgException e) {
 				log.e("Failed to prepare clef "+clef.name(), e);
-				// TODO some nice info
-				finish();
+				showErrorDialog(R.string.NEWSCORE_errormsg_unrecoverable, e, true);
 				return;
 			}
 		}
@@ -81,8 +101,7 @@ public class NewScoreActivity extends Activity {
 				sheetElementView.setOnClickListener(radioGroup);
 			} catch (LoadingSvgException e) {
 				log.e("Failed to prepare key signature "+key.name(), e);
-				// TODO some nice info
-				finish();
+				showErrorDialog(R.string.NEWSCORE_errormsg_unrecoverable, e, true);
 				return;
 			}
 		}
@@ -109,16 +128,25 @@ public class NewScoreActivity extends Activity {
 			RadioGroup.select(findViewByEnumTag(timeSignContainer, defaultTimeSignatureType));
 		} catch (LoadingSvgException e) {
 			log.e("Failed to prepare image.", e);
-			// TODO some nice info
-			finish();
+			showErrorDialog(R.string.NEWSCORE_errormsg_unrecoverable, e, true);
 			return;
 		}
+		
+		View okButton = findViewById(R.id.NEWSCORE_okbutton);
+		okButton.setOnClickListener(new OkListener());
+		View cancelButton = findViewById(R.id.NEWSCORE_cancelbutton);
+		cancelButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				finish();
+			}
+		});		
 	}
 	
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
-		ViewUtils.setupActivityOnLayout(this, new OnLayoutListener() {
+		ViewUtils.addActivityOnLayout(this, new OnLayoutListener() {
 			@Override
 			public void onFirstLayoutPassed() {
 				scrollToSelected((ViewGroup) findViewById(R.id.NEWSCORE_clefs_container));
@@ -126,6 +154,29 @@ public class NewScoreActivity extends Activity {
 				scrollToSelected((ViewGroup) findViewById(R.id.NEWSCORE_meter_container));
 			}
 		});
+	}
+	
+	@Override
+	protected void onDestroy() {
+		unregisterInsertReceiver();
+		super.onDestroy();
+	}
+
+	private void unregisterInsertReceiver() {
+		if(insertRequestReceiver != null) {
+			unregisterReceiver(insertRequestReceiver);
+			insertRequestReceiver = null;
+		}
+	}
+	
+	private void showErrorDialog(int messageStringId, Throwable e, boolean lazyFinish) {
+		DialogFragment prev = (DialogFragment) getSupportFragmentManager().findFragmentByTag(DIALOGTAG_ERROR);
+	    if (prev != null) {
+	        prev.dismiss();
+	    }
+		DialogFragment newFragment = ErrorDialog.newInstance(
+			this, messageStringId, e, lazyFinish ? ERRORDIALOG_CALLBACK_DO_FINISH : 0);
+	    newFragment.show(getSupportFragmentManager(), DIALOGTAG_ERROR);
 	}
 	
 	private static ThreadLocal<Rect> threadLocal = new ThreadLocal<Rect>() { protected Rect initialValue() { return new Rect(); } };
@@ -146,6 +197,8 @@ public class NewScoreActivity extends Activity {
 	private static final String INSTANCE_EXTRA_CLEF = "clef";
 	private static final String INSTANCE_EXTRA_KEY = "key";
 	private static final String INSTANCE_EXTRA_METRUM_TYPE = "metrum_signature_type";
+	private static final String INSTANCE_EXTRA_INSERT_REQUEST_ID = "insert_requestid";
+	
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
@@ -154,6 +207,14 @@ public class NewScoreActivity extends Activity {
 		saveSelectedViewEnumTag(outState, R.id.NEWSCORE_clefs_container, INSTANCE_EXTRA_CLEF);
 		saveSelectedViewEnumTag(outState, R.id.NEWSCORE_keys_container, INSTANCE_EXTRA_KEY);
 		saveSelectedViewEnumTag(outState, R.id.NEWSCORE_meter_container, INSTANCE_EXTRA_METRUM_TYPE);
+    	if(insertRequestReceiver != null) {
+    		// save information about insert request we've already sent
+    		outState.putString(
+				INSTANCE_EXTRA_INSERT_REQUEST_ID, 
+				insertRequestReceiver.getUniqueRequestID(false)
+			);
+    		unregisterInsertReceiver();
+    	}
 	}
 	
 	@Override
@@ -165,6 +226,34 @@ public class NewScoreActivity extends Activity {
 		selectRadioViewByEnumTag(savedInstanceState, INSTANCE_EXTRA_CLEF, R.id.NEWSCORE_clefs_container);
 		selectRadioViewByEnumTag(savedInstanceState, INSTANCE_EXTRA_KEY, R.id.NEWSCORE_keys_container);
 		selectRadioViewByEnumTag(savedInstanceState, INSTANCE_EXTRA_METRUM_TYPE, R.id.NEWSCORE_meter_container);
+		
+		if(savedInstanceState.containsKey(INSTANCE_EXTRA_INSERT_REQUEST_ID)) {
+        	// we requested INSERT but got restarted before receiving response
+        	String callbackId = savedInstanceState.getString(INSTANCE_EXTRA_INSERT_REQUEST_ID);
+			insertRequestReceiver = new InsertRequestReceiver(callbackId);
+			Intent i = AsyncHelper.prepareRepeatCallbackIntent(
+				this, 
+				ContentService.class, 
+				callbackId,
+				PendingIntent.getBroadcast(this, 0, new Intent(CALLBACK_ACTION_INSERT), 0)
+			);
+	        registerReceiver(insertRequestReceiver, new IntentFilter(CALLBACK_ACTION_INSERT));
+        	log.v("Sending REPEAT_CALLBACK "+callbackId);
+        	startService(i);
+        	lockUiOnProgress();
+        	
+        	ViewUtils.addActivityOnLayout(this, new OnLayoutListener() {
+				@Override
+				public void onFirstLayoutPassed() {
+					View button = findViewById(R.id.NEWSCORE_okbutton);
+					Rect rect = new Rect(0, 0, button.getWidth(), button.getHeight());
+					button.requestRectangleOnScreen(
+						rect,
+						true
+					);
+				}
+			});
+        }
 	}
 
 	private void selectRadioViewByEnumTag(Bundle state, String stateKey, int containerId) {
@@ -213,6 +302,111 @@ public class NewScoreActivity extends Activity {
 		return null;
 	}
 	
+	private final class OkListener implements OnClickListener {
+		@Override
+		public void onClick(View v) {
+			lockUiOnProgress();
+			String title = ((TextView) findViewById(R.id.NEWSCORE_textfield_title)).getText().toString();
+			if(title.trim().length() < 1) {
+				title = null;
+			}
+			Clef clef = (Clef) getSelectedViewTag(R.id.NEWSCORE_clefs_container);
+			KeySignature key = (KeySignature) getSelectedViewTag(R.id.NEWSCORE_keys_container);
+			TimeSignatureType signType = (TimeSignatureType) getSelectedViewTag(R.id.NEWSCORE_meter_container);
+			TimeStep timeSignature = null;
+			switch(signType) {
+			case COMMON_TIME:
+				timeSignature = TimeStep.commonTime;
+				break;
+			case CUT_COMMON_TIME:
+				timeSignature = TimeStep.cutCommonTime;
+				break;
+			case CUSTOM:
+				timeSignature = new TimeStep(
+					meterSignMultipierCtrl.getValue(), 
+					IntUtils.log2(meterSignBaseCtrl.getValue())
+				);
+				break;
+			}
+			// FIXME obtain this from user
+			DisplayMode dMode = DisplayMode.NORMAL;
+			
+			Score score = new Score(
+				title,
+				dMode,
+				ScoreContentFactory.initialContent(
+					clef, key, timeSignature
+				)
+			);
+			insertRequestReceiver = new InsertRequestReceiver(null);
+			PendingIntent callbackIntent = PendingIntent.getBroadcast(NewScoreActivity.this, 0, new Intent(CALLBACK_ACTION_INSERT), 0);
+			Intent requestIntent = AsyncHelper.prepareServiceIntent(
+				NewScoreActivity.this, 
+				ContentService.class, 
+				ContentService.ACTIONS.INSERT_SCORE, 
+				insertRequestReceiver.getUniqueRequestID(true), 
+				callbackIntent, 
+				true
+			);
+			try {
+				requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_SCORE, score.prepareParcelable());
+			} catch (SerializationException e) {
+				log.e("failed to serialize Score", e);
+				showErrorDialog(R.string.NEWSCORE_errormsg_unrecoverable, e, true);
+				return;
+			}
+			registerReceiver(insertRequestReceiver, new IntentFilter(CALLBACK_ACTION_INSERT));
+        	log.v("Sending "+CALLBACK_ACTION_INSERT);
+        	startService(requestIntent);
+		}
+
+		private Object getSelectedViewTag(int containerId) {
+			return findSelected((ViewGroup) findViewById(containerId)).getTag();
+		}
+	}
+	
+	private static final String CALLBACK_ACTION_INSERT = NewScoreActivity.class.getName()+ ".insert";
+	
+	private class InsertRequestReceiver extends FilterByRequestIdReceiver {
+		public InsertRequestReceiver(String currentRequestUniqueId) {
+			super(currentRequestUniqueId);
+		}
+
+		@Override
+		protected void onFailure(Intent response) {
+			unregisterInsertReceiver();
+			sendCleanup();
+			showErrorDialog(R.string.NEWSCORE_errormsg_gonewrong, null, false);
+			unlockUi();
+		}
+
+		@Override
+		protected void onSuccess(Intent response) {
+			unregisterInsertReceiver();
+			sendCleanup();
+			log.v("INSERT_SCORE onSuccess()");
+			long scoreId = response.getLongExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_ENTITY_ID, -1);
+			if(scoreId == -1) {
+				log.e("INSERT_SCORE onSuccess() didn't contain entity id");
+				showErrorDialog(R.string.NEWSCORE_errormsg_unrecoverable, null, true);
+				return;
+			}
+			Intent i = new Intent(getApplicationContext(), EditActivity.class);
+			i.putExtra(EditActivity.STARTINTENT_EXTRAS_SCORE_ID, scoreId);
+			startActivity(i);
+			finish();
+		}
+		
+		private void sendCleanup() {
+			Intent i = AsyncHelper.prepareCleanCallbackIntent(
+				NewScoreActivity.this, 
+				ContentService.class,
+				getUniqueRequestID(false)
+			);
+			startService(i);
+		}
+	}
+
 	private static enum TimeSignatureType {
 		NONE,
 		COMMON_TIME,
@@ -325,6 +519,26 @@ public class NewScoreActivity extends Activity {
 		}
 	}
 	
+	private void lockUiOnProgress() {
+		Button okButton = (Button) findViewById(R.id.NEWSCORE_okbutton);
+		AnimationDrawable dr = (AnimationDrawable) getResources().getDrawable(R.drawable.spinner_16dp);
+		okButton.setCompoundDrawablesWithIntrinsicBounds(dr, null, null, null);
+		dr.start();
+		okButton.setEnabled(false);
+		View cancelButton = findViewById(R.id.NEWSCORE_cancelbutton);
+		cancelButton.setEnabled(false);
+	}
+	
+	private void unlockUi() {
+		Button okButton = (Button) findViewById(R.id.NEWSCORE_okbutton);
+		AnimationDrawable dr = (AnimationDrawable) getResources().getDrawable(R.drawable.spinner_16dp);
+		okButton.setCompoundDrawablesWithIntrinsicBounds(dr, null, null, null);
+		dr.stop();
+		okButton.setEnabled(true);
+		View cancelButton = findViewById(R.id.NEWSCORE_cancelbutton);
+		cancelButton.setEnabled(true);
+	}
+
 	private static class EmptyElement extends SheetElement {
 
 		@Override
@@ -346,5 +560,13 @@ public class NewScoreActivity extends Activity {
 		public void onDraw(Canvas canvas, Paint paint) {
 		}
 		
+	}
+
+	@Override
+	public void onDismiss(ErrorDialog dialog, int arg) {
+		switch(arg) {
+		case ERRORDIALOG_CALLBACK_DO_FINISH:
+			finish();
+		}
 	}
 }

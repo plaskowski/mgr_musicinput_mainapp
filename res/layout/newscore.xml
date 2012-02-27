@@ -9,7 +9,19 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:descendantFocusability="beforeDescendants"
+		android:focusableInTouchMode="true"
     >
+        <TextView
+            style="@style/NEWSCORE_h1"
+            android:text="@string/label_score_title"
+       	/>
+
+        <EditText
+            android:id="@+id/NEWSCORE_textfield_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+        />
 
         <TextView
             style="@style/NEWSCORE_h1"
@@ -71,15 +83,19 @@
     	    android:layout_weight="1"
    	    >
     	    <Button 
+    	        android:id="@+id/NEWSCORE_cancelbutton"
     	        android:layout_gravity="bottom"
 	    	    android:layout_height="wrap_content"
 	    	    android:layout_width="fill_parent"
+	    	    android:minHeight="50dip"
 	    	    android:layout_weight="1"
 	    	    android:text="@string/label_cancel"
    	        />
     	    <Button 
+    	        android:id="@+id/NEWSCORE_okbutton"
     	        android:layout_gravity="bottom"
 	    	    android:layout_height="wrap_content"
+	    	    android:minHeight="50dip"
 	    	    android:layout_width="fill_parent"
 	    	    android:layout_weight="1"
 	    	    android:text="@string/label_create_new_score"

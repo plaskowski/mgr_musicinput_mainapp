@@ -29,4 +29,8 @@ public class IntUtils {
 	public static boolean asBool(int flagVal) {
 		return flagVal == 1;
 	}
+
+	public static int log2(int value) {
+		return 31 - Integer.numberOfLeadingZeros(value);
+	}
 }

@@ -1,5 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
+import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
@@ -228,7 +229,7 @@ public class TimeStepDialog extends DialogFragment {
 					return new TimeStep(
 						getController(container, R.id.EDIT_dialog_timestep_spinnertop)
 						.getValue(),
-						log2(
+						IntUtils.log2(
 						getController(container, R.id.EDIT_dialog_timestep_spinnerbottom)
 						.getValue()
 						)
@@ -241,10 +242,6 @@ public class TimeStepDialog extends DialogFragment {
 		log.w("Unable to find selected radio button, returning none TimeStep");
 		return null;
 	}	
-	
-	private static int log2(int value) {
-		return 31 - Integer.numberOfLeadingZeros(value);
-	}
 	
 	private static class ScrollToOne implements OnGlobalLayoutListener {
 		private ViewGroup scroll;

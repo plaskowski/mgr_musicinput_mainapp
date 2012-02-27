@@ -5,7 +5,7 @@ import java.util.EnumSet;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.Clef;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.KeySignature;
 
-public class TimeSpec {
+public class TimeSpec implements ScoreContentElem {
 	TimeStep timeStep;
 	Clef clef;
 	KeySignature keySignature;

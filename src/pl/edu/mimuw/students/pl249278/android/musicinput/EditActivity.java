@@ -25,13 +25,13 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.Key
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.NoteModifier;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.PauseSpec;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.AdditionalMark;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Action;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.IndicatorOrigin;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams.DisplayMode;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TimeStepDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
@@ -91,6 +91,10 @@ import android.widget.Toast;
 
 public class EditActivity extends FragmentActivity implements TimeStepDialog.OnPromptResult {
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
+	/**
+	 * of type long
+	 */
+	public static final String STARTINTENT_EXTRAS_SCORE_ID = "score_id";
 
 	private static final int ANIM_TIME = 150;
 	protected Paint noteHighlightPaint = new Paint();
@@ -167,6 +171,10 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.editscreen);
+
+		// TODO remove test code
+		long scoreId = getIntent().getLongExtra(STARTINTENT_EXTRAS_SCORE_ID, -1);
+		log.w("onCreate() scoreId = %d", scoreId);
 		
 		// TODO sheetParams comes from previous view
 		sheetParams = new SheetParams(
@@ -360,7 +368,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	@Override
 	protected void onResume() {
 		super.onResume();
-		ViewUtils.setupActivityOnLayout(this, new OnLayoutListener() {
+		ViewUtils.addActivityOnLayout(this, new OnLayoutListener() {
 			@Override
 			public void onFirstLayoutPassed() {
 				log.v("onGlobalLayout() >> HSCROLL %dx%d", hscroll.getWidth(), hscroll.getHeight());
@@ -2348,7 +2356,6 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 
 		@Override
 		protected void perform(int elementIndex) {
-			// TODO Auto-generated method stub
 			try {
 				contextTimeIndex = getTimeIndex(elementIndex);
 				DialogFragment newFragment = TimeStepDialog.newInstance(EditActivity.this, 
@@ -2739,7 +2746,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	
 	private ElementSpec.NormalNote elementSpecNN(NoteSpec spec) {
 		int orientation;
-		DisplayMode mode = sheetParams.getDisplayMode();
+		Score.DisplayMode mode = sheetParams.getDisplayMode();
 		switch (mode) {
 		case LOWER_VOICE:
 			orientation = NoteConstants.ORIENT_DOWN;

@@ -4,7 +4,7 @@ import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
 import static pl.edu.mimuw.students.pl249278.android.common.IntUtils.asBool;
 import static pl.edu.mimuw.students.pl249278.android.common.IntUtils.asFlagVal;
 
-public class PauseSpec implements LengthSpec {
+public class PauseSpec implements LengthSpec, ScoreContentElem {
 	private int length;
 	private int flags;
 	private static final int FLAG_DOT_L = 0;
@@ -12,7 +12,12 @@ public class PauseSpec implements LengthSpec {
 	protected static final int FLAGS_AMOUNT = FLAG_DOT_H+1;
 	
 	public PauseSpec(int length) {
+		this(length, 0);
+	}
+	
+	public PauseSpec(int length, int dotExtension) {
 		this.length = length;
+		setDotExtension(dotExtension);
 	}
 	
 	public PauseSpec(PauseSpec source) {

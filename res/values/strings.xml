@@ -14,4 +14,9 @@
     <string name="label_choose_meter_signature">Meter signature:</string>
     <string name="label_cancel">Cancel</string>
     <string name="label_create_new_score">Create</string>
+    <string name="label_score_title">Score title:</string>
+    <string name="errordialog_title">Error occured</string>
+    <string name="errordialog_button">OK. Shit happens.</string>
+    <string name="NEWSCORE_errormsg_unrecoverable">Sorry, severe error occured. Try report it to us.</string>
+    <string name="NEWSCORE_errormsg_gonewrong">Something gone wrong. Try again.</string>
 </resources>

@@ -40,9 +40,16 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 		}
 	}
 	
-	public NoteSpec(int length, int postion) {
-		super(length);
-		this.postion = postion;
+	public NoteSpec(int length, int position) {
+		this(length, 0, position, null, false, false);
+	}
+	
+	public NoteSpec(int length, int dotExtension, int position, NoteModifier modifier, boolean hasJoinArc, boolean isGrouped) {
+		super(length, dotExtension);
+		this.postion = position;
+		setToneModifier(modifier);
+		setHasJoinArc(hasJoinArc);
+		setIsGrouped(isGrouped);
 	}
 	
 	public NoteSpec(NoteSpec source, TOGGLE_FIELD fieldToToggle) {
@@ -91,7 +98,7 @@ public class NoteSpec extends PauseSpec implements PositonSpec {
 	public void setToneModifier(NoteModifier modifier) {
 		putValue(
 			FLAG_TONEMODIFIER_H, FLAG_TONEMODIFIER_L,
-			TONE_MODIFIER_MAPPING.get(modifier)
+			modifier != null ? TONE_MODIFIER_MAPPING.get(modifier) : 0
 		);
 	}
 	

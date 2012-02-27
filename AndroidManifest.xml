@@ -42,5 +42,7 @@
             </intent-filter>
         </activity>
         
+        <service android:name=".services.ContentService" android:exported="false" />
+        
     </application>
 </manifest>

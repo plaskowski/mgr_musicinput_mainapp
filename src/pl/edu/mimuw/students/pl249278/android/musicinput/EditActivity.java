@@ -494,78 +494,78 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 //		log.i("rebuildTimes(%d)", startTimeIndex);
 		
 		// TODO fix logic when no metrum
-		// if(sheetParams.getTimeStep() != null) 
-		{
-			TimeSpec.TimeStep currentMetrum = getCurrentTimeStep(startTimeIndex);
-			int i = startTimeIndex < times.size() ? times.get(startTimeIndex).rangeStart : 0;
-			int timeIndex = startTimeIndex;
-			Time currentTime = null;
-			int currentTimeCapcity = 0;
-			int prevHandledTime = timeIndex-1;
-			for(; i < elementViews.size();) {
-				if(timeIndex > prevHandledTime) {
-					currentTime = rebuildTime(timeIndex, i, currentMetrum);
-					if(currentTime.spec.getTimeStep() != null) {
-						currentMetrum = currentTime.spec.getTimeStep();
-					}
-					currentTimeCapcity = timeCapacity(currentMetrum, minPossibleValue);
-					prevHandledTime = timeIndex;
-					i++;
-					continue;
+		TimeSpec.TimeStep currentMetrum = getCurrentTimeStep(startTimeIndex);
+		int i = startTimeIndex < times.size() ? times.get(startTimeIndex).rangeStart : 0;
+		int timeIndex = startTimeIndex;
+		Time currentTime = null;
+		int currentTimeCapcity = 0;
+		int prevHandledTime = timeIndex-1;
+		for(; i < elementViews.size();) {
+			if(timeIndex > prevHandledTime) {
+				currentTime = rebuildTime(timeIndex, i, currentMetrum);
+				if(currentTime.spec.getTimeStep() != null) {
+					currentMetrum = currentTime.spec.getTimeStep();
 				}
-				SheetAlignedElementView view = elementViews.get(i);
-				ElementSpec elementSpec = view.model().getElementSpec();
-				if(elementSpec.getType() == ElementType.FAKE_PAUSE) {
+				currentTimeCapcity = timeCapacity(currentMetrum, minPossibleValue);
+				prevHandledTime = timeIndex;
+				i++;
+				continue;
+			}
+			SheetAlignedElementView view = elementViews.get(i);
+			ElementSpec elementSpec = view.model().getElementSpec();
+			if(elementSpec.getType() == ElementType.FAKE_PAUSE) {
+				removeElementView(view);
+				continue;
+			} else if(elementSpec.getType() == ElementType.TIMES_DIVIDER) {
+				elementViews.remove(i);
+				if(currentMetrum == null) {
+					timeIndex++;
+				}
+				continue;
+			}
+			int timeValue = elementSpec.timeValue(minPossibleValue);
+			// FIXME problem when timeValue == 0
+			if(timeValue <= currentTime.capLeft) {
+//					log.i("rebuildTimes(): element at %d of timeValue %d will shrink %d cap of time[%d]", i, timeValue, capLeft, timeIndex); 
+				currentTime.capLeft -= timeValue;
+				if(currentTime.capLeft == 0) {
+//						log.i("rebuildTimes(): and forced it's end", i, timeValue, timeIndex); 
+					timeIndex++;
+				}
+			} 
+			else if(timeValue > currentTimeCapcity) { 
+				// try to divide element to fit
+				if(elementSpec.getType() != ElementType.NOTE) {
+					// drop because no possibility of dividing
 					removeElementView(view);
 					continue;
-				} else if(elementSpec.getType() == ElementType.TIMES_DIVIDER) {
-					elementViews.remove(i);
+				} else {
+					ElementSpec.NormalNote note = (NormalNote) elementSpec;
+					int capLeft = currentTime.capLeft;
+					removeElementView(view);
+					insertDivdiedNote.insertDivided(i, capLeft, note.noteSpec(), true);
+					insertDivdiedNote.insertDivided(
+						i+insertDivdiedNote.getTotal(), 
+						timeValue - capLeft, note.noteSpec(), false);
 					continue;
 				}
-				int timeValue = elementSpec.timeValue(minPossibleValue);
-				// FIXME problem when timeValue == 0
-				if(timeValue <= currentTime.capLeft) {
-//					log.i("rebuildTimes(): element at %d of timeValue %d will shrink %d cap of time[%d]", i, timeValue, capLeft, timeIndex); 
-					currentTime.capLeft -= timeValue;
-					if(currentTime.capLeft == 0) {
-//						log.i("rebuildTimes(): and forced it's end", i, timeValue, timeIndex); 
-						timeIndex++;
-					}
-				} 
-				else if(timeValue > currentTimeCapcity) { 
-					// try to divide element to fit
-					if(elementSpec.getType() != ElementType.NOTE) {
-						// drop because no possibility of dividing
-						removeElementView(view);
-						continue;
-					} else {
-						ElementSpec.NormalNote note = (NormalNote) elementSpec;
-						int capLeft = currentTime.capLeft;
-						removeElementView(view);
-						insertDivdiedNote.insertDivided(i, capLeft, note.noteSpec(), true);
-						insertDivdiedNote.insertDivided(
-							i+insertDivdiedNote.getTotal(), 
-							timeValue - capLeft, note.noteSpec(), false);
-						continue;
-					}
-				} 
-				else {
-					fillWithFakePauses.insertDivided(i, currentTime.capLeft, true);
-					i += fillWithFakePauses.getTotal();
-					timeIndex++;
-					continue;
-				}
-				i++;
+			} 
+			else {
+				fillWithFakePauses.insertDivided(i, currentTime.capLeft, true);
+				i += fillWithFakePauses.getTotal();
+				timeIndex++;
+				continue;
 			}
-			if(timeIndex > prevHandledTime) {
-				rebuildTime(timeIndex, i, currentMetrum);
-			}
-			// usuwam nadmiarowe (względem nowego wyliczenia) obiekty Time
-			int lastOldTime = times.size()-1;
-			while(lastOldTime > timeIndex) {
-				Time removedTime = times.remove(lastOldTime--);
-				removeElementView(removedTime.view, false);
-			}
+			i++;
+		}
+		if(timeIndex > prevHandledTime) {
+			rebuildTime(timeIndex, i, currentMetrum);
+		}
+		// usuwam nadmiarowe (względem nowego wyliczenia) obiekty Time
+		int lastOldTime = times.size()-1;
+		while(lastOldTime > timeIndex) {
+			Time removedTime = times.remove(lastOldTime--);
+			removeElementView(removedTime.view, false);
 		}
 	}
 	
@@ -692,6 +692,16 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			updatePosition(currentTime.view, positionAfter(newRangeStart-1), sheetElementY(currentTime.view));
 		} else {
 			currentTime = times.get(timeIndex); 
+			int prevIndex = elementViews.indexOf(currentTime.view);
+			if(prevIndex >= 0) {
+				if(prevIndex < newRangeStart) {
+					throw new RuntimeException(String.format(
+						"time[%d].view should not be at %d that is lower that newRangeStart %d",
+						timeIndex, prevIndex, newRangeStart
+					));
+				}
+				elementViews.remove(prevIndex);
+			}
 			elementViews.add(newRangeStart, currentTime.view);
 		}
 		currentTime.rangeStart = newRangeStart;
@@ -934,7 +944,23 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		debugViews();
 		return newElement;
 	}
+	
+	private void insertNewNoTimestepTime(int newTimeIndex, int viewInsertIndex) {
+		/**
+		 * clean NoteGroup-s and JoinArc-s, get rebuildRange from them
+		 * inject new Time into times
+		 * inject view into elementViews at specified place
+		 * correct rebuildRange
+		 * position view inside IA
+		 * rebuild NG and JA
+		 * postInsert()
+		 */
+		throw new UnsupportedOperationException();
+	}	
 
+	/**
+	 * @return index of the rightmost time, which {@link Time#rangeStart} < insertIndex
+	 */
 	private int findTimeToInsertTo(int insertIndex) {
 		int currTime = findTime(insertIndex);
 		if(times.get(currTime).rangeStart == insertIndex) {
@@ -1090,7 +1116,12 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private void forceCloseTime(int insertIndex) {
 		int timeIndex = findTimeToInsertTo(insertIndex);
 		Time time = times.get(timeIndex);
-		int capToFill = timeCapacity(getCurrentTimeStep(timeIndex), minPossibleValue);
+		TimeStep currentTimeStep = getCurrentTimeStep(timeIndex);
+		if(currentTimeStep == null) {
+			insertNewNoTimestepTime(timeIndex+1, insertIndex);
+			return;
+		}
+		int capToFill = timeCapacity(currentTimeStep, minPossibleValue);
 		for(int i = time.rangeStart+1; i < insertIndex; i++) {
 			ElementSpec spec = specAt(i);
 			switch(spec.getType()) {
@@ -1355,14 +1386,14 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				if(activePointerId == INVALID_POINTER)
 					break;
 				activePointerId = INVALID_POINTER;
-				insertNoteAndClean();
+				postInsertClean();
 				return true;
 			}
 			cancel();
 			return false;
 		}
 
-		private void insertNoteAndClean() {
+		private void postInsertClean() {
 			SheetAlignedElementView noteView = elementViews.get(insertIndex);
 			noteView.setPaint(normalPaint, NOTE_DRAW_PADDING);
 			highlightAnchor(null);
@@ -1772,6 +1803,9 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		setTouchInputLocked(true);
 	}
 	
+	/**
+	 * @return index of the rightmost time, which {@link Time#rangeStart} <= insertIndex
+	 */
 	protected int findTime(int elementIndex) {
 		int i = 0;
 		for(; i < times.size(); i++) {
@@ -2511,6 +2545,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 
 		@Override
 		protected void perform(int elementIndex) {
+			// TODO przerobic na updateElementSpec()
 			try {
 				int timeIndex = getTimeIndex(elementIndex);
 				Time time = times.get(timeIndex);
@@ -2580,6 +2615,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		if(timeIndex == 0 || timeIndex >= times.size()) {
 			log.w("Tried to alter timestep of incorrect time %d", timeIndex);
 		} else try {
+			// TODO przerobić na updateElementSpec()
 			Time time = times.get(timeIndex);
 			time.spec.setTimeStep(enteredValue);
 			int pinVisiblePositionX = abs2visibleX(viewStableX(time.view) + middleX(time.view));
@@ -2951,7 +2987,10 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	}
 	
 	private static int timeCapacity(TimeStep timeStep, int measureBaseUnit) {
-		return length(timeStep.getTempoBaseLength(), measureBaseUnit)*timeStep.getBaseMultiplier();
+		if(timeStep == null)
+			return Integer.MAX_VALUE;
+		else 
+			return length(timeStep.getTempoBaseLength(), measureBaseUnit)*timeStep.getBaseMultiplier();
 	}
 	
 	private int moveDistance() {

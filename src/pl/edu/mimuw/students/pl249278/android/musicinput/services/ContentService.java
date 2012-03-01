@@ -142,7 +142,6 @@ public class ContentService extends AsynchronousRequestsService {
 	}
 
 	private void insertScore(Intent requestIntent) {
-		// TODO add displayMode support
 		SQLiteDatabase writableDatabase = mDb.getWritableDatabase();
 		ContentValues values = new ContentValues();
 		ParcelableScore parcelable = requestIntent.getParcelableExtra(ACTIONS.EXTRAS_SCORE);

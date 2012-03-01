@@ -18,18 +18,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
 import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.KeySignature;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.NoteModifier;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.PauseSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score.ParcelableScore;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreContentElem;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.SerializationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.AdditionalMark;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
+import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
+import pl.edu.mimuw.students.pl249278.android.musicinput.services.FilterByRequestIdReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Action;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ErrorDialog;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ErrorDialog.ErrorDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.IndicatorOrigin;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TimeStepDialog;
@@ -65,7 +73,11 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.Intercep
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.ScrollingLockable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.TouchInputLockable;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
+import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.TypedArray;
 import android.graphics.BlurMaskFilter;
 import android.graphics.BlurMaskFilter.Blur;
@@ -89,45 +101,79 @@ import android.widget.HorizontalScrollView;
 import android.widget.ScrollView;
 import android.widget.Toast;
 
-public class EditActivity extends FragmentActivity implements TimeStepDialog.OnPromptResult {
+public class EditActivity extends FragmentActivity implements TimeStepDialog.OnPromptResult, ErrorDialogListener {
+	private static LogUtils log = new LogUtils(EditActivity.class);
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
-	/**
-	 * of type long
-	 */
+	/** of type long */
 	public static final String STARTINTENT_EXTRAS_SCORE_ID = "score_id";
-
 	private static final int ANIM_TIME = 150;
-	protected Paint noteHighlightPaint = new Paint();
-	protected Paint fakePausePaint = new Paint();
+	
+	private static final String INSTANCE_STATE_SCORE = "state_score";
+	private static final String INSTANCE_STATE_VISUALCONF = "state_visualconf";
+	private static final String INSTANCE_STATE_RIGHT_TO_IA = "right2ia";
+	/** 
+	 * Instance key for {@link #rightToIAsavedPosition}.
+	 * Required to restore horizontal scroll position.
+	 */
+	private static final String INSTANCE_STATE_RIGHT_TO_IA_POSITION = "right2iaPos";
+	private static final String INSTANCE_STATE_SCALE = "scale";
+	/** 
+	 * Instance key for {@link #contextTimeIndex}.
+	 * Required to persist context of displayed TimestepDialog during configuration restart.
+	 */
+	private static final String INSTANCE_STATE_CONTEXT_TIME_INDEX = "ctxTime";
+	/** Instance key for {@link #currentNoteLength} */
+ 	private static final String INSTANCE_STATE_CURRENT_NOTE_LENGTH = "newNoteLength";
+	
+	private static final String DIALOGTAG_ERROR = "errordialog";
+	private static final int ERRORDIALOG_CALLBACK_DO_FINISH = 1;
+	private static final String CALLBACK_ACTION_GET = "callback_get";
+	
 	private int NOTE_DRAW_PADDING = 0;
 	private int MIN_DRAW_SPACING;
-	protected static final Paint normalPaint = new Paint();
+	protected Paint noteHighlightPaint = new Paint();
+	protected Paint fakePausePaint = new Paint();
+	protected Paint normalPaint = new Paint();
 	{
 		normalPaint.setAntiAlias(true);
 		noteHighlightPaint.setAntiAlias(true);
 		fakePausePaint.setAntiAlias(true);
 	}
-
-	private static LogUtils log = new LogUtils(EditActivity.class);
 	
 	private Sheet5LinesView lines;
-	private SheetParams sheetParams;
 	private ViewGroup sheet;
-	private ArrayList<Time> times = new ArrayList<EditActivity.Time>();
-	private ArrayList<SheetAlignedElementView> elementViews = new ArrayList<SheetAlignedElementView>();
-	private ArrayList<SheetElementView<SheetElement>> overlaysViews = new ArrayList<SheetElementView<SheetElement>>();
-	private int inputAreaWidth;
 	private View inputArea;
 	private HorizontalScrollView hscroll;
 	private ScrollView vertscroll;
 	private ViewGroup scaleGestureDetector;
 	private Animator animator = new EditActivity.Animator(this);
+	private ProgressDialog progressDialog;	
+	private QuickActionsView qActionsView; 
+	
+	private boolean isScaleValid = false;
+	private SheetParams sheetParams;
+	private ArrayList<Time> times = new ArrayList<EditActivity.Time>();
+	private ArrayList<SheetAlignedElementView> elementViews = new ArrayList<SheetAlignedElementView>();
+	private ArrayList<SheetElementView<SheetElement>> overlaysViews = new ArrayList<SheetElementView<SheetElement>>();
+	private Score score = null;
+	private ScoreVisualizationConfig visualConf = null;
 	
 	/**
 	 * Index (in elementViews) of element that is first on right side of InputArea,
 	 * when there is no such element rightToIA = elementViews.size()
 	 */
-	private int rightToIA;
+	private int rightToIA = Integer.MAX_VALUE;
+	/** elementViews[rightToIA].middle - moveLeftBorder() value before restart
+	 * @see #INSTANCE_STATE_RIGHT_TO_IA_POSITION
+	 */
+	private int rightToIAsavedPosition;
+	
+	/** index of Time which {@link TimeStepDialog} operates on */
+	private int contextTimeIndex = -1;
+
+	/** length attribute for new note being inserted, provided by {@link NoteValueSpinner} */
+	protected int currentNoteLength = 0;
+	
 	private int iaRightMargin;
 	private int delta;
 	private int mTouchSlop;
@@ -135,9 +181,8 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private int visibleRectWidth;
 	private int visibleRectHeight;
 	private int notesAreaX;
-
-	protected int currentNoteLength = 0;
 	
+	private int inputAreaWidth;
 	private float noteMinDistToIA;
 	private float defaultSpacingBaseFactor;
 	private float minDrawSpacingFactor;
@@ -172,33 +217,239 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.editscreen);
 
-		// TODO remove test code
-		long scoreId = getIntent().getLongExtra(STARTINTENT_EXTRAS_SCORE_ID, -1);
-		log.w("onCreate() scoreId = %d", scoreId);
-		
-		// TODO sheetParams comes from previous view
 		sheetParams = new SheetParams(
 			getResources().getInteger(R.integer.lineThickness),
 			getResources().getInteger(R.integer.linespaceThickness)
 		);
-		sheetParams.setTimeStep(new TimeSpec.TimeStep(3, 2));
-		sheetParams.setClef(NoteConstants.Clef.VIOLIN);
-		sheetParams.setKeySignature(KeySignature.B_DUR);
-		sheetParams.setMinSpaceAnchor(getResources().getInteger(R.integer.minSpaceDefault));
-		sheetParams.setMaxSpaceAnchor(getResources().getInteger(R.integer.maxSpaceDefault));
 		
 		scaleGestureDetector = (ViewGroup) findViewById(R.id.EDIT_scale_detector);
 		scaleGestureDetector.setOnTouchListener(quickActionsDismiss);
 		hscroll = (HorizontalScrollView) findViewById(R.id.EDIT_outer_hscrollview);
-		hscroll.setOnTouchListener(quickActionsDismiss);
 		vertscroll = (ScrollView) findViewById(R.id.EDIT_vertscrollview);
-		vertscroll.setOnTouchListener(quickActionsDismiss);
 		sheet = (ViewGroup) findViewById(R.id.EDIT_sheet_container);
 		lines = (Sheet5LinesView) findViewById(R.id.EDIT_sheet_5lines);
 		((HackedScrollViewChild) vertscroll.getChildAt(0)).setRuler(lines);
 		int hColor = getResources().getColor(R.color.highlightColor);
 		lines.setHiglightColor(hColor);
 		noteHighlightPaint.setColor(hColor);
+		this.inputArea = findViewById(R.id.EDIT_inputArea);
+		
+		this.inputAreaWidth = getResources().getDimensionPixelSize(R.dimen.inputAreaWidth);
+		ViewConfiguration configuration = ViewConfiguration.get(this);
+        this.mTouchSlop = configuration.getScaledTouchSlop();
+		noteShadow = readParametrizedFactor(R.string.noteShadow);
+		fakePauseEffectRadius = readParametrizedFactor(R.string.fakePauseEffectRadius);
+		noteMinDistToIA = readParametrizedFactor(R.string.minDistToIA);
+		defaultSpacingBaseFactor = readParametrizedFactor(R.string.defaultTimeSpacingBaseFactor);
+		minPossibleValue = getResources().getInteger(R.integer.minNotePossibleValue) + 1;
+		minDrawSpacingFactor = readParametrizedFactor(R.string.minDrawSpacing);
+		afterTimeDividerVisualSpacingFactor = readParametrizedFactor(R.string.timeDividerDrawAfterSpacingFactor);
+		maxLinespaceThickness = getResources().getDimensionPixelSize(R.dimen.maxLinespaceThickness);
+		
+		NoteValueSpinner valueSpinner = (NoteValueSpinner) findViewById(R.id.EDIT_note_value_scroll);
+		try {
+			int newNoteLength = savedInstanceState == null ? 
+				-1 : savedInstanceState.getInt(INSTANCE_STATE_CURRENT_NOTE_LENGTH, -1);
+			if(newNoteLength == -1) {
+				valueSpinner.setupNoteViews(sheetParams);
+			} else {
+				valueSpinner.setupNoteViews(sheetParams, newNoteLength);
+			}
+			currentNoteLength = valueSpinner.getCurrentValue();
+		} catch (CreationException e) {
+			log.e("Failed to setup spinner", e);
+			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
+			return;
+		}
+		
+		if(savedInstanceState != null && savedInstanceState.containsKey(INSTANCE_STATE_SCORE)) {
+			ParcelableScore parcelable = savedInstanceState.getParcelable(INSTANCE_STATE_SCORE);
+			score = parcelable.getSource();
+			visualConf = savedInstanceState.getParcelable(INSTANCE_STATE_VISUALCONF);
+			rightToIA = savedInstanceState.getInt(INSTANCE_STATE_RIGHT_TO_IA);
+			if(savedInstanceState.containsKey(INSTANCE_STATE_SCALE)) {
+				sheetParams.setScale(savedInstanceState.getFloat(INSTANCE_STATE_SCALE));
+				isScaleValid = true;
+			}
+			rightToIAsavedPosition = savedInstanceState.getInt(INSTANCE_STATE_RIGHT_TO_IA_POSITION);
+			contextTimeIndex = savedInstanceState.getInt(INSTANCE_STATE_CONTEXT_TIME_INDEX);
+			onModelLoaded();
+		} else {
+			long scoreId = getIntent().getLongExtra(STARTINTENT_EXTRAS_SCORE_ID, -1);
+			if(scoreId == -1) {
+				log.e("Activity started without score id in intent");
+				showErrorDialog(R.string.errormsg_unrecoverable, null, true);
+				return;
+			}
+			// sending request for Score object
+			GetScoreReceiver getScoreReceiver = new GetScoreReceiver();	
+			PendingIntent callbackIntent = PendingIntent.getBroadcast(this, 0, new Intent(CALLBACK_ACTION_GET), 0);
+			Intent requestIntent = AsyncHelper.prepareServiceIntent(
+				this, 
+				ContentService.class, 
+				ContentService.ACTIONS.GET_SCORE_BY_ID, 
+				getScoreReceiver.getUniqueRequestID(true), 
+				callbackIntent, 
+				true
+			);
+			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, scoreId);
+			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, true);
+			registerReceiver(getScoreReceiver, new IntentFilter(CALLBACK_ACTION_GET));
+        	log.v("Sending "+CALLBACK_ACTION_GET+" for id "+scoreId);
+        	startService(requestIntent);
+        	progressDialog = ProgressDialog.show(this, "", 
+    			getString(R.string.msg_loading_please_wait), true);
+		}
+	}
+	
+	private class GetScoreReceiver extends FilterByRequestIdReceiver {
+		@Override
+		protected void onFailure(Intent response) {
+			log.e("Failed to get score: " + AsyncHelper.getError(response));
+			unregisterReceiver(this);
+			progressDialog.dismiss();
+			progressDialog = null;
+			showErrorDialog(R.string.errormsg_unrecoverable, null, true);
+		}
+		
+		@Override
+		protected void onSuccess(Intent response) {
+			unregisterReceiver(this);
+			ParcelableScore parcelable = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_ENTITY);
+			score = parcelable.getSource();
+			visualConf = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF);
+			onModelLoaded();
+		}
+	}
+	
+	private void showErrorDialog(int messageStringId, Throwable e, boolean lazyFinish) {
+		DialogFragment prev = (DialogFragment) getSupportFragmentManager().findFragmentByTag(DIALOGTAG_ERROR);
+	    if (prev != null) {
+	        prev.dismiss();
+	    }
+		DialogFragment newFragment = ErrorDialog.newInstance(
+			this, messageStringId, e, lazyFinish ? ERRORDIALOG_CALLBACK_DO_FINISH : 0);
+	    newFragment.show(getSupportFragmentManager(), DIALOGTAG_ERROR);
+	}
+	
+	@Override
+	public void onDismiss(ErrorDialog dialog, int arg) {
+		if(arg == ERRORDIALOG_CALLBACK_DO_FINISH) {
+			finish();
+		}
+	}
+	
+	private void onModelLoaded() {
+		try {
+			List<ScoreContentElem> content = score.getContent();
+			for(ScoreContentElem el: content) {
+				ElementSpec spec;
+				if(el instanceof TimeSpec) {
+					TimeSpec timeSpec = (TimeSpec) el;
+					times.add(new Time(timeSpec));
+					spec = new ElementSpec.TimeDivider(
+						times.size() > 1 ? times.get(times.size()-2).spec : null, 
+						timeSpec
+					);
+				} else if(el instanceof NoteSpec) {
+					spec = elementSpecNN((NoteSpec) el);
+				} else if(el instanceof PauseSpec) {
+					spec = new ElementSpec.Pause((PauseSpec) el, false);
+				} else {
+					log.e("Unsupported score content element " + el);
+					showErrorDialog(R.string.errormsg_unrecoverable, null, true);
+					return;
+				}
+				SheetAlignedElementView view = addElementView(elementViews.size(), createDrawingModel(spec));
+				if(el instanceof TimeSpec) {
+					times.get(times.size()-1).view = view;
+				}
+			}
+			// build times
+			rebuildTimes(0);
+			// rebuild overlays
+			int size = elementViews.size();
+			buildNoteGroups(0, size-1);
+			buildJoinArcs(0, size-1);
+		} catch (CreationException e) {
+			log.e("Failed to initialize", e);
+			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
+			return;
+		} catch (SerializationException e) {
+			log.e("Failed to initialize", e);
+			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
+			return;
+		}
+		
+		rightToIA = Math.min(rightToIA, elementViews.size());
+		
+		setupListeners();
+		ViewUtils.addActivityOnLayout(this, new OnLayoutListener() {
+			@Override
+			public void onFirstLayoutPassed() {
+				log.v("onGlobalLayout() >> HSCROLL %dx%d", hscroll.getWidth(), hscroll.getHeight());
+				onContainerResize(hscroll.getWidth(), hscroll.getHeight());
+			}
+		});
+		hscroll.requestLayout();
+		if(progressDialog != null) {
+			progressDialog.dismiss();
+			progressDialog = null;
+		}
+	}
+	
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		if(score != null) {
+			// collect new Score content
+			List<ScoreContentElem> content = new ArrayList<ScoreContentElem>(elementViews.size());
+			for(SheetAlignedElementView view: elementViews) {
+				ElementSpec spec = view.model().getElementSpec();
+				switch(spec.getType()) {
+				case FAKE_PAUSE:
+					continue;
+				case NOTE:
+					content.add(((ElementSpec.NormalNote) spec).noteSpec());
+					break;
+				case PAUSE:
+					content.add(((ElementSpec.Pause) spec).pauseSpec());
+					break;
+				case SPECIAL_SIGN:
+					// TODO implement or remove
+					throw new UnsupportedOperationException();
+				case TIMES_DIVIDER:
+					content.add(((ElementSpec.TimeDivider) spec).getRightTime());
+					break;
+				default:
+					throw new UnsupportedOperationException();
+				}
+			}
+			score.setContent(content);
+			try {
+				outState.putParcelable(INSTANCE_STATE_SCORE, score.prepareParcelable());
+			} catch (SerializationException e) {
+				throw new RuntimeException(e);
+			}
+			outState.putParcelable(INSTANCE_STATE_VISUALCONF, visualConf);
+			outState.putInt(INSTANCE_STATE_RIGHT_TO_IA, rightToIA);
+			if(isScaleValid) {
+				outState.putFloat(INSTANCE_STATE_SCALE, sheetParams.getScale());
+			}
+			if(rightToIA < elementViews.size()) {
+				SheetAlignedElementView view = elementViews.get(rightToIA);
+				int middleX = viewStableX(view) + middleX(view);
+				outState.putInt(INSTANCE_STATE_RIGHT_TO_IA_POSITION, abs2visibleX(middleX) - moveLeftBorder());
+			}
+			outState.putInt(INSTANCE_STATE_CONTEXT_TIME_INDEX, contextTimeIndex);
+			outState.putInt(INSTANCE_STATE_CURRENT_NOTE_LENGTH, currentNoteLength);
+		}
+		super.onSaveInstanceState(outState);
+	}
+
+	
+	private void setupListeners() {
+		hscroll.setOnTouchListener(quickActionsDismiss);
+		vertscroll.setOnTouchListener(quickActionsDismiss);
 		((InterceptsScaleGesture) scaleGestureDetector).setOnScaleListener(scaleListener);
 		sheet.setOnTouchListener(new CompoundTouchListener(
 			quickActionsDismiss,
@@ -208,14 +459,6 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		));
 		// setup noteValue spinner
 		NoteValueSpinner valueSpinner = (NoteValueSpinner) findViewById(R.id.EDIT_note_value_scroll);
-		try {
-			valueSpinner.setupNoteViews(sheetParams);
-			currentNoteLength = valueSpinner.getCurrentValue();
-		} catch (CreationException e) {
-			e.printStackTrace();
-			finish();
-			return;
-		}
 		valueSpinner.setOnValueChangedListener(new OnValueChanged<Integer>() {
 			@Override
 			public void onValueChanged(Integer newValue, Integer oldValue) {
@@ -230,21 +473,6 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				showQuickActionsAbove(findViewById(R.id.EDIT_button_insert), rightToIA, insertActions);
 			}
 		});
-		
-		this.inputArea = findViewById(R.id.EDIT_inputArea);
-		this.inputAreaWidth = getResources().getDimensionPixelSize(R.dimen.inputAreaWidth);
-		ViewConfiguration configuration = ViewConfiguration.get(this);
-        this.mTouchSlop = configuration.getScaledTouchSlop();
-		
-		noteShadow = readParametrizedFactor(R.string.noteShadow);
-		fakePauseEffectRadius = readParametrizedFactor(R.string.fakePauseEffectRadius);
-		noteMinDistToIA = readParametrizedFactor(R.string.minDistToIA);
-		defaultSpacingBaseFactor = readParametrizedFactor(R.string.defaultTimeSpacingBaseFactor);
-		minPossibleValue = getResources().getInteger(R.integer.minNotePossibleValue) + 1;
-		minDrawSpacingFactor = readParametrizedFactor(R.string.minDrawSpacing);
-		afterTimeDividerVisualSpacingFactor = readParametrizedFactor(R.string.timeDividerDrawAfterSpacingFactor);
-		maxLinespaceThickness = getResources().getDimensionPixelSize(R.dimen.maxLinespaceThickness);
-		
 		try {
 			prepareQuickActions();
 		} catch (LoadingSvgException e) {
@@ -252,131 +480,9 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			finish();
 			return;
 		}
-		
-		// create elements
-		ArrayList<ElementSpec> rawNotesSequence = new ArrayList<ElementSpec>();
-		NoteSpec n;
-
-//		n = new NoteSpec(NoteConstants.LEN_HALFNOTE, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINESPACE));
-//		n.setHasDot(true);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n4));
-		
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINE));
-//		n.setToneModifier(NoteModifier.SHARP);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINESPACE));
-////		n.setHasDot(true);
-//		n.setToneModifier(NoteModifier.SHARP);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINE));
-//		n.setToneModifier(NoteModifier.SHARP);
-////		n.setHasDot(true);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE));
-//		n.setIsGrouped(true);
-//		n.setHasDot(true);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE));
-//		n.setIsGrouped(true);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(6, NoteConstants.ANCHOR_TYPE_LINESPACE));
-////		n.setIsGrouped(true);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-		
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINE));
-//		n.setIsGrouped(true);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+2, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
-//		n.setIsGrouped(true);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-//		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(5, NoteConstants.ANCHOR_TYPE_LINE));
-//		n.setIsGrouped(true);
-//		rawNotesSequence.add(new ElementSpec.NormalNote(n));
-		
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
-		n.setHasJoinArc(true);
-		rawNotesSequence.add(elementSpecNN(n));
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
-//		n.setHasJoinArc(true);
-		n.setToneModifier(NoteModifier.FLAT);
-		rawNotesSequence.add(elementSpecNN(n));
-		
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE));
-		n.setHasJoinArc(true);
-		n.setIsGrouped(true);
-//		n.setHasDot(true);
-		rawNotesSequence.add(elementSpecNN(n));
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
-//		n.setToneModifier(NoteModifier.FLAT);
-//		n.setHasJoinArc(true);
-		n.setIsGrouped(true);
-		rawNotesSequence.add(elementSpecNN(n));
-		
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINESPACE));
-		n.setHasJoinArc(true);
-//		n.setIsGrouped(true);
-//		n.setHasDot(true);
-		rawNotesSequence.add(elementSpecNN(n));
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
-//		n.setToneModifier(NoteModifier.FLAT);
-		n.setHasJoinArc(true);
-		n.setIsGrouped(true);
-		rawNotesSequence.add(elementSpecNN(n));
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
-//		n.setHasJoinArc(true);
-		rawNotesSequence.add(elementSpecNN(n));
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE));
-//		n.setHasJoinArc(true);
-		n.setIsGrouped(true);
-//		n.setHasDot(true);
-		rawNotesSequence.add(elementSpecNN(n));
-		
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+1, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE));
-		n.setIsGrouped(true);
-//		n.setHasDot(true);
-		rawNotesSequence.add(elementSpecNN(n));
-		
-		n = new NoteSpec(NoteConstants.LEN_QUATERNOTE+2, NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE));
-		rawNotesSequence.add(elementSpecNN(n));
-		
-//		rawNotesSequence.add(new ElementSpec.Pause(new PauseSpec(NoteConstants.LEN_QUATERNOTE)));
-//		rawNotesSequence.add(new ElementSpec.Pause(new PauseSpec(NoteConstants.LEN_QUATERNOTE+1)));
-		
-		try {
-			for(ElementSpec spec: rawNotesSequence) {
-				addElementView(elementViews.size(), createDrawingModel(spec));
-			}
-			// build times
-			rebuildTimes(0);
-			// rebuild overlays
-			int size = elementViews.size();
-			buildNoteGroups(0, size-1);
-			buildJoinArcs(0, size-1);
-		} catch (CreationException e) {
-			e.printStackTrace();
-			finish();
-			return;
-		}
-		
 		((InterceptableOnScrollChanged) hscroll).setListener(horizontalScrollListener);
-		
-		rightToIA = elementViews.size();
 	}
 
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		ViewUtils.addActivityOnLayout(this, new OnLayoutListener() {
-			@Override
-			public void onFirstLayoutPassed() {
-				log.v("onGlobalLayout() >> HSCROLL %dx%d", hscroll.getWidth(), hscroll.getHeight());
-				onContainerResize(hscroll.getWidth(), hscroll.getHeight());
-			}
-		});
-	}
-	
 	private float readParametrizedFactor(int stringResId) {
 		return sheetParams.readParametrizedFactor(getResources().getString(stringResId));
 	}
@@ -387,7 +493,9 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private void rebuildTimes(int startTimeIndex) throws CreationException {
 //		log.i("rebuildTimes(%d)", startTimeIndex);
 		
-		if(sheetParams.getTimeStep() != null) {
+		// TODO fix logic when no metrum
+		// if(sheetParams.getTimeStep() != null) 
+		{
 			TimeSpec.TimeStep currentMetrum = getCurrentTimeStep(startTimeIndex);
 			int i = startTimeIndex < times.size() ? times.get(startTimeIndex).rangeStart : 0;
 			int timeIndex = startTimeIndex;
@@ -434,9 +542,9 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 						ElementSpec.NormalNote note = (NormalNote) elementSpec;
 						int capLeft = currentTime.capLeft;
 						removeElementView(view);
-						insertDiviedNote.insertDivided(i, capLeft, note.noteSpec(), true);
-						insertDiviedNote.insertDivided(
-							i+insertDiviedNote.getTotal(), 
+						insertDivdiedNote.insertDivided(i, capLeft, note.noteSpec(), true);
+						insertDivdiedNote.insertDivided(
+							i+insertDivdiedNote.getTotal(), 
 							timeValue - capLeft, note.noteSpec(), false);
 						continue;
 					}
@@ -492,7 +600,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	}
 	private FillWithPauses fillWithPauses = new FillWithPauses();
 	
-	private class InsertDiviedNote extends InsertDivided {
+	private class InsertDividedNote extends InsertDivided {
 		private NoteSpec template;
 		private List<NoteSpec> specs = new ArrayList<NoteSpec>();
 
@@ -523,7 +631,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		}
 		
 	}
-	private InsertDiviedNote insertDiviedNote = new InsertDiviedNote();
+	private InsertDividedNote insertDivdiedNote = new InsertDividedNote();
 	
 	private abstract class InsertDivided extends DivideLengthStrategy {
 		private int insertIndex;
@@ -575,10 +683,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private Time rebuildTime(int timeIndex, int newRangeStart, TimeStep prevMetrum) throws CreationException {
 		Time currentTime;
 		if(timeIndex >= times.size()) {
-			currentTime = new Time(timeIndex == 0 ? 
-				new TimeSpec(sheetParams.getTimeStep(), sheetParams.getClef(), sheetParams.getKeySignature()) 
-				: new TimeSpec()
-			);
+			currentTime = new Time(new TimeSpec());
 			currentTime.view = addElementView(newRangeStart, createDrawingModel(new ElementSpec.TimeDivider(
 				timeIndex > 0 ? times.get(timeIndex-1).spec : null,
 				currentTime.spec
@@ -1319,9 +1424,9 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		return Math.max( 
 			Math.min(
 			LINE0_ABSINDEX + indexDelta + (indexDeltaHead < 0 ? -1 : 0),
-			NoteConstants.anchorIndex(sheetParams.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
+			NoteConstants.anchorIndex(visualConf.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
 			),
-			NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
+			NoteConstants.anchorIndex(visualConf.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
 		);
 	}
 	
@@ -1339,7 +1444,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	}
 	
 	private TimeStep getCurrentTimeStep(int timeIndex) {
-		TimeStep result = sheetParams.getTimeStep(), curr;
+		TimeStep result = null, curr;
 		timeIndex = Math.min(timeIndex, times.size()-1);
 		for(int i = 0; i <= timeIndex; i++) {
 			if((curr = times.get(i).spec.getTimeStep()) != null) {
@@ -1726,31 +1831,42 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		
 		iaRightMargin = ((View) inputArea.getParent()).getWidth() - inputArea.getRight();
 		
-		// calculate default scale so spaces/lines (from space -1 to space 5) fit visible height
-		float scale = ((float) (visibleRectHeight)) / ((float) (
-			sheetParams.getLineFactor() * 5 + sheetParams.getLinespacingFactor() * 6
-		));
-		sheetParams.setScale(scale);
-		int optimal = getResources().getDimensionPixelSize(R.dimen.optimalLinespaceThickness);
-		int current = sheetParams.getLinespacingThickness();
-		if(current > optimal) {
-			scale = scale * optimal / current;
+		float scale;
+		if(!isScaleValid) {
+			// calculate default scale so spaces/lines (from space -1 to space 5) fit visible height
+			scale = ((float) (visibleRectHeight)) / ((float) (
+				sheetParams.getLineFactor() * 5 + sheetParams.getLinespacingFactor() * 6
+			));
+			sheetParams.setScale(scale);
+			int optimal = getResources().getDimensionPixelSize(R.dimen.optimalLinespaceThickness);
+			int current = sheetParams.getLinespacingThickness();
+			if(current > optimal) {
+				scale = scale * optimal / current;
+			}
+			sheetParams.setScale(scale);
+			if(sheetParams.getLineThickness() < 1) {
+				scale = scale * 1 / sheetParams.getLineThickness();
+			}
+			isScaleValid = true;
+		} else {
+			scale = sheetParams.getScale();
 		}
-		sheetParams.setScale(scale);
-		if(sheetParams.getLineThickness() < 1) {
-			scale = scale * 1 / sheetParams.getLineThickness();
-		}
-		updateScaleFactor(scale);
+		updateScaleFactor(scale, false);
 		
-		int vis2 = visibleRectHeight/2;
 		int linesHalf = sheetParams.anchorOffset(NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE), AnchorPart.MIDDLE);
-		fixLine0VisibleY(vis2 - linesHalf);
+		fixLine0VisibleY((visibleRectHeight/2) - linesHalf);
 		
-		// TODO calculate sheet start scroll position
+    	// scroll according to rightToIA
+		final int startScrollX;
+		if(rightToIA >= elementViews.size()) {
+			startScrollX = declaredWidth(sheet);
+		} else {
+			startScrollX = middleAbsoluteX(elementViews.get(rightToIA)) - (moveLeftBorder() + rightToIAsavedPosition);
+		}
 		hscroll.post(new Runnable() {
 		    @Override
 		    public void run() {
-				hscroll.scrollTo(declaredWidth(sheet), 0);
+				hscroll.scrollTo(startScrollX, 0);
 				sheet.setVisibility(View.VISIBLE);
 		    } 
 		});
@@ -1772,6 +1888,9 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	}
 
 	private void updateScaleFactor(float newScaleFactor) {
+		updateScaleFactor(newScaleFactor, true);
+	}
+	private void updateScaleFactor(float newScaleFactor, boolean ignoreRightToIA) {
 		log.d("newScaleFactor: %f", newScaleFactor);
 		sheetParams.setScale(newScaleFactor);
 		MIN_DRAW_SPACING = (int) (minDrawSpacingFactor*sheetParams.getScale());
@@ -1784,11 +1903,11 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		log.d("updateScaleFactor(%f): delta = %d", newScaleFactor, delta);
 		// <!-- correct "5 lines" View to assure that min/maxSpaceAnchor is visible
 		int minLinespaceTopOffset = sheetParams.anchorOffset(
-			NoteConstants.anchorIndex(sheetParams.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE), 
+			NoteConstants.anchorIndex(visualConf.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE), 
 			AnchorPart.TOP_EDGE
 		);
 		int maxLinespaceBottomOffset = sheetParams.anchorOffset(
-			NoteConstants.anchorIndex(sheetParams.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE),
+			NoteConstants.anchorIndex(visualConf.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE),
 			AnchorPart.BOTTOM_EDGE
 		);
 		int line4bottomOffset = sheetParams.anchorOffset(
@@ -1811,6 +1930,9 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		}
 		for(int i = 0; i < elementViews.size(); i++) {
 			x += spacingAfter;
+			if(!ignoreRightToIA && i == rightToIA) {
+				x += moveDistance();
+			}
 			SheetAlignedElementView v = elementViews.get(i);
 			v.updateDrawRadius(NOTE_DRAW_PADDING);
 			if(v.model().getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
@@ -2449,9 +2571,6 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		
 	}
 	
-	// TODO persist in onSaveInstance
-	private int contextTimeIndex = -1;
-	
 	@Override
 	/**
 	 * Result of prompt for new TimeStep for current Time
@@ -2497,7 +2616,6 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		}
 	}
 	
-	private QuickActionsView qActionsView; 
 	private void prepareQuickActions() throws LoadingSvgException {
 		qActionsView = (QuickActionsView) findViewById(R.id.EDIT_quickactions);
 		qActionsView.setVisibility(View.INVISIBLE);
@@ -2746,7 +2864,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	
 	private ElementSpec.NormalNote elementSpecNN(NoteSpec spec) {
 		int orientation;
-		Score.DisplayMode mode = sheetParams.getDisplayMode();
+		ScoreVisualizationConfig.DisplayMode mode = visualConf.getDisplayMode();
 		switch (mode) {
 		case LOWER_VOICE:
 			orientation = NoteConstants.ORIENT_DOWN;
@@ -2793,10 +2911,16 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		return elementViews.get(elementIndex).model().getElementSpec();
 	}
 	
+	/**
+	 * @return view's SheetAlignedElement horizontal middle in "sheet" view coordinates
+	 */
 	private static int middleAbsoluteX(SheetAlignedElementView view) {
 		return left(view)+middleX(view);
 	}
 
+	/**
+	 * @return SheetAlignedElement horizontal middle in view coordinates
+	 */
 	private static int middleX(SheetAlignedElementView view) {
 		return view.getPaddingLeft()+view.model().getMiddleX();
 	}

@@ -9,23 +9,14 @@ import android.os.Parcelable;
 import android.util.Log;
 
 public class Score {
-	// TODO wywalic to do osobnych ustawien
-	public static enum DisplayMode {
-		NORMAL,
-		UPPER_VOICE,
-		LOWER_VOICE
-	}
 	private String title;
 	private long creationUtcStamp, modificationUtcStamp;
-	private DisplayMode displayMode;
 	private String rawContent;
 	private List<ScoreContentElem> content;
 	
-    public Score(String title, DisplayMode displayMode,
-			List<ScoreContentElem> content) {
+    public Score(String title, List<ScoreContentElem> content) {
 		super();
 		this.title = title;
-		this.displayMode = displayMode;
 		this.content = content;
 	}
 
@@ -33,15 +24,22 @@ public class Score {
     	title = in.readString();
     	creationUtcStamp = in.readLong();
     	modificationUtcStamp = in.readLong();
-    	displayMode = DisplayMode.valueOf(in.readString());
     	rawContent = in.readString();
     }
     
-    private void writeToParcel(Parcel out, int flags) throws SerializationException {
+	
+	public Score(String title, String rawContent, long creationUtcStamp,
+			long modificationUtcStamp) {
+		this.title = title;
+		this.rawContent = rawContent;
+		this.creationUtcStamp = creationUtcStamp;
+		this.modificationUtcStamp = modificationUtcStamp;
+	}
+
+	private void writeToParcel(Parcel out, int flags) throws SerializationException {
 		out.writeString(title);
 		out.writeLong(creationUtcStamp);
 		out.writeLong(modificationUtcStamp);
-		out.writeString(displayMode.name());
         out.writeString(getRawContent());
     }
     
@@ -106,7 +104,7 @@ public class Score {
 		return title;
 	}
 
-	public DisplayMode getDisplayMode() {
-		return displayMode;
+	public void setContent(List<ScoreContentElem> content) {
+		this.content = content;
 	}
 }

@@ -73,6 +73,11 @@ public class NoteValueSpinner extends ScrollView {
 		values.recycle();
 	}
 	
+	public void setupNoteViews(SheetParams globalParams, int initialCurrentValue) throws CreationException {
+		setupNoteViews(globalParams);
+		currentValue = Math.min(initialCurrentValue, minNoteValue);
+	}
+	
 	public void setupNoteViews(SheetParams globalParams) throws CreationException {
 		if(getChildCount() == 1) {
 			notesContainer = (ViewGroup) getChildAt(0);
@@ -96,10 +101,6 @@ public class NoteValueSpinner extends ScrollView {
 			));
 			notesContainer.addView(noteView, new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
 		}
-        
-        if(currentValue >= 0 && currentValue <= minNoteValue) {
-        	setIsSelected(currentValue, true);
-        }
 	}
 	
 	private static int middleX(SheetAlignedElementView noteView) {
@@ -148,6 +149,7 @@ public class NoteValueSpinner extends ScrollView {
 	          currentView.getTop()
 			  + verticalAlignLine((SheetAlignedElementView) currentView)
 			  - getHeight()/2);
+        	setIsSelected(currentValue, true);
 		}
 	}
 	
@@ -210,7 +212,21 @@ public class NoteValueSpinner extends ScrollView {
 	
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+		switch(MeasureSpec.getMode(heightMeasureSpec)) {
+		case MeasureSpec.EXACTLY:
+		case MeasureSpec.AT_MOST:
+			heightMeasureSpec = MeasureSpec.makeMeasureSpec(
+				MeasureSpec.getMode(heightMeasureSpec), 
+				Math.min(mMaxHeight, MeasureSpec.getSize(heightMeasureSpec))
+			);
+			break;
+		case MeasureSpec.UNSPECIFIED:
+			heightMeasureSpec = MeasureSpec.makeMeasureSpec(
+				MeasureSpec.AT_MOST, 
+				mMaxHeight
+			);
+			break;
+		}
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-		setMeasuredDimension(getMeasuredWidth(), Math.min(mMaxHeight, getMeasuredHeight()));
 	}
 }

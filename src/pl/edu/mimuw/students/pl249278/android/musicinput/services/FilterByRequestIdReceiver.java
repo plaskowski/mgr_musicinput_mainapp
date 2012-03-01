@@ -11,6 +11,10 @@ public abstract class FilterByRequestIdReceiver extends BroadcastReceiver {
 	private static final String TAG = LogUtils.COMMON_TAG;
 	private String currentRequestId = null;
 	
+	public FilterByRequestIdReceiver() {
+		this(null);
+	}
+	
 	public FilterByRequestIdReceiver(String currentRequestId) {
 		this.currentRequestId = currentRequestId;
 	}

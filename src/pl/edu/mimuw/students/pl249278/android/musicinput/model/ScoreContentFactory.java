@@ -112,11 +112,8 @@ public class ScoreContentFactory {
 
 	public static List<ScoreContentElem> deserialize(String rawContent)
 		throws SerializationException {
-		Pattern pattern = Pattern.compile(" ([^ ]+)");
+		Pattern pattern = Pattern.compile("(\\S+)");
 		Matcher matcher = pattern.matcher(rawContent);
-		if(!matcher.find()) {
-			throw new SerializationException("Raw content doesn't specify version");
-		}
 		int version = tryReadIntOrThrow(matcher, "content version");
 		if(version != CURRENT_VERSION) {
 			throw new SerializationException("Raw content in usupported version "+version);

@@ -1,7 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams;
 	
@@ -9,13 +8,6 @@ public class SheetParams implements SheetVisualParams {
 	private int lineFactor;
 	private int linespacingFactor;
 	private float scale = 1;
-	private int minSpaceAnchor;
-	private int maxSpaceAnchor;
-		
-	private TimeSpec.TimeStep timeStep;
-	private NoteConstants.Clef clef;
-	private NoteConstants.KeySignature keySignature;
-	private Score.DisplayMode displayMode = Score.DisplayMode.NORMAL;
 		
 	public SheetParams(int lineFactor, int linespacingFactor) {
 		super();
@@ -107,54 +99,6 @@ public class SheetParams implements SheetVisualParams {
 	@Override
 	public int getLinespacingThickness() {
 		return (int) (linespacingFactor*scale);
-	}
-
-	public int getMinSpaceAnchor() {
-		return minSpaceAnchor;
-	}
-
-	public void setMinSpaceAnchor(int minSpaceAnchor) {
-		this.minSpaceAnchor = minSpaceAnchor;
-	}
-
-	public int getMaxSpaceAnchor() {
-		return maxSpaceAnchor;
-	}
-
-	public void setMaxSpaceAnchor(int maxSpaceAnchor) {
-		this.maxSpaceAnchor = maxSpaceAnchor;
-	}
-
-	public NoteConstants.Clef getClef() {
-		return clef;
-	}
-
-	public void setClef(NoteConstants.Clef clef) {
-		this.clef = clef;
-	}
-		
-	public TimeSpec.TimeStep getTimeStep() {
-		return timeStep;
-	}
-
-	public void setTimeStep(TimeSpec.TimeStep timeStep) {
-		this.timeStep = timeStep;
-	}
-
-	public NoteConstants.KeySignature getKeySignature() {
-		return keySignature;
-	}
-
-	public void setKeySignature(NoteConstants.KeySignature keySignature) {
-		this.keySignature = keySignature;
-	}
-
-	public Score.DisplayMode getDisplayMode() {
-		return displayMode;
-	}
-
-	public void setDisplayMode(Score.DisplayMode displayMode) {
-		this.displayMode = displayMode;
 	}
 
 }

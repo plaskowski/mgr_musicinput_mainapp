@@ -7,8 +7,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.Clef;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.KeySignature;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score.DisplayMode;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreContentFactory;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.SerializationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
@@ -83,7 +83,7 @@ public class NewScoreActivity extends FragmentActivity implements ErrorDialogLis
 				sheetElementView.setTag(clef);
 			} catch (LoadingSvgException e) {
 				log.e("Failed to prepare clef "+clef.name(), e);
-				showErrorDialog(R.string.NEWSCORE_errormsg_unrecoverable, e, true);
+				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 				return;
 			}
 		}
@@ -101,7 +101,7 @@ public class NewScoreActivity extends FragmentActivity implements ErrorDialogLis
 				sheetElementView.setOnClickListener(radioGroup);
 			} catch (LoadingSvgException e) {
 				log.e("Failed to prepare key signature "+key.name(), e);
-				showErrorDialog(R.string.NEWSCORE_errormsg_unrecoverable, e, true);
+				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 				return;
 			}
 		}
@@ -128,7 +128,7 @@ public class NewScoreActivity extends FragmentActivity implements ErrorDialogLis
 			RadioGroup.select(findViewByEnumTag(timeSignContainer, defaultTimeSignatureType));
 		} catch (LoadingSvgException e) {
 			log.e("Failed to prepare image.", e);
-			showErrorDialog(R.string.NEWSCORE_errormsg_unrecoverable, e, true);
+			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 			return;
 		}
 		
@@ -329,11 +329,13 @@ public class NewScoreActivity extends FragmentActivity implements ErrorDialogLis
 				break;
 			}
 			// FIXME obtain this from user
-			DisplayMode dMode = DisplayMode.NORMAL;
-			
+			ScoreVisualizationConfig config = new ScoreVisualizationConfig(
+				ScoreVisualizationConfig.DisplayMode.NORMAL,
+				getResources().getInteger(R.integer.minSpaceDefault),
+				getResources().getInteger(R.integer.maxSpaceDefault)
+			);
 			Score score = new Score(
 				title,
-				dMode,
 				ScoreContentFactory.initialContent(
 					clef, key, timeSignature
 				)
@@ -352,9 +354,10 @@ public class NewScoreActivity extends FragmentActivity implements ErrorDialogLis
 				requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_SCORE, score.prepareParcelable());
 			} catch (SerializationException e) {
 				log.e("failed to serialize Score", e);
-				showErrorDialog(R.string.NEWSCORE_errormsg_unrecoverable, e, true);
+				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 				return;
 			}
+			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_SCORE_VISUAL_CONF, config);
 			registerReceiver(insertRequestReceiver, new IntentFilter(CALLBACK_ACTION_INSERT));
         	log.v("Sending "+CALLBACK_ACTION_INSERT);
         	startService(requestIntent);
@@ -388,7 +391,7 @@ public class NewScoreActivity extends FragmentActivity implements ErrorDialogLis
 			long scoreId = response.getLongExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_ENTITY_ID, -1);
 			if(scoreId == -1) {
 				log.e("INSERT_SCORE onSuccess() didn't contain entity id");
-				showErrorDialog(R.string.NEWSCORE_errormsg_unrecoverable, null, true);
+				showErrorDialog(R.string.errormsg_unrecoverable, null, true);
 				return;
 			}
 			Intent i = new Intent(getApplicationContext(), EditActivity.class);

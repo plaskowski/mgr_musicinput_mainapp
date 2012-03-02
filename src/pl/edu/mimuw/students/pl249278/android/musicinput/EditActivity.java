@@ -202,9 +202,9 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		private SheetAlignedElementView view;
 		private int capLeft;
 		
-		public Time(TimeSpec spec) {
-			super();
+		public Time(TimeSpec spec, SheetAlignedElementView view) {
 			this.spec = spec;
+			this.view = view;
 		}
 		
 		public boolean isFull() {
@@ -346,9 +346,8 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				ElementSpec spec;
 				if(el instanceof TimeSpec) {
 					TimeSpec timeSpec = (TimeSpec) el;
-					times.add(new Time(timeSpec));
 					spec = new ElementSpec.TimeDivider(
-						times.size() > 1 ? times.get(times.size()-2).spec : null, 
+						times.size() - 1 >= 0 ? times.get(times.size()-1).spec : null, 
 						timeSpec
 					);
 				} else if(el instanceof NoteSpec) {
@@ -362,7 +361,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				}
 				SheetAlignedElementView view = addElementView(elementViews.size(), createDrawingModel(spec));
 				if(el instanceof TimeSpec) {
-					times.get(times.size()-1).view = view;
+					times.add(new Time((TimeSpec) el, view));
 				}
 			}
 			// build times
@@ -683,11 +682,14 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private Time rebuildTime(int timeIndex, int newRangeStart, TimeStep prevMetrum) throws CreationException {
 		Time currentTime;
 		if(timeIndex >= times.size()) {
-			currentTime = new Time(new TimeSpec());
-			currentTime.view = addElementView(newRangeStart, createDrawingModel(new ElementSpec.TimeDivider(
-				timeIndex > 0 ? times.get(timeIndex-1).spec : null,
-				currentTime.spec
-			)));
+			TimeSpec timeSpec = new TimeSpec();
+			currentTime = new Time(
+				timeSpec,
+				addElementView(newRangeStart, createDrawingModel(new ElementSpec.TimeDivider(
+					timeIndex > 0 ? times.get(timeIndex-1).spec : null,
+					timeSpec
+				)))
+			);
 			times.add(timeIndex, currentTime);
 			updatePosition(currentTime.view, positionAfter(newRangeStart-1), sheetElementY(currentTime.view));
 		} else {
@@ -914,24 +916,8 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		debugTimes();
 		assertTimesValidity();
 		
-		// find NotesGroup start that could be affected by inserted element
-		int i = insertIndex - 1;
-		for(;i > 0; i--) {
-			ElementSpec elementSpec = specAt(i);
-			if(!NotesGroup.GroupBuilder.canExtendGroup(elementSpec)) {
-				break;
-			}
-		}
-		int ngRebuildIndex = i;
-		// find possible JoinArc that will be affected by rebuild of NotesGroup at ngRebuildIndex
-		for(i = i-1; i > 0; i--) {
-			ElementSpec elementSpec = specAt(i);
-			if(JoinArc.canEndJA(elementSpec) || JoinArc.canStrartJA(elementSpec) || !JoinArc.canSkipOver(elementSpec)) {
-				break;
-			}
-			                                                                        
-		}
-		int jaRebuildIndex = Math.max(i, 0);
+		int ngRebuildIndex = findPossibleNoteGroupStart(insertIndex);
+		int jaRebuildIndex = findPossibleJoinArcStart(ngRebuildIndex);
 		log.i("insertElement() jaRebuildIndex = %d, ngRebuildIndex = %d", jaRebuildIndex, ngRebuildIndex);
 		int lastEl = elementViews.size() - 1;
 		clearJoinArcs(jaRebuildIndex, lastEl);
@@ -945,17 +931,57 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		return newElement;
 	}
 	
-	private void insertNewNoTimestepTime(int newTimeIndex, int viewInsertIndex) {
-		/**
-		 * clean NoteGroup-s and JoinArc-s, get rebuildRange from them
-		 * inject new Time into times
-		 * inject view into elementViews at specified place
-		 * correct rebuildRange
-		 * position view inside IA
-		 * rebuild NG and JA
-		 * postInsert()
-		 */
-		throw new UnsupportedOperationException();
+	/**
+	 * @return index of start of possible NoteGroup that could span up to given index
+	 */
+	private int findPossibleNoteGroupStart(int index) {
+		int i = index - 1;
+		for(;i > 0; i--) {
+			ElementSpec elementSpec = specAt(i);
+			if(!NotesGroup.GroupBuilder.canExtendGroup(elementSpec)) {
+				break;
+			}
+		}
+		return Math.max(i, 0);
+	}
+	
+	/**
+	 * @return index of start of possible JoinArc that could span up to given index
+	 */
+	private int findPossibleJoinArcStart(int index) {
+		int i = index - 1;
+		for(; i > 0; i--) {
+			ElementSpec elementSpec = specAt(i);
+			if(JoinArc.canEndJA(elementSpec) || JoinArc.canStrartJA(elementSpec) || !JoinArc.canSkipOver(elementSpec)) {
+				break;
+			}
+			                                                                        
+		}
+		return Math.max(i, 0);		
+	}
+	
+	private void insertNewTime(int newTimeIndex, int timeDividerIndex) throws CreationException {
+		assert newTimeIndex > 0;
+		int ngRebuildIndex = findPossibleNoteGroupStart(timeDividerIndex);
+		int jaRebuildIndex = findPossibleJoinArcStart(ngRebuildIndex);
+		int lastEl = elementViews.size() - 1;
+		clearJoinArcs(jaRebuildIndex, lastEl);
+		clearNoteGroups(ngRebuildIndex, lastEl);
+		
+		TimeSpec newTime = new TimeSpec();
+		ElementSpec spec = new ElementSpec.TimeDivider(times.get(newTimeIndex-1).spec, newTime);
+		SheetAlignedElementView newElement = addElementView(timeDividerIndex, createDrawingModel(spec));
+		times.add(newTimeIndex, new Time(newTime, newElement));
+		rebuildTimes(newTimeIndex-1);
+		recreateTimeDivider(newTimeIndex+1);
+		
+		lastEl = elementViews.size() - 1;
+		buildNoteGroups(ngRebuildIndex, lastEl);
+		buildJoinArcs(jaRebuildIndex, lastEl);
+		
+		updatePosition(newElement, inIA_noteViewX(newElement), sheetElementY(newElement));
+		updatePositions(timeDividerIndex+1, lastEl, visible2absX(visibleRectWidth-iaRightMargin+delta));
+		postInsert(timeDividerIndex, new Point(jaRebuildIndex, lastEl));
 	}	
 
 	/**
@@ -1005,21 +1031,8 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		SheetAlignedElementView view = elementViews.get(elementIndex);
 		boolean timesRebuildRequired = view.model().getElementSpec().timeValue(minPossibleValue) != newSpec.timeValue(minPossibleValue);
 		
-		int ngRebuildIndex = elementIndex-1;
-		for(;ngRebuildIndex > 0; ngRebuildIndex--) {
-			ElementSpec elementSpec = specAt(ngRebuildIndex);
-			if(!NotesGroup.GroupBuilder.canExtendGroup(elementSpec)) {
-				break;
-			}
-		}
-		int jaRebuildIndex = Math.max(ngRebuildIndex-1, 0);
-		for(; jaRebuildIndex > 0; jaRebuildIndex--) {
-			ElementSpec elementSpec = specAt(jaRebuildIndex);
-			if(JoinArc.canEndJA(elementSpec) || JoinArc.canStrartJA(elementSpec) || !JoinArc.canSkipOver(elementSpec)) {
-				break;
-			}
-			                                                                        
-		}
+		int ngRebuildIndex = findPossibleNoteGroupStart(elementIndex);
+		int jaRebuildIndex = findPossibleJoinArcStart(ngRebuildIndex);
 		int rebuildEnd;
 		int size = elementViews.size();
 		if(timesRebuildRequired) {
@@ -1066,24 +1079,8 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		SheetAlignedElementView elView = elementViews.get(elementIndex);
 		
 		// find NotesGroup start that could be affected by removal
-		int i = elementIndex - 1;
-		for(;i > 0; i--) {
-			ElementSpec elementSpec = specAt(i);
-			if(!NotesGroup.GroupBuilder.canExtendGroup(elementSpec)) {
-				break;
-			}
-		}
-		int ngRebuildIndex = i;
-		// find possible JoinArc that will be affected by rebuild of NotesGroup at ngRebuildIndex
-		for(i = i-1; i > 0; i--) {
-			ElementSpec elementSpec = specAt(i);
-			if(JoinArc.canEndJA(elementSpec) || JoinArc.canStrartJA(elementSpec) || !JoinArc.canSkipOver(elementSpec)) {
-				break;
-			}
-			                                                                        
-		}
-		int jaRebuildIndex = Math.max(i, 0);
-		log.i("removeElement() jaRebuildIndex = %d, ngRebuildIndex = %d", jaRebuildIndex, ngRebuildIndex);
+		int ngRebuildIndex = findPossibleNoteGroupStart(elementIndex);
+		int jaRebuildIndex = findPossibleJoinArcStart(ngRebuildIndex);
 		
 		// usunąć m.in. wszystkie Overlay-ie które operować na usuwanym elemencie
 		int lastEl = elementViews.size() - 1;
@@ -1117,25 +1114,25 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		int timeIndex = findTimeToInsertTo(insertIndex);
 		Time time = times.get(timeIndex);
 		TimeStep currentTimeStep = getCurrentTimeStep(timeIndex);
-		if(currentTimeStep == null) {
-			insertNewNoTimestepTime(timeIndex+1, insertIndex);
-			return;
-		}
-		int capToFill = timeCapacity(currentTimeStep, minPossibleValue);
-		for(int i = time.rangeStart+1; i < insertIndex; i++) {
-			ElementSpec spec = specAt(i);
-			switch(spec.getType()) {
-			case NOTE:
-			case PAUSE:
-				capToFill -= spec.timeValue(minPossibleValue);
-				break;
-			case FAKE_PAUSE:
-				break;
-			default:
-				throw new CodeLogicError("Unexpected type of element: "+spec.getType().name());
-			}
-		}
 		try {
+			if(currentTimeStep == null) {
+				insertNewTime(timeIndex+1, insertIndex);
+				return;
+			}
+			int capToFill = timeCapacity(currentTimeStep, minPossibleValue);
+			for(int i = time.rangeStart+1; i < insertIndex; i++) {
+				ElementSpec spec = specAt(i);
+				switch(spec.getType()) {
+				case NOTE:
+				case PAUSE:
+					capToFill -= spec.timeValue(minPossibleValue);
+					break;
+				case FAKE_PAUSE:
+					break;
+				default:
+					throw new CodeLogicError("Unexpected type of element: "+spec.getType().name());
+				}
+			}
 			fillWithPauses.insertDivided(insertIndex, capToFill, false);
 			if(fillWithPauses.getTotal() > 0) {
 				fillWithPauses.rebuildRange.y += fillWithPauses.getTotal()-1;
@@ -2556,25 +2553,8 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				}
 				SheetAlignedElementView pinView = elementViews.get(elementIndex);
 				int pinVisiblePositionX = abs2visibleX(viewStableX(pinView) + middleX(pinView));
-				int oldAbsMiddleX = viewStableX(time.view) + middleX(time.view);
-				time.view.setModel(createDrawingModel(new ElementSpec.TimeDivider(
-					timeIndex > 0 ? times.get(timeIndex-1).spec : null,
-					time.spec
-				)));
-				updatePosition(time.view, oldAbsMiddleX - middleX(time.view), sheetElementY(time.view));
-				if(timeIndex + 1 < times.size()) {
-					Time nextTime = times.get(timeIndex+1);
-					oldAbsMiddleX = viewStableX(nextTime.view) + middleX(nextTime.view);
-					nextTime.view.setModel(createDrawingModel(new ElementSpec.TimeDivider(
-						time.spec,
-						nextTime.spec
-					)));
-					updatePosition(
-						nextTime.view, 
-						oldAbsMiddleX - middleX(nextTime.view), 
-						sheetElementY(nextTime.view)
-					);
-				}
+				recreateTimeDivider(timeIndex);
+				recreateTimeDivider(timeIndex+1);
 				if(timeIndex == 0) {
 					onFirstTimeDividerChanged();
 				}
@@ -2619,19 +2599,8 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			Time time = times.get(timeIndex);
 			time.spec.setTimeStep(enteredValue);
 			int pinVisiblePositionX = abs2visibleX(viewStableX(time.view) + middleX(time.view));
-			time.view.setModel(createDrawingModel(new ElementSpec.TimeDivider(
-				timeIndex > 0 ? times.get(timeIndex-1).spec : null,
-				time.spec
-			)));
-			updatePosition(time.view, null, sheetElementY(time.view));
-			if(timeIndex + 1 < times.size()) {
-				Time nextTime = times.get(timeIndex+1);
-				nextTime.view.setModel(createDrawingModel(new ElementSpec.TimeDivider(
-					time.spec,
-					nextTime.spec
-				)));
-				updatePosition(nextTime.view, null, sheetElementY(nextTime.view));
-			}
+			recreateTimeDivider(timeIndex);
+			recreateTimeDivider(timeIndex+1);
 			int endIndex = elementViews.size()-1;
 			clearJoinArcs(0, endIndex);
 			clearNoteGroups(0, endIndex);
@@ -3069,6 +3038,27 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 
 	private void updateOverlayPosition(ElementsOverlay overlay, SheetElementView<SheetElement> ovView) {
 		updatePosition(ovView, overlay.left()-ovView.getPaddingLeft(), line0Top() + overlay.top()-ovView.getPaddingTop());
+	}
+
+	/**
+	 * Updates drawing model of TimeDivider that starts given time. Preserves absolute position of middleX. 
+	 * @param timeIndex index of given time, may be invalid
+	 */
+	private void recreateTimeDivider(int timeIndex)
+			throws CreationException {
+		if(timeIndex >= 0 && timeIndex < times.size()) {
+			Time time = times.get(timeIndex);
+			int oldAbsMiddleX = viewStableX(time.view) + middleX(time.view);
+			time.view.setModel(createDrawingModel(new ElementSpec.TimeDivider(
+				timeIndex > 0 ? times.get(timeIndex-1).spec : null,
+				time.spec
+			)));
+			updatePosition(
+				time.view, 
+				oldAbsMiddleX - middleX(time.view), 
+				sheetElementY(time.view)
+			);
+		}
 	}
 
 	private static abstract class WaitManyRunOnce implements Runnable {

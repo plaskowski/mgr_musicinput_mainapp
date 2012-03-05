@@ -35,6 +35,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.Addition
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.FilterByRequestIdReceiver;
+import pl.edu.mimuw.students.pl249278.android.musicinput.services.AsyncServiceToastReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Action;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ErrorDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ErrorDialog.ErrorDialogListener;
@@ -91,6 +92,8 @@ import android.os.Handler;
 import android.os.Vibrator;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -157,6 +160,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	private ArrayList<SheetElementView<SheetElement>> overlaysViews = new ArrayList<SheetElementView<SheetElement>>();
 	private Score score = null;
 	private ScoreVisualizationConfig visualConf = null;
+	private boolean skipOnStopCopy = false;	
 	
 	/**
 	 * Index (in elementViews) of element that is first on right side of InputArea,
@@ -335,7 +339,109 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	@Override
 	public void onDismiss(ErrorDialog dialog, int arg) {
 		if(arg == ERRORDIALOG_CALLBACK_DO_FINISH) {
+			skipOnStopCopy = true;
 			finish();
+		}
+	}
+	
+	@Override
+	protected void onStop() {
+		if(score != null && !skipOnStopCopy) {
+			// parse Score::content from model
+			score.setContent(parseModifiedCotentModel());
+			// save a working copy
+			Intent request = AsyncHelper.prepareServiceIntent(
+				this, ContentService.class, 
+				ContentService.ACTIONS.SAVE_SCORE_COPY, 
+				null, null, false);
+			try {
+				request.putExtra(ContentService.ACTIONS.EXTRAS_SCORE, score.prepareParcelable());
+				request.putExtra(ContentService.ACTIONS.EXTRAS_SCORE_VISUAL_CONF, visualConf);
+				log.v("Sending request SAVE_SCORE_COPY of Score#%d", score.getId());
+				startService(request);
+			} catch (SerializationException e) {
+				log.e("Failed to serialize model", e);
+			}
+		}
+		
+		super.onStop();
+	}
+	
+	private static final int MENU_SAVE = 1;
+	private static final int MENU_SAVE_AND_CLOSE = 2;
+	private static final int MENU_DISCARD = 3;
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		menu.add(Menu.NONE, MENU_SAVE, Menu.NONE, R.string.menu_label_save);
+		menu.add(Menu.NONE, MENU_SAVE_AND_CLOSE, Menu.NONE, R.string.menu_label_save_exit);
+		menu.add(Menu.NONE, MENU_DISCARD, Menu.NONE, R.string.menu_label_discard_changes);
+		return super.onCreateOptionsMenu(menu);
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		int id = item.getItemId();
+		switch(id) {
+		case MENU_SAVE:
+			saveChanges();
+			break;
+		case MENU_SAVE_AND_CLOSE:
+			saveChanges();
+			skipOnStopCopy = true;
+			finish();
+			break;
+		case MENU_DISCARD:
+			sendCleanCopy();
+			skipOnStopCopy = true;
+			finish();
+			break;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+		return true;
+	}
+
+	private void sendCleanCopy() {
+		if(score != null) {
+			Intent request = AsyncHelper.prepareServiceIntent(
+				this, ContentService.class, 
+				ContentService.ACTIONS.CLEAN_SCORE_SESSION_COPY, 
+				null, null, false);
+			request.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, score.getId());
+			startService(request);
+		}
+	}
+	
+	private void saveChanges() {
+		if(score == null) {
+			Toast.makeText(this, "Score not loaded yet.", Toast.LENGTH_SHORT).show();
+			log.v("Trying to save changes when score is null");
+		} else {
+			score.setContent(parseModifiedCotentModel());
+			String scoreTitle = score.getTitle();
+			if(scoreTitle == null) {
+				scoreTitle = getString(android.R.string.untitled);
+			}
+			PendingIntent callback = AsyncServiceToastReceiver.prepare(
+				this, 
+				getString(R.string.toast_score_saved, scoreTitle), 
+				getString(R.string.toast_failed_to_save_score, scoreTitle), 
+				false
+			);
+			Intent request = AsyncHelper.prepareServiceIntent(
+				this, ContentService.class, 
+				ContentService.ACTIONS.UPDATE_SCORE, 
+				null, callback, false);
+			try {
+				request.putExtra(ContentService.ACTIONS.EXTRAS_SCORE, score.prepareParcelable());
+				request.putExtra(ContentService.ACTIONS.EXTRAS_SCORE_VISUAL_CONF, visualConf);
+				log.v("Sending request UPDATE of Score#%d", score.getId());
+				startService(request);
+			} catch (SerializationException e) {
+				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
+				log.e("Failed to serialize model", e);
+			}
 		}
 	}
 	
@@ -400,30 +506,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		if(score != null) {
-			// collect new Score content
-			List<ScoreContentElem> content = new ArrayList<ScoreContentElem>(elementViews.size());
-			for(SheetAlignedElementView view: elementViews) {
-				ElementSpec spec = view.model().getElementSpec();
-				switch(spec.getType()) {
-				case FAKE_PAUSE:
-					continue;
-				case NOTE:
-					content.add(((ElementSpec.NormalNote) spec).noteSpec());
-					break;
-				case PAUSE:
-					content.add(((ElementSpec.Pause) spec).pauseSpec());
-					break;
-				case SPECIAL_SIGN:
-					// TODO implement or remove
-					throw new UnsupportedOperationException();
-				case TIMES_DIVIDER:
-					content.add(((ElementSpec.TimeDivider) spec).getRightTime());
-					break;
-				default:
-					throw new UnsupportedOperationException();
-				}
-			}
-			score.setContent(content);
+			score.setContent(parseModifiedCotentModel());
 			try {
 				outState.putParcelable(INSTANCE_STATE_SCORE, score.prepareParcelable());
 			} catch (SerializationException e) {
@@ -443,6 +526,33 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			outState.putInt(INSTANCE_STATE_CURRENT_NOTE_LENGTH, currentNoteLength);
 		}
 		super.onSaveInstanceState(outState);
+	}
+
+	private List<ScoreContentElem> parseModifiedCotentModel() {
+		// collect new Score content
+		List<ScoreContentElem> content = new ArrayList<ScoreContentElem>(elementViews.size());
+		for(SheetAlignedElementView view: elementViews) {
+			ElementSpec spec = view.model().getElementSpec();
+			switch(spec.getType()) {
+			case FAKE_PAUSE:
+				continue;
+			case NOTE:
+				content.add(((ElementSpec.NormalNote) spec).noteSpec());
+				break;
+			case PAUSE:
+				content.add(((ElementSpec.Pause) spec).pauseSpec());
+				break;
+			case SPECIAL_SIGN:
+				// TODO implement or remove
+				throw new UnsupportedOperationException();
+			case TIMES_DIVIDER:
+				content.add(((ElementSpec.TimeDivider) spec).getRightTime());
+				break;
+			default:
+				throw new UnsupportedOperationException();
+			}
+		}
+		return content;
 	}
 
 	
@@ -480,6 +590,12 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			return;
 		}
 		((InterceptableOnScrollChanged) hscroll).setListener(horizontalScrollListener);
+		findViewById(R.id.EDIT_menu_button).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				openOptionsMenu();
+			}
+		});
 	}
 
 	private float readParametrizedFactor(int stringResId) {
@@ -718,14 +834,14 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			SheetAlignedElementView view = elementViews.get(i);
 			str.append(view.model().getElementSpec().getType().name()+", ");
 		}
-		log.i("elementViews(#%d) { "+str.toString()+" }", elementViews.size());
+		log.d("elementViews(#%d) { "+str.toString()+" }", elementViews.size());
 	}
 	private void debugTimes() {
 		StringBuilder str = new StringBuilder();
 		for(int i = 0; i < times.size(); i++) {
 			str.append(times.get(i).rangeStart+", ");
 		}
-		log.i("times(#%d) { "+str.toString()+" }", times.size());
+		log.d("times(#%d) { "+str.toString()+" }", times.size());
 	}
 	private void assertTimesValidity() {
 		int timeIndex = -1;
@@ -867,7 +983,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			SheetAlignedElementView view = elementViews.get(elementI);
 			ElementsOverlay boundOverlay = getBoundOverlay(view, overlayClass);
 			if(boundOverlay != null) {
-				log.i(
+				log.v(
 					"clearOverlay(of class %s): %d -> %d",
 					overlayClass.getSimpleName(), 
 					elementViews.indexOf(boundOverlay.getElement(0).getTag()),
@@ -918,7 +1034,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		
 		int ngRebuildIndex = findPossibleNoteGroupStart(insertIndex);
 		int jaRebuildIndex = findPossibleJoinArcStart(ngRebuildIndex);
-		log.i("insertElement() jaRebuildIndex = %d, ngRebuildIndex = %d", jaRebuildIndex, ngRebuildIndex);
+		log.v("insertElement() jaRebuildIndex = %d, ngRebuildIndex = %d", jaRebuildIndex, ngRebuildIndex);
 		int lastEl = elementViews.size() - 1;
 		clearJoinArcs(jaRebuildIndex, lastEl);
 		clearNoteGroups(ngRebuildIndex, lastEl);
@@ -1047,7 +1163,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			rebuildEnd = Math.min(rebuildEnd, size-1);
 		}
 		
-		log.i(
+		log.v(
 			"updateElementSpec(%d) rebuilds ja %d->%d ng %d->%d",
 			elementIndex,
 			jaRebuildIndex, rebuildEnd,
@@ -1228,7 +1344,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 				absMiddleX = middleAbsoluteX(view);
 				return true;
 			case MotionEvent.ACTION_MOVE:
-				if(activePointerId == INVALID_POINTER)
+				if(activePointerId != event.getPointerId(event.getActionIndex()))
 					break;
 				int newAnchor = nearestAnchor((int) event.getY(event.findPointerIndex(activePointerId)) - touchYoffset);
 				if(newAnchor != currentAnchor) {
@@ -1407,7 +1523,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			
 			if(downPointerId != INVALID_POINTER) {
 				hscroll.removeCallbacks(lazyActionDown);
-				log.i("iaTouchListener::cancel() insert reverted");
+				log.v("iaTouchListener::cancel() insert reverted");
 			} else if(activePointerId != INVALID_POINTER) {
 				try {
 					removeElement(insertIndex, null);
@@ -2811,6 +2927,8 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		if(qActionsView.getVisibility() == View.VISIBLE) {
 			hideQuickActionsPopup();
 		} else {
+			skipOnStopCopy = true;
+			sendCleanCopy();
 			super.onBackPressed();
 		}
 	}

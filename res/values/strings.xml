@@ -20,4 +20,10 @@
     <string name="errormsg_unrecoverable">Sorry, severe error occured. Try report it to us.</string>
     <string name="NEWSCORE_errormsg_gonewrong">Something gone wrong. Try again.</string>
     <string name="msg_loading_please_wait">Loading. Please wait...</string>
+    <string name="format_auto_copy">%s (auto-copy)</string>
+    <string name="menu_label_save">Save</string>
+    <string name="menu_label_save_exit">Save &amp; Exit</string>
+    <string name="menu_label_discard_changes">Discard changes</string>
+    <string name="toast_score_saved">%s saved.</string>
+    <string name="toast_failed_to_save_score">Failed to save %s.</string>
 </resources>

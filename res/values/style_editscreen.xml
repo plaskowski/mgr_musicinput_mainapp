@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="EmbossGray">
+    	<item>@style/EmbossGray_edge</item>
+    	<item>@style/EmbossGray_fill</item>
+    </array>
+    
+    <style name="EmbossGray_fill" parent="PaintAntialias">
+    	<item name="color">#40FFFFFF</item>
+    	<item name="drawRadius">3px</item>
+    </style>
+    <style name="EmbossGray_edge" parent="PaintAntialias">
+    	<item name="color">#40000000</item>
+    	<item name="offsetX">1px</item>
+    	<item name="offsetY">1px</item>
+    	<item name="drawRadius">1px</item>
+    	<item name="paintStyle">STROKE</item>
+    	<item name="strokeWidth">2px</item>
+    </style>
+</resources>

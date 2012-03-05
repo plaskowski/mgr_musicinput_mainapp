@@ -126,12 +126,12 @@ public class NoteValueSpinner extends ScrollView {
 			params = new LinearLayout.LayoutParams(templateParams);
     		params.leftMargin = availableWidth/2-middleX(current);
     		int verticalAlignLine = verticalAlignLine(current);
-			params.topMargin = horizontalSpaceLeft - verticalAlignLine;
+			params.topMargin = Math.max(0, horizontalSpaceLeft - verticalAlignLine);
         	current.setLayoutParams(params);
         	horizontalSpaceLeft = distanceBetweenNotesHeads-(current.measureHeight()-verticalAlignLine);
         }
         // bottomMargin for last
-		params.bottomMargin = visibleRectHeight/2 - (current.measureHeight()-verticalAlignLine(current));
+		params.bottomMargin = Math.max(0, visibleRectHeight/2 - (current.measureHeight()-verticalAlignLine(current)));
         current.setLayoutParams(params);
 	}
 

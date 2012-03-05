@@ -9,10 +9,14 @@ import android.os.Parcelable;
 import android.util.Log;
 
 public class Score {
+	public static final long NO_ID = -1L;
+	
+	private long id = NO_ID;
+	private long originalId = NO_ID;
 	private String title;
 	private long creationUtcStamp, modificationUtcStamp;
-	private String rawContent;
-	private List<ScoreContentElem> content;
+	private String rawContent = null;
+	private List<ScoreContentElem> content = null;
 	
     public Score(String title, List<ScoreContentElem> content) {
 		super();
@@ -21,6 +25,8 @@ public class Score {
 	}
 
 	private Score(Parcel in) {
+		id = in.readLong();
+		originalId = in.readLong();
     	title = in.readString();
     	creationUtcStamp = in.readLong();
     	modificationUtcStamp = in.readLong();
@@ -28,8 +34,10 @@ public class Score {
     }
     
 	
-	public Score(String title, String rawContent, long creationUtcStamp,
+	public Score(long id, long originalId, String title, String rawContent, long creationUtcStamp,
 			long modificationUtcStamp) {
+		this.id = id;
+		this.originalId = originalId;
 		this.title = title;
 		this.rawContent = rawContent;
 		this.creationUtcStamp = creationUtcStamp;
@@ -37,6 +45,8 @@ public class Score {
 	}
 
 	private void writeToParcel(Parcel out, int flags) throws SerializationException {
+		out.writeLong(id);
+		out.writeLong(originalId);
 		out.writeString(title);
 		out.writeLong(creationUtcStamp);
 		out.writeLong(modificationUtcStamp);
@@ -106,5 +116,26 @@ public class Score {
 
 	public void setContent(List<ScoreContentElem> content) {
 		this.content = content;
+		this.rawContent = null;
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public long getOriginalId() {
+		return originalId;
+	}
+
+	public void setOriginalId(long originalId) {
+		this.originalId = originalId;
 	}
 }

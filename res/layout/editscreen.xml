@@ -4,43 +4,63 @@
 	xmlns:custom="http://schemas.android.com/apk/res/pl.edu.mimuw.students.pl249278.android.musicinput"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:id="@+id/EDIT_main_containter"
 >
-    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner
-		android:layout_alignParentLeft="true" 
-		android:id="@+id/EDIT_note_value_scroll" 
+	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
+	    android:id="@+id/EDIT_menu_button"
+		android:layout_width="50dip"
+		android:layout_height="44dip"
+		android:layout_alignParentBottom="true"
+		android:layout_alignParentLeft="true"
+	    android:background="@drawable/button_darkgraygradient"
+	    android:layout_marginRight="-45dip"
+	    custom:extendedImage="@style/SvgCompoundDrawable"
+	    custom:svgResource="@xml/button_menu"
+	    custom:paintsSetup="@array/EmbossGray"
+	    android:scaleType="fitXY"
+	/>
+	<RelativeLayout 
+	    android:id="@+id/EDIT_note_value_wrapper"
 		android:layout_height="fill_parent" 
-		android:layout_width="50dip" 
-		android:scrollbars="none"
-		custom:itemPaint="@style/spinnerNoSelection"
-		custom:selectedItemPaint="@style/spinnerSelection"
-		android:layout_centerVertical="true"
-		custom:maxHeight="300dip"
-	>
-		<LinearLayout
-			android:layout_height="wrap_content"
-			android:layout_width="50dip"
-			android:orientation="vertical"
-			android:background="@drawable/pasek_tile"
-			android:paddingLeft="5dip"
-			android:paddingRight="5dip"
-		/>
-    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner>
-	<ImageView 
-		android:src="@drawable/cien"
-		android:background="@drawable/ramka"
-		android:scaleType="fitXY"
-		android:layout_alignLeft="@id/EDIT_note_value_scroll"
-		android:layout_alignTop="@id/EDIT_note_value_scroll"
-		android:layout_alignRight="@id/EDIT_note_value_scroll"
-		android:layout_alignBottom="@id/EDIT_note_value_scroll"
-		android:layout_height="0dip"
-		android:layout_width="0dip"
-	/><!-- shadow over spinner -->    
+		android:layout_width="wrap_content" 
+		android:layout_above="@id/EDIT_menu_button"
+    >
+	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner
+			android:layout_alignParentLeft="true" 
+			android:id="@+id/EDIT_note_value_scroll" 
+			android:layout_height="fill_parent" 
+			android:layout_width="50dip" 
+			android:scrollbars="none"
+			custom:itemPaint="@style/spinnerNoSelection"
+			custom:selectedItemPaint="@style/spinnerSelection"
+			android:layout_centerVertical="true"
+			custom:maxHeight="300dip"
+			android:background="#000000"
+		>
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="50dip"
+				android:orientation="vertical"
+				android:background="@drawable/pasek_tile"
+				android:paddingLeft="5dip"
+				android:paddingRight="5dip"
+			/>
+	    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner>
+		<ImageView 
+			android:src="@drawable/cien"
+			android:background="@drawable/simpleborder_gray_1dp"
+			android:scaleType="fitXY"
+			android:layout_alignLeft="@id/EDIT_note_value_scroll"
+			android:layout_alignTop="@id/EDIT_note_value_scroll"
+			android:layout_alignRight="@id/EDIT_note_value_scroll"
+			android:layout_alignBottom="@id/EDIT_note_value_scroll"
+			android:layout_height="0dip"
+			android:layout_width="0dip"
+		/><!-- shadow over spinner -->    
+	</RelativeLayout>
 	
 	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.RelativeLayout_InterceptScale_LockTouchInput
 		android:id="@+id/EDIT_scale_detector"
-    	android:layout_toRightOf="@id/EDIT_note_value_scroll" 
+    	android:layout_toRightOf="@id/EDIT_note_value_wrapper" 
 	    android:layout_width="fill_parent"
 	    android:layout_height="fill_parent"
 	>

@@ -33,15 +33,14 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.SerializationExce
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.AdditionalMark;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
+import pl.edu.mimuw.students.pl249278.android.musicinput.services.AsyncServiceToastReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.FilterByRequestIdReceiver;
-import pl.edu.mimuw.students.pl249278.android.musicinput.services.AsyncServiceToastReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Action;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ErrorDialog;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ErrorDialog.ErrorDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.IndicatorOrigin;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TimeStepDialog;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
@@ -91,7 +90,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -104,7 +102,7 @@ import android.widget.HorizontalScrollView;
 import android.widget.ScrollView;
 import android.widget.Toast;
 
-public class EditActivity extends FragmentActivity implements TimeStepDialog.OnPromptResult, ErrorDialogListener {
+public class EditActivity extends FragmentActivity_ErrorDialog implements TimeStepDialog.OnPromptResult {
 	private static LogUtils log = new LogUtils(EditActivity.class);
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	/** of type long */
@@ -128,9 +126,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 	/** Instance key for {@link #currentNoteLength} */
  	private static final String INSTANCE_STATE_CURRENT_NOTE_LENGTH = "newNoteLength";
 	
-	private static final String DIALOGTAG_ERROR = "errordialog";
-	private static final int ERRORDIALOG_CALLBACK_DO_FINISH = 1;
-	private static final String CALLBACK_ACTION_GET = "callback_get";
+	private static final String CALLBACK_ACTION_GET = EditActivity.class.getName()+".callback_get";
 	
 	private int NOTE_DRAW_PADDING = 0;
 	private int MIN_DRAW_SPACING;
@@ -299,7 +295,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, scoreId);
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, true);
 			registerReceiver(getScoreReceiver, new IntentFilter(CALLBACK_ACTION_GET));
-        	log.v("Sending "+CALLBACK_ACTION_GET+" for id "+scoreId);
+        	log.v("Sending GET_SCORE_BY_ID for id "+scoreId);
         	startService(requestIntent);
         	progressDialog = ProgressDialog.show(this, "", 
     			getString(R.string.msg_loading_please_wait), true);
@@ -326,22 +322,10 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		}
 	}
 	
-	private void showErrorDialog(int messageStringId, Throwable e, boolean lazyFinish) {
-		DialogFragment prev = (DialogFragment) getSupportFragmentManager().findFragmentByTag(DIALOGTAG_ERROR);
-	    if (prev != null) {
-	        prev.dismiss();
-	    }
-		DialogFragment newFragment = ErrorDialog.newInstance(
-			this, messageStringId, e, lazyFinish ? ERRORDIALOG_CALLBACK_DO_FINISH : 0);
-	    newFragment.show(getSupportFragmentManager(), DIALOGTAG_ERROR);
-	}
-	
 	@Override
-	public void onDismiss(ErrorDialog dialog, int arg) {
-		if(arg == ERRORDIALOG_CALLBACK_DO_FINISH) {
-			skipOnStopCopy = true;
-			finish();
-		}
+	protected void lazyFinishCleanup() {
+		skipOnStopCopy = true;
+		super.lazyFinishCleanup();
 	}
 	
 	@Override
@@ -705,12 +689,11 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		protected void handle(int atIndex, int baseLength, int dotExt) throws CreationException {
 			PauseSpec pause = new PauseSpec(baseLength);
 			pause.setDotExtension(dotExt);
-			SheetAlignedElementView newElement = insertElement(
+			insertElementAtIA(
 				atIndex, 
 				new ElementSpec.Pause(pause), 
 				getTotal() != 1 ? null : rebuildRange
 			);
-			updatePosition(newElement, inIA_noteViewX(newElement), sheetElementY(newElement));
 		}
 	}
 	private FillWithPauses fillWithPauses = new FillWithPauses();
@@ -1019,7 +1002,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		return null;
 	}
 
-	private SheetAlignedElementView insertElement(int insertIndex, ElementSpec spec, Point rebuildRange) throws CreationException {
+	private int insertElementAtIA(int insertIndex, ElementSpec spec, Point rebuildRange) throws CreationException {
 		// TODO wywalić debugowanie w kodzie produkcyjnym
 		debugTimes();
 		debugViews();
@@ -1032,19 +1015,24 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		debugTimes();
 		assertTimesValidity();
 		
+		int lastEl = elementViews.size() - 1;
+		/** actual index may have changed because of removed FAKE pauses */
+		if(insertIndex > lastEl || !elementViews.get(insertIndex).equals(newElement)) {
+			insertIndex = elementViews.indexOf(newElement);
+		}
 		int ngRebuildIndex = findPossibleNoteGroupStart(insertIndex);
 		int jaRebuildIndex = findPossibleJoinArcStart(ngRebuildIndex);
 		log.v("insertElement() jaRebuildIndex = %d, ngRebuildIndex = %d", jaRebuildIndex, ngRebuildIndex);
-		int lastEl = elementViews.size() - 1;
 		clearJoinArcs(jaRebuildIndex, lastEl);
 		clearNoteGroups(ngRebuildIndex, lastEl);
 		buildNoteGroups(ngRebuildIndex, lastEl);
 		buildJoinArcs(jaRebuildIndex, lastEl);
 		
+		updatePosition(newElement, inIA_noteViewX(newElement), sheetElementY(newElement));
 		updatePositions(insertIndex+1, lastEl, visible2absX(visibleRectWidth-iaRightMargin+delta));
 		if(rebuildRange != null) rebuildRange.set(jaRebuildIndex, lastEl);
 		debugViews();
-		return newElement;
+		return insertIndex;
 	}
 	
 	/**
@@ -1400,9 +1388,6 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 			public void run() {
 				if(downPointerId != INVALID_POINTER && insideIA(downCoords.x)) {
 					insertIndex = rightToIA;
-					while(insertIndex > 0 && specAt(insertIndex-1).getType() == ElementType.FAKE_PAUSE) {
-						insertIndex--;
-					}
 					currentAnchor = nearestAnchor(downCoords.y);
 					ElementSpec.NormalNote newNoteSpec = elementSpecNN(new NoteSpec(currentNoteLength, currentAnchor));
 					if(!willFitInTime(insertIndex, newNoteSpec)) {
@@ -1412,7 +1397,6 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 					}
 					highlightAnchor(currentAnchor);
 					try {
-						rightToIA = insertIndex+1;
 						activePointerId = downPointerId;
 						downPointerId = INVALID_POINTER;
 						// <!-- check if we insert inside NoteGroup. If so, automatically add GROUP flag.
@@ -1430,9 +1414,9 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 						addGroupFlag &= insertIndex < elementViews.size() && GroupBuilder.canEndGroup(specAt(insertIndex));
 						newNoteSpec.noteSpec().setIsGrouped(addGroupFlag);
 						// -->
-						SheetAlignedElementView newNote = insertElement(insertIndex, newNoteSpec, rebuildRange);
-						newNote.setPaint(noteHighlightPaint, NOTE_DRAW_PADDING);
-						updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
+						insertIndex = insertElementAtIA(insertIndex, newNoteSpec, rebuildRange);
+						rightToIA = insertIndex+1;
+						elementViews.get(insertIndex).setPaint(noteHighlightPaint, NOTE_DRAW_PADDING);
 						setVerticalScrollingLocked(true);
 					} catch (CreationException e) {
 						e.printStackTrace();
@@ -1582,7 +1566,10 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		}
 		int capLeft = timeCapacity(currentTimeStep, minPossibleValue);
 		for(int i = times.get(timeIndex).rangeStart + 1; i < insertIndex; i++) {
-			capLeft -= specAt(i).timeValue(minPossibleValue);
+			ElementSpec specAt = specAt(i);
+			if(specAt.getType() != ElementType.FAKE_PAUSE) {
+				capLeft -= specAt.timeValue(minPossibleValue);
+			}
 		}
 		return spec.timeValue(minPossibleValue) <= capLeft;
 	}
@@ -2592,8 +2579,7 @@ public class EditActivity extends FragmentActivity implements TimeStepDialog.OnP
 		@Override
 		protected void perform(int elementIndex) {
 			try {
-				SheetAlignedElementView newNote = insertElement(elementIndex, spec, rebuildRange);
-				updatePosition(newNote, inIA_noteViewX(newNote), sheetElementY(newNote));
+				elementIndex = insertElementAtIA(elementIndex, spec, rebuildRange);
 				postInsert(elementIndex, rebuildRange);
 				spec = null;
 			} catch (CreationException e) {

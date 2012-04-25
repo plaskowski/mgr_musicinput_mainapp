@@ -1,10 +1,14 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.services;
 
+import static pl.edu.mimuw.students.pl249278.android.common.IntUtils.asFlagVal;
+
 import java.util.HashMap;
 import java.util.Map;
 
 import pl.edu.mimuw.students.pl249278.android.async.AsynchronousRequestsService;
+import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.PlayingConfiguration;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score.ParcelableScore;
@@ -48,12 +52,21 @@ public class ContentService extends AsynchronousRequestsService {
 		/** inserted entity id (of type long) */
 		public static final String RESPONSE_EXTRAS_ENTITY_ID = "entity_id";
 		
+		/**
+		 * Parameters: {@link #EXTRAS_ENTITY_ID} Score id, {@link #EXTRAS_ATTACH_SCORE_VISUAL_CONF}, {@link #EXTRAS_ATTACH_SCORE_PLAY_CONF}
+		 * <br />
+		 * Output: {@link #RESPONSE_EXTRAS_ENTITY} Score object, {@link #RESPONSE_EXTRAS_VISUAL_CONF}, {@link #RESPONSE_EXTRAS_PLAY_CONF} or null
+		 */
 		public static String GET_SCORE_BY_ID = ContentService.class.getName()+".get_score";
+		/** whether service have to attach visual configuration of requested score (type boolean) */
 		public static final String EXTRAS_ATTACH_SCORE_VISUAL_CONF = "attach_vis_conf";
+		/** whether service have to attach {@link PlayingConfiguration} of requested score (type boolean) */
+		public static final String EXTRAS_ATTACH_SCORE_PLAY_CONF = "attach_vis_conf";
 		/** requested entity id (of type long) */
 		public static final String EXTRAS_ENTITY_ID = "entity_id";
 		public static final String RESPONSE_EXTRAS_ENTITY = "entity";
 		public static final String RESPONSE_EXTRAS_VISUAL_CONF = "vis_conf";
+		public static final String RESPONSE_EXTRAS_PLAY_CONF = "play_conf";
 		
 		/** 
 		 * Saves a "session" backup copy of score. 
@@ -67,14 +80,29 @@ public class ContentService extends AsynchronousRequestsService {
 		/** 
 		 * Updates Score.
 		 * Discards "session" backup.
-		 * Parameters: {@link #EXTRAS_SCORE}, {@link #EXTRAS_SCORE_VISUAL_CONF} (optional)
+		 * Parameters: {@link #EXTRAS_SCORE}, {@link #EXTRAS_SCORE_VISUAL_CONF} (optional), {@link #EXTRAS_KEEP_BACKUP}
 		 */
 		public static final String UPDATE_SCORE = ContentService.class.getName()+".update_score";
+		public static final String EXTRAS_KEEP_BACKUP = "keep_backup";
 		/**
 		 * Removes session copy.
 		 * Parameters: {@link #EXTRAS_ENTITY_ID} - original id
 		 */
 		public static final String CLEAN_SCORE_SESSION_COPY = ContentService.class.getName()+".clean_copy";
+		/**
+		 * Saves {@link PlayingConfiguration} of given Score.
+		 * Parameters: {@link #EXTRAS_ENTITY_ID} id of Score, {@link #EXTRAS_SCORE_PLAY_CONF} configuration object
+		 */
+		public static final String SAVE_PLAY_CONF = ContentService.class.getName()+".save_playconf";
+		public static final String EXTRAS_SCORE_PLAY_CONF = "score_play_conf";
+		/**
+		 * Parameters: {@link #EXTRAS_ATTACH_SCORE_VISUAL_CONF} (optional) attach each retrieved Score its {@link ScoreVisualizationConfig}
+		 * <br />
+		 * Output: {@link #RESPONSE_EXTRAS_SCORES} - array of Score objects, {@link #RESPONSE_EXTRAS_VISUAL_CONFS} - array of {@link ScoreVisualizationConfig} matching returned Scores
+		 */
+		public static final String LIST_SCORES = ContentService.class.getName()+".list_scores";
+		public static final String RESPONSE_EXTRAS_SCORES = "scores_array";
+		public static final String RESPONSE_EXTRAS_VISUAL_CONFS = "vis_conf_array";
 	}
 	
 	@Override
@@ -88,6 +116,10 @@ public class ContentService extends AsynchronousRequestsService {
 			saveScoreCopy(requestIntent);
 		} else if(ACTIONS.UPDATE_SCORE.equals(action)) {
 			updateScore(requestIntent);
+		} else if(ACTIONS.LIST_SCORES.equals(action)) {
+			listScores(requestIntent);
+		} else if(ACTIONS.SAVE_PLAY_CONF.equals(action)) {
+			savePlayConfiguration(requestIntent);
 		} else if(ACTIONS.CLEAN_SCORE_SESSION_COPY.equals(action)) {
 			long id = requestIntent.getLongExtra(ACTIONS.EXTRAS_ENTITY_ID, -1);
 			if(id == -1) {
@@ -101,12 +133,113 @@ public class ContentService extends AsynchronousRequestsService {
 		}
 	}
 
+	private Map<Long, Integer> idToIndex = new HashMap<Long, Integer>();
+	private static final String[] METAS_VISUAL = new String[] {
+		ScoresMeta.IntMeta.DISPLAY_MODE,
+		ScoresMeta.IntMeta.MIN_LINESPACE,
+		ScoresMeta.IntMeta.MAX_LINESPACE
+	};
+	
+	private void listScores(Intent requestIntent) {
+		Cursor scoreCursor = null, metaCursor = null; 
+		try {
+			SQLiteDatabase db = mDb.getReadableDatabase();
+			scoreCursor = db.query(
+					SCORES_TABLE_NAME, null, 
+					null, null, 
+					null, null,
+					Scores.MODIFIED_UTC_TIME + " DESC"
+			);
+			int total = scoreCursor.getCount();
+			ParcelableScore[] scores = new ParcelableScore[total];
+			idToIndex.clear();
+			for(int i = 0; scoreCursor.moveToNext(); i++) {
+				Score score = rowToScore(scoreCursor);
+				scores[i] = score.prepareParcelable();
+				idToIndex.put(score.getId(), i);
+			}
+			Intent result = new Intent();
+			result.putExtra(ACTIONS.RESPONSE_EXTRAS_SCORES, scores);
+			if(requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, false)) {
+				ScoreVisualizationConfig[] confs = new ScoreVisualizationConfig[total];
+				for(int i = 0; i < total; i++) {
+					confs[i] = ScoreVisualizationConfigFactory.createWithDefaults(this);
+				}
+				metaCursor = db.query(
+					SCORES_INTMETA_TABLE_NAME, null,
+					ScoresMeta.META_NAME + " IN (?, ?, ?)" , METAS_VISUAL,
+					null, null, null);
+				while(metaCursor.moveToNext()) {
+					long scoreId = metaCursor.getLong(metaCursor.getColumnIndex(ScoresMeta._ID));
+					if(idToIndex.containsKey(scoreId)) {
+						fillField(metaCursor, confs[idToIndex.get(scoreId)]);
+					}
+				}
+				result.putExtra(ACTIONS.RESPONSE_EXTRAS_VISUAL_CONFS, confs);
+			}
+			onRequestSuccess(requestIntent, result);
+		} catch (SerializationException e) {
+			Log.w(TAG, "Impossible error", e);
+			onRequestError(requestIntent, "Failed to read Scores from DB");
+		} catch (Exception e) {
+			Log.w(TAG, "", e);
+			onRequestError(requestIntent, "Failed to read Scores from DB");
+		} finally {
+			if(scoreCursor != null) {
+				scoreCursor.close();
+			}
+			if(metaCursor != null) {
+				metaCursor.close();
+			}
+		}
+	}
+
+	private void savePlayConfiguration(Intent requestIntent) {
+		long scoreId = requestIntent.getLongExtra(ACTIONS.EXTRAS_ENTITY_ID, -1);
+		if(scoreId == -1) {
+			onRequestError(requestIntent, "No ENTITY_ID provided");
+			return;
+		}
+		PlayingConfiguration config = requestIntent.getParcelableExtra(ACTIONS.EXTRAS_SCORE_PLAY_CONF);
+		if(config == null) {
+			onRequestError(requestIntent, "No PlayConfiguration object provided");
+			return;
+		}
+		try {
+			SQLiteDatabase writableDatabase = mDb.getWritableDatabase();
+			ContentValues metaEntry = new ContentValues();
+			metaEntry.put(ScoresMeta._ID, scoreId);
+			insertOrUpdateIntMeta(
+				writableDatabase, metaEntry, 
+				ScoresMeta.IntMeta.TEMPO, 
+				config.getTempo()
+			);
+			insertOrUpdateIntMeta(
+				writableDatabase, metaEntry, 
+				ScoresMeta.IntMeta.METRONOME, 
+				asFlagVal(config.isPlayMetronome())
+			);
+			insertOrUpdateIntMeta(
+				writableDatabase, metaEntry, 
+				ScoresMeta.IntMeta.LOOP, 
+				asFlagVal(config.isLoop())
+			);
+			insertOrUpdateIntMeta(
+				writableDatabase, metaEntry, 
+				ScoresMeta.IntMeta.INTRO, 
+				asFlagVal(config.isPrependEmptyBar())
+			);
+		} finally {
+			onRequestSuccess(requestIntent, new Intent());
+		}
+	}
+
 	private void updateScore(Intent requestIntent) {
 		Score score = getScoreWithValidId(requestIntent);
 		if(score == null) {
 			return;
 		}
-		if(updateScore(requestIntent, score)) {
+		if(updateScore(requestIntent, score) && !requestIntent.getBooleanExtra(ACTIONS.EXTRAS_KEEP_BACKUP, false)) {
 			dropSessionCopy(score.getId());
 		}
 	}
@@ -219,7 +352,7 @@ public class ContentService extends AsynchronousRequestsService {
 			onRequestError(requestIntent, "No entity ID provided");
 			return;
 		}
-		Cursor scoreCursor = null, metaCursor = null; 
+		Cursor scoreCursor = null, metaCursor = null, playConfCursor = null; 
 		try {
 			SQLiteDatabase db = mDb.getReadableDatabase();
 			scoreCursor = db.query(
@@ -230,42 +363,51 @@ public class ContentService extends AsynchronousRequestsService {
 				onRequestError(requestIntent, "No row with id "+id);
 				return;
 			}
-			Score score = new Score(
-				id,
-				scoreCursor.getLong(scoreCursor.getColumnIndex(Scores.ORIGINAL_ID)),
-				scoreCursor.getString(scoreCursor.getColumnIndex(Scores.TITLE)),
-				scoreCursor.getString(scoreCursor.getColumnIndex(Scores.CONTENT)),
-				scoreCursor.getLong(scoreCursor.getColumnIndex(Scores.CREATED_UTC_TIME)),
-				scoreCursor.getLong(scoreCursor.getColumnIndex(Scores.MODIFIED_UTC_TIME))
-			);
-			metaCursor = db.query(
-				SCORES_INTMETA_TABLE_NAME, null,
-				ScoresMeta._ID + " = " + id, null,
-				null, null, null);
+			Score score = rowToScore(scoreCursor);
 			Intent outData = new Intent();
 			outData.putExtra(ACTIONS.RESPONSE_EXTRAS_ENTITY, score.prepareParcelable());
 			if(requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, false)) {
 				ScoreVisualizationConfig scoreConf = ScoreVisualizationConfigFactory.createWithDefaults(this);
+				metaCursor = db.query(
+					SCORES_INTMETA_TABLE_NAME, null,
+					ScoresMeta._ID + " = " + id, null,
+					null, null, null);
 				while(metaCursor.moveToNext()) {
-					String metaName = metaCursor.getString(metaCursor.getColumnIndex(ScoresMeta.META_NAME));
-					long metaValue = metaCursor.getLong(metaCursor.getColumnIndex(ScoresMeta.META_VALUE));
-					if(ScoresMeta.IntMeta.DISPLAY_MODE.equals(metaName)) {
-						if(metaValue < 0 || metaValue >= DisplayMode.values().length) {
-							Log.w(TAG, "Score meta DISPLAY_MODE = "+metaValue+" outside of Enum scope");
-						} else {
-							scoreConf.setDisplayMode(DisplayMode.values()[(int) metaValue]);
-						}
-					} else if(ScoresMeta.IntMeta.MIN_LINESPACE.equals(metaName)) {
-						scoreConf.setMinSpaceAnchor((int) metaValue);
-					} else if(ScoresMeta.IntMeta.MAX_LINESPACE.equals(metaName)) {
-						scoreConf.setMaxSpaceAnchor((int) metaValue);
-					} else {
-						Log.d(TAG, "Uknown meta "+metaName+" for Score#"+id);
-					}
+					fillField(metaCursor, scoreConf);
 				}
 				outData.putExtra(ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF, scoreConf);
 			}
-			onRequestSuccess(requestIntent, outData);
+			if(requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_PLAY_CONF, false)) {
+				playConfCursor = db.query(
+					SCORES_INTMETA_TABLE_NAME, null,
+					ScoresMeta._ID + " = " + id, null,
+					null, null, null);
+				PlayingConfiguration playConf = new PlayingConfiguration(-1, false, false, false);
+				int presence = 0;
+				while(playConfCursor.moveToNext()) {
+					String metaName = playConfCursor.getString(playConfCursor.getColumnIndex(ScoresMeta.META_NAME));
+					long metaValue = playConfCursor.getLong(playConfCursor.getColumnIndex(ScoresMeta.META_VALUE));
+					if(ScoresMeta.IntMeta.TEMPO.equals(metaName)) {
+						playConf.setTempo((int) metaValue);
+						presence |= 1 << 0;
+					} else if(ScoresMeta.IntMeta.LOOP.equals(metaName)) {
+						playConf.setLoop(IntUtils.asBool((int) metaValue)); 
+						presence |= 1 << 1;
+					} else if(ScoresMeta.IntMeta.METRONOME.equals(metaName)) {
+						playConf.setPlayMetronome(IntUtils.asBool((int) metaValue)); 
+						presence |= 1 << 2;
+					} else if(ScoresMeta.IntMeta.INTRO.equals(metaName)) {
+						playConf.setPrependEmptyBar(IntUtils.asBool((int) metaValue)); 
+						presence |= 1 << 3;
+					}
+				}
+				if(presence == 0x0F) {
+					outData.putExtra(ACTIONS.RESPONSE_EXTRAS_PLAY_CONF, playConf);
+				} else if(presence != 0) {
+					Log.d(TAG, "Missing meta entries for PlayingConfiguration for Score#"+id);
+				}
+			}
+ 			onRequestSuccess(requestIntent, outData);
 		} catch (Exception e) {
 			Log.e(TAG, "Exception while fetching Score row", e);
 			onRequestError(requestIntent, "findScore() exception occured "+e.getMessage());
@@ -277,7 +419,37 @@ public class ContentService extends AsynchronousRequestsService {
 			if(metaCursor != null) {
 				metaCursor.close();
 			}
+			if(playConfCursor != null) {
+				playConfCursor.close();
+			}
 		}
+	}
+
+	private static void fillField(Cursor metaCursor, ScoreVisualizationConfig scoreConf) {
+		String metaName = metaCursor.getString(metaCursor.getColumnIndex(ScoresMeta.META_NAME));
+		long metaValue = metaCursor.getLong(metaCursor.getColumnIndex(ScoresMeta.META_VALUE));
+		if(ScoresMeta.IntMeta.DISPLAY_MODE.equals(metaName)) {
+			if(metaValue < 0 || metaValue >= DisplayMode.values().length) {
+				Log.w(TAG, "Score meta DISPLAY_MODE = "+metaValue+" outside of Enum scope");
+			} else {
+				scoreConf.setDisplayMode(DisplayMode.values()[(int) metaValue]);
+			}
+		} else if(ScoresMeta.IntMeta.MIN_LINESPACE.equals(metaName)) {
+			scoreConf.setMinSpaceAnchor((int) metaValue);
+		} else if(ScoresMeta.IntMeta.MAX_LINESPACE.equals(metaName)) {
+			scoreConf.setMaxSpaceAnchor((int) metaValue);
+		}
+	}
+
+	private static Score rowToScore(Cursor scoreTableCursor) {
+		return new Score(
+			scoreTableCursor.getLong(scoreTableCursor.getColumnIndex(Scores._ID)),
+			scoreTableCursor.getLong(scoreTableCursor.getColumnIndex(Scores.ORIGINAL_ID)),
+			scoreTableCursor.getString(scoreTableCursor.getColumnIndex(Scores.TITLE)),
+			scoreTableCursor.getString(scoreTableCursor.getColumnIndex(Scores.CONTENT)),
+			scoreTableCursor.getLong(scoreTableCursor.getColumnIndex(Scores.CREATED_UTC_TIME)),
+			scoreTableCursor.getLong(scoreTableCursor.getColumnIndex(Scores.MODIFIED_UTC_TIME))
+		);
 	}
 
 	@SuppressWarnings("unused")
@@ -366,7 +538,6 @@ public class ContentService extends AsynchronousRequestsService {
 			config.getMaxSpaceAnchor()
 		);
 	}
-	
 
 	private void insertOrUpdateIntMeta(SQLiteDatabase writableDatabase, ContentValues metaEntry, String metaName, int metaValue) {
 		metaEntry.put(ScoresMeta.META_NAME, metaName);
@@ -391,9 +562,13 @@ public class ContentService extends AsynchronousRequestsService {
 		public static final String META_VALUE = "value";
 		
 		public static class IntMeta {
+			public static final String INTRO = "intro";
+			public static final String LOOP = "loop";
+			public static final String METRONOME = "metronome";
 			public static final String DISPLAY_MODE = "displaymode";
 			public static final String MIN_LINESPACE = "minlsp";
 			public static final String MAX_LINESPACE = "maxlsp";
+			public static final String TEMPO = "tempo";
 		}
 	}
 	

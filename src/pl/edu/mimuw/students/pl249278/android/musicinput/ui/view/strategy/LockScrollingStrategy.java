@@ -12,6 +12,10 @@ public abstract class LockScrollingStrategy extends ViewGroup implements Scrolli
 		super(context, attrs);
 	}
 
+	public LockScrollingStrategy(Context context) {
+		super(context);
+	}
+
 	private boolean scrollingLocked = false;
 	
 	@Override

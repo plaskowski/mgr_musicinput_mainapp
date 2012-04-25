@@ -19,6 +19,15 @@ public class ErrorDialogStrategy extends FragmentActivity implements ErrorDialog
 	    newFragment.show(getSupportFragmentManager(), DIALOGTAG_ERROR);
 	}
 	
+	protected final void showErrorDialogOnUiThread(final int messageStringId, final Throwable e, final boolean lazyFinish) {
+		this.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				showErrorDialog(messageStringId, e, lazyFinish);
+			}
+		});
+	}
+	
 	protected void lazyFinishCleanup() {
 	}
 	

@@ -1,0 +1,1069 @@
+package pl.edu.mimuw.students.pl249278.android.musicinput;
+
+import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.elementSpecNN;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.middleX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.timeCapacity;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.overallLength;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSize;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.security.InvalidParameterException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
+import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
+import pl.edu.mimuw.students.pl249278.android.common.PaintBuilder;
+import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.InsertDivided;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.LengthSpec;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.PauseSpec;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.PlayingConfiguration;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score.ParcelableScore;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreContentElem;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.SerializationException;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
+import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
+import pl.edu.mimuw.students.pl249278.android.musicinput.services.FilterByRequestIdReceiver;
+import pl.edu.mimuw.students.pl249278.android.musicinput.services.WorkerService;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_ShowScore;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollViewChild;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils.OnLayoutListener;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptsScaleGesture;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.LazyScrolling;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.OnInterceptTouchObservable;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.OnInterceptTouchObservable.OnInterceptListener;
+import pl.edu.mimuw.students.pl249278.midi.MidiFile;
+import pl.edu.mimuw.students.pl249278.midi.MidiFormatException;
+import android.app.PendingIntent;
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PointF;
+import android.graphics.Rect;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnErrorListener;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.AsyncTask.Status;
+import android.os.Bundle;
+import android.os.Handler;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.Menu;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.EditText;
+import android.widget.HorizontalScrollView;
+import android.widget.ScrollView;
+import android.widget.ViewAnimator;
+
+public class PlayActivity extends FragmentActivity_ErrorDialog_ShowScore implements OnLayoutListener {
+	private static LogUtils log = new LogUtils(PlayActivity.class);
+	
+	/** of type long */
+	public static final String STARTINTENT_EXTRAS_SCORE_ID = "score_id";
+	private static final String INSTANCE_STATE_SCORE = "score";
+	private static final String INSTANCE_STATE_VISCONF = "visual_conf";
+	private static final String INSTANCE_STATE_PLAYCONF = "play_conf";
+	private static final String INSTANCE_STATE_LISTENER_POS = "listener_pos";
+	/** of type float */
+	private static final String INSTANCE_STATE_SCALE = "scale";
+	private static final String CALLBACK_ACTION_GET = PlayActivity.class.getName()+".get_score";
+	private static final int[] MENUPANEL_FIELDS = new int[] {
+		R.id.button_minus_ten, R.id.button_plus_ten, R.id.PLAY_tempoField, 
+		R.id.PLAY_checkbox_intro, R.id.PLAY_checkbox_metronome
+	};
+	
+	private Score score;
+	private List<ScoreContentElem> content;
+	private ScoreVisualizationConfig visualConf;
+	private PlayingConfiguration playConf;
+	
+	private MediaPlayer player;
+	/** If the last message sent to MediaPlayer was play() */
+	private boolean playerIsPlaying = false;
+	/** position to seek before next {@link #player} .start() call */
+	private Integer lazySeek = null;
+	/** Path to temporary generated MIDI file for MediaPlayer playback purpose */
+	private File midiLocalFile;
+	/** If play configuration (besides .loop field) has changed since last {@link #resumePlaying()} call */
+	private boolean configurationUpdated = false;
+	
+	/** Maps given Score element to View that represents it */
+	private Map<ScoreContentElem, SheetAlignedElementView> modelToViewsMapping = new HashMap<ScoreContentElem, SheetAlignedElementView>();
+	private ProgressDialog progressDialog;
+	private ViewGroup sheet;
+	private ScrollView vertscroll;
+	private HorizontalScrollView hscroll;
+	IntegerSpinner.IntegerSpinnerController tempoController;
+	private View menuPanel;
+	private Paint normalPaint = PaintBuilder.init().antialias(true).build();
+	private Paint highlightPaint;
+	private float highlightShadowFactor;
+	private int NOTE_DRAW_PADDING;
+	private int notesAreaX;
+	/** If the Activity is in playing mode (controls hidden) or paused mode */
+	private boolean isPlayingState = false;
+	/** Is being run on UI Thread when MediaPlayer is playing to follow it's progress */
+	private OnPlayerPositionChanged listener = new OnPlayerPositionChanged();
+	private int listenerSavedPosition = 0;
+	private boolean isScaleValid = false;
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		WorkerService.scheduleCleanOldFiles(getApplicationContext());
+		setContentView(R.layout.playscreen);
+		setVolumeControlStream(AudioManager.STREAM_MUSIC);
+		sheet = (ViewGroup) findViewById(R.id.PLAY_sheet_container);
+		lines = (Sheet5LinesView) findViewById(R.id.PLAY_sheet_5lines);
+		hscroll = (HorizontalScrollView) findViewById(R.id.PLAY_hscrollview);
+		((OnInterceptTouchObservable) hscroll).setListener(new OnInterceptListener() {
+			@Override
+			public void onTouchIntercepted() {
+				exitPlayingState();
+			}
+		});
+		vertscroll = (ScrollView) findViewById(R.id.PLAY_vertscrollview);
+		((HackedScrollViewChild) vertscroll.getChildAt(0)).setRuler(lines);
+		highlightPaint = PaintBuilder.init().antialias(true)
+		.color(getResources().getColor(R.color.highlightColor)).build();
+		highlightShadowFactor = readParametrizedFactor(R.string.noteShadow);
+		menuPanel = getLayoutInflater().inflate(R.layout.playscreen_menu, null);
+		setEnabled(menuPanel, MENUPANEL_FIELDS, false);
+		
+		((CompoundButton) menuPanel.findViewById(R.id.PLAY_checkbox_intro)).setOnCheckedChangeListener(new OnCheckedChangeListener() {			
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				playConf.setPrependEmptyBar(isChecked);
+				configurationUpdated = true;
+			}
+		});
+		((CompoundButton) menuPanel.findViewById(R.id.PLAY_checkbox_metronome)).setOnCheckedChangeListener(new OnCheckedChangeListener() {			
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				playConf.setPlayMetronome(isChecked);
+				configurationUpdated = true;
+			}
+		});		
+		findViewById(R.id.PLAY_barbutton_play).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if(!isPlayingState) {
+					setUiHidden(true);
+					isPlayingState = true;
+					resumePlaying();
+				}
+			}
+		});
+		findViewById(R.id.PLAY_barbutton_replay).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if(!isPlayingState) {
+					setUiHidden(true);
+					isPlayingState = true;
+					// rewind
+					listener.seek(0);
+					resumePlaying();
+				}
+			}
+		});
+		findViewById(R.id.PLAY_barbutton_configure).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if(isPlayingState) return;
+				PlayActivity.this.openOptionsMenu();
+			}
+		});
+		((View) findViewById(R.id.PLAY_barbutton_loop)).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				v.setSelected(!v.isSelected());
+				playConf.setLoop(v.isSelected());
+			}
+		});
+		sheet.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				exitPlayingState();
+			}
+		});
+		sheet.setOnTouchListener(new NoteOrPauseOnClickListener());
+		
+		if(savedInstanceState != null) {
+			listenerSavedPosition = savedInstanceState.getInt(INSTANCE_STATE_LISTENER_POS, 0);
+			if(savedInstanceState.containsKey(INSTANCE_STATE_SCALE)) {
+				sheetParams.setScale(savedInstanceState.getFloat(INSTANCE_STATE_SCALE, 1));
+				isScaleValid = true;
+			}
+		}
+		if(savedInstanceState != null && savedInstanceState.containsKey(INSTANCE_STATE_SCORE)) {
+			ParcelableScore parcelable = savedInstanceState.getParcelable(INSTANCE_STATE_SCORE);
+			ScoreVisualizationConfig conf = savedInstanceState.getParcelable(INSTANCE_STATE_VISCONF);
+			PlayingConfiguration pconf = savedInstanceState.getParcelable(INSTANCE_STATE_PLAYCONF);
+			onModelLoaded(parcelable.getSource(), conf, pconf);
+		} else {
+			long scoreId = getIntent().getLongExtra(STARTINTENT_EXTRAS_SCORE_ID, -1);
+			if(scoreId == -1) {
+				log.e("Activity started without score id in intent");
+				showErrorDialog(R.string.errormsg_unrecoverable, null, true);
+				return;
+			}
+			// sending request for Score object
+			GetScoreReceiver getScoreReceiver = new GetScoreReceiver();	
+			PendingIntent callbackIntent = PendingIntent.getBroadcast(this, 0, new Intent(CALLBACK_ACTION_GET), 0);
+			Intent requestIntent = AsyncHelper.prepareServiceIntent(
+				this, 
+				ContentService.class, 
+				ContentService.ACTIONS.GET_SCORE_BY_ID, 
+				getScoreReceiver.getUniqueRequestID(true), 
+				callbackIntent, 
+				true
+			);
+			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, scoreId);
+			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, true);
+			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_PLAY_CONF, true);
+			registerReceiver(getScoreReceiver, new IntentFilter(CALLBACK_ACTION_GET));
+	    	log.v("Sending "+CALLBACK_ACTION_GET+" for id "+scoreId);
+	    	startService(requestIntent);
+	    	progressDialog = ProgressDialog.show(this, "", 
+				getString(R.string.msg_loading_please_wait), true);
+		}
+	}
+
+	@Override
+	public View onCreatePanelView(int featureId) {
+		if(featureId == Window.FEATURE_OPTIONS_PANEL) {
+			return menuPanel;
+		} else {
+			return super.onCreatePanelView(featureId);
+		}
+	}
+	
+	@Override
+	public boolean onMenuOpened(int featureId, Menu menu) {
+		if(featureId == Window.FEATURE_OPTIONS_PANEL) {
+			exitPlayingState();
+			return true;
+		} else {
+			return super.onMenuOpened(featureId, menu);
+		}
+	}
+	
+	/** 
+	 * Detects clicks on Note/Pause views inside "sheet" View, 
+	 * fires {@link #listener#seek(LengthSpec)}, unless isPlayingState
+	 */
+	private final class NoteOrPauseOnClickListener implements OnTouchListener {
+		private Rect hitRect = new Rect();
+		private int selectedIndex = -1;
+		private Paint prevPaint;
+
+		@Override
+		public boolean onTouch(View v, MotionEvent event) {
+			if(isPlayingState)
+				return false;
+			switch(event.getActionMasked()) {
+			case MotionEvent.ACTION_DOWN:
+				// check if some note was clicked
+				int i = 0;
+				for(; i < elementViews.size(); i++) {
+					elementViews.get(i).getHitRect(hitRect);
+					if(hitRect.contains((int) event.getX(), (int) event.getY())) {
+						break;
+					}
+				}
+				if(i >= elementViews.size() || !(specAt(i).getType() == ElementType.NOTE
+				  || specAt(i).getType() == ElementType.PAUSE)) {
+					break;
+				}
+				selectedIndex = i;
+				SheetAlignedElementView view = elementViews.get(selectedIndex);
+				prevPaint = view.getPaint();
+				view.setPaint(highlightPaint, NOTE_DRAW_PADDING);
+				return true;
+			case MotionEvent.ACTION_MOVE:
+				 return selectedIndex != -1;
+			case MotionEvent.ACTION_UP:
+				if(selectedIndex != -1) {
+					elementViews.get(selectedIndex).setPaint(prevPaint, NOTE_DRAW_PADDING);
+					ElementSpec spec = specAt(selectedIndex);
+					LengthSpec elem;
+					switch(spec.getType()) {
+					case NOTE:
+						elem = ((ElementSpec.NormalNote) spec).noteSpec();
+						break;
+					case  PAUSE:
+						elem = ((ElementSpec.Pause) spec).pauseSpec();
+						break;
+					default:
+						throw new CodeLogicError("Not expected type of clicked element "+spec.getType());
+					}
+					listener.seek(elem);
+					return true;
+				}
+				break;
+			default:
+				if(selectedIndex != -1) {
+					elementViews.get(selectedIndex).setPaint(prevPaint, NOTE_DRAW_PADDING);
+				}
+			}
+			selectedIndex = -1;
+			return false;
+		}
+	}
+
+	private class OnPlayerPositionChanged implements Runnable {
+		/** Used for pull MediaPlayer position changes */
+		private Handler mHandler = new Handler();
+		private static final int REFRESH_DELAY = 50;
+		
+		private int prevPlayerPosition = 0;
+		private ScoreIterator scoreIterator;
+		private LengthSpec currentElement;
+		/** in base units */
+		private int currentElementOffset;
+		/** in base units */
+		private int currentElemLength;
+		/** duration of minPossibleValue (in miliseconds) according to current tempo */
+		private float baseUnitDuration;
+		/** the configuration this listener is currently using */
+		private PlayingConfiguration playConfiguration;
+		
+		void onConfigurationChanged(PlayingConfiguration newPlayConf) {
+			float newUnitDuration = ((float) 60*1000)/((1 << (minPossibleValue - NoteConstants.LEN_QUATERNOTE)) * newPlayConf.getTempo());
+			if(playConfiguration == null) {
+				baseUnitDuration = newUnitDuration;
+				playConfiguration = new PlayingConfiguration(newPlayConf);
+			} else {
+				if(currentElement != null) {
+					modelToViewsMapping.get(currentElement).setPaint(normalPaint, NOTE_DRAW_PADDING);
+				}
+				int position = getPosition();
+				int unitPassed = (int) (position/baseUnitDuration);
+				unitPassed -= MidiBuilder.initialDelay(content, minPossibleValue, playConfiguration);
+				if(unitPassed <= 0) {
+					// if onConfigurationChanged() happened before playing first actual note/rest rewind to start (before intro)
+					unitPassed = 0;
+				} else {
+					unitPassed += MidiBuilder.initialDelay(content, minPossibleValue, newPlayConf);
+				}
+				position = (int) (unitPassed * newUnitDuration);
+				lazySeek = position;
+				baseUnitDuration = newUnitDuration;
+				playConfiguration = new PlayingConfiguration(newPlayConf);
+				resetIterator();
+				seek(position);
+			}
+		}
+		
+		public void run() {
+			if(onPositionChanged(player.getCurrentPosition())) {
+				mHandler.postDelayed(this, REFRESH_DELAY);
+			}
+		}
+		
+		private boolean onPositionChanged(int currentPosition) {
+			int baseUnitPassed = (int) Math.round(currentPosition/baseUnitDuration);
+			LengthSpec prevElement = currentElement;
+			if(currentPosition < prevPlayerPosition || scoreIterator == null) {
+				resetIterator();
+			}
+			prevPlayerPosition = currentPosition;
+			// seek forward iterator to find element matching current position
+			while(currentElementOffset + currentElemLength <= baseUnitPassed) {
+				if(!scoreIterator.hasNext()) {
+					log.v("No element found for position %d (%d baseUnit)", currentPosition, baseUnitPassed);
+					// treat this as float precision issue of baseUnitDuration, stay at last element
+					return true;
+				}
+				currentElementOffset += currentElemLength;
+				ScoreContentElem elem = scoreIterator.next();
+				if(elem instanceof PauseSpec) {
+					currentElement = (LengthSpec) elem;
+					currentElemLength = overallLength(currentElement, minPossibleValue);
+				} else if(elem instanceof TimeSpec) {
+					currentElemLength = 0;
+					continue;
+				} else {
+					throw new UnsupportedOperationException();
+				}
+			}
+			if(currentElement != prevElement) {
+				if(prevElement != null) {
+					modelToViewsMapping.get(prevElement).setPaint(normalPaint, NOTE_DRAW_PADDING);
+				}
+				if(currentElement != null) {
+					// mark current
+					modelToViewsMapping.get(currentElement).setPaint(highlightPaint, NOTE_DRAW_PADDING);
+				}
+			}
+			// scroll to make current middle visible
+			hscroll.scrollTo(computeHorizontalScroll(), 0);
+			return true;
+		}
+		
+		public int computeHorizontalScroll() {
+			if(scoreIterator == null) {
+				resetIterator();
+			}
+			if(currentElement == null) {
+				// TODO moze wskazac na kreske taktu zamiast przypalowo 0
+				return 0;
+			}
+			ScoreContentElem next;
+			while((next = scoreIterator.previewNext()) != null && !(next instanceof PauseSpec)) {
+				scoreIterator.next();
+			}
+			int currMiddleX = middleAbsoluteX(modelToViewsMapping.get(currentElement));
+			int absX;
+			if(next != null) {
+				// scroll in between current and next
+				float progress = (prevPlayerPosition - (currentElementOffset * baseUnitDuration))/(currentElemLength * baseUnitDuration);
+				int nextMiddleX = middleAbsoluteX(modelToViewsMapping.get(next));
+				absX = (int) (currMiddleX + (nextMiddleX - currMiddleX) * progress);
+			}
+			else {
+				absX = currMiddleX;
+			}
+			return absX - hscroll.getWidth()/3;
+		}
+
+		private void resetIterator() {
+			scoreIterator = new ScoreIterator(content);
+			currentElementOffset = 0;
+			currentElement = null;
+			currentElemLength = MidiBuilder.initialDelay(content, minPossibleValue, playConfiguration);
+		}
+
+		/** Called when user (in pause mode) clicks some note to rewind to it */
+		public void seek(LengthSpec elem) {
+			SheetAlignedElementView view = modelToViewsMapping.get(elem);
+			view.setPaint(highlightPaint, NOTE_DRAW_PADDING);
+			if(currentElement == elem) {
+				return;
+			} else if(currentElement != null) {
+				// remove previous note selection
+				modelToViewsMapping.get(currentElement).setPaint(normalPaint, NOTE_DRAW_PADDING);
+			}
+			if(scoreIterator == null) {
+				resetIterator();
+			}
+			if(!forwardIteratorTo(elem)) {
+				// must rewind iterator and search from beginning
+				resetIterator();
+				if(!forwardIteratorTo(elem)) {
+					throw new InvalidParameterException(elem + "couldn't be found in ScoreIterator");
+				}
+			}
+			// seek MediaPlayer to current element start
+			lazySeek = (int) (baseUnitDuration * currentElementOffset);
+		}
+
+		private boolean forwardIteratorTo(LengthSpec elem) {
+			while(scoreIterator.hasNext()) {
+				currentElementOffset += currentElemLength;
+				ScoreContentElem next = scoreIterator.next();
+				if(!(next instanceof LengthSpec)) {
+					currentElemLength = 0;
+					continue;
+				}
+				currentElement = (LengthSpec) next;
+				currentElemLength = overallLength(currentElement, minPossibleValue);
+				if(currentElement == elem) {
+					return true;
+				}
+			}
+			return false;
+		}
+		
+		public void seek(int position) {
+			onPositionChanged(position);
+			lazySeek = position;
+		}
+		
+		public void startListening() {
+			mHandler.postDelayed(this, REFRESH_DELAY);
+		}
+
+		public void stopListening() {
+			mHandler.removeCallbacks(this);
+		}
+
+		public int getPosition() {
+			if(lazySeek != null) {
+				return lazySeek;
+			} else {
+				return prevPlayerPosition;
+			}
+		}
+	};
+
+	private BuildMidiTask buildMidiTask = new BuildMidiTask();
+	
+	private class BuildMidiTask extends AsyncTask<Void, Void, File> {
+		protected File doInBackground(Void... params) {
+			try {
+				MidiFile file = MidiBuilder.build(content, minPossibleValue, playConf);
+				File tempFile = TemporaryFilesFactory.getUniqueName(PlayActivity.this, ".mid");
+				FileOutputStream out = new FileOutputStream(tempFile);
+				file.writeTo(new FileOutputWrapper(out));
+				out.close();
+				return tempFile;
+			} catch (MidiFormatException e) {
+				log.e("Failed to create midi file", e);
+				showErrorDialogOnUiThread(R.string.errormsg_unrecoverable, e, true);
+			} catch (IOException e) {
+				log.e("Failed to create midi file", e);
+				showErrorDialogOnUiThread(R.string.errormsg_exception_try_later, e, true);
+			}
+			return null;
+		}
+		
+		protected void onPostExecute(File result) {
+			if(!isCancelled()) {
+				midiLocalFile = result;
+				resumePlaying();
+			}
+		}
+	};
+	
+	private void resumePlaying() {
+		if(configurationUpdated) {
+			configurationUpdated = false;
+			listener.onConfigurationChanged(playConf);
+			// invalidate previously generated midi file
+			buildMidiTask.cancel(true);
+			buildMidiTask = new BuildMidiTask();
+			midiLocalFile = null;
+			clearPlayerInstance();
+		}
+		if(midiLocalFile != null) {
+			play(midiLocalFile);
+		} else if(buildMidiTask.getStatus() == AsyncTask.Status.RUNNING && !buildMidiTask.isCancelled()) {
+			// wait until task is done, it will call resumePlaying() then
+		} else {
+			buildMidiTask.execute();
+		}
+	}
+	
+	private void play(File midiFile) {
+		if(player == null) {
+			player = MediaPlayer.create(this, Uri.fromFile(midiFile));
+			if(player == null) {
+				showErrorDialog(R.string.errormsg_exception_try_later, null, true);
+				return;
+			}
+			player.setOnErrorListener(new OnErrorListener() {
+				@Override
+				public boolean onError(MediaPlayer mp, int what, int extra) {
+					String errorLabel = ReflectionUtils.findConstName(MediaPlayer.class, "MEDIA_ERROR", what, null);
+					if(errorLabel == null && !playerIsPlaying) {
+						/*
+						 * A workaround for issue with calling player.pause() at beginning.
+						 * It causes onError(..., -3, 0) but music keeps playing.
+						 * We stop it and force to recreate the Player.
+						 */
+						log.d("Received strange MediaPlayer.onError(, %d, %d) when !playerIsPlaying", what, extra);
+						try {
+							player.stop();
+							player.release();
+							player = null;
+						} catch (IllegalStateException e) {
+						}
+						return true;
+					} else {
+						log.w("MediaPlayer.onError(, %s, %d)", errorLabel, extra);
+						showErrorDialog(R.string.PLAY_errormsg_playingfailed_tryagain, null, false);
+						listener.stopListening();
+						playerIsPlaying = false;
+						try {
+							player.release();
+						} catch (Exception e) {
+						}
+						return false;
+					}
+				}
+			});
+			player.setOnCompletionListener(new OnCompletionListener() {
+				@Override
+				public void onCompletion(MediaPlayer mp) {
+					playerIsPlaying = false;
+					listener.stopListening();
+					lazySeek = 0;
+					isPlayingState = false;
+					setUiHidden(false);
+				}
+			});
+		}
+		player.setLooping(playConf.isLoop());
+		playerIsPlaying = true;
+		if(lazySeek != null) {
+			player.seekTo(lazySeek);
+			lazySeek = null;
+		}
+		player.start();
+		listener.startListening();
+	}
+	
+	private void pausePlaying() {
+		if(buildMidiTask.getStatus() == Status.RUNNING) {
+			buildMidiTask.cancel(true);
+		}
+		if(player != null && playerIsPlaying) {
+			playerIsPlaying = false;
+			player.pause();
+			listener.stopListening();
+		}
+	}
+	
+	@Override
+	protected void onPause() {
+		pausePlaying();
+		isPlayingState = false;
+		super.onPause();
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		setUiHidden(false);
+	}
+	
+	@Override
+	protected void onStop() {
+		clearPlayerInstance();
+		/** save player's current position in case of onStart() and "play" command */
+		lazySeek = listener.getPosition();
+		if(playConf != null) {
+			// save configuration for feature use
+			Intent request = AsyncHelper.prepareServiceIntent(
+				this, ContentService.class, 
+				ContentService.ACTIONS.SAVE_PLAY_CONF, 
+				null, null, false);
+			request.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, score.getId());
+			request.putExtra(ContentService.ACTIONS.EXTRAS_SCORE_PLAY_CONF, playConf);
+			log.v("Sending request SAVE_PLAY_CONF of Score#%d", score.getId());
+			startService(request);
+		}
+		
+		super.onStop();
+	}
+
+	private void clearPlayerInstance() {
+		if(player != null) {
+			player.setOnErrorListener(null);
+			player.stop();
+			player.release();
+			player = null;
+		}
+	}
+		
+	private class GetScoreReceiver extends FilterByRequestIdReceiver {
+		@Override
+		protected void onFailure(Intent response) {
+			log.e("Failed to get score: " + AsyncHelper.getError(response));
+			unregisterReceiver(this);
+			dismissProgressDialog();
+			showErrorDialog(R.string.errormsg_unrecoverable, null, true);
+		}
+
+		private void dismissProgressDialog() {
+			progressDialog.dismiss();
+			progressDialog = null;
+		}
+		
+		@Override
+		protected void onSuccess(Intent response) {
+			unregisterReceiver(this);
+			dismissProgressDialog();
+			ParcelableScore parcelable = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_ENTITY);
+			ScoreVisualizationConfig config = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF);
+			PlayingConfiguration playConf = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_PLAY_CONF);
+			if(playConf == null) {
+				playConf = new PlayingConfiguration(
+					getResources().getInteger(R.integer.defaultPlayTempoBPM),
+					false,
+					false,
+					false
+				);
+			}
+			onModelLoaded(parcelable.getSource(), config, playConf);
+		}
+	}
+
+	public void onModelLoaded(Score score, ScoreVisualizationConfig config, PlayingConfiguration playConf) {
+		this.score = score;
+		this.visualConf = config;
+		this.playConf = playConf;
+		try {
+			 content = score.getContent();
+		} catch (SerializationException e) {
+			log.e("Failed to create midi file", e);
+			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
+			return;
+		}
+		listener.onConfigurationChanged(playConf);
+		try {
+			fillUpWithPauses(content, minPossibleValue);
+			createViews(content);
+			int lastEl = elementViews.size()-1;
+			buildNoteGroups(0, lastEl, sheet, normalPaint, 0);
+			buildJoinArcs(0, lastEl, sheet, normalPaint, 0);
+			ViewUtils.addActivityOnLayout(this, this);
+			String scoreTitle = score.getTitle();
+			if(scoreTitle == null) {
+				scoreTitle = getString(android.R.string.untitled);
+			}
+			setTitle(getString(R.string.PLAY_title, scoreTitle));
+			sheet.requestLayout();			
+		} catch (CreationException e) {
+			log.e("Exception while creating drawing model", e);
+			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
+			return;
+		}
+		// setup UI according to loaded model
+		setEnabled(menuPanel, MENUPANEL_FIELDS, true);
+		tempoController = new TempoFieldController(playConf.getTempo(), menuPanel);
+		((CompoundButton) menuPanel.findViewById(R.id.PLAY_checkbox_intro)).setChecked(playConf.isPrependEmptyBar());
+		((CompoundButton) menuPanel.findViewById(R.id.PLAY_checkbox_metronome)).setChecked(playConf.isPlayMetronome());
+		findViewById(R.id.PLAY_barbutton_loop).setSelected(playConf.isLoop());
+	}
+	
+	private InterceptsScaleGesture.OnScaleListener scaleListener = new InterceptsScaleGesture.OnScaleListener() {
+		@Override
+		public void onScale(float scaleFactor, PointF focusPoint) {
+			float oldScale = sheetParams.getScale();
+			float newScale = oldScale*scaleFactor;
+			sheetParams.setScale(newScale);
+			if(sheetParams.getLineThickness() < 1) {
+				sheetParams.setScale(oldScale);
+				return;
+			}
+			int fpNewRelX = (int) ((visible2absX((int) focusPoint.x)-notesAreaX)*scaleFactor);
+			int line0NewVisibleY = (int) (focusPoint.y + (abs2visibleY(line0Top()) - focusPoint.y)*scaleFactor);
+			onScaleChanged();
+			hscroll.scrollTo((int) (fpNewRelX+notesAreaX-focusPoint.x), 0);
+			fixLine0VisibleY(line0NewVisibleY);
+		}
+		
+		private int abs2visibleY(int absoluteY) {
+			return absoluteY + sheet.getTop() - vertscroll.getScrollY();
+		}
+		
+		private int visible2absX(int visibleX) {
+			return visibleX + hscroll.getScrollX();
+		}
+
+		@Override
+		public void onScaleBegin() {
+		}
+
+		@Override
+		public void onScaleEnd() {
+		}
+	};
+		
+	private void fixLine0VisibleY(int visY) {
+		((HackedScrollViewChild) vertscroll.getChildAt(0)).fixRulerVisibleY(visY - lines.getPaddingTop());
+	}
+	
+	/** fired when model was loaded, views created so now we need to position them. */
+	@Override
+	public void onFirstLayoutPassed() {
+		int visibleHeight = findViewById(R.id.PLAY_hscrollview).getHeight();
+		sheet.setVisibility(View.VISIBLE);
+		findViewById(R.id.PLAY_barAnimator).setVisibility(View.VISIBLE);
+		
+		((InterceptsScaleGesture) findViewById(R.id.PLAY_scaleInterceptor)).setOnScaleListener(scaleListener);
+		if(!isScaleValid) {
+			// try to fit every View into available height
+			sheetParams.setScale(1);
+			int minTop = Integer.MAX_VALUE, maxBottom = Integer.MIN_VALUE;
+			for (SheetAlignedElementView view : elementViews) {
+				view.setSheetParams(sheetParams);
+				int top = view.model().getOffsetToAnchor(LINE0_ABSINDEX, AnchorPart.TOP_EDGE)
+				- view.getPaddingTop();
+				int bottom = top + view.measureHeight();
+				minTop = Math.min(minTop, top);
+				maxBottom = Math.max(maxBottom, bottom);
+			}
+			sheetParams.setScale(visibleHeight / (float) (maxBottom - minTop));
+			// make sure that line is at least 1 pixel thick
+			if(sheetParams.getLineThickness() < 1) {
+				sheetParams.setScale(1f / sheetParams.getLineFactor());
+			}
+			isScaleValid = true;
+		}
+		onScaleChanged();
+		int linesHalf = sheetParams.anchorOffset(NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE), AnchorPart.MIDDLE);
+		fixLine0VisibleY((visibleHeight/2) - linesHalf);
+		listener.seek(listenerSavedPosition);
+		((LazyScrolling) hscroll).postLayoutScrollTo(listener.computeHorizontalScroll(), 0);
+	}
+
+	@Override
+	protected void onScaleChanged() {
+		super.onScaleChanged();
+		NOTE_DRAW_PADDING = MIN_DRAW_SPACING;
+		float highlightShadow = highlightShadowFactor*sheetParams.getScale();
+		highlightPaint.setShadowLayer(highlightShadow, highlightShadow/2, highlightShadow, Color.BLACK);		
+		NOTE_DRAW_PADDING = Math.max(NOTE_DRAW_PADDING, (int) Math.floor(highlightShadow));
+		lines.setParams(sheetParams, 0, 0);
+		SheetAlignedElementView firstTimeDivider = elementViews.get(0);
+		firstTimeDivider.setSheetParams(sheetParams);
+		int paddingLeft = (int) (notesAreaHorizontalPaddingFactor * sheetParams.getScale())
+		 + middleX(elementViews.get(0));
+		lines.setPaddingLeft(paddingLeft);
+		notesAreaX = paddingLeft;
+		
+		for(int i = 0; i < overlaysViews.size(); i++) {
+			overlaysViews.get(i).updateDrawRadius(NOTE_DRAW_PADDING);
+		}
+		int spacingAfter = notesAreaX;
+		int x = 0;
+		int currentSpacingBase = 0;
+		int currentTimeDividerIndex = 0;
+		for(int i = 0; i < elementViews.size(); i++) {
+			x += spacingAfter;
+			SheetAlignedElementView v = elementViews.get(i);
+			v.updateDrawRadius(NOTE_DRAW_PADDING);
+			if(v.model().getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
+				int lastTimeEl = i+1;
+				for(; lastTimeEl < elementViews.size(); lastTimeEl++) {
+					if(specAt(lastTimeEl).getType() == ElementType.TIMES_DIVIDER) {
+						break;
+					}
+				}
+				lastTimeEl--;
+				currentTimeDividerIndex = i;
+				currentSpacingBase = computeTimeSpacingBase(i, lastTimeEl, true);
+			}
+			spacingAfter = afterElementSpacing(currentTimeDividerIndex, currentSpacingBase, v.model());
+			int xpos = x-middleX(v);
+			int ypos = sheetElementY(v);
+			updatePosition(
+				v, 
+				xpos,
+				ypos
+			);
+		}
+		correctSheetWidth();
+	}
+	
+	/**
+	 * Resize sheet accordingly to last element position.
+	 */
+	private void correctSheetWidth() {
+		int lastElIndex = elementViews.size()-1;
+		SheetAlignedElementView lastView = elementViews.get(lastElIndex);
+		int hPadding = (int) (notesAreaHorizontalPaddingFactor * sheetParams.getScale());
+		lines.setPaddingRight(hPadding + middleX(lastView));
+		int newSheetWidth = left(lastView) + lastView.measureWidth() + hPadding;
+		updateSize(sheet, newSheetWidth, null);
+		updateSize(lines, newSheetWidth, null);
+	}
+
+	/** create views for Score elements */
+	private void createViews(final List<ScoreContentElem> content)
+			throws CreationException {
+		TimeSpec prevTime = null;
+		for (Iterator<ScoreContentElem> iterator = content.iterator(); iterator.hasNext();) {
+			ScoreContentElem elem = iterator.next();
+			ElementSpec spec;
+			if(elem instanceof NoteSpec) {
+				spec = elementSpecNN((NoteSpec) elem, visualConf);
+			} else if(elem instanceof PauseSpec) {
+				spec = new ElementSpec.Pause((PauseSpec) elem);
+			} else if(elem instanceof TimeSpec) {
+				if(!iterator.hasNext() && prevTime != null) {
+					// skip last bar definition when it has no content, unless it's also the first one
+					break;
+				}
+				TimeSpec currTime = (TimeSpec) elem;
+				spec = new ElementSpec.TimeDivider(prevTime, currTime);
+				prevTime = currTime;
+			} else {
+				throw new UnsupportedOperationException();
+			}
+			SheetAlignedElement drawingModel = DrawingModelFactory.createDrawingModel(this, spec);
+			SheetAlignedElementView view = addElementView(drawingModel);
+			modelToViewsMapping.put(elem, view);
+		}
+		ElementSpec.TimeDivider closingTimeDivider = new ElementSpec.TimeDivider(prevTime, null);
+		addElementView(DrawingModelFactory.createDrawingModel(this, closingTimeDivider));
+	}
+
+	private SheetAlignedElementView addElementView(SheetAlignedElement drawingModel) {
+		SheetAlignedElementView elementView = new SheetAlignedElementView(this, drawingModel);
+		elementView.setPaint(normalPaint, NOTE_DRAW_PADDING);
+		elementView.setSheetParams(sheetParams);
+		elementViews.add(elementView);
+		sheet.addView(elementView);
+		return elementView;
+	}
+
+	/** fill empty space in bars (except last one) with rests */
+	private static void fillUpWithPauses(final List<ScoreContentElem> content, int baseUnit) throws CreationException {
+		int capacityLeft = 0;
+		TimeStep currentTS = null;
+		for(int i = 0; i < content.size(); i++) {
+			ScoreContentElem elem = content.get(i);
+			if(elem instanceof LengthSpec) {
+				capacityLeft -= ElementSpec.overallLength((LengthSpec) elem, baseUnit);
+			} else if(elem instanceof TimeSpec) {
+				if(currentTS != null && capacityLeft > 0) { 
+					// fill empty space in previous bar with rests
+					InsertDivided strategy = new InsertDivided() {
+						@Override
+						protected void handle(int atIndex, int baseLength, int dotExt) throws CreationException {
+							PauseSpec pause = new PauseSpec(baseLength, dotExt);
+							content.add(atIndex, pause);
+						}
+					};
+					strategy.insertDivided(i, capacityLeft, true, baseUnit);
+					i += strategy.getTotal();
+				}
+				TimeSpec time = (TimeSpec) elem;
+				currentTS = ifNotNull(time.getTimeStep(), currentTS);
+				capacityLeft = timeCapacity(currentTS, baseUnit);
+			} else {
+				throw new UnsupportedOperationException();
+			}
+		}
+	}	
+
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		if(score != null) {
+			try {
+				outState.putParcelable(INSTANCE_STATE_SCORE, score.prepareParcelable());
+				outState.putParcelable(INSTANCE_STATE_VISCONF, visualConf);
+				outState.putParcelable(INSTANCE_STATE_PLAYCONF, playConf);
+				outState.putInt(INSTANCE_STATE_LISTENER_POS, listener.getPosition());
+			} catch (SerializationException e) {
+				// this shouldn't happen because we didn't change anything
+				throw new RuntimeException(e);
+			}
+		}
+		if(isScaleValid) {
+			outState.putFloat(INSTANCE_STATE_SCALE, sheetParams.getScale());
+		}
+	}
+	
+	private void setUiHidden(boolean hide) {
+		setAnimatorContentHidden(R.id.PLAY_barAnimator, R.id.PLAY_actionsBar, hide);
+	}
+	
+	private void setAnimatorContentHidden(int animatorId, int contentId, boolean b) {
+		View cotent = findViewById(contentId);
+		int i = 0;
+		ViewAnimator animator = (ViewAnimator) findViewById(animatorId);
+		for(; i < animator.getChildCount(); i++) {
+			if(animator.getChildAt(i) == cotent)
+				break;
+		}
+		animator.setDisplayedChild(b ? i+1 : i);
+	}
+
+	private void exitPlayingState() {
+		if(isPlayingState) {
+			setUiHidden(false);
+			isPlayingState = false;
+			pausePlaying();
+		}
+	}
+	
+	private void setEnabled(View wrapper, int[] fieldsIdentifiers, boolean enabled) {
+		for (int i = 0; i < fieldsIdentifiers.length; i++) {
+			int id = fieldsIdentifiers[i];
+			wrapper.findViewById(id).setEnabled(enabled);
+		}
+	}
+	
+	private class TempoFieldController extends IntegerSpinner.IntegerSpinnerController implements TextWatcher {
+		private EditText field;
+		private int prevValue;
+
+		public TempoFieldController(int initialValue, View wrapper) {
+			super(
+				new IntegerSpinner.IncrementModel(10)
+				.setMinValue(getResources().getInteger(R.integer.minPlayTempoBPM))
+				.setValue(initialValue),
+				wrapper,
+				R.id.button_plus_ten, 
+				R.id.button_minus_ten
+			);
+			field = (EditText) wrapper.findViewById(R.id.PLAY_tempoField);
+			field.addTextChangedListener(this);
+			prevValue = initialValue;
+			updateViews();
+		}
+		
+		@Override
+		protected void updateViews() {
+			super.updateViews();
+			if(field != null) {
+				field.setText(Integer.toString(getValue()));
+			}
+			onValueChanged();
+		}
+		
+		private void onValueChanged() {
+			if(model.getValue() != prevValue) {
+				prevValue = model.getValue();
+				playConf.setTempo(model.getValue());
+				configurationUpdated = true;
+			}
+		}
+
+		@Override
+		public void afterTextChanged(Editable s) {
+			try {
+				int newValue = Integer.parseInt(s.toString());
+				model.setValue(newValue);
+				super.updateViews();
+				onValueChanged();
+			} catch(NumberFormatException e) {
+			}
+		}
+		@Override
+		public void onTextChanged(CharSequence s, int start, int before, int count) {
+		}
+		@Override
+		public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+		}
+	}
+}

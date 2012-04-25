@@ -95,14 +95,6 @@ public class ContentService extends AsynchronousRequestsService {
 		 */
 		public static final String SAVE_PLAY_CONF = ContentService.class.getName()+".save_playconf";
 		public static final String EXTRAS_SCORE_PLAY_CONF = "score_play_conf";
-		/**
-		 * Parameters: {@link #EXTRAS_ATTACH_SCORE_VISUAL_CONF} (optional) attach each retrieved Score its {@link ScoreVisualizationConfig}
-		 * <br />
-		 * Output: {@link #RESPONSE_EXTRAS_SCORES} - array of Score objects, {@link #RESPONSE_EXTRAS_VISUAL_CONFS} - array of {@link ScoreVisualizationConfig} matching returned Scores
-		 */
-		public static final String LIST_SCORES = ContentService.class.getName()+".list_scores";
-		public static final String RESPONSE_EXTRAS_SCORES = "scores_array";
-		public static final String RESPONSE_EXTRAS_VISUAL_CONFS = "vis_conf_array";
 	}
 	
 	@Override
@@ -116,8 +108,6 @@ public class ContentService extends AsynchronousRequestsService {
 			saveScoreCopy(requestIntent);
 		} else if(ACTIONS.UPDATE_SCORE.equals(action)) {
 			updateScore(requestIntent);
-		} else if(ACTIONS.LIST_SCORES.equals(action)) {
-			listScores(requestIntent);
 		} else if(ACTIONS.SAVE_PLAY_CONF.equals(action)) {
 			savePlayConfiguration(requestIntent);
 		} else if(ACTIONS.CLEAN_SCORE_SESSION_COPY.equals(action)) {
@@ -130,67 +120,6 @@ public class ContentService extends AsynchronousRequestsService {
 			onRequestSuccess(requestIntent, new Intent());
 		} else {
 			super.onHandleIntent(requestIntent);
-		}
-	}
-
-	private Map<Long, Integer> idToIndex = new HashMap<Long, Integer>();
-	private static final String[] METAS_VISUAL = new String[] {
-		ScoresMeta.IntMeta.DISPLAY_MODE,
-		ScoresMeta.IntMeta.MIN_LINESPACE,
-		ScoresMeta.IntMeta.MAX_LINESPACE
-	};
-	
-	private void listScores(Intent requestIntent) {
-		Cursor scoreCursor = null, metaCursor = null; 
-		try {
-			SQLiteDatabase db = mDb.getReadableDatabase();
-			scoreCursor = db.query(
-					SCORES_TABLE_NAME, null, 
-					null, null, 
-					null, null,
-					Scores.MODIFIED_UTC_TIME + " DESC"
-			);
-			int total = scoreCursor.getCount();
-			ParcelableScore[] scores = new ParcelableScore[total];
-			idToIndex.clear();
-			for(int i = 0; scoreCursor.moveToNext(); i++) {
-				Score score = rowToScore(scoreCursor);
-				scores[i] = score.prepareParcelable();
-				idToIndex.put(score.getId(), i);
-			}
-			Intent result = new Intent();
-			result.putExtra(ACTIONS.RESPONSE_EXTRAS_SCORES, scores);
-			if(requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, false)) {
-				ScoreVisualizationConfig[] confs = new ScoreVisualizationConfig[total];
-				for(int i = 0; i < total; i++) {
-					confs[i] = ScoreVisualizationConfigFactory.createWithDefaults(this);
-				}
-				metaCursor = db.query(
-					SCORES_INTMETA_TABLE_NAME, null,
-					ScoresMeta.META_NAME + " IN (?, ?, ?)" , METAS_VISUAL,
-					null, null, null);
-				while(metaCursor.moveToNext()) {
-					long scoreId = metaCursor.getLong(metaCursor.getColumnIndex(ScoresMeta._ID));
-					if(idToIndex.containsKey(scoreId)) {
-						fillField(metaCursor, confs[idToIndex.get(scoreId)]);
-					}
-				}
-				result.putExtra(ACTIONS.RESPONSE_EXTRAS_VISUAL_CONFS, confs);
-			}
-			onRequestSuccess(requestIntent, result);
-		} catch (SerializationException e) {
-			Log.w(TAG, "Impossible error", e);
-			onRequestError(requestIntent, "Failed to read Scores from DB");
-		} catch (Exception e) {
-			Log.w(TAG, "", e);
-			onRequestError(requestIntent, "Failed to read Scores from DB");
-		} finally {
-			if(scoreCursor != null) {
-				scoreCursor.close();
-			}
-			if(metaCursor != null) {
-				metaCursor.close();
-			}
 		}
 	}
 
@@ -363,7 +292,14 @@ public class ContentService extends AsynchronousRequestsService {
 				onRequestError(requestIntent, "No row with id "+id);
 				return;
 			}
-			Score score = rowToScore(scoreCursor);
+			Score score = new Score(
+				id,
+				scoreCursor.getLong(scoreCursor.getColumnIndex(Scores.ORIGINAL_ID)),
+				scoreCursor.getString(scoreCursor.getColumnIndex(Scores.TITLE)),
+				scoreCursor.getString(scoreCursor.getColumnIndex(Scores.CONTENT)),
+				scoreCursor.getLong(scoreCursor.getColumnIndex(Scores.CREATED_UTC_TIME)),
+				scoreCursor.getLong(scoreCursor.getColumnIndex(Scores.MODIFIED_UTC_TIME))
+			);
 			Intent outData = new Intent();
 			outData.putExtra(ACTIONS.RESPONSE_EXTRAS_ENTITY, score.prepareParcelable());
 			if(requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, false)) {
@@ -373,7 +309,19 @@ public class ContentService extends AsynchronousRequestsService {
 					ScoresMeta._ID + " = " + id, null,
 					null, null, null);
 				while(metaCursor.moveToNext()) {
-					fillField(metaCursor, scoreConf);
+					String metaName = metaCursor.getString(metaCursor.getColumnIndex(ScoresMeta.META_NAME));
+					long metaValue = metaCursor.getLong(metaCursor.getColumnIndex(ScoresMeta.META_VALUE));
+					if(ScoresMeta.IntMeta.DISPLAY_MODE.equals(metaName)) {
+						if(metaValue < 0 || metaValue >= DisplayMode.values().length) {
+							Log.w(TAG, "Score meta DISPLAY_MODE = "+metaValue+" outside of Enum scope");
+						} else {
+							scoreConf.setDisplayMode(DisplayMode.values()[(int) metaValue]);
+						}
+					} else if(ScoresMeta.IntMeta.MIN_LINESPACE.equals(metaName)) {
+						scoreConf.setMinSpaceAnchor((int) metaValue);
+					} else if(ScoresMeta.IntMeta.MAX_LINESPACE.equals(metaName)) {
+						scoreConf.setMaxSpaceAnchor((int) metaValue);
+					}
 				}
 				outData.putExtra(ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF, scoreConf);
 			}

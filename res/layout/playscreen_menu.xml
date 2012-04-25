@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+    android:orientation="vertical"
+><!-- panel with configuration options -->
+	<LinearLayout
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="horizontal"
+	    android:padding="5dip"
+	    android:paddingBottom="0dip"
+	    android:descendantFocusability="beforeDescendants"
+		android:focusableInTouchMode="true"
+	>
+	    <TextView
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="@string/label_tempo"
+	        android:textColor="?android:panelColorForeground"
+	        android:minHeight="48dip"
+	        android:layout_marginRight="10dip"
+		/>
+	    <Button
+	        android:id="@+id/button_minus_ten"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="-10"
+	    	android:minWidth="48dip"
+	    	android:minHeight="48dip"
+	    />
+	    <EditText
+	        android:id="@+id/PLAY_tempoField"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:ems="3"
+	        android:inputType="number"
+	    />
+	    <Button
+	        android:id="@+id/button_plus_ten"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="+10"
+	    	android:minWidth="48dip"
+	    	android:minHeight="48dip"
+		/>
+	</LinearLayout>
+	<CheckBox 
+	    android:id="@+id/PLAY_checkbox_metronome"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="dźwięk metronomu"
+        android:textColor="?android:panelColorForeground"
+        android:minHeight="48dip"
+    />
+	<CheckBox 
+	    android:id="@+id/PLAY_checkbox_intro"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="takt wstępu"
+        android:textColor="?android:panelColorForeground"
+        android:minHeight="48dip"
+    />
+</LinearLayout>

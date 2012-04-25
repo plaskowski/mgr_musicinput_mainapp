@@ -2,8 +2,9 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy.PaddingSettersStrategy;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -12,10 +13,9 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.GradientDrawable.Orientation;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.View;
 
 // TODO should I extract logic to SheetElement object?
-public class Sheet5LinesView extends View {
+public class Sheet5LinesView extends PaddingSettersStrategy {
 
 	private static final int LINESPACE3_ABSINDEX = NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	private static final int LINESPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
@@ -25,19 +25,12 @@ public class Sheet5LinesView extends View {
 		super(context);
 	}
 
-	public Sheet5LinesView(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
-	}
-
 	public Sheet5LinesView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 	}
 
-
 	SheetVisualParams params;
-	private int lineThickness;
 	private int totalVerticalSpan;
-	private int notesAreaLeftPadding;
 	private Integer highlightedAnchor = null;
 	private Paint normalPaint = new Paint();
 	private Paint lineHighlightedPaint = new Paint();
@@ -45,7 +38,6 @@ public class Sheet5LinesView extends View {
 	
 	public void setParams(SheetVisualParams params, int topPaddingMin, int bottomPaddingMin) {
 		this.params = params;
-		lineThickness = params.getLineThickness();
 		totalVerticalSpan = params.anchorOffset(LINE4_ABSINDEX, AnchorPart.BOTTOM_EDGE);
 		int shadowThickness = params.getLineThickness()/2;
 		lineHighlightedPaint.setShadowLayer(shadowThickness, 0, params.getLineThickness()/4, Color.BLACK);
@@ -81,9 +73,9 @@ public class Sheet5LinesView extends View {
 		for(int i = 0; i < 5; i++) {
 			int anchorIndex = NoteConstants.anchorIndex(i, NoteConstants.ANCHOR_TYPE_LINE);
 			canvas.drawRect(
-				notesAreaLeftPadding, 
+				getPaddingLeft(), 
 				paddingTop + params.anchorOffset(anchorIndex, AnchorPart.TOP_EDGE),
-				getWidth(), 
+				getWidth() - getPaddingRight(), 
 				paddingTop + params.anchorOffset(anchorIndex, AnchorPart.BOTTOM_EDGE),
 				highlightedAnchor != null && highlightedAnchor == anchorIndex ? lineHighlightedPaint : normalPaint
 			);
@@ -93,9 +85,9 @@ public class Sheet5LinesView extends View {
 		&& highlightedAnchor >= LINESPACE0_ABSINDEX
 		&& highlightedAnchor <= LINESPACE3_ABSINDEX) {
 			linespaceHighlighted.setBounds(
-				notesAreaLeftPadding, 
+				getPaddingLeft(), 
 				paddingTop + params.anchorOffset(highlightedAnchor, AnchorPart.TOP_EDGE),
-				getWidth(), 
+				getWidth() - getPaddingRight(), 
 				paddingTop + params.anchorOffset(highlightedAnchor, AnchorPart.BOTTOM_EDGE)
 			);
 			linespaceHighlighted.draw(canvas);
@@ -118,13 +110,5 @@ public class Sheet5LinesView extends View {
 			break;
 		}
 		setMeasuredDimension(width, totalVerticalSpan+getPaddingTop()+getPaddingBottom());
-	}
-
-	public int getMinNotesAreaLeftPadding() {
-		return 2*lineThickness;
-	}
-
-	public void setNotesAreaLeftPadding(int paddingLeft) {
-		this.notesAreaLeftPadding = paddingLeft;
 	}
 }

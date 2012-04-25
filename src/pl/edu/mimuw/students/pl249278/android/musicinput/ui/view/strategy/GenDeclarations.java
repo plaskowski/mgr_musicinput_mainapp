@@ -2,6 +2,7 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
 import pl.waw.echo.eclipse.codegenerator.annotation.JoinClasses;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -28,9 +29,10 @@ class GenDeclarations {
 	@JoinClasses(
 		superClass = ScrollView.class,
 		ancestors = {
-			LockScrollingStrategy.class
+			LockScrollingStrategy.class,
+			LazyScrollToStrategy.class
 		},
-		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ScrollView_LockableScroll"
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ScrollView_LockableScroll_LazyScrolling"
 	)
 	static Class<? extends View> CUSTOM3; // = ScrollView_LockableScroll.class; 
 	@JoinClasses(
@@ -74,4 +76,21 @@ class GenDeclarations {
 		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.RelativeLayout_InterceptScale_LockTouchInput"
 	)
 	static Class<? extends View> CUSTOM8; //  = RelativeLayout_InterceptScale_LockTouchInput.class;
+	@JoinClasses(
+		superClass = FrameLayout.class,
+		ancestors = {
+			InterceptScaleGestureStrategy.class
+		},
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.FrameLayout_InterceptScale"
+	)
+	static Class<? extends View> CUSTOM9;
+	@JoinClasses(
+		superClass = HorizontalScrollView.class,
+		ancestors = {
+			DetectTouchInterceptionStrategy.class,
+			LazyScrollToStrategy.class
+		},
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HorizontalScrollView_ObserveInterceptTouch_LazyScrolling"
+	)
+	static Class<? extends View> CUSTOM10;
 }

@@ -1,26 +1,22 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
-import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ANCHOR_TYPE_LINE;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.middleX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.timeCapacity;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE4_ABSINDEX;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.length;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.BOTTOM_EDGE;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.TOP_EDGE;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateMargins;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSize;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
-import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.InsertDivided;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.NoteModifier;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
@@ -40,14 +36,12 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Action;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.IndicatorOrigin;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TimeStepDialog;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_ShowScore;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementsOverlay;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementsOverlay.Observer;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.JoinArc;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.LoadingSvgException;
@@ -102,7 +96,7 @@ import android.widget.HorizontalScrollView;
 import android.widget.ScrollView;
 import android.widget.Toast;
 
-public class EditActivity extends FragmentActivity_ErrorDialog implements TimeStepDialog.OnPromptResult {
+public class EditActivity extends FragmentActivity_ErrorDialog_ShowScore implements TimeStepDialog.OnPromptResult {
 	private static LogUtils log = new LogUtils(EditActivity.class);
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	/** of type long */
@@ -129,7 +123,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 	private static final String CALLBACK_ACTION_GET = EditActivity.class.getName()+".callback_get";
 	
 	private int NOTE_DRAW_PADDING = 0;
-	private int MIN_DRAW_SPACING;
 	protected Paint noteHighlightPaint = new Paint();
 	protected Paint fakePausePaint = new Paint();
 	protected Paint normalPaint = new Paint();
@@ -139,7 +132,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 		fakePausePaint.setAntiAlias(true);
 	}
 	
-	private Sheet5LinesView lines;
 	private ViewGroup sheet;
 	private View inputArea;
 	private HorizontalScrollView hscroll;
@@ -150,10 +142,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 	private QuickActionsView qActionsView; 
 	
 	private boolean isScaleValid = false;
-	private SheetParams sheetParams;
 	private ArrayList<Time> times = new ArrayList<EditActivity.Time>();
-	private ArrayList<SheetAlignedElementView> elementViews = new ArrayList<SheetAlignedElementView>();
-	private ArrayList<SheetElementView<SheetElement>> overlaysViews = new ArrayList<SheetElementView<SheetElement>>();
 	private Score score = null;
 	private ScoreVisualizationConfig visualConf = null;
 	private boolean skipOnStopCopy = false;	
@@ -184,10 +173,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 	
 	private int inputAreaWidth;
 	private float noteMinDistToIA;
-	private float defaultSpacingBaseFactor;
-	private float minDrawSpacingFactor;
-	private int minPossibleValue;
-	private float afterTimeDividerVisualSpacingFactor;
 	private float noteShadow;
 	private float fakePauseEffectRadius;
 	private int maxLinespaceThickness;
@@ -217,11 +202,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.editscreen);
 
-		sheetParams = new SheetParams(
-			getResources().getInteger(R.integer.lineThickness),
-			getResources().getInteger(R.integer.linespaceThickness)
-		);
-		
 		scaleGestureDetector = (ViewGroup) findViewById(R.id.EDIT_scale_detector);
 		scaleGestureDetector.setOnTouchListener(quickActionsDismiss);
 		hscroll = (HorizontalScrollView) findViewById(R.id.EDIT_outer_hscrollview);
@@ -240,10 +220,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 		noteShadow = readParametrizedFactor(R.string.noteShadow);
 		fakePauseEffectRadius = readParametrizedFactor(R.string.fakePauseEffectRadius);
 		noteMinDistToIA = readParametrizedFactor(R.string.minDistToIA);
-		defaultSpacingBaseFactor = readParametrizedFactor(R.string.defaultTimeSpacingBaseFactor);
-		minPossibleValue = getResources().getInteger(R.integer.minNotePossibleValue) + 1;
-		minDrawSpacingFactor = readParametrizedFactor(R.string.minDrawSpacing);
-		afterTimeDividerVisualSpacingFactor = readParametrizedFactor(R.string.timeDividerDrawAfterSpacingFactor);
 		maxLinespaceThickness = getResources().getDimensionPixelSize(R.dimen.maxLinespaceThickness);
 		
 		NoteValueSpinner valueSpinner = (NoteValueSpinner) findViewById(R.id.EDIT_note_value_scroll);
@@ -581,10 +557,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 			}
 		});
 	}
-
-	private float readParametrizedFactor(int stringResId) {
-		return sheetParams.readParametrizedFactor(getResources().getString(stringResId));
-	}
 	
 	// TODO co jak nie ma ustalonego metrum?
 	// TODO co jak zmienia się metrum? nie powienienem przepychać nuty do istniejących taktów tylko stworzyć nowy takt starego metrum
@@ -650,7 +622,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 				}
 			} 
 			else {
-				fillWithFakePauses.insertDivided(i, currentTime.capLeft, true);
+				fillWithFakePauses.insertDivided(i, currentTime.capLeft, true, minPossibleValue);
 				i += fillWithFakePauses.getTotal();
 				timeIndex++;
 				continue;
@@ -705,7 +677,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 		void insertDivided(int insertIndex, int capToFill, NoteSpec template, boolean addJoinArcAtEnd) throws CreationException {
 			this.template = template;
 			specs.clear();
-			super.insertDivided(insertIndex, capToFill, false);
+			super.insertDivided(insertIndex, capToFill, false, minPossibleValue);
 			int total = specs.size();
 			for(int i = 0; i < total; i++) {
 				NoteSpec spec = specs.get(i);
@@ -730,53 +702,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 		
 	}
 	private InsertDividedNote insertDivdiedNote = new InsertDividedNote();
-	
-	private abstract class InsertDivided extends DivideLengthStrategy {
-		private int insertIndex;
-		private int total;
-
-		void insertDivided(int insertIndex, int capToFill, boolean multipleDots) throws CreationException {
-			this.insertIndex = insertIndex;
-			this.total = 0;
-			divide(capToFill, multipleDots);
-		}
-		
-		@Override
-		protected void handle(int baseLength, int dotExt) throws CreationException {
-			handle(insertIndex+(total++), baseLength, dotExt);
-		}
-		
-		protected abstract void handle(int atIndex, int baseLength, int dotExt) throws CreationException;
-
-		int getTotal() {
-			return total;
-		}
-	}
-	
-	private abstract class DivideLengthStrategy {
-		void divide(int capToFill, boolean multipleDots) throws CreationException {
-			for(int pLength = 0; pLength <= minPossibleValue; pLength++) {
-				int bitIndex = (minPossibleValue-pLength);
-				if(IntUtils.getFlag(capToFill, bitIndex) == 1) {
-					int baseLength = pLength;
-					int dotExt = 0;
-					for(pLength = pLength+1; pLength <= minPossibleValue; pLength++) {
-						bitIndex = (minPossibleValue-pLength);
-						if(IntUtils.getFlag(capToFill, bitIndex) == 1) {
-							dotExt++;
-							if(!multipleDots)
-								break;
-						} else {
-							break;
-						}
-					}
-					handle(baseLength, dotExt);
-				}
-			}
-		}
-
-		protected abstract void handle(int baseLength, int dotExt) throws CreationException;
-	}
 	
 	private Time rebuildTime(int timeIndex, int newRangeStart, TimeStep prevMetrum) throws CreationException {
 		Time currentTime;
@@ -862,90 +787,15 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 			}
 		}
 	}
-
-	/**
-	 * build greedily NotesGroups starting from startIndex 
-	 * @param endIndex maximal index of first element of NotesGroup
-	 * @param instantRedraw do we want to reposition views immediately after changing their drawing model
-	 */
-	private void buildNoteGroups(int startIndex, int endIndex) throws CreationException {
-		NotesGroup group = null;
-		int totalSize = elementViews.size();
-		for(int elementI = startIndex; elementI <= endIndex; elementI++) {
-			SheetAlignedElementView view = elementViews.get(elementI);
-			ElementSpec spec = view.model().getElementSpec();
-			if(group == null && GroupBuilder.canStartGroup(spec)) {
-				GroupBuilder gb = new GroupBuilder(spec);
-				int groupEl = elementI+1;
-				for(; groupEl < totalSize; groupEl++) {
-					if(!gb.tryExtend(specAt(groupEl))) {
-						break;
-					}
-				}
-				if(gb.isValid()) {
-					group = gb.build();
-					addOverlayView(group);
-					// extends endIndex so we reach all grouped elements
-					int groupEndIndex = elementI + group.elementsCount() - 1;
-					endIndex = Math.max(endIndex, groupEndIndex);
-					log.v("buildNoteGroup(): %d -> %d", elementI, groupEndIndex);
-				}
-			} 
-			if(group != null) {
-				// recreate model because ElementSpec has been modified by GroupBuilder
-				SheetAlignedElement model = createDrawingModel(spec);
-				view.setModel(model);
-				group.wrapNext(model);
-				bind(group, view);
-				model.setSheetParams(sheetParams);
-				updatePosition(view, null, sheetElementY(view));
-				if(!group.hasNext()) {
-					 group = null;
-				 }
-			}
-		}
+	
+	protected void buildNoteGroups(int startIndex, int endIndex) throws CreationException {
+		super.buildNoteGroups(startIndex, endIndex, sheet, normalPaint, NOTE_DRAW_PADDING);
 	}
 	
-	/**
-	 * Builds any JoinArc that starts at position from specified range 
-	 * @param startIndex minimal index of JoinArc start element
-	 * @param endIndex maximal index of JoinArc start element
-	 */
-	private void buildJoinArcs(int startIndex, int endIndex) throws CreationException {
-		SheetAlignedElementView arcStart = null;
-		int lastPossibleEl = elementViews.size()-1;
-		// such index that would allow me to finish JoinArc that starts at (or skip over) endIndex position
-		int extendedEndIndex = endIndex;
-		for(int elementI = startIndex; elementI <= extendedEndIndex; elementI++) {
-			SheetAlignedElementView view = elementViews.get(elementI);
-			ElementSpec spec = view.model().getElementSpec();
-			if(arcStart != null) {
-				if(JoinArc.canEndJA(spec)) {
-					JoinArc arc = new JoinArc(arcStart.model());
-					arc.setRightElement(view.model());
-					bind(arc, arcStart);
-					bind(arc, view);
-					addOverlayView(arc);
-					log.v("buildJoinArc(): %d -> %d", elementViews.indexOf(arcStart), elementI);
-					arcStart = null;
-				} else if(JoinArc.canSkipOver(spec)) {
-					if(elementI == extendedEndIndex) {
-						extendedEndIndex = Math.min(extendedEndIndex+1, lastPossibleEl);
-					}
-					continue;
-				} else {
-					arcStart = null;
-				}
-			}
-			if(arcStart == null && elementI <= endIndex && JoinArc.canStrartJA(spec)) {
-				arcStart = view;
-				if(elementI == extendedEndIndex) {
-					extendedEndIndex = Math.min(extendedEndIndex+1, lastPossibleEl);
-				}
-			} 
-		}
+	protected void buildJoinArcs(int startIndex, int endIndex) throws CreationException {
+		super.buildJoinArcs(startIndex, endIndex, sheet, normalPaint, NOTE_DRAW_PADDING);
 	}
-		
+
 	private void clearJoinArcs(int startIndex, int endIndex) {
 		clearOverlays(startIndex, endIndex, JoinArc.class, null);
 	}
@@ -1237,7 +1087,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 					throw new CodeLogicError("Unexpected type of element: "+spec.getType().name());
 				}
 			}
-			fillWithPauses.insertDivided(insertIndex, capToFill, false);
+			fillWithPauses.insertDivided(insertIndex, capToFill, false, minPossibleValue);
 			if(fillWithPauses.getTotal() > 0) {
 				fillWithPauses.rebuildRange.y += fillWithPauses.getTotal()-1;
 				postInsert(insertIndex+fillWithPauses.getTotal()-1, fillWithPauses.rebuildRange);
@@ -2009,11 +1859,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 	private void onFirstTimeDividerChanged() {
 		int paddingLeft = 
 		Math.max(
-			lines.getMinNotesAreaLeftPadding() + middleX(elementViews.get(0)),
+			(int) (notesAreaHorizontalPaddingFactor * sheetParams.getScale()) + middleX(elementViews.get(0)),
 			// assure that when sheet is scrolled to start IA left edge matches start of area where notes are placed
 			visibleRectWidth-inputAreaWidth-iaRightMargin + mTouchSlop - timeDividerSpacing(times.get(0), true)
 		);
-		lines.setNotesAreaLeftPadding(paddingLeft);
+		lines.setPaddingLeft(paddingLeft);
 		this.notesAreaX = paddingLeft;
 	}
 	
@@ -2027,7 +1877,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 	private void updateScaleFactor(float newScaleFactor, boolean ignoreRightToIA) {
 		log.d("newScaleFactor: %f", newScaleFactor);
 		sheetParams.setScale(newScaleFactor);
-		MIN_DRAW_SPACING = (int) (minDrawSpacingFactor*sheetParams.getScale());
+		onScaleChanged();
 		NOTE_DRAW_PADDING = (int) (noteShadow * sheetParams.getScale());
 		noteHighlightPaint.setShadowLayer(NOTE_DRAW_PADDING, NOTE_DRAW_PADDING/2, NOTE_DRAW_PADDING, Color.BLACK);		
 		fakePausePaint.setMaskFilter(new BlurMaskFilter(fakePauseEffectRadius*sheetParams.getScale(), Blur.OUTER));
@@ -2088,32 +1938,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 
 	private void updateTimeSpacingBase(int timeIndex, boolean refreshSheetParams) {
 		Time time = times.get(timeIndex);
-		if(refreshSheetParams) {
-			elementViews.get(time.rangeStart).setSheetParams(sheetParams); // update left TimeDivider
-		}
-		time.spacingBase = (int) (defaultSpacingBaseFactor * sheetParams.getScale()); // calculate default spacing base
-		int baseLength = length(0, minPossibleValue);
-		int firstEl = time.rangeStart+1;
-		if(refreshSheetParams && firstEl < elementViews.size()) { // update first element of Time if present
-			elementViews.get(firstEl).setSheetParams(sheetParams); 
-		}
 		int lastEl = (timeIndex + 1 < times.size() ? times.get(timeIndex+1).rangeStart : elementViews.size()) - 1;
-		for(int i = firstEl; i <= lastEl; i++) { // for each element inside Time 
-			SheetAlignedElementView el = elementViews.get(i);
-			/** minimal visual spacing between 2 element's middles so that they don't collide */
-			int minSpacing = el.model().collisionRegionRight()-el.model().getMiddleX() + MIN_DRAW_SPACING;
-			if(i+1 < elementViews.size()) {
-				SheetAlignedElementView next = elementViews.get(i+1);
-				if(refreshSheetParams) { 
-					next.setSheetParams(sheetParams); 
-				}
-				minSpacing += next.model().getMiddleX()-next.model().collisionRegionLeft();
-			}
-			time.spacingBase = (int) Math.max(
-				time.spacingBase,
-				minSpacing * baseLength / el.model().getElementSpec().spacingLength(minPossibleValue)
-			);
-		}
+		time.spacingBase = computeTimeSpacingBase(time.rangeStart, lastEl, refreshSheetParams);
 	}
 	
 	private void setVerticalScrollingLocked(boolean verticalScrollingLocked) {
@@ -2628,7 +2454,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 
 		@Override
 		protected boolean isValidOn(int elementIndex) {
-			return getTimeIndex(elementIndex) != 0;
+			return getTimeIndex(elementIndex) >= 0;
 		}
 		
 	}
@@ -2694,7 +2520,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 	 */
 	public void onResult(TimeStep enteredValue) {
 		int timeIndex = contextTimeIndex;
-		if(timeIndex == 0 || timeIndex >= times.size()) {
+		if(timeIndex >= times.size()) {
 			log.w("Tried to alter timestep of incorrect time %d", timeIndex);
 		} else try {
 			// TODO przerobić na updateElementSpec()
@@ -2703,10 +2529,13 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 			int pinVisiblePositionX = abs2visibleX(viewStableX(time.view) + middleX(time.view));
 			recreateTimeDivider(timeIndex);
 			recreateTimeDivider(timeIndex+1);
+			if(timeIndex == 0) {
+				onFirstTimeDividerChanged();
+			}
 			int endIndex = elementViews.size()-1;
 			clearJoinArcs(0, endIndex);
 			clearNoteGroups(0, endIndex);
-			rebuildTimes(timeIndex-1);
+			rebuildTimes(Math.max(timeIndex-1, 0));
 			endIndex = elementViews.size()-1;
 			buildNoteGroups(0, endIndex);
 			buildJoinArcs(0, endIndex);
@@ -2919,27 +2748,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 		}
 	}
 
-	private void addOverlayView(final ElementsOverlay overlay) {
-		SheetElementView<SheetElement> elementView;
-		elementView = new SheetElementView<SheetElement>(this, overlay);
-		elementView.setPaint(normalPaint, NOTE_DRAW_PADDING);
-		elementView.setSheetParams(sheetParams);
-		overlay.setTag(elementView);
-		overlaysViews.add(elementView);
-		sheet.addView(elementView);
-		updateOverlayPosition(overlay, elementView);
-		overlay.setObserver(new Observer() {
-			@Override
-			public void onMeasureInvalidated() {
-				// find view
-				SheetElementView<SheetElement> ovView = (SheetElementView<SheetElement>) overlay.getTag();
-				ovView.invalidateMeasure();
-				ovView.invalidate();
-				// reposition it
-				updateOverlayPosition(overlay, ovView);
-				updateSize(ovView, ovView.measureWidth(), ovView.measureHeight());
-			}
-		});
+	protected void addOverlayView(ElementsOverlay overlay) {
+		super.addOverlayView(overlay, sheet, normalPaint, NOTE_DRAW_PADDING);
 	}
 	
 	private SheetAlignedElementView addElementView(int index, SheetAlignedElement model) {
@@ -2967,73 +2777,18 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 		}
 	}
 	
-	private SheetAlignedElement createDrawingModel(ElementSpec elementSpec) throws CreationException {
-		return DrawingModelFactory.createDrawingModel(this, elementSpec);
-	}
-	
 	private ElementSpec.NormalNote elementSpecNN(NoteSpec spec) {
-		int orientation;
-		ScoreVisualizationConfig.DisplayMode mode = visualConf.getDisplayMode();
-		switch (mode) {
-		case LOWER_VOICE:
-			orientation = NoteConstants.ORIENT_DOWN;
-			break;
-		case UPPER_VOICE:
-			orientation = NoteConstants.ORIENT_UP;
-			break;
-		case NORMAL:
-			orientation = NoteConstants.defaultOrientation(spec.positon());
-			break;
-		default:
-			throw CodeLogicError.unhandledEnumValue(mode);
-		}
-		return new ElementSpec.NormalNote(spec, orientation);
+		return ScoreHelper.elementSpecNN(spec, visualConf);
 	}
 
 	private int afterElementSpacing(Time time, SheetAlignedElement sheetAlignedElement) {
-		ElementSpec elementSpec = sheetAlignedElement.getElementSpec();
-		if(elementSpec.getType() == ElementType.TIMES_DIVIDER) {
-			return timeDividerSpacing(time, false);
-		} else {
-			return length2spacing(time, elementSpec.spacingLength(minPossibleValue), minPossibleValue);
-		}
-	}
-	
-	private static int length2spacing(Time time, double lengthInMU, int measureUnit) {
-		int baseLength = length(0, measureUnit);
-		return (int) (time.spacingBase * lengthInMU / baseLength);
+		return afterElementSpacing(time.rangeStart, time.spacingBase, sheetAlignedElement);
 	}
 	
 	private int timeDividerSpacing(Time time, boolean updateSheetParams) {
-		SheetAlignedElementView v = elementViews.get(time.rangeStart);
-		if(updateSheetParams) v.setSheetParams(sheetParams);
-		int minSpacing = v.model().collisionRegionRight()-v.model().getMiddleX()+(int) (afterTimeDividerVisualSpacingFactor*sheetParams.getScale());
-		if(time.rangeStart + 1 < elementViews.size()) {
-			SheetAlignedElementView firstTimeEl = elementViews.get(time.rangeStart+1);
-			if(updateSheetParams) firstTimeEl.setSheetParams(sheetParams);
-			minSpacing += firstTimeEl.model().getMiddleX()-firstTimeEl.model().collisionRegionLeft();
-		}
-		return minSpacing;
-	}
-	
-	private ElementSpec specAt(int elementIndex) {
-		return elementViews.get(elementIndex).model().getElementSpec();
-	}
-	
-	/**
-	 * @return view's SheetAlignedElement horizontal middle in "sheet" view coordinates
-	 */
-	private static int middleAbsoluteX(SheetAlignedElementView view) {
-		return left(view)+middleX(view);
+		return timeDividerSpacing(time.rangeStart, updateSheetParams);
 	}
 
-	/**
-	 * @return SheetAlignedElement horizontal middle in view coordinates
-	 */
-	private static int middleX(SheetAlignedElementView view) {
-		return view.getPaddingLeft()+view.model().getMiddleX();
-	}
-	
 	/**
 	 * Absolute position of element.
 	 * If element is subject of animation, take it's destination position instead of temporary one. 
@@ -3047,23 +2802,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 		}
 	}
 	
-	private int sheetElementY(SheetElementView<?> v) {
-		return line0Top() + v.getOffsetToAnchor(NoteConstants.anchorIndex(0, ANCHOR_TYPE_LINE), TOP_EDGE);
-	}
-	
-	private int line0Top() {
-		return top(lines) + lines.getPaddingTop();
-	}
-
 	private void highlightAnchor(Integer anchorAbsIndex) {
 		lines.highlightAnchor(anchorAbsIndex);
-	}
-	
-	private static int timeCapacity(TimeStep timeStep, int measureBaseUnit) {
-		if(timeStep == null)
-			return Integer.MAX_VALUE;
-		else 
-			return length(timeStep.getTempoBaseLength(), measureBaseUnit)*timeStep.getBaseMultiplier();
 	}
 	
 	private int moveDistance() {
@@ -3074,43 +2814,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 		return view.getLayoutParams().width;
 	}
 	
-	private Map<SheetAlignedElementView, Set<ElementsOverlay>> bindMap = new HashMap<SheetAlignedElementView, Set<ElementsOverlay>>(); 
-	private void bind(ElementsOverlay overlay, SheetAlignedElementView view) {
-		if(bindMap.get(view) == null) {
-			bindMap.put(view, new LinkedHashSet<ElementsOverlay>());
-		}
-		bindMap.get(view).add(overlay);
-		dispatchPositionChanged(overlay, view);
-	}
-	
-	private static int left(View view) {
-		return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).leftMargin;
-	}
-	private static int top(View view) {
-		return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).topMargin;
-	}
-
-	private void updatePosition(View v, Integer left, Integer top) {
-		updateMargins(v, left, top);
-		if(v instanceof SheetAlignedElementView) {
-			SheetAlignedElementView view = (SheetAlignedElementView) v;
-			Set<ElementsOverlay> overlays = bindMap.get(view);
-			if(overlays != null) {
-				for(ElementsOverlay ov: overlays) {
-					dispatchPositionChanged(ov, view);
-				}
-			}
-		}
-	}
-	
-	private void dispatchPositionChanged(ElementsOverlay overlay, SheetAlignedElementView view) {
-		overlay.positionChanged(
-			view.model(), 
-			left(view) + view.getPaddingLeft(), 
-			top(view) + view.getPaddingTop() - line0Top()
-		);
-	}
-
 	private int moveLeftBorder() {
 		return visibleRectWidth - iaRightMargin + delta - mTouchSlop;
 	}
@@ -3138,10 +2841,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog implements TimeSt
 	
 	private int inIA_noteViewX(SheetAlignedElementView noteView) {
 		return visible2absX(visibleRectWidth-iaRightMargin-inputAreaWidth/2)-middleX(noteView);
-	}
-
-	private void updateOverlayPosition(ElementsOverlay overlay, SheetElementView<SheetElement> ovView) {
-		updatePosition(ovView, overlay.left()-ovView.getPaddingLeft(), line0Top() + overlay.top()-ovView.getPaddingTop());
 	}
 
 	/**

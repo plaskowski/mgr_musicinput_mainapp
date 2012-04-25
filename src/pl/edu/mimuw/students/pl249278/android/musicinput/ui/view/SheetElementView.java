@@ -77,6 +77,7 @@ public class SheetElementView<ElementType extends SheetElement> extends View {
 		);
 	}	
 
+	/** height of model (according to current {@link #setSheetParams(SheetVisualParams)}) + padding top and bottom */
 	public int measureHeight() {
 		return model.measureHeight()+getPaddingTop()+getPaddingBottom();
 	}
@@ -95,6 +96,10 @@ public class SheetElementView<ElementType extends SheetElement> extends View {
 		this.paint = paint;
 		invalidate();
 		updateDrawRadius(drawRadius);
+	}
+	
+	public Paint getPaint() {
+		return paint;
 	}
 
 	public void updateDrawRadius(float drawRadius) {

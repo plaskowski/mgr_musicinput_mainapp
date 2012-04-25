@@ -10,22 +10,22 @@
 	 <uses-permission android:name="android.permission.VIBRATE"/>
     
     <application android:icon="@drawable/icon" android:label="@string/app_name" android:debuggable="true" >
-        <activity android:name=".ui.TestSvgActivity"
-                  android:label="SVG test">
+        <activity android:name=".test.TestEditActivity"
+                  android:label="TEST edit score">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
- <!-- 
-        <activity android:name=".test.TestDrawableActivity"
-                  android:label="@string/app_name">
+        
+        <activity android:name=".test.TestPlayActivity"
+                  android:label="Test play">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
- -->
+        
 		<activity android:name="pl.edu.mimuw.students.pl249278.android.musicinput.NewScoreActivity"
                   android:label="@string/NEWSCORE_title">
             <intent-filter>
@@ -35,14 +35,14 @@
         </activity>
  
         <activity android:name=".EditActivity"
-                  android:label="@string/app_name">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+                  android:label="@string/app_name"
+		/>
+        
+        <activity android:name=".PlayActivity" />
         
         <service android:name=".services.ContentService" android:exported="false" />
+        
+        <service android:name=".services.WorkerService" android:exported="false" />
         
         <receiver android:name=".services.AsyncServiceToastReceiver" android:exported="false">
             <intent-filter>

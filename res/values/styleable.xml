@@ -36,6 +36,7 @@
 	    	
 	<declare-styleable name="SvgDrawable">
 		<attr name="svgResource" format="reference" />
+		<attr name="iconMaxHeight" format="dimension" />
 	</declare-styleable>
 	    	
 	<declare-styleable name="StyleableClassDeclaration">

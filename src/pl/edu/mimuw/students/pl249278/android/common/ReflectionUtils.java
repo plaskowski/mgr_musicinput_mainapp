@@ -25,6 +25,10 @@ public class ReflectionUtils {
 	}
 
 	public static String findConstName(Class<?> constWrapperClass, String constNamePrefix, Object constValue) {
+		return findConstName(constWrapperClass, constNamePrefix, constValue, "(NO SUCH CONST)");
+	}
+	
+	public static String findConstName(Class<?> constWrapperClass, String constNamePrefix, Object constValue, String defaultValue) {
 		for (Field field: findConsts(constWrapperClass, constNamePrefix)) {
 			try {
 				Object fieldValue = field.get(null);
@@ -36,6 +40,6 @@ public class ReflectionUtils {
 				Log.e(ReflectionUtils.class.getName(), "", e);
 			}
 		}
-		return "(NO SUCH CONST)";
+		return defaultValue;
 	}
 }

@@ -12,6 +12,7 @@ import android.graphics.Paint;
 
 public class SvgCompoundDrawable extends CompoundDrawable {
 	private SvgImage svgImage;
+	private float iconMaxHeight = -1;
 	
 	public SvgCompoundDrawable(SvgImage svgImage) {
 		this.svgImage = svgImage;
@@ -25,6 +26,7 @@ public class SvgCompoundDrawable extends CompoundDrawable {
 			if(xmlId != 0) {
 				this.svgImage = NotePartFactory.prepareSvgImage(resolver.getResources(), xmlId);
 			}
+			iconMaxHeight = values.getDimension(R.styleable.SvgDrawable_iconMaxHeight, -1);
 		} catch (LoadingSvgException e) {
 			throw new RuntimeException(e);
 		} finally {
@@ -35,19 +37,20 @@ public class SvgCompoundDrawable extends CompoundDrawable {
 	@Override
 	protected void draw(Canvas canvas, Paint paint, float width, float height) {
 		float Xscale = width/svgImage.getWidth();
-		float Yscale = height/svgImage.getHeight();
-		if(Xscale == Yscale) {
-			SvgRenderer.drawSvgImage(canvas, svgImage, Xscale, paint);
-		} else {
-			canvas.save();
-			if(Xscale < Yscale) {
-				canvas.translate(0, (height-Xscale*svgImage.getHeight())/2f);
-			} else {
-				canvas.translate((width-Yscale*svgImage.getWidth())/2f, 0);
-			}
-			SvgRenderer.drawSvgImage(canvas, svgImage, Math.min(Xscale, Yscale), paint);
-			canvas.restore();
+		float drawingHeight = height;
+		if(iconMaxHeight > 0) {
+			drawingHeight = iconMaxHeight;
 		}
+		float Yscale = drawingHeight/svgImage.getHeight();
+		float scale = Math.min(Xscale, Yscale);
+		canvas.save();
+		// center drawing inside available area
+		canvas.translate(
+			(width-scale*svgImage.getWidth())/2f,
+			(height-scale*svgImage.getHeight())/2f
+		);
+		SvgRenderer.drawSvgImage(canvas, svgImage, scale, paint);
+		canvas.restore();
 	}
 	
 	@Override

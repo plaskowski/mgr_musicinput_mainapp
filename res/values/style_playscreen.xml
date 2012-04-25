@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="toolbar_blue_button" parent="toolbar_button_svgbluetemplate">
+        <item name="android:background">@drawable/button_bluegradient</item>
+        <item name="iconMaxHeight">20dip</item>
+    </style>
+    <style name="toolbar_blue_statebutton" parent="toolbar_button_svgbluetemplate">
+        <item name="android:background">@drawable/statebutton_bluegradient</item>
+        <item name="iconMaxHeight">20dip</item>
+    </style>
+    <style name="toolbar_button_svgbluetemplate">
+        <item name="extendedImage">@style/SvgCompoundDrawable</item>
+        <item name="paintsSetup">@array/InvertedEmboss</item>
+        <item name="android:scaleType">fitXY</item>
+    	<item name="android:layout_width">50dip</item>
+        <item name="android:layout_height">50dip</item>
+        <item name="android:layout_marginRight">1dip</item>
+    </style>
+</resources>

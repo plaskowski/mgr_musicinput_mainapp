@@ -24,4 +24,7 @@
 	    <item>5</item>
 	    <item>4</item>
    	</integer-array>
+   	
+	<integer name="minPlayTempoBPM">10</integer>
+	<integer name="defaultPlayTempoBPM">90</integer>
 </resources>

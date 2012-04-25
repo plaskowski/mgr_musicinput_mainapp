@@ -86,7 +86,7 @@ public class HackedScrollViewChild extends LinearLayout {
 //				,topSpacerHeight, bottomHeight, scrollTo);
 		setVerticalPadding(this, topSpacerHeight, bottomHeight);
 		HackedScrollView parent = (HackedScrollView) getParent();
-		parent.setScrollToY(scrollTo);
+		parent.postLayoutScrollTo(0, scrollTo);
 	}
 
 	public void setRuler(View ruler) {

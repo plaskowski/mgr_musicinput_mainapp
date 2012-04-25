@@ -192,6 +192,7 @@ public class NotesGroup extends ElementsOverlay {
 			int x = xpositions[i];
 			if(x == -1 || x <= prevX)
 				return false;
+			prevX = x;
 		}
 		return true;
 	}

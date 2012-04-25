@@ -16,6 +16,9 @@ public class NoteConstants {
 	/** stem is drawn below the head */
 	public static final int ORIENT_DOWN = 1;
 	
+	/** 
+	 * TODO call this rather an Accidental
+	 */
 	public static enum NoteModifier {
 		SHARP, // krzyżyk
 		FLAT, // bemol
@@ -26,9 +29,22 @@ public class NoteConstants {
 	 * klucz umieszczany na pięciolinii celem określenia położenia jednego dźwięku 
 	 */
 	public static enum Clef {
-		VIOLIN,
-		ALTO,
-		BASS
+		VIOLIN(new DiatonicPitch(DiatonicScalePitch.G, MIDDLE_C_OCTAVE), anchorIndex(3, ANCHOR_TYPE_LINE)),
+		ALTO(new DiatonicPitch(DiatonicScalePitch.C, MIDDLE_C_OCTAVE), anchorIndex(2, ANCHOR_TYPE_LINE)),
+		BASS(new DiatonicPitch(DiatonicScalePitch.F, MIDDLE_C_OCTAVE-1), anchorIndex(1, ANCHOR_TYPE_LINE));
+		
+		private Clef(DiatonicPitch diatonicNote, int anhorIndex) {
+			this.diatonicNote = diatonicNote;
+			this.anhorIndex = anhorIndex;
+		}
+		/**
+		 * Which note it marks on staff
+		 */
+		public final DiatonicPitch diatonicNote;
+		/**
+		 * At what place on staff note is marked
+		 */
+		public final int anhorIndex;
 	}
 	
 	/**
@@ -69,6 +85,49 @@ public class NoteConstants {
 		private static Accidental acc(int anchor, NoteModifier accidental) {
 			return new Accidental(anchor, accidental);
 		}
+	}
+	
+	/** scientific index of octave that is started by "middle C" on piano 88 keys keyboard */
+	private static final int MIDDLE_C_OCTAVE = 4;
+	
+	public static class DiatonicPitch {
+		public final DiatonicScalePitch basePitch;
+		/** as in scientific notation */
+		public final int octaveIndex;
+		
+		public DiatonicPitch(DiatonicScalePitch basePitch, int octaveIndex) {
+			this.basePitch = basePitch;
+			this.octaveIndex = octaveIndex;
+		}
+	}
+	
+	public static class Pitch {
+		public final ChromaticScalePitch basePitch;
+		public final int octaveIndex;
+		
+		public Pitch(ChromaticScalePitch basePitch, int octaveIndex) {
+			this.basePitch = basePitch;
+			this.octaveIndex = octaveIndex;
+		}
+	}
+	
+	public static enum DiatonicScalePitch {
+		C (ChromaticScalePitch.C), 
+		D (ChromaticScalePitch.D),
+		E (ChromaticScalePitch.E), 
+		F (ChromaticScalePitch.F), 
+		G (ChromaticScalePitch.G), 
+		A (ChromaticScalePitch.A), 
+		H (ChromaticScalePitch.H);
+		
+		private DiatonicScalePitch(ChromaticScalePitch chromatic) {
+			this.chromatic = chromatic;
+		}
+		public final ChromaticScalePitch chromatic;
+	}
+	
+	public static enum ChromaticScalePitch {
+		C, C_SHARP, D, D_SHARP, E, F, F_SHARP, G, G_SHARP, A, A_SHARP, H
 	}
 	
 	public static final int LINE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINE);

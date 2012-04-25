@@ -13,4 +13,12 @@ class GenDeclarations {
 		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_ShowScore"
 	)
 	static Class<? extends FragmentActivity> CUSTOM1; // = LinearLayout_ExtendedBackground.class; 
+	@JoinClasses(
+		superClass = FragmentActivity.class,
+		ancestors = {
+			ErrorDialogStrategy.class
+		},
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog"
+	)
+	static Class<? extends FragmentActivity> CUSTOM2; // = LinearLayout_ExtendedBackground.class; 
 }

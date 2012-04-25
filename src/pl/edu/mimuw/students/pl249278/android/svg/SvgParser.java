@@ -30,6 +30,7 @@ public class SvgParser {
 	private static final String VAL_STYLETYPE_TEXTCSS = "text/css";
 	private static final String ATTR_STYLE_TYPE = "contentStyleType";
 	private static final String TAG_ROOT = "svg";
+	private static final String TAG_DEFS = "defs";
 	private static final String ROOT_ATTR_HEIGHT = "height";
 	private static final String ROOT_ATTR_WIDTH = "width";
 	public static final String SVG_NS = "http://www.w3.org/2000/svg";
@@ -47,14 +48,12 @@ public class SvgParser {
 	SVGPathParser pathParser = new SVGPathParser();
 	private static final Pattern STYLE_ENTRY_FORMAT = Pattern.compile("\\s*([a-zA-z_-]+)\\s*:\\s*([^;]+)");
 	
-	private int depth = 0;
 	public SvgImage parse(XmlPullParser xmlParser) throws XmlPullParserException, IOException, SvgFormatException {
 		try {
 			SvgImage result = new SvgImage();
 			int eventType = xmlParser.getEventType();
 	        while (eventType != XmlPullParser.END_DOCUMENT) {
 	         if(eventType == XmlPullParser.START_TAG) {
-	        	 depth++;
 	        	 if(!SVG_NS.equals(xmlParser.getNamespace())) {
 	        		 log.v("Ignoring element %s:%s not from SVG NS", xmlParser.getNamespace(), xmlParser.getName());
 	        	 } else {
@@ -63,6 +62,16 @@ public class SvgParser {
 		            	 assertAttrsPresence(xmlParser, ROOT_ATTR_WIDTH, ROOT_ATTR_HEIGHT);
 		            	 result.width = parseFloat(attrValue(xmlParser, ROOT_ATTR_WIDTH));
 		            	 result.height =  parseFloat(attrValue(xmlParser, ROOT_ATTR_HEIGHT));
+		             } else if(TAG_DEFS.equals(name)) {
+	        			 log.v("Ignoring <defs> subtree");
+		            	 int startTagDepth = xmlParser.getDepth();
+		            	 do {
+		            		 xmlParser.next();
+		            	 } while(!(
+	            			 xmlParser.getEventType() == XmlPullParser.END_TAG	 
+	            			 && xmlParser.getName().equals(TAG_DEFS) 
+	            			 && xmlParser.getDepth() == startTagDepth
+            			 ));
 		             } else if(TAG_PATH.equals(name)) {
 		            	 handleTransformAttribute(xmlParser);
 	        			 SvgPath path = parsePathNode(xmlParser);
@@ -84,7 +93,6 @@ public class SvgParser {
 	        		 handleNodeEnd(xmlParser);
 	        	 }
 	//             System.out.println("End tag "+xmlParser.getName());
-	        	 depth--;
 	         } else if(eventType == XmlPullParser.TEXT) {
 	//             System.out.println("Text "+xmlParser.getText());
 	         }
@@ -120,14 +128,14 @@ public class SvgParser {
 			Matrix transformMatrix = new Matrix();
 			parseTransformString(transform, transformMatrix);
 			transformations.push(transformMatrix);
-			introLevels.push(depth);
+			introLevels.push(xmlParser.getDepth());
 			isCTMdirty = true;
 		}
 	}
 	
 	private void handleNodeEnd(XmlPullParser xmlParser) {
 		/* sprawdzic czy grupa z aktualnego poziomu zaglebienia wprowadzala transformacje. Jesli tak to trzeba je wycofac */
-		if(!introLevels.empty() && introLevels.peek().equals(depth)) {
+		if(!introLevels.empty() && introLevels.peek().equals(xmlParser.getDepth())) {
 			introLevels.pop();
 			transformations.pop();
 			isCTMdirty = true;

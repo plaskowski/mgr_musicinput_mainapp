@@ -53,7 +53,7 @@ public class Score {
         out.writeString(getRawContent());
     }
     
-    public Parcelable prepareParcelable() throws SerializationException {
+    public ParcelableScore prepareParcelable() throws SerializationException {
     	// try detect any possible serialization errors here
     	getRawContent();
     	return new ParcelableScore(this);
@@ -137,5 +137,13 @@ public class Score {
 
 	public void setOriginalId(long originalId) {
 		this.originalId = originalId;
+	}
+
+	public long getCreationUtcStamp() {
+		return creationUtcStamp;
+	}
+
+	public long getModificationUtcStamp() {
+		return modificationUtcStamp;
 	}
 }

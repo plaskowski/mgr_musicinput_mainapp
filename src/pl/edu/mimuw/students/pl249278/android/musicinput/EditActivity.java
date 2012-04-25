@@ -100,7 +100,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 	private static LogUtils log = new LogUtils(EditActivity.class);
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	/** of type long */
-	public static final String STARTINTENT_EXTRAS_SCORE_ID = "score_id";
+	public static final String STARTINTENT_EXTRAS_SCORE_ID = EditActivity.class.getCanonicalName()+".score_id";
 	private static final int ANIM_TIME = 150;
 	
 	private static final String INSTANCE_STATE_SCORE = "state_score";
@@ -1799,11 +1799,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 			RLAnimation anim = new RLAnimation(view, left(view), dx, duration);
 			anim.setOnAnimationEndListener(listn);
 //			log.i("startAnimation(): %d --[%d]--> %d, dur: %d", anim.start_value, dx, anim.start_value+dx, duration);
-			mStartAnimation(anim);
+			startAnimation(anim);
 		}
 		public void startHScrollAnimation(HorizontalScrollView hscrollView, int scrollDelta, long duration, Runnable onAnimationEndListener) {
 			HScrollAnimation anim = new HScrollAnimation(hscrollView, hscrollView.getScrollX(), scrollDelta, duration, onAnimationEndListener);
-			mStartAnimation(anim);
+			startAnimation(anim);
 		}
 	}
 	

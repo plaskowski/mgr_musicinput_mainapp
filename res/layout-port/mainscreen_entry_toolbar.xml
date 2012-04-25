@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res/pl.edu.mimuw.students.pl249278.android.musicinput"
+    android:id="@+id/entry_toolbar"
+    android:layout_width="fill_parent"
+    android:layout_height="0dp"
+    android:orientation="vertical"
+>
+    <TableRow
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" >
+        <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
+            android:id="@+id/button_play"
+            style="@style/mainscreen_entry_toolbar_item"
+            custom:svgResource="@xml/button_play"
+        />
+        <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
+            android:id="@+id/button_edit"
+            style="@style/mainscreen_entry_toolbar_item"
+            custom:svgResource="@xml/button_edit"
+        />
+        <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
+            android:id="@+id/button_delete"
+            style="@style/mainscreen_entry_toolbar_item"
+            custom:svgResource="@xml/button_delete"
+        />
+    </TableRow>
+    <TableRow
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" >
+        <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
+            android:id="@+id/button_rename"
+            style="@style/mainscreen_entry_toolbar_item"
+            custom:svgResource="@xml/button_rename"
+        />
+        <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
+            android:id="@+id/button_duplicate"
+            style="@style/mainscreen_entry_toolbar_item"
+            custom:svgResource="@xml/button_copy"
+        />
+        <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
+            android:id="@+id/button_exportmidi"
+            style="@style/mainscreen_entry_toolbar_item"
+            custom:svgResource="@xml/button_export_to_midi"
+        />
+    </TableRow>
+</LinearLayout>

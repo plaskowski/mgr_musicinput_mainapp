@@ -131,7 +131,7 @@ public class TimeStepDialog extends DialogFragment {
 			.setView(wrapper)
 			.setTitle(R.string.EDIT_timestepdialog_title)
 			.setCancelable(true)
-			.setPositiveButton(R.string.dialog_button_ok,
+			.setPositiveButton(android.R.string.ok,
 				new OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
@@ -147,7 +147,7 @@ public class TimeStepDialog extends DialogFragment {
 					}
 				}
 			)
-			.setNegativeButton(R.string.dialog_button_cancel, null);
+			.setNegativeButton(android.R.string.cancel, null);
 		AlertDialog dialog = builder.create();
 		return dialog;
 	}

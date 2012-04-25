@@ -60,7 +60,7 @@ public class LayoutAnimator<ContextType> implements Runnable {
 	private boolean mIsRunning = false;
 	private long lastticktime;
 	
-	protected void mStartAnimation(LayoutAnimation<ContextType, ?> anim) {
+	public void startAnimation(LayoutAnimation<ContextType, ?> anim) {
 		if(IS_APPLY_CALL) {
 			lazyAdded.add(anim);
 		} else {

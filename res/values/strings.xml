@@ -4,8 +4,6 @@
     <string name="EDIT_current_note_value">Aktualna długość nuty:</string>
     <string name="EDIT_msg_inserterror_notetolong">This note won\'t fit into current time</string>
     <string name="no_timestep">No metrum specified.</string>
-    <string name="dialog_button_ok">Ok</string>
-    <string name="dialog_button_cancel">Cancel</string>
     <string name="dialog_timestep_custom">custom:</string>
     <string name="EDIT_timestepdialog_title">Choose current metrum</string>
     <string name="NEWSCORE_title">Create new score</string>
@@ -26,9 +24,9 @@
     <string name="menu_label_discard_changes">Discard changes</string>
     <string name="toast_score_saved">%s saved.</string>
     <string name="toast_failed_to_save_score">Failed to save %s.</string>
-    <string name="activity_title_quick_play">Quick play</string>
     <string name="errormsg_exception_try_later">Ops, error occured. Try again later.</string>
     <string name="PLAY_errormsg_playingfailed_tryagain">Ops, something wrong happened. Try play again.</string>
     <string name="PLAY_title">Play: %s</string>
     <string name="label_tempo">Tempo [BPM]</string>
+    <string name="popup_title_change_title">Change title</string>
 </resources>

@@ -1,6 +1,10 @@
 package pl.edu.mimuw.students.pl249278.android.svg;
 
 import static pl.edu.mimuw.students.pl249278.android.svg.SvgPath.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import pl.edu.mimuw.students.pl249278.android.svg.SvgPath.MemorySaavyIterator;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgPath.SvgPathCommand;
 import android.graphics.Canvas;
@@ -8,12 +12,20 @@ import android.graphics.Paint;
 import android.graphics.Path;
 
 public class SvgRenderer {
+	private static PathsCacheKey temp = new PathsCacheKey(null, 0);
 	
 	public static void drawSvgImage(Canvas c, SvgImage img, float scale, Paint paint) {
-		
 		for(SvgObject obj: img.objects) {
 			if(obj instanceof SvgPath) {
-				Path path = generate((SvgPath) obj, scale);
+				SvgPath svgPath = (SvgPath) obj;
+				temp.path = svgPath;
+				temp.scale = scale;
+				Path path;
+				// FIXME ugly hack to speed up drawing same image at same scale over and over
+				if((path = pathsCache.get(temp)) == null) {
+					path = generate(svgPath, scale);
+					pathsCache.put(new PathsCacheKey(svgPath, scale), path);
+				}
 				c.drawPath(path, paint);
 			} else if(obj instanceof SvgRect) {
 				SvgRect rect = (SvgRect) obj;
@@ -27,6 +39,33 @@ public class SvgRenderer {
 			}
 		}
 	}
+	
+	private static class PathsCacheKey {
+		private SvgPath path;
+		private float scale;
+		
+		public PathsCacheKey(SvgPath path, float scale) {
+			this.path = path;
+			this.scale = scale;
+		}
+		
+		@Override
+		public int hashCode() {
+			return path.hashCode();
+		}
+		
+		@Override
+		public boolean equals(Object o) {
+			if(o instanceof PathsCacheKey) {
+				PathsCacheKey obj = (PathsCacheKey) o;
+				return obj.path == path && obj.scale == scale;
+			} else {
+				return false;
+			}
+		}		
+	}
+	
+	private static Map<PathsCacheKey, Path> pathsCache = new HashMap<PathsCacheKey, Path>();
 	
 	private static Path generate(SvgPath path, float scale) {
 		Path result = new Path();

@@ -46,6 +46,10 @@ public class ContentService extends AsynchronousRequestsService {
 	}
 	
 	public static class ACTIONS {
+		/**
+		 * Parameters: {@link #EXTRAS_SCORE}, {@link #EXTRAS_SCORE_VISUAL_CONF}
+		 * Output: {@link #RESPONSE_EXTRAS_ENTITY_ID}
+		 */
 		public static final String INSERT_SCORE = ContentService.class.getName()+".insert_score";
 		public static final String EXTRAS_SCORE = "score";
 		public static final String EXTRAS_SCORE_VISUAL_CONF = "score_vis_conf";
@@ -103,6 +107,16 @@ public class ContentService extends AsynchronousRequestsService {
 		public static final String LIST_SCORES = ContentService.class.getName()+".list_scores";
 		public static final String RESPONSE_EXTRAS_SCORES = "scores_array";
 		public static final String RESPONSE_EXTRAS_VISUAL_CONFS = "vis_conf_array";
+		 /**
+		  * Parameters: {@link #EXTRAS_ENTITY_ID} - id of Score
+		 */
+		public static final String DELETE_SCORE = ContentService.class.getName()+".delete_score";
+		 /**
+		  * Parameters: {@link #EXTRAS_ENTITY_ID} - id of Score to copy, {@link #EXTRAS_NEW_TITLE} 
+		  * Output: {@link #RESPONSE_EXTRAS_ENTITY} - copy with valid id and time stamps
+		 */
+		public static final String DUPLICATE_SCORE = ContentService.class.getName()+".duplicate_score";
+		public static final String EXTRAS_NEW_TITLE = "new_title";
 	}
 	
 	@Override
@@ -110,12 +124,16 @@ public class ContentService extends AsynchronousRequestsService {
 		String action = requestIntent.getAction();
 		if(ACTIONS.INSERT_SCORE.equals(action)) {
 			insertScore(requestIntent);
+		} else if(ACTIONS.DUPLICATE_SCORE.equals(action)) {
+			duplicateScore(requestIntent);
 		} else if(ACTIONS.GET_SCORE_BY_ID.equals(action)) {
 			findScore(requestIntent);
 		} else if(ACTIONS.SAVE_SCORE_COPY.equals(action)) {
 			saveScoreCopy(requestIntent);
 		} else if(ACTIONS.UPDATE_SCORE.equals(action)) {
 			updateScore(requestIntent);
+		} else if(ACTIONS.DELETE_SCORE.equals(action)) {
+			deleteScore(requestIntent);
 		} else if(ACTIONS.LIST_SCORES.equals(action)) {
 			listScores(requestIntent);
 		} else if(ACTIONS.SAVE_PLAY_CONF.equals(action)) {
@@ -130,6 +148,54 @@ public class ContentService extends AsynchronousRequestsService {
 			onRequestSuccess(requestIntent, new Intent());
 		} else {
 			super.onHandleIntent(requestIntent);
+		}
+	}
+
+	private void duplicateScore(Intent requestIntent) {
+		SQLiteDatabase db = mDb.getWritableDatabase();
+		long id = requestIntent.getLongExtra(ACTIONS.EXTRAS_ENTITY_ID, -1);
+		Score score = loadScore(db, id);
+		if(score == null) {
+			onRequestError(requestIntent, "No Score#"+id);
+			return;
+		}
+		score.setTitle(requestIntent.getStringExtra(ACTIONS.EXTRAS_NEW_TITLE));
+		long copyId = insertAsNew(score, db);
+		if(copyId == -1) {
+			onRequestError(requestIntent, "Failed to create copy of Score#"+id);
+			return;
+		}
+		score.setId(copyId);
+		// copy all meta data
+		try {
+			db.execSQL(String.format(
+				"INSERT INTO %s (%s, %s, %s) SELECT %d, %s, %s FROM %s WHERE %s = %d", 
+				SCORES_INTMETA_TABLE_NAME, ScoresMeta._ID, ScoresMeta.META_NAME, ScoresMeta.META_VALUE,
+				copyId, ScoresMeta.META_NAME, ScoresMeta.META_VALUE, SCORES_INTMETA_TABLE_NAME,
+				ScoresMeta._ID, id
+			));
+		} catch(Exception e) {
+			Log.w(TAG, "Failed to copy meta data of Score#"+id, e);
+		}
+		try {
+			Intent outData = new Intent();
+			outData.putExtra(ACTIONS.RESPONSE_EXTRAS_ENTITY, score.prepareParcelable());
+			onRequestSuccess(requestIntent, outData);
+		} catch (SerializationException e) {
+			onRequestError(requestIntent, "Failed to serialize Score#"+copyId);
+		}
+	}
+
+	private void deleteScore(Intent requestIntent) {
+		SQLiteDatabase db = mDb.getWritableDatabase();
+		long scoreId = requestIntent.getLongExtra(ACTIONS.EXTRAS_ENTITY_ID, -1);
+		int count = db.delete(SCORES_TABLE_NAME, Scores._ID + " = " + scoreId, null);
+		if(count == 0) {
+			onRequestError(requestIntent, "No Score to delete with id "+scoreId);
+		} else {
+			Log.v(TAG, "Deleted Score#"+scoreId);
+			db.delete(SCORES_INTMETA_TABLE_NAME, ScoresMeta._ID + " = " + scoreId, null);
+			onRequestSuccess(requestIntent, new Intent());
 		}
 	}
 
@@ -352,18 +418,14 @@ public class ContentService extends AsynchronousRequestsService {
 			onRequestError(requestIntent, "No entity ID provided");
 			return;
 		}
-		Cursor scoreCursor = null, metaCursor = null, playConfCursor = null; 
+		Cursor metaCursor = null, playConfCursor = null; 
 		try {
 			SQLiteDatabase db = mDb.getReadableDatabase();
-			scoreCursor = db.query(
-					SCORES_TABLE_NAME, null, 
-					Scores._ID + " = " + id, null, 
-					null, null, null);
-			if(!scoreCursor.moveToFirst()) {
-				onRequestError(requestIntent, "No row with id "+id);
+			Score score = loadScore(db, id);
+			if(score == null) {
+				onRequestError(requestIntent, "No Score row with id "+id);
 				return;
 			}
-			Score score = rowToScore(scoreCursor);
 			Intent outData = new Intent();
 			outData.putExtra(ACTIONS.RESPONSE_EXTRAS_ENTITY, score.prepareParcelable());
 			if(requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, false)) {
@@ -413,14 +475,29 @@ public class ContentService extends AsynchronousRequestsService {
 			onRequestError(requestIntent, "findScore() exception occured "+e.getMessage());
 		}
 		finally {
-			if(scoreCursor != null) {
-				scoreCursor.close();
-			}
 			if(metaCursor != null) {
 				metaCursor.close();
 			}
 			if(playConfCursor != null) {
 				playConfCursor.close();
+			}
+		}
+	}
+	
+	private Score loadScore(SQLiteDatabase db, long scoreId) {
+		Cursor scoreCursor = null;
+		try {
+			scoreCursor = db.query(
+				SCORES_TABLE_NAME, null, 
+				Scores._ID + " = " + scoreId, null, 
+				null, null, null);
+			if(!scoreCursor.moveToFirst()) {
+				return null;
+			}
+			return rowToScore(scoreCursor);
+		} finally {
+			if(scoreCursor != null) {
+				scoreCursor.close();
 			}
 		}
 	}
@@ -478,26 +555,9 @@ public class ContentService extends AsynchronousRequestsService {
 		insertScore(requestIntent, score);
 	}
 	
-	/**
-	 * @return inserted Scores row id or -1 on failure
-	 */
-
 	private long insertScore(Intent requestIntent, Score score) {
 		SQLiteDatabase writableDatabase = mDb.getWritableDatabase();
-		ContentValues values = new ContentValues();
-		values.put(Scores.TITLE, score.getTitle());
-		try {
-			values.put(Scores.CONTENT, score.getRawContent());
-		} catch (SerializationException e) {
-			Log.e(TAG, "Exception while deserializing Score from requestIncent", e);
-			onRequestError(requestIntent, "Unable to deserialize Score");
-			return -1;
-		}
-		values.put(Scores.ORIGINAL_ID, score.getOriginalId());
-		long time = System.currentTimeMillis();
-		values.put(Scores.CREATED_UTC_TIME, time);
-		values.put(Scores.MODIFIED_UTC_TIME, time);
-		long id = writableDatabase.insert(SCORES_TABLE_NAME, null, values);
+		long id = insertAsNew(score, writableDatabase);
 		if(id == -1) {
 			// send back error
 			onRequestError(requestIntent, "Failed to insert into DB");
@@ -512,6 +572,27 @@ public class ContentService extends AsynchronousRequestsService {
 			onRequestSuccess(requestIntent, outData);
 		}
 		return id;
+	}
+
+	/**
+	 * Insert given Score as new row into DB table. Fills in stamps as side effect.
+	 * @return row id or -1 on failure
+	 */
+	private long insertAsNew(Score score, SQLiteDatabase writableDatabase) {
+		ContentValues values = new ContentValues();
+		values.put(Scores.TITLE, score.getTitle());
+		try {
+			values.put(Scores.CONTENT, score.getRawContent());
+		} catch (SerializationException e) {
+			Log.e(TAG, "Exception while deserializing Score from requestIncent", e);
+			return -1;
+		}
+		values.put(Scores.ORIGINAL_ID, score.getOriginalId());
+		long time = System.currentTimeMillis();
+		values.put(Scores.CREATED_UTC_TIME, time);
+		values.put(Scores.MODIFIED_UTC_TIME, time);
+		score.setStamps(time);
+		return writableDatabase.insert(SCORES_TABLE_NAME, null, values);
 	}
 
 	private void updateScoreMeta(SQLiteDatabase writableDatabase, long scoreId,

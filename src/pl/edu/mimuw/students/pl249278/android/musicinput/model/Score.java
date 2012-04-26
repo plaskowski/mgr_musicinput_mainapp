@@ -146,4 +146,8 @@ public class Score {
 	public long getModificationUtcStamp() {
 		return modificationUtcStamp;
 	}
+
+	public void setStamps(long utcStamp) {
+		creationUtcStamp = modificationUtcStamp = utcStamp;
+	}
 }

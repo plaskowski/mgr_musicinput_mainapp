@@ -34,4 +34,10 @@ public class ViewHeightAnimation<Context> extends LayoutAnimator.LayoutAnimation
 			return view.getMeasuredHeight();
 		}		
 	}
+	
+	public static void fillBefore(View view) {
+		MarginLayoutParams layoutParams = (MarginLayoutParams) view.getLayoutParams();
+		layoutParams.height = 0;
+		view.requestLayout();
+	}
 }

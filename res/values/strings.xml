@@ -29,4 +29,9 @@
     <string name="PLAY_title">Play: %s</string>
     <string name="label_tempo">Tempo [BPM]</string>
     <string name="popup_title_change_title">Change title</string>
+    <string name="errormsg_failed_to_delete">Ops, failed to delete.</string>
+    <string name="confirmmsg_delete">Do you want to delete \'%s\'?</string>
+    <string name="popup_title_copytitle">Title of the copy</string>
+    <string name="template_copy_title">%s (copy)</string>
+    <string name="errormsg_failed_to_duplicate">Ops, failed to create a copy.</string>
 </resources>

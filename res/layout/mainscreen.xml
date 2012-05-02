@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView
 	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:custom="http://schemas.android.com/apk/res/pl.edu.mimuw.students.pl249278.android.musicinput"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
 	android:id="@+id/main_scrollview"
@@ -11,5 +12,28 @@
 	    android:layout_height="wrap_content"
 	    android:orientation="vertical"
     >
+		<LinearLayout
+		    android:id="@+id/MAIN_entry_addnew"
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    android:background="@drawable/button_darkgraygradient"
+		    android:clickable="true"
+		    android:orientation="horizontal"
+	    >
+		    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageView_ExtendedImage
+		        android:layout_width="wrap_content"
+		        android:layout_height="60dip"
+		        custom:extendedImage="@style/SvgCompoundDrawable"
+		        custom:svgResource="@xml/icon_add" 
+		        custom:paintsSetup="@style/NEWSCORE_thumbsPaint"
+		        android:paddingRight="5dip"
+	        />
+		    <TextView
+		        android:layout_width="fill_parent"
+		        android:layout_height="wrap_content"
+		        android:text="@string/MAIN_label_create_new_score"
+		        android:layout_gravity="center_vertical"
+	        />
+		</LinearLayout>   
 	</LinearLayout>	
 </ScrollView>

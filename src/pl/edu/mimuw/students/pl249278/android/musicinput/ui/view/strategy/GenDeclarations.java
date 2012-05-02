@@ -5,6 +5,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
@@ -93,4 +94,12 @@ class GenDeclarations {
 		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HorizontalScrollView_ObserveInterceptTouch_LazyScrolling"
 	)
 	static Class<? extends View> CUSTOM10;
+	@JoinClasses(
+		superClass = ImageView.class,
+		ancestors = {
+			ExtendedImageStrategy.class
+		},
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageView_ExtendedImage"
+	)
+	static Class<? extends View> CUSTOM11; 
 }

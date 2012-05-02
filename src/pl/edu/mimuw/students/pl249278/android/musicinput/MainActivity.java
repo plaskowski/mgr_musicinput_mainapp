@@ -19,14 +19,16 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.FilterByRequestIdReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.WorkerService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogBuilder;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.FragmentUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ParcelablePrimitives.ParcelableLong;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ProgressDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ProgressDialog.ProgressDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog.TextInputDialogListener;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_TipDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
@@ -50,7 +52,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends FragmentActivity_ErrorDialog implements TextInputDialogListener, ProgressDialogListener, ConfirmDialogListener {
+public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog implements TextInputDialogListener, ProgressDialogListener, ConfirmDialogListener {
 	private static LogUtils log = new LogUtils(MainActivity.class);
 	private static final String CALLBACK_ACTION_GET = MainActivity.class.getName()+".callback_get";
 	protected static final String CALLBACK_ACTION_DELETE = MainActivity.class.getName()+".callback_delete";
@@ -70,8 +72,9 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 	protected static final int INPUTDIALOG_CALLBACKARG_NEW_TITLE = 1;
 	protected static final int INPUTDIALOG_CALLBACKARG_COPY_TITLE = 2;
 	protected static final int INPUTDIALOG_CALLBACKARG_MIDIFILE = 3;
-	protected static final int CONFIRMDIALOG_CALLBACKARG_DELETESCORE = 1;
-	private static final int CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE = 2;
+	protected static final int CONFIRMDIALOG_CALLBACKARG_DELETESCORE = CONFIRMDIALOG_CALLBACKARG_TIP+1;
+	private static final int CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE = CONFIRMDIALOG_CALLBACKARG_DELETESCORE+1;
+	protected static final String TIP_MIDI_ON_STORAGE = MainActivity.class.getCanonicalName()+".midi_exported_to_storage";
 	
 	private static final String STATE_REQUEST_ID = "request_id";
 	private static final String STATE_SCORES = "scores";
@@ -217,7 +220,6 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 			onModelLoaded(scores);
 			// TODO handle vis confs
 			response.getParcelableArrayExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_VISUAL_CONFS);
-			Toast.makeText(MainActivity.this, "Loaded", Toast.LENGTH_SHORT).show();
 			sendCleanRequest(getUniqueRequestID(false));
 		}
 	}
@@ -232,6 +234,13 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 		}
 		// FIXME ugly hack to force loading of SVG icons used in entry toolbar
 		getLayoutInflater().inflate(R.layout.mainscreen_entry_toolbar, null);
+		findViewById(R.id.MAIN_entry_addnew).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent i = new Intent(getApplicationContext(), NewScoreActivity.class);
+				startActivity(i);
+			}
+		});
 	}
 
 	private View inflateAndPopulateEntry(Score score, ViewGroup container) {
@@ -320,11 +329,11 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 		toolbar.findViewById(R.id.button_delete).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				ConfirmDialog.newInstance(
-					MainActivity.this, CONFIRMDIALOG_CALLBACKARG_DELETESCORE, score.getId(), 
-					R.string.confirmmsg_delete, new String[] { title(score) }, 
-					android.R.string.ok, android.R.string.cancel)
-				.show(getSupportFragmentManager(), DIALOGTAG_CONFIRM_DELETE);
+				new ConfirmDialogBuilder(CONFIRMDIALOG_CALLBACKARG_DELETESCORE)
+				.setState(new ParcelableLong(score.getId()))
+				.setMsg(R.string.confirmmsg_delete, new String[] { title(score) })
+				.setPositiveNegative(android.R.string.ok, android.R.string.cancel)
+				.showNew(getSupportFragmentManager(), DIALOGTAG_CONFIRM_DELETE);
 			}
 		});
 		toolbar.findViewById(R.id.button_duplicate).setOnClickListener(new OnClickListener() {
@@ -348,31 +357,35 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 	}
 	
 	@Override
-	public void onConfirm(ConfirmDialog dialog, int dialogId, long callbackParam, Parcelable state) {
+	public void onConfirm(ConfirmDialog dialog, int dialogId, Parcelable state) {
 		switch(dialogId) {
 		case CONFIRMDIALOG_CALLBACKARG_DELETESCORE:
-			Score score = findScoreById(callbackParam);
+			Long scoreId = ((ParcelableLong) state).value;
+			Score score = findScoreById(scoreId);
 			if(score != null) {
 				deleteScore(score);
 			} else {
-				log.w("Received delete confirmation for non-existient Score#%d", callbackParam);
+				log.w("Received delete confirmation for non-existient Score#%d", scoreId);
 			}
 			break;
 		case CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE:
 			// user chose to overwrite existing MIDI file
 			sendExportMidiRequest((ExportMidiRequest) state);
 			break;
+		default:
+			super.onConfirm(dialog, dialogId, state);
 		}
 	}
 	
 	@Override
-	public void onNeutral(ConfirmDialog dialog, int dialogId,
-			long callbackParam, Parcelable state) {
+	public void onNeutral(ConfirmDialog dialog, int dialogId, Parcelable state) {
 		switch(dialogId) {
 		case CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE:
 			ExportMidiRequest request = (ExportMidiRequest) state;
 			showExportMidiDialog(findScoreById(request.scoreId), request.filename);
 			break;
+		default:
+			super.onNeutral(dialog, dialogId, state);
 		}
 	}
 	
@@ -497,11 +510,11 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 				File dir = WorkerService.getExportDir();
 				File destFile = new File(dir, value);
 				if(destFile.exists()) {
-					ConfirmDialog.newInstance(this, CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE, 
-						new ExportMidiRequest(listenerArg, value),
-						R.string.popup_msg_file_already_exists, new String[] { value }, 
-						R.string.overwrite, android.R.string.cancel, R.string.change)
-					.show(getSupportFragmentManager(), DIALOGTAG_CONFIRM_OVERWRITE);
+					new ConfirmDialogBuilder(CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE)
+					.setState(new ExportMidiRequest(listenerArg, value))
+					.setMsg(R.string.popup_msg_file_already_exists, new String[] { value })
+					.setButtons(R.string.overwrite, R.string.change, android.R.string.cancel)
+					.showNew(getSupportFragmentManager(), DIALOGTAG_CONFIRM_OVERWRITE);
 				} else {
 					sendExportMidiRequest(new ExportMidiRequest(listenerArg, value));
 				}
@@ -694,12 +707,10 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 						Toast.makeText(getApplicationContext(), R.string.toast_midi_export_finished, Toast.LENGTH_SHORT).show();
 						String relDir = WorkerService.getExportDir().getAbsolutePath();
 						relDir = relDir.replace(Environment.getExternalStorageDirectory().getAbsolutePath(), "");
-						InfoDialog.newInstance(MainActivity.this, R.string.tip_midifile_exported, 0, new String[] {
+						showTipDialog(TIP_MIDI_ON_STORAGE, 
+							R.string.tip_midifile_exported, new String[] {
 							state.filename, getString(R.string.midiArtist), getString(R.string.midiAlbum), relDir
-						})
-						.show(getSupportFragmentManager(), DIALOGTAG_INFO);
-//						"Saved as ? on external storage. You can find it in any music player under artist ? or album ? or directly through file browser in ? folder"
-						// TODO impelement; show hint
+						});
 					}
 				}, 500);
 			}
@@ -889,10 +900,6 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 
 	private String title(Score score) {
 		return Macros.ifNotNull(score.getTitle(), getString(android.R.string.untitled));
-	}
-	
-	@Override
-	public void onCancel(ConfirmDialog dialog, int dialogId, long callbackParam, Parcelable state) {
 	}
 	
 	@Override

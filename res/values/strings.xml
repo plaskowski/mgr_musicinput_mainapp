@@ -34,4 +34,13 @@
     <string name="popup_title_copytitle">Title of the copy</string>
     <string name="template_copy_title">%s (copy)</string>
     <string name="errormsg_failed_to_duplicate">Ops, failed to create a copy.</string>
+    <string name="popup_title_export_as_midi">Export as MIDI tune</string>
+    <string name="popup_msg_exportmidi">Name for destination .midi file:</string>
+    <string name="errormsg_external_storage_not_present">External storage (SD card) is not present.</string>
+    <string name="popup_msg_file_already_exists">File %s already exists!</string>
+    <string name="overwrite">Overwrite</string>
+    <string name="errormsg_failed_to_export_midi">Failed to save MIDI file, try again later.</string>
+    <string name="toast_midi_export_finished">MIDI file exported.</string>
+    <string name="change">Change</string>
+    <string name="tip_midifile_exported">Score has been saved as \'%1$s\' file on external storage. You can find it in any music player (under artist \'%2$s\' or album \'%3$s\') or directly through the file browser in \'%4$s\' folder</string>
 </resources>

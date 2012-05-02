@@ -13,9 +13,9 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.SerializationExce
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.FilterByRequestIdReceiver;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ErrorDialog;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ErrorDialog.ErrorDialogListener;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog.InfoDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.KeySignatureElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.LoadingSvgException;
@@ -31,7 +31,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner.
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinedSheetElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils.OnLayoutListener;
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
@@ -40,22 +39,18 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class NewScoreActivity extends FragmentActivity implements ErrorDialogListener {
+public class NewScoreActivity extends FragmentActivity_ErrorDialog implements InfoDialogListener {
 	private static LogUtils log = new LogUtils(NewScoreActivity.class);
 	private static final Clef defaultClef = Clef.VIOLIN;
 	private static final KeySignature defaultKeySign = KeySignature.C_DUR;
 	private static final TimeStep defaultCustomTimeSign = new TimeStep(1 << NoteConstants.LEN_QUATERNOTE, NoteConstants.LEN_QUATERNOTE);
 	private static final TimeSignatureType defaultTimeSignatureType = TimeSignatureType.CUSTOM;
-	private static final String DIALOGTAG_ERROR = "dialog_error";
-	private static final int ERRORDIALOG_CALLBACK_DO_FINISH = 1;
 	private InsertRequestReceiver insertRequestReceiver;
 	
 	@Override
@@ -169,16 +164,6 @@ public class NewScoreActivity extends FragmentActivity implements ErrorDialogLis
 		}
 	}
 	
-	private void showErrorDialog(int messageStringId, Throwable e, boolean lazyFinish) {
-		DialogFragment prev = (DialogFragment) getSupportFragmentManager().findFragmentByTag(DIALOGTAG_ERROR);
-	    if (prev != null) {
-	        prev.dismiss();
-	    }
-		DialogFragment newFragment = ErrorDialog.newInstance(
-			this, messageStringId, e, lazyFinish ? ERRORDIALOG_CALLBACK_DO_FINISH : 0);
-	    newFragment.show(getSupportFragmentManager(), DIALOGTAG_ERROR);
-	}
-	
 	private static ThreadLocal<Rect> threadLocal = new ThreadLocal<Rect>() { protected Rect initialValue() { return new Rect(); } };
 	private void scrollToSelected(ViewGroup wrapper) {
 		View selectedChild = findSelected(wrapper);
@@ -235,7 +220,7 @@ public class NewScoreActivity extends FragmentActivity implements ErrorDialogLis
 				this, 
 				ContentService.class, 
 				callbackId,
-				PendingIntent.getBroadcast(this, 0, new Intent(CALLBACK_ACTION_INSERT), 0)
+				AsyncHelper.getBroadcastCallback(CALLBACK_ACTION_INSERT)
 			);
 	        registerReceiver(insertRequestReceiver, new IntentFilter(CALLBACK_ACTION_INSERT));
         	log.v("Sending REPEAT_CALLBACK "+callbackId);
@@ -341,13 +326,12 @@ public class NewScoreActivity extends FragmentActivity implements ErrorDialogLis
 				)
 			);
 			insertRequestReceiver = new InsertRequestReceiver(null);
-			PendingIntent callbackIntent = PendingIntent.getBroadcast(NewScoreActivity.this, 0, new Intent(CALLBACK_ACTION_INSERT), 0);
 			Intent requestIntent = AsyncHelper.prepareServiceIntent(
 				NewScoreActivity.this, 
 				ContentService.class, 
 				ContentService.ACTIONS.INSERT_SCORE, 
 				insertRequestReceiver.getUniqueRequestID(true), 
-				callbackIntent, 
+				AsyncHelper.getBroadcastCallback(CALLBACK_ACTION_INSERT),
 				true
 			);
 			try {
@@ -563,13 +547,5 @@ public class NewScoreActivity extends FragmentActivity implements ErrorDialogLis
 		public void onDraw(Canvas canvas, Paint paint) {
 		}
 		
-	}
-
-	@Override
-	public void onDismiss(ErrorDialog dialog, int arg) {
-		switch(arg) {
-		case ERRORDIALOG_CALLBACK_DO_FINISH:
-			finish();
-		}
 	}
 }

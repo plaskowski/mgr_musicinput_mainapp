@@ -67,7 +67,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.Intercep
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.ScrollingLockable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.TouchInputLockable;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
-import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -259,13 +258,12 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 			}
 			// sending request for Score object
 			GetScoreReceiver getScoreReceiver = new GetScoreReceiver();	
-			PendingIntent callbackIntent = PendingIntent.getBroadcast(this, 0, new Intent(CALLBACK_ACTION_GET), 0);
 			Intent requestIntent = AsyncHelper.prepareServiceIntent(
 				this, 
 				ContentService.class, 
 				ContentService.ACTIONS.GET_SCORE_BY_ID, 
 				getScoreReceiver.getUniqueRequestID(true), 
-				callbackIntent, 
+				AsyncHelper.getBroadcastCallback(CALLBACK_ACTION_GET), 
 				true
 			);
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, scoreId);
@@ -383,7 +381,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 			if(scoreTitle == null) {
 				scoreTitle = getString(android.R.string.untitled);
 			}
-			PendingIntent callback = AsyncServiceToastReceiver.prepare(
+			Intent callback = AsyncServiceToastReceiver.prepare(
 				this, 
 				getString(R.string.toast_score_saved, scoreTitle), 
 				getString(R.string.toast_failed_to_save_score, scoreTitle), 

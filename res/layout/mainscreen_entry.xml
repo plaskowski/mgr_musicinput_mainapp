@@ -6,10 +6,12 @@
     android:clickable="true"
     android:orientation="vertical" >
 
-    <TextView
+    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TextViewWithAnimations
         android:id="@+id/title"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content" 
+        android:drawablePadding="5dip"
+    />
 
     <TextView
         android:id="@+id/modified"

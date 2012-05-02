@@ -65,7 +65,7 @@ public class ContentService extends AsynchronousRequestsService {
 		/** whether service have to attach visual configuration of requested score (type boolean) */
 		public static final String EXTRAS_ATTACH_SCORE_VISUAL_CONF = "attach_vis_conf";
 		/** whether service have to attach {@link PlayingConfiguration} of requested score (type boolean) */
-		public static final String EXTRAS_ATTACH_SCORE_PLAY_CONF = "attach_vis_conf";
+		public static final String EXTRAS_ATTACH_SCORE_PLAY_CONF = "attach_play_conf";
 		/** requested entity id (of type long) */
 		public static final String EXTRAS_ENTITY_ID = "entity_id";
 		public static final String RESPONSE_EXTRAS_ENTITY = "entity";

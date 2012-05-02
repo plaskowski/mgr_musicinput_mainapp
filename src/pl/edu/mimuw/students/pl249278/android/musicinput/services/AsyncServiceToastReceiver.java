@@ -1,7 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.services;
 
 import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -24,15 +23,12 @@ public class AsyncServiceToastReceiver extends BroadcastReceiver {
 		toast.show();
 	}
 	
-	public static PendingIntent prepare(Context ctx, String successMsg, String failureMsg, boolean isLong) {
-		Intent intent = new Intent(ACTION_TOAST);
+	public static Intent prepare(Context ctx, String successMsg, String failureMsg, boolean isLong) {
+		Intent intent = AsyncHelper.getBroadcastCallback(ACTION_TOAST);
 		intent.putExtra(EXTRAS_ONSUCCESS_TEXT, successMsg);
 		intent.putExtra(EXTRAS_ONFAILURE_TEXT, failureMsg);
-		return prepare(ctx, intent, isLong);
-	}
-	private static PendingIntent prepare(Context ctx, Intent intent, boolean isLong) {
 		intent.putExtra(EXTRAS_IS_LONG, isLong);
-		return PendingIntent.getBroadcast(ctx, 0, intent, 0);
+		return intent;
 	}
 
 }

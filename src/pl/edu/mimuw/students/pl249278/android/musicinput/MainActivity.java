@@ -1,44 +1,51 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
+import static pl.edu.mimuw.students.pl249278.android.async.AsyncHelper.getBroadcastCallback;
+import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.common.Macros;
+import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivityHelper.DuplicateRequest;
+import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivityHelper.ExportMidiRequest;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score.ParcelableScore;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.SerializationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.FilterByRequestIdReceiver;
+import pl.edu.mimuw.students.pl249278.android.musicinput.services.WorkerService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ErrorDialog;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.FragmentUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ProgressDialog;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogListener;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.FragmentUtils;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ProgressDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ProgressDialog.ProgressDialogListener;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog.TextInputDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator.LayoutAnimation;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation;
-import android.app.PendingIntent;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Parcel;
+import android.os.Environment;
+import android.os.Handler;
 import android.os.Parcelable;
 import android.text.format.DateUtils;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
-import android.view.ViewGroup;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,22 +55,30 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 	private static final String CALLBACK_ACTION_GET = MainActivity.class.getName()+".callback_get";
 	protected static final String CALLBACK_ACTION_DELETE = MainActivity.class.getName()+".callback_delete";
 	private static final String CALLBACK_ACTION_DUPLICATE = MainActivity.class.getName()+".callback_duplicate";
+	private static final String CALLBACK_ACTION_EXPORTMIDI = MainActivity.class.getName()+".callback_export";
 	
 	protected static final String DIALOGTAG_NEW_TITLE = "dialog_newtitle";
 	protected static final String DIALOGTAG_COPY_TITLE = "dialog_copytitle";
 	protected static final String DIALOGTAG_PROGRESS = "dialog_progress";
 	protected static final String DIALOGTAG_CONFIRM_DELETE = "dialog_confirm_delete";
+	protected static final String DIALOGTAG_EXPORT_MIDI = "dialog_export_midi";
+	protected static final String DIALOGTAG_INFO = "dialog_info";
+	private static final String DIALOGTAG_CONFIRM_OVERWRITE = "dialog_overwrite_file";
 	private static final int ERRORDIALOG_CALLBACKARG_RELOAD = ERRORDIALOG_CALLBACKARG_DO_FINISH+1;
 	private static final int ERRORDIALOG_CALLBACKARG_DUPLICATE = ERRORDIALOG_CALLBACKARG_RELOAD+1;
+	private static final int ERRORDIALOG_CALLBACKARG_INFO = ERRORDIALOG_CALLBACKARG_DUPLICATE+1;
 	protected static final int INPUTDIALOG_CALLBACKARG_NEW_TITLE = 1;
-	protected static final int CONFIRMDIALOG_CALLBACKARG_DELETESCORE = 1;
 	protected static final int INPUTDIALOG_CALLBACKARG_COPY_TITLE = 2;
+	protected static final int INPUTDIALOG_CALLBACKARG_MIDIFILE = 3;
+	protected static final int CONFIRMDIALOG_CALLBACKARG_DELETESCORE = 1;
+	private static final int CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE = 2;
 	
 	private static final String STATE_REQUEST_ID = "request_id";
 	private static final String STATE_SCORES = "scores";
 	private static final String STATE_EXPANDED_ENTRY_SCOREID = "expanded_scoreid";
 	private static final String STATE_DELETE_REQUESTS = "delete_requests";
 	private static final String STATE_DUPLICATE_REQUESTS = "duplicate_requests";
+	private static final String STATE_EXPORT_REQUESTS = "export_requests";
 	
 	/**
 	 * Not null means whole model has been successfully loaded.
@@ -78,13 +93,16 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 	private ContentReceiver receiver;
 	private List<FilterByRequestIdReceiver> scoreDeletedReceivers = new ArrayList<FilterByRequestIdReceiver>();
 	private List<DuplicateReceiver> duplicateReceivers = new ArrayList<DuplicateReceiver>();
+	private List<ExportMidiReceiver> exportMidiReceivers = new ArrayList<MainActivity.ExportMidiReceiver>();
 	private LayoutAnimator<MainActivity> animator = new LayoutAnimator<MainActivity>(this);
 	protected View expandedEntry;
+	private Handler uiHandler;
 
 	@Override
 	protected void onCreate(Bundle savedState) {
 		super.onCreate(savedState);
 		setContentView(R.layout.mainscreen);
+		uiHandler = new Handler();
 		
 		if(savedState != null && savedState.containsKey(STATE_SCORES)) {
 			ArrayList<ParcelableScore> scores = savedState.getParcelableArrayList(STATE_SCORES);
@@ -104,7 +122,18 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 			if(duplicateRequests != null) for(DuplicateRequest state: duplicateRequests) {
 				DuplicateReceiver receiver = new DuplicateReceiver(state);
 				registerAndRequestRepeat(receiver, CALLBACK_ACTION_DUPLICATE, duplicateReceivers);
-				receiver.inflateAndAddProgressView();
+				View entryView = findEntryView(receiver.originalScoreId);
+				addProgressLock(entryView);
+				addLock(entryView, R.id.button_duplicate);
+			}
+			ArrayList<ExportMidiRequest> exportRequests = savedState.getParcelableArrayList(STATE_EXPORT_REQUESTS);
+			if(exportRequests != null) for(ExportMidiRequest request: exportRequests) {
+				ExportMidiReceiver receiver = new ExportMidiReceiver(request);
+				registerAndRequestRepeat(receiver, CALLBACK_ACTION_EXPORTMIDI, exportMidiReceivers);
+				// show progress indicator
+				View entryView = findEntryView(request.scoreId);
+				addProgressLock(entryView);
+				addLock(entryView, R.id.button_exportmidi);
 			}
 		} else {
 			requestModel(savedState == null ? null : savedState.getString(STATE_REQUEST_ID));
@@ -116,12 +145,11 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 		collection.add(receiver);
 		startService(AsyncHelper.prepareRepeatCallbackIntent(
 			this, ContentService.class, 
-			receiver.getUniqueRequestID(false), callbackIntent(callbackAction)
+			receiver.getUniqueRequestID(false), getBroadcastCallback(callbackAction)
 		));
 	}
 
 	private void requestModel(String requestId) {
-		PendingIntent callbackIntent = PendingIntent.getBroadcast(this, 0, new Intent(CALLBACK_ACTION_GET), 0);
 		Intent requestIntent;
 		if(requestId != null) {
 			receiver = new ContentReceiver(requestId);
@@ -129,7 +157,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 				this, 
 				ContentService.class, 
 				requestId, 
-				callbackIntent
+				getBroadcastCallback(CALLBACK_ACTION_GET)
 			);
 		} else {
 			receiver = new ContentReceiver();
@@ -138,7 +166,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 				ContentService.class, 
 				ContentService.ACTIONS.LIST_SCORES, 
 				receiver.getUniqueRequestID(true), 
-				callbackIntent, 
+				getBroadcastCallback(CALLBACK_ACTION_GET),
 				true
 			);
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, true);
@@ -228,12 +256,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 		@Override
 		public void onClick(View view) {
 			ViewGroup entry = (ViewGroup) view;
-			View toolbar = entry.findViewById(R.id.entry_toolbar);
-			if(toolbar == null) {
-				toolbar = getLayoutInflater().inflate(R.layout.mainscreen_entry_toolbar, entry, false);
-				entry.addView(toolbar);
-				setupEntryToolbarCallbacks((Score) entry.getTag(), toolbar);
-			}
+			View toolbar = setupEntryToolbar(entry);
 			if(prev != null) {
 				animator.startAnimation(new ViewHeightAnimation.CollapseAnimation<MainActivity>(prev, 300));
 			}
@@ -252,6 +275,20 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 		return DateUtils.getRelativeDateTimeString(this, UtcStamp, 
 			DateUtils.MINUTE_IN_MILLIS, 2*DateUtils.DAY_IN_MILLIS, 0);
 	}
+	
+	/**
+	 * Inflate and set up "entry" View toolbar, unless it was already done.
+	 * @return "toolbar" View of given "entry" View
+	 */
+	private View setupEntryToolbar(ViewGroup entry) {
+		View toolbar = entry.findViewById(R.id.entry_toolbar);
+		if(toolbar == null) {
+			toolbar = getLayoutInflater().inflate(R.layout.mainscreen_entry_toolbar, entry, false);
+			entry.addView(toolbar);
+			setupEntryToolbarCallbacks((Score) entry.getTag(), toolbar);
+		}
+		return toolbar;
+	}	
 	
 	protected void setupEntryToolbarCallbacks(final Score score, View toolbar) {
 		toolbar.findViewById(R.id.button_rename).setOnClickListener(new OnClickListener() {
@@ -300,10 +337,18 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 				.show(getSupportFragmentManager(), DIALOGTAG_COPY_TITLE);
 			}
 		});
+		toolbar.findViewById(R.id.button_exportmidi).setOnClickListener(new OnClickListener() {			
+			@Override
+			public void onClick(View v) {
+				String title = ifNotNull(score.getTitle(), getString(android.R.string.untitled));
+				String initValue = title.replaceAll("[^A-Za-z \\(\\)0-9]", "_") + ".midi";
+				showExportMidiDialog(score, initValue);
+			}
+		});
 	}
 	
 	@Override
-	public void onConfirm(ConfirmDialog dialog, int dialogId, long callbackParam) {
+	public void onConfirm(ConfirmDialog dialog, int dialogId, long callbackParam, Parcelable state) {
 		switch(dialogId) {
 		case CONFIRMDIALOG_CALLBACKARG_DELETESCORE:
 			Score score = findScoreById(callbackParam);
@@ -313,6 +358,21 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 				log.w("Received delete confirmation for non-existient Score#%d", callbackParam);
 			}
 			break;
+		case CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE:
+			// user chose to overwrite existing MIDI file
+			sendExportMidiRequest((ExportMidiRequest) state);
+			break;
+		}
+	}
+	
+	@Override
+	public void onNeutral(ConfirmDialog dialog, int dialogId,
+			long callbackParam, Parcelable state) {
+		switch(dialogId) {
+		case CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE:
+			ExportMidiRequest request = (ExportMidiRequest) state;
+			showExportMidiDialog(findScoreById(request.scoreId), request.filename);
+			break;
 		}
 	}
 	
@@ -320,14 +380,13 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 	 * Send DELETE request to {@link ContentService}, removes view and updates {@link #scores}
 	 */
 	private void deleteScore(Score score) {
-		PendingIntent callbackIntent = callbackIntent(CALLBACK_ACTION_DELETE);
 		DeleteScoreReceiver receiver = new DeleteScoreReceiver();
 		Intent requestIntent = AsyncHelper.prepareServiceIntent(
 			MainActivity.this, 
 			ContentService.class, 
 			ContentService.ACTIONS.DELETE_SCORE, 
 			receiver.getUniqueRequestID(true), 
-			callbackIntent, 
+			getBroadcastCallback(CALLBACK_ACTION_DELETE), 
 			true
 		);
 		requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, score.getId());
@@ -378,10 +437,6 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
     	}
 	}
 
-	private PendingIntent callbackIntent(String callbackAction) {
-		return PendingIntent.getBroadcast(MainActivity.this, 0, new Intent(callbackAction), 0);
-	}
-	
 	private class DeleteScoreReceiver extends FilterByRequestIdReceiver {
 		
 		public DeleteScoreReceiver() {
@@ -418,7 +473,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 	}
 	
 	@Override
-	public void onDismiss(ErrorDialog dialog, int arg) {
+	public void onDismiss(InfoDialog dialog, int arg) {
 		if(arg == ERRORDIALOG_CALLBACKARG_RELOAD) {			
 			// clear entry views
 			((ViewGroup) findViewById(R.id.entries_container)).removeAllViews();
@@ -435,6 +490,23 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 			long listenerArg, String value) {
 		Score score;
 		switch(valueId) {
+		case INPUTDIALOG_CALLBACKARG_MIDIFILE:
+			if(!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+				showErrorDialog(R.string.errormsg_external_storage_not_present, ERRORDIALOG_CALLBACKARG_INFO);
+			} else {
+				File dir = WorkerService.getExportDir();
+				File destFile = new File(dir, value);
+				if(destFile.exists()) {
+					ConfirmDialog.newInstance(this, CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE, 
+						new ExportMidiRequest(listenerArg, value),
+						R.string.popup_msg_file_already_exists, new String[] { value }, 
+						R.string.overwrite, android.R.string.cancel, R.string.change)
+					.show(getSupportFragmentManager(), DIALOGTAG_CONFIRM_OVERWRITE);
+				} else {
+					sendExportMidiRequest(new ExportMidiRequest(listenerArg, value));
+				}
+			}
+			break;
 		case INPUTDIALOG_CALLBACKARG_NEW_TITLE:
 			if((score = findScoreById(listenerArg)) == null) {
 				log.w("onValueEntered::new title for non-existient score %d", listenerArg);
@@ -488,7 +560,6 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 
 	private class DuplicateReceiver extends FilterByRequestIdReceiver {
 		private long originalScoreId;
-		View progressView;
 		
 		public DuplicateReceiver(DuplicateRequest request) {
 			this(request.requestId, request.scoreId);
@@ -503,19 +574,17 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 		protected void onSuccess(Intent response) {
 			if(unregister()) {
 				// hide progress
-				if(progressView != null) {
-					LayoutAnimation<MainActivity, ?> animation = animator.getAnimation(progressView);
-					if(animation != null) {
-						animator.stopAnimation(animation);
-					}
-					animator.startAnimation(new ViewHeightAnimation.CollapseAnimation<MainActivity>(progressView, 150));
+				View originalEntryView = findEntryView(originalScoreId);
+				if(originalEntryView != null) {
+					removeProgressLock(originalEntryView);
+					removeLock(originalEntryView, R.id.button_duplicate);
 				}
 				// create and reveal entry with received copy
 				ParcelableScore pScore = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_ENTITY);
 				scores.add(scores.indexOf(findParcelableScoreById(originalScoreId))+1, pScore);
 				ViewGroup container = (ViewGroup) findViewById(R.id.entries_container);
 				final View entryView = inflateAndPopulateEntry(pScore.getSource(), container);
-				container.addView(entryView, ViewUtils.indexOf(container, progressView));
+				container.addView(entryView, ViewUtils.indexOf(container, originalEntryView)+1);
 				ViewHeightAnimation.ExpandAnimation.fillBefore(entryView);
 				ExpandKeepVisibleAnimation anim = new ExpandKeepVisibleAnimation(entryView, 200);
 				anim.setOnAnimationEndListener(new Runnable() {
@@ -532,9 +601,10 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 		protected void onFailure(Intent response) {
 			if(unregister()) {
 				showErrorDialog(R.string.errormsg_failed_to_duplicate, ERRORDIALOG_CALLBACKARG_DUPLICATE);
-				if(progressView != null) {
-					progressView.setVisibility(View.GONE);
-					progressView = null;
+				View originalEntryView = findEntryView(originalScoreId);
+				if(originalEntryView != null) {
+					removeProgressLock(originalEntryView);
+					removeLock(originalEntryView, R.id.button_duplicate);
 				}
 			}
 		}
@@ -552,48 +622,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 			return new DuplicateRequest(originalScoreId, getUniqueRequestID(false));
 		}
 		
-		View inflateAndAddProgressView() {
-			ViewGroup container = (ViewGroup) findViewById(R.id.entries_container);
-			View progressView = getLayoutInflater().inflate(R.layout.mainscreen_progress_stub, container, false);
-			container.addView(progressView, ViewUtils.indexOf(container, findEntryView(originalScoreId))+1);
-			this.progressView = progressView;
-			return progressView;
-		}
 	}
-	
-	public static class DuplicateRequest implements Parcelable {
-		private long scoreId;
-		private String requestId;
-		
-		public DuplicateRequest(long scoreId, String requestId) {
-			this.scoreId = scoreId;
-			this.requestId = requestId;
-		}
-
-		public void writeToParcel(Parcel out, int flags) {
-			out.writeLong(scoreId);
-			out.writeString(requestId);
-		}
-		
-		private DuplicateRequest(Parcel in) {
-			scoreId = in.readLong();
-			requestId = in.readString();
-		}
-		
-		public static final Parcelable.Creator<DuplicateRequest> CREATOR = new Parcelable.Creator<DuplicateRequest>() {
-			public DuplicateRequest createFromParcel(Parcel in) {
-				return new DuplicateRequest(in);
-			}
-			
-			public DuplicateRequest[] newArray(int size) {
-				return new DuplicateRequest[size];
-			}
-		};
-		
-		public int describeContents() {
-			return 0;
-		}
-	}	
 	
 	private void sendCreateDuplicate(Score score, String newTitle) {
 		DuplicateReceiver receiver = new DuplicateReceiver(null, score.getId());
@@ -601,15 +630,17 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 		duplicateReceivers.add(receiver);
 		Intent request = AsyncHelper.prepareServiceIntent(MainActivity.this, 
 			ContentService.class, ContentService.ACTIONS.DUPLICATE_SCORE, 
-			receiver.getUniqueRequestID(true), callbackIntent(CALLBACK_ACTION_DUPLICATE), true);
+			receiver.getUniqueRequestID(true), getBroadcastCallback(CALLBACK_ACTION_DUPLICATE), true);
 		request.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, score.getId());
 		request.putExtra(ContentService.ACTIONS.EXTRAS_NEW_TITLE, newTitle);
 		log.v("Sending request DUPLICATE of Score#%d", score.getId());
 		startService(request);
 		// show progress indicator
-		View progressView = receiver.inflateAndAddProgressView();
-		ViewHeightAnimation.ExpandAnimation.fillBefore(progressView);
-		animator.startAnimation(new ExpandKeepVisibleAnimation(progressView, 150));
+		View entryView = findEntryView(score.getId());
+		if(entryView != null) {
+			addProgressLock(entryView);
+			addLock(entryView, R.id.button_duplicate);
+		}
 	}
 	
 	private void sendUpdate(Score score) {
@@ -633,6 +664,88 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 		} catch (SerializationException e) {
 			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 			log.e("Failed to serialize model", e);
+		}
+	}
+	
+	private class ExportMidiReceiver extends FilterByRequestIdReceiver {
+		private ExportMidiRequest state;
+
+		public ExportMidiReceiver(ExportMidiRequest state) {
+			super(state.requestId);
+			this.state = state;
+		}
+
+		@Override
+		protected void onFailure(Intent response) {
+			if(unregister()) {
+				hideProgress();
+				showErrorDialog(R.string.errormsg_failed_to_export_midi, ERRORDIALOG_CALLBACKARG_INFO);
+			}
+		}
+
+		@Override
+		protected void onSuccess(Intent response) {
+			if(unregister()) {
+				// delay so user can notice progress indicator and how it fades away
+				uiHandler.postDelayed(new Runnable() {
+					@Override
+					public void run() {
+						hideProgress();
+						Toast.makeText(getApplicationContext(), R.string.toast_midi_export_finished, Toast.LENGTH_SHORT).show();
+						String relDir = WorkerService.getExportDir().getAbsolutePath();
+						relDir = relDir.replace(Environment.getExternalStorageDirectory().getAbsolutePath(), "");
+						InfoDialog.newInstance(MainActivity.this, R.string.tip_midifile_exported, 0, new String[] {
+							state.filename, getString(R.string.midiArtist), getString(R.string.midiAlbum), relDir
+						})
+						.show(getSupportFragmentManager(), DIALOGTAG_INFO);
+//						"Saved as ? on external storage. You can find it in any music player under artist ? or album ? or directly through file browser in ? folder"
+						// TODO impelement; show hint
+					}
+				}, 500);
+			}
+		}
+		
+		private boolean unregister() {
+			if(exportMidiReceivers.remove(this)) {
+				unregisterReceiver(this);
+				return true;
+			} else {
+				return false;
+			}
+		}
+		
+		private void hideProgress() {
+			View entryView = findEntryView(state.scoreId);
+			if(entryView != null) {
+				removeProgressLock(entryView);
+				removeLock(entryView, R.id.button_exportmidi);
+			}
+		}
+		
+		public ExportMidiRequest getState() {
+			state.requestId = getUniqueRequestID(false);
+			return state;
+		}
+	}
+		
+	private void sendExportMidiRequest(ExportMidiRequest state) {
+		ExportMidiReceiver receiver = new ExportMidiReceiver(state);
+		registerReceiver(receiver, new IntentFilter(CALLBACK_ACTION_EXPORTMIDI));
+		exportMidiReceivers.add(receiver);
+		String requestId = receiver.getUniqueRequestID(state.requestId == null);
+		Intent request = AsyncHelper.prepareServiceIntent(MainActivity.this, 
+			WorkerService.class, WorkerService.ACTIONS.EXPORT_TO_MIDI, 
+			requestId, 
+			getBroadcastCallback(CALLBACK_ACTION_EXPORTMIDI), true);
+		request.putExtra(WorkerService.ACTIONS.EXTRAS_SCORE_ID, state.scoreId);
+		request.putExtra(WorkerService.ACTIONS.EXTRAS_DEST_FILE, state.filename);
+		log.v("Sending request(%s) EXPORT_MIDI of Score#%d", requestId, state.scoreId);
+		startService(request);
+		// show progress indicator
+		View entryView = findEntryView(state.scoreId);
+		if(entryView != null) {
+			addProgressLock(entryView);
+			addLock(entryView, R.id.button_exportmidi);
 		}
 	}
 
@@ -663,6 +776,13 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 			}
 			duplicateReceivers.clear();
 			outState.putParcelableArrayList(STATE_DUPLICATE_REQUESTS, duplicateRequests);
+			ArrayList<Parcelable> exportRequests = new ArrayList<Parcelable>();
+			for(ExportMidiReceiver receiver: exportMidiReceivers) {
+				exportRequests.add(receiver.getState());
+				unregisterReceiver(receiver);
+			}
+			exportMidiReceivers.clear();
+			outState.putParcelableArrayList(STATE_EXPORT_REQUESTS, exportRequests);
 		}
 	}
 	
@@ -675,6 +795,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 		}
 		dismissReceivers(scoreDeletedReceivers);
 		dismissReceivers(duplicateReceivers);
+		dismissReceivers(exportMidiReceivers);
 		super.onDestroy();
 	}
 
@@ -720,17 +841,70 @@ public class MainActivity extends FragmentActivity_ErrorDialog implements TextIn
 			ensureViewIsVisible(view, true);
 		}
 	}
+	
+	private void addLock(View entryView, int buttonId) {
+		changeLock(entryView, buttonId, true);
+	}
+
+	private void changeLock(View entryView, int buttonId, boolean incr) {
+		View button = setupEntryToolbar((ViewGroup) entryView).findViewById(buttonId);
+		button.setEnabled(changeLockTag(button, incr) == 0);
+	}
+
+	/**
+	 * @return locks count after modification
+	 */
+	private int changeLockTag(View view, boolean incr) {
+		int locks = ifNotNull((Integer) view.getTag(R.id.viewtag_locks), 0);
+		locks = Math.max(locks + (incr ? 1 : -1), 0);
+		view.setTag(R.id.viewtag_locks, locks);
+		return locks;
+	}
+
+	private void addProgressLock(View entryView) {
+		changeProgressLock(entryView, true);		
+	}
+	
+	public void removeLock(View entryView, int buttonId) {
+		changeLock(entryView, buttonId, false);
+	}
+
+	public void removeProgressLock(View entryView) {
+		changeProgressLock(entryView, false);
+		
+	}
+
+	private void changeProgressLock(View entryView, boolean incr) {
+		int locks = changeLockTag(entryView, incr);
+		TextView textView = (TextView) entryView.findViewById(R.id.title);
+		Drawable[] compoundDrawables = textView.getCompoundDrawables();
+		compoundDrawables[2] = locks > 0 ? getResources().getDrawable(R.drawable.spinner_16dp) : null;
+		textView.setCompoundDrawablesWithIntrinsicBounds(compoundDrawables[0], compoundDrawables[1], compoundDrawables[2], compoundDrawables[3]);
+	}
+	
+	private void showErrorDialog(int msgId, int infoDialogCallbackId) {
+		InfoDialog.newInstance(this, R.string.errordialog_title, msgId, R.string.errordialog_button, null, infoDialogCallbackId)
+		.show(getSupportFragmentManager(), DIALOGTAG_INFO);
+	}
 
 	private String title(Score score) {
 		return Macros.ifNotNull(score.getTitle(), getString(android.R.string.untitled));
 	}
 	
 	@Override
-	public void onCancel(ConfirmDialog dialog, int dialogId, long callbackParam) {
+	public void onCancel(ConfirmDialog dialog, int dialogId, long callbackParam, Parcelable state) {
 	}
 	
 	@Override
 	public void onDismiss(TextInputDialog dialog, int valueId, long listenerArg) {
+	}
+
+	private void showExportMidiDialog(final Score score, String initValue) {
+		TextInputDialog.newInstance(MainActivity.this, 
+			INPUTDIALOG_CALLBACKARG_MIDIFILE, score.getId(),
+			R.string.popup_title_export_as_midi, getString(R.string.popup_msg_exportmidi),
+			android.R.string.ok, android.R.string.cancel, initValue
+		).show(getSupportFragmentManager(), DIALOGTAG_EXPORT_MIDI);
 	}
 	
 }

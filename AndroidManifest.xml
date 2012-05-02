@@ -4,9 +4,8 @@
       android:versionCode="1"
       android:versionName="1.0">
     <uses-sdk android:minSdkVersion="7" />
-    <!-- required for writing *.trace files for profiling purposes
+    <!-- required for exporting .midi files -->
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-	 -->
 	 <uses-permission android:name="android.permission.VIBRATE"/>
     
     <application android:icon="@drawable/icon" android:label="@string/app_name">

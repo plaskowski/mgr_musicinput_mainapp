@@ -49,4 +49,25 @@ public class TextViewWithAnimations extends TextView {
 		super.onWindowFocusChanged(hasWindowFocus);
 		updateAnimationsState();
 	}
+
+	@Override
+	public void setCompoundDrawables(Drawable left, Drawable top,
+			Drawable right, Drawable bottom) {
+		super.setCompoundDrawables(left, top, right, bottom);
+		updateAnimationsState();
+	}
+
+	@Override
+	public void setCompoundDrawablesWithIntrinsicBounds(Drawable left,
+			Drawable top, Drawable right, Drawable bottom) {
+		super.setCompoundDrawablesWithIntrinsicBounds(left, top, right, bottom);
+		updateAnimationsState();
+	}
+
+	@Override
+	public void setCompoundDrawablesWithIntrinsicBounds(int left, int top,
+			int right, int bottom) {
+		super.setCompoundDrawablesWithIntrinsicBounds(left, top, right, bottom);
+		updateAnimationsState();
+	}
 }

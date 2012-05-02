@@ -56,7 +56,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.OnInterc
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.OnInterceptTouchObservable.OnInterceptListener;
 import pl.edu.mimuw.students.pl249278.midi.MidiFile;
 import pl.edu.mimuw.students.pl249278.midi.MidiFormatException;
-import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -243,13 +242,12 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 			}
 			// sending request for Score object
 			GetScoreReceiver getScoreReceiver = new GetScoreReceiver();	
-			PendingIntent callbackIntent = PendingIntent.getBroadcast(this, 0, new Intent(CALLBACK_ACTION_GET), 0);
 			Intent requestIntent = AsyncHelper.prepareServiceIntent(
 				this, 
 				ContentService.class, 
 				ContentService.ACTIONS.GET_SCORE_BY_ID, 
 				getScoreReceiver.getUniqueRequestID(true), 
-				callbackIntent, 
+				AsyncHelper.getBroadcastCallback(CALLBACK_ACTION_GET), 
 				true
 			);
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, scoreId);

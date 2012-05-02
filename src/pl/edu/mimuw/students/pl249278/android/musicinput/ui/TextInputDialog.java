@@ -18,10 +18,11 @@ public class TextInputDialog extends DialogFragment {
 	private static final LogUtils log = new LogUtils(TextInputDialog.class);
 	private static final String ARG_VALUE_ID = "value_id";
 	private static final String ARG_LISTENER_ARG = "listener_arg";
-	private static final String ARG_TITLE = "title";
+	private static final String ARG_TITLE = "titleId";
 	private static final String ARG_POSITIVE_LABEL = "okid";
 	private static final String ARG_NEGATIVE_LABEL = "cancelid";
 	private static final String ARG_INITIAL_VALUE = "value";
+	private static final String ARG_MSG = "msg";
 	
 	public static interface TextInputDialogListener {
 		void onValueEntered(TextInputDialog dialog, int valueId, long listenerArg, String value);
@@ -29,17 +30,24 @@ public class TextInputDialog extends DialogFragment {
 	}
 
 	public static TextInputDialog newInstance(Context ctx, int valueId, long listenerArg, 
-		String title, int positiveLabelId, int negativeLabelId, String initialValue) {
-		TextInputDialog dialog = new TextInputDialog();
+		String message, int positiveLabelId, int negativeLabelId, String initialValue) {
 		Bundle args = new Bundle();
-        args.putInt(ARG_VALUE_ID, valueId);
-        args.putLong(ARG_LISTENER_ARG, listenerArg);
-        args.putString(ARG_TITLE, title);
-        args.putInt(ARG_POSITIVE_LABEL, positiveLabelId);
-        args.putInt(ARG_NEGATIVE_LABEL, negativeLabelId);
-        args.putString(ARG_INITIAL_VALUE, initialValue);
+		args.putInt(ARG_VALUE_ID, valueId);
+		args.putLong(ARG_LISTENER_ARG, listenerArg);
+		args.putString(ARG_MSG, message);
+		args.putInt(ARG_POSITIVE_LABEL, positiveLabelId);
+		args.putInt(ARG_NEGATIVE_LABEL, negativeLabelId);
+		args.putString(ARG_INITIAL_VALUE, initialValue);
+		TextInputDialog dialog = new TextInputDialog();
 		dialog.setArguments(args);
-        return dialog;
+		return dialog;
+    }
+	
+	public static TextInputDialog newInstance(Context ctx, int valueId, long listenerArg, int titleId,
+		String message, int positiveLabelId, int negativeLabelId, String initialValue) {
+		TextInputDialog newInstance = newInstance(ctx, valueId, listenerArg, message, positiveLabelId, negativeLabelId, initialValue);
+        newInstance.getArguments().putInt(ARG_TITLE, titleId);
+		return newInstance;
     }
 	
 	@Override
@@ -47,7 +55,11 @@ public class TextInputDialog extends DialogFragment {
 		Context ctx = getActivity();
 		Bundle args = getArguments();
 		AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
-		builder.setMessage(args.getString(ARG_TITLE))
+		if(args.containsKey(ARG_TITLE)) {
+			builder.setTitle(args.getInt(ARG_TITLE));
+		}
+		builder
+		.setMessage(args.getString(ARG_MSG))
          .setCancelable(true)
          .setPositiveButton(ctx.getString(args.getInt(ARG_POSITIVE_LABEL)), new DialogInterface.OnClickListener() {
 			   public void onClick(DialogInterface dialog, int id) {

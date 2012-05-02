@@ -12,4 +12,6 @@
 		<item name="iconMaxHeight">24dip</item>
 		<item name="paintsSetup">@array/InvertedEmboss</item>        
     </style>
+    
+    <item name="viewtag_locks" type="id" />    
 </resources>

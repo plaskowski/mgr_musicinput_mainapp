@@ -2,6 +2,7 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.services;
 
 import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
+import pl.edu.mimuw.students.pl249278.android.common.Macros;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -11,19 +12,22 @@ public abstract class FilterByRequestIdReceiver extends BroadcastReceiver {
 	private static final String TAG = LogUtils.COMMON_TAG;
 	private String currentRequestId = null;
 	
+	/**
+	 * currentRequestId will be set to generated unique id
+	 */
 	public FilterByRequestIdReceiver() {
 		this(null);
 	}
 	
+	/**
+	 * @param currentRequestId if null, unique id will be generated
+	 */
 	public FilterByRequestIdReceiver(String currentRequestId) {
-		this.currentRequestId = currentRequestId;
+		this.currentRequestId = Macros.ifNotNull(currentRequestId, getUniqueRequestID());
 	}
 
-	public String getUniqueRequestID(boolean generateNew) {
-		if(generateNew) {
-			currentRequestId = System.identityHashCode(this)+""+System.currentTimeMillis();
-		}
-		return currentRequestId;
+	private String getUniqueRequestID() {
+		return System.identityHashCode(this)+""+System.currentTimeMillis();
 	}
 	
 	@Override
@@ -42,4 +46,8 @@ public abstract class FilterByRequestIdReceiver extends BroadcastReceiver {
 	
 	protected abstract void onFailure(Intent response);
 	protected abstract void onSuccess(Intent response);
+
+	public String getCurrentRequestId() {
+		return currentRequestId;
+	}
 }

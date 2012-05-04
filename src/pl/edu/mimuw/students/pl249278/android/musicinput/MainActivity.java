@@ -25,7 +25,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ParcelablePrimitives.ParcelableLong;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog.TextInputDialogListener;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_TipDialog_ProgressDialog;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_TipDialog_ProgressDialog_ManagedReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
@@ -49,7 +49,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_ProgressDialog implements TextInputDialogListener, ConfirmDialogListener {
+public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_ProgressDialog_ManagedReceiver implements TextInputDialogListener, ConfirmDialogListener {
 	private static LogUtils log = new LogUtils(MainActivity.class);
 	private static final String CALLBACK_ACTION_GET = MainActivity.class.getName()+".callback_get";
 	protected static final String CALLBACK_ACTION_DELETE = MainActivity.class.getName()+".callback_delete";
@@ -72,7 +72,6 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	private static final int CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE = CONFIRMDIALOG_CALLBACKARG_DELETESCORE+1;
 	protected static final String TIP_MIDI_ON_STORAGE = MainActivity.class.getCanonicalName()+".midi_exported_to_storage";
 	
-	private static final String STATE_REQUEST_ID = "request_id";
 	private static final String STATE_SCORES = "scores";
 	private static final String STATE_EXPANDED_ENTRY_SCOREID = "expanded_scoreid";
 	private static final String STATE_DELETE_REQUESTS = "delete_requests";
@@ -84,12 +83,6 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	 */
 	private ArrayList<ParcelableScore> scores = null;
 	
-	/**
-	 * Receives response from {@link ContentService}. 
-	 * Not null means request was sent and response haven't been received yet.
-	 * Not null also means it is registered (assumption valid on UIThread only).
-	 */
-	private ContentReceiver receiver;
 	private List<FilterByRequestIdReceiver> scoreDeletedReceivers = new ArrayList<FilterByRequestIdReceiver>();
 	private List<DuplicateReceiver> duplicateReceivers = new ArrayList<DuplicateReceiver>();
 	private List<ExportMidiReceiver> exportMidiReceivers = new ArrayList<MainActivity.ExportMidiReceiver>();
@@ -135,7 +128,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 				addLock(entryView, R.id.button_exportmidi);
 			}
 		} else {
-			requestModel(savedState == null ? null : savedState.getString(STATE_REQUEST_ID));
+			requestModel();
 		}
 	}
 	
@@ -144,67 +137,37 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		collection.add(receiver);
 		startService(AsyncHelper.prepareRepeatCallbackIntent(
 			this, ContentService.class, 
-			receiver.getUniqueRequestID(false), getBroadcastCallback(callbackAction)
+			receiver.getCurrentRequestId(), getBroadcastCallback(callbackAction)
 		));
 	}
 
-	private void requestModel(String requestId) {
+	private void requestModel() {
 		Intent requestIntent;
-		if(requestId != null) {
-			receiver = new ContentReceiver(requestId);
-			requestIntent = AsyncHelper.prepareRepeatCallbackIntent(
-				this, 
-				ContentService.class, 
-				requestId, 
-				getBroadcastCallback(CALLBACK_ACTION_GET)
-			);
-		} else {
-			receiver = new ContentReceiver();
-			requestIntent = AsyncHelper.prepareServiceIntent(
-				this, 
-				ContentService.class, 
-				ContentService.ACTIONS.LIST_SCORES, 
-				receiver.getUniqueRequestID(true), 
-				getBroadcastCallback(CALLBACK_ACTION_GET),
-				true
-			);
-			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, true);
-		}
-		registerReceiver(receiver, new IntentFilter(CALLBACK_ACTION_GET));
+		ContentReceiver receiver = new ContentReceiver();
+		requestIntent = AsyncHelper.prepareServiceIntent(
+			this, 
+			ContentService.class, 
+			ContentService.ACTIONS.LIST_SCORES, 
+			receiver.getCurrentRequestId(), 
+			getBroadcastCallback(CALLBACK_ACTION_GET),
+			false
+		);
+		requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, true);
+		registerManagedReceiver(receiver, CALLBACK_ACTION_GET);
 		startService(requestIntent);
 		showProgressDialog();
 	}
 	
-	private class ContentReceiver extends FilterByRequestIdReceiver {
-		
-		public ContentReceiver() {
-		}
-
-		public ContentReceiver(String currentRequestId) {
-			super(currentRequestId);
-		}
-
+	private class ContentReceiver extends ManagedReceiver {
 		@Override
-		protected void onFailure(Intent response) {
+		protected void onFailureReceived(Intent response) {
 			log.e("Failed to list scores: " + AsyncHelper.getError(response));
-			if(receiver == null) {
-				// we received response before unregisterReceiver() took effect. Ignore.
-				return;
-			}
-			unregisterReceiver(this);
-			receiver = null;
 			hideProgressDialog();
 			showErrorDialog(R.string.errormsg_unrecoverable, null, true);
 		}
 		
 		@Override
-		protected void onSuccess(Intent response) {
-			if(receiver == null) {
-				// we received response before unregisterReceiver() took effect. Ignore.
-				return;
-			}
-			unregisterReceiver(this);
-			receiver = null;
+		protected void onSuccessReceived(Intent response) {
 			hideProgressDialog();
 			Parcelable[] scoresArr = response.getParcelableArrayExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_SCORES);
 			ArrayList<ParcelableScore> scores = new ArrayList<Score.ParcelableScore>(scoresArr.length);
@@ -215,7 +178,6 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			onModelLoaded(scores);
 			// TODO handle vis confs
 			response.getParcelableArrayExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_VISUAL_CONFS);
-			sendCleanRequest(getUniqueRequestID(false));
 		}
 	}
 	
@@ -393,7 +355,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			MainActivity.this, 
 			ContentService.class, 
 			ContentService.ACTIONS.DELETE_SCORE, 
-			receiver.getUniqueRequestID(true), 
+			receiver.getCurrentRequestId(), 
 			getBroadcastCallback(CALLBACK_ACTION_DELETE), 
 			true
 		);
@@ -487,7 +449,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			((ViewGroup) findViewById(R.id.entries_container)).removeAllViews();
 			// read model once again
 			scores = null;
-			requestModel(null);
+			requestModel();
 		} else {
 			super.onDismiss(dialog, arg);
 		}
@@ -627,7 +589,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		}
 
 		public Parcelable getState() {
-			return new DuplicateRequest(originalScoreId, getUniqueRequestID(false));
+			return new DuplicateRequest(originalScoreId, getCurrentRequestId());
 		}
 		
 	}
@@ -638,7 +600,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		duplicateReceivers.add(receiver);
 		Intent request = AsyncHelper.prepareServiceIntent(MainActivity.this, 
 			ContentService.class, ContentService.ACTIONS.DUPLICATE_SCORE, 
-			receiver.getUniqueRequestID(true), getBroadcastCallback(CALLBACK_ACTION_DUPLICATE), true);
+			receiver.getCurrentRequestId(), getBroadcastCallback(CALLBACK_ACTION_DUPLICATE), true);
 		request.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, score.getId());
 		request.putExtra(ContentService.ACTIONS.EXTRAS_NEW_TITLE, newTitle);
 		log.v("Sending request DUPLICATE of Score#%d", score.getId());
@@ -729,7 +691,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		}
 		
 		public ExportMidiRequest getState() {
-			state.requestId = getUniqueRequestID(false);
+			state.requestId = getCurrentRequestId();
 			return state;
 		}
 	}
@@ -738,7 +700,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		ExportMidiReceiver receiver = new ExportMidiReceiver(state);
 		registerReceiver(receiver, new IntentFilter(CALLBACK_ACTION_EXPORTMIDI));
 		exportMidiReceivers.add(receiver);
-		String requestId = receiver.getUniqueRequestID(state.requestId == null);
+		String requestId = receiver.getCurrentRequestId();
 		Intent request = AsyncHelper.prepareServiceIntent(MainActivity.this, 
 			WorkerService.class, WorkerService.ACTIONS.EXPORT_TO_MIDI, 
 			requestId, 
@@ -758,18 +720,14 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		if(receiver != null) {
-			outState.putString(STATE_REQUEST_ID, receiver.getUniqueRequestID(false));
-			unregisterReceiver(receiver);
-			receiver = null;
-		} else if(scores != null) {
+		if(scores != null) {
 			outState.putParcelableArrayList(STATE_SCORES, scores);
 			if(expandedEntry != null) {
 				outState.putLong(STATE_EXPANDED_ENTRY_SCOREID, ((Score) expandedEntry.getTag()).getId());
 			}
 			ArrayList<String> deleteRequests = new ArrayList<String>();
 			for(FilterByRequestIdReceiver receiver: scoreDeletedReceivers) {
-				deleteRequests.add(receiver.getUniqueRequestID(false));
+				deleteRequests.add(receiver.getCurrentRequestId());
 				unregisterReceiver(receiver);
 			}
 			scoreDeletedReceivers.clear();
@@ -793,11 +751,6 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	
 	@Override
 	protected void onDestroy() {
-		if(receiver != null) {
-			unregisterReceiver(receiver);
-			sendCleanRequest(receiver.getUniqueRequestID(false));
-			receiver = null;
-		}
 		dismissReceivers(scoreDeletedReceivers);
 		dismissReceivers(duplicateReceivers);
 		dismissReceivers(exportMidiReceivers);
@@ -809,11 +762,6 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			unregisterReceiver(receiver);
 		}
 		receivers.clear();
-	}
-	
-	private void sendCleanRequest(String requestId) {
-		Intent cleanRequest = AsyncHelper.prepareCleanCallbackIntent(MainActivity.this, ContentService.class, requestId);
-		startService(cleanRequest);
 	}
 	
 	private static int[] point = new int[2];

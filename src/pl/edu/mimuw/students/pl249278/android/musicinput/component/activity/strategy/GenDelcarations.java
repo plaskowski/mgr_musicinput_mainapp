@@ -9,9 +9,10 @@ class GenDeclarations {
 		ancestors = {
 			ErrorDialogStrategy.class,
 			ShowScoreStrategy.class,
-			InitialProgressDialogStrategy.class
+			InitialProgressDialogStrategy.class,
+			ManagedReceiverStrategy.class
 		},
-		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_ProgressDialog_ShowScore"
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_ProgressDialog_ShowScore_ManagedReceiver"
 	)
 	static Class<? extends FragmentActivity> CUSTOM1; // = LinearLayout_ExtendedBackground.class; 
 	@JoinClasses(
@@ -19,9 +20,10 @@ class GenDeclarations {
 		ancestors = {
 			ErrorDialogStrategy.class,
 			TipDialogStrategy.class,
-			InitialProgressDialogStrategy.class
+			InitialProgressDialogStrategy.class,
+			ManagedReceiverStrategy.class
 		},
-		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_TipDialog_ProgressDialog"
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_TipDialog_ProgressDialog_ManagedReceiver"
 	)
 	static Class<? extends FragmentActivity> CUSTOM2; // = LinearLayout_ExtendedBackground.class; 
 }

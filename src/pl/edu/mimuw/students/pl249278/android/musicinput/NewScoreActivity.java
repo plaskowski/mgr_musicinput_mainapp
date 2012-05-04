@@ -196,7 +196,7 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
     		// save information about insert request we've already sent
     		outState.putString(
 				INSTANCE_EXTRA_INSERT_REQUEST_ID, 
-				insertRequestReceiver.getUniqueRequestID(false)
+				insertRequestReceiver.getCurrentRequestId()
 			);
     		unregisterInsertReceiver();
     	}
@@ -325,12 +325,12 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 					clef, key, timeSignature
 				)
 			);
-			insertRequestReceiver = new InsertRequestReceiver(null);
+			insertRequestReceiver = new InsertRequestReceiver();
 			Intent requestIntent = AsyncHelper.prepareServiceIntent(
 				NewScoreActivity.this, 
 				ContentService.class, 
 				ContentService.ACTIONS.INSERT_SCORE, 
-				insertRequestReceiver.getUniqueRequestID(true), 
+				insertRequestReceiver.getCurrentRequestId(), 
 				AsyncHelper.getBroadcastCallback(CALLBACK_ACTION_INSERT),
 				true
 			);
@@ -355,8 +355,12 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 	private static final String CALLBACK_ACTION_INSERT = NewScoreActivity.class.getName()+ ".insert";
 	
 	private class InsertRequestReceiver extends FilterByRequestIdReceiver {
-		public InsertRequestReceiver(String currentRequestUniqueId) {
-			super(currentRequestUniqueId);
+		
+		public InsertRequestReceiver() {
+		}
+
+		public InsertRequestReceiver(String currentRequestId) {
+			super(currentRequestId);
 		}
 
 		@Override
@@ -388,7 +392,7 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 			Intent i = AsyncHelper.prepareCleanCallbackIntent(
 				NewScoreActivity.this, 
 				ContentService.class,
-				getUniqueRequestID(false)
+				getCurrentRequestId()
 			);
 			startService(i);
 		}

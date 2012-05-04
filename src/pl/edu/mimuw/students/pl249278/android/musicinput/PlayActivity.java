@@ -35,9 +35,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.SerializationExce
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
-import pl.edu.mimuw.students.pl249278.android.musicinput.services.FilterByRequestIdReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.WorkerService;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_ProgressDialog_ShowScore;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_ProgressDialog_ShowScore_ManagedReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
@@ -57,7 +56,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.OnInterc
 import pl.edu.mimuw.students.pl249278.midi.MidiFile;
 import pl.edu.mimuw.students.pl249278.midi.MidiFormatException;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PointF;
@@ -87,7 +85,7 @@ import android.widget.HorizontalScrollView;
 import android.widget.ScrollView;
 import android.widget.ViewAnimator;
 
-public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_ShowScore implements OnLayoutListener {
+public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_ShowScore_ManagedReceiver implements OnLayoutListener {
 	private static LogUtils log = new LogUtils(PlayActivity.class);
 	
 	/** of type long */
@@ -124,7 +122,6 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private File midiLocalFile;
 	/** If play configuration (besides .loop field) has changed since last {@link #resumePlaying()} call */
 	private boolean configurationUpdated = false;
-	private GetScoreReceiver getScoreReceiver;	
 	
 	/** Maps given Score element to View that represents it */
 	private Map<ScoreContentElem, SheetAlignedElementView> modelToViewsMapping = new HashMap<ScoreContentElem, SheetAlignedElementView>();
@@ -252,19 +249,19 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				showErrorDialog(R.string.errormsg_unrecoverable, null, true);
 				return;
 			}
-			getScoreReceiver = new GetScoreReceiver();	
+			GetScoreReceiver getScoreReceiver = new GetScoreReceiver();	
 			Intent requestIntent = AsyncHelper.prepareServiceIntent(
 				this, 
 				ContentService.class, 
 				ContentService.ACTIONS.GET_SCORE_BY_ID, 
-				getScoreReceiver.getUniqueRequestID(true), 
+				getScoreReceiver.getCurrentRequestId(), 
 				AsyncHelper.getBroadcastCallback(CALLBACK_ACTION_GET), 
 				true
 			);
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, scoreId);
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, true);
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_PLAY_CONF, true);
-			registerReceiver(getScoreReceiver, new IntentFilter(CALLBACK_ACTION_GET));
+			registerManagedReceiver(getScoreReceiver, CALLBACK_ACTION_GET);
 	    	log.v("Sending "+CALLBACK_ACTION_GET+" for id "+scoreId);
 	    	startService(requestIntent);
 	    	showProgressDialog();
@@ -699,23 +696,17 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 	}
 		
-	private class GetScoreReceiver extends FilterByRequestIdReceiver {
+	private class GetScoreReceiver extends ManagedReceiver {
 		@Override
-		protected void onFailure(Intent response) {
+		protected void onFailureReceived(Intent response) {
 			log.e("Failed to get score: " + AsyncHelper.getError(response));
-			cleanUp();
-			showErrorDialog(R.string.errormsg_unrecoverable, null, true);
-		}
-
-		private void cleanUp() {
-			unregisterReceiver(this);
-			getScoreReceiver = null;
 			hideProgressDialog();
+			showErrorDialog(R.string.errormsg_unrecoverable, null, true);
 		}
 		
 		@Override
-		protected void onSuccess(Intent response) {
-			cleanUp();
+		protected void onSuccessReceived(Intent response) {
+			hideProgressDialog();
 			ParcelableScore parcelable = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_ENTITY);
 			ScoreVisualizationConfig config = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF);
 			PlayingConfiguration playConf = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_PLAY_CONF);
@@ -989,15 +980,6 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		if(isScaleValid) {
 			outState.putFloat(INSTANCE_STATE_SCALE, sheetParams.getScale());
 		}
-	}
-	
-	@Override
-	protected void onDestroy() {
-		if(getScoreReceiver != null) {
-			unregisterReceiver(getScoreReceiver);
-			getScoreReceiver = null;
-		}
-		super.onDestroy();
 	}
 	
 	private void setUiHidden(boolean hide) {

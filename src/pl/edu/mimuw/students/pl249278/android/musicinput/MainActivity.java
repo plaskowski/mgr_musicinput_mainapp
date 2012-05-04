@@ -14,7 +14,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivityHelper.Dupl
 import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivityHelper.ExportMidiRequest;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score.ParcelableScore;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.SerializationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.FilterByRequestIdReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.WorkerService;
@@ -614,26 +613,21 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	}
 	
 	private void sendUpdate(Score score) {
-		try {
-			Intent request = AsyncHelper.prepareServiceIntent(
-				MainActivity.this, ContentService.class, 
-				ContentService.ACTIONS.UPDATE_SCORE, 
-				null, null, false);
-			request.putExtra(ContentService.ACTIONS.EXTRAS_SCORE, score.prepareParcelable());
-			request.putExtra(ContentService.ACTIONS.EXTRAS_KEEP_BACKUP, true);
-			log.v("Sending request UPDATE of Score#%d", score.getId());
-			startService(request);
-			// update view
-			View entry = findEntryView(score.getId());
-			if(entry == null) {
-				log.w("Couldn't find entry View for Score %d#%s", score.getId(), score.getTitle());
-			} else {
-				populateEntryTextViews(score, entry);
-				ensureViewIsVisible(entry, true);
-			}
-		} catch (SerializationException e) {
-			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
-			log.e("Failed to serialize model", e);
+		Intent request = AsyncHelper.prepareServiceIntent(
+			MainActivity.this, ContentService.class, 
+			ContentService.ACTIONS.CHANGE_SCORE_TITLE, 
+			null, null, false);
+		request.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, score.getId());
+		request.putExtra(ContentService.ACTIONS.EXTRAS_NEW_TITLE, score.getTitle());
+		log.v("Sending request CHANGE_TITLE of Score#%d", score.getId());
+		startService(request);
+		// update view
+		View entry = findEntryView(score.getId());
+		if(entry == null) {
+			log.w("Couldn't find entry View for Score %d#%s", score.getId(), score.getTitle());
+		} else {
+			populateEntryTextViews(score, entry);
+			ensureViewIsVisible(entry, true);
 		}
 	}
 	

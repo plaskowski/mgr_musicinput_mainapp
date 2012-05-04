@@ -84,10 +84,9 @@ public class ContentService extends AsynchronousRequestsService {
 		/** 
 		 * Updates Score.
 		 * Discards "session" backup.
-		 * Parameters: {@link #EXTRAS_SCORE}, {@link #EXTRAS_SCORE_VISUAL_CONF} (optional), {@link #EXTRAS_KEEP_BACKUP}
+		 * Parameters: {@link #EXTRAS_SCORE}, {@link #EXTRAS_SCORE_VISUAL_CONF} (optional)
 		 */
 		public static final String UPDATE_SCORE = ContentService.class.getName()+".update_score";
-		public static final String EXTRAS_KEEP_BACKUP = "keep_backup";
 		/**
 		 * Removes session copy.
 		 * Parameters: {@link #EXTRAS_ENTITY_ID} - original id
@@ -117,6 +116,10 @@ public class ContentService extends AsynchronousRequestsService {
 		 */
 		public static final String DUPLICATE_SCORE = ContentService.class.getName()+".duplicate_score";
 		public static final String EXTRAS_NEW_TITLE = "new_title";
+		 /**
+		  * Parameters: {@link #EXTRAS_ENTITY_ID} - id of Score, {@link #EXTRAS_NEW_TITLE} 
+		 */
+		public static final String CHANGE_SCORE_TITLE = ContentService.class.getName()+".rename_score";
 	}
 	
 	@Override
@@ -132,6 +135,8 @@ public class ContentService extends AsynchronousRequestsService {
 			saveScoreCopy(requestIntent);
 		} else if(ACTIONS.UPDATE_SCORE.equals(action)) {
 			updateScore(requestIntent);
+		} else if(ACTIONS.CHANGE_SCORE_TITLE.equals(action)) {
+			renameScore(requestIntent);
 		} else if(ACTIONS.DELETE_SCORE.equals(action)) {
 			deleteScore(requestIntent);
 		} else if(ACTIONS.LIST_SCORES.equals(action)) {
@@ -148,6 +153,19 @@ public class ContentService extends AsynchronousRequestsService {
 			onRequestSuccess(requestIntent, new Intent());
 		} else {
 			super.onHandleIntent(requestIntent);
+		}
+	}
+
+	private void renameScore(Intent requestIntent) {
+		SQLiteDatabase db = mDb.getWritableDatabase();
+		long id = requestIntent.getLongExtra(ACTIONS.EXTRAS_ENTITY_ID, -1);
+		ContentValues values = new ContentValues(1);
+		values.put(Scores.TITLE, requestIntent.getStringExtra(ACTIONS.EXTRAS_NEW_TITLE));
+		int count = db.update(SCORES_TABLE_NAME, values, Scores._ID + " = " + id, null);
+		if(count > 0) {
+			onRequestSuccess(requestIntent, new Intent());
+		} else {
+			onRequestError(requestIntent, "No row was updated");
 		}
 	}
 
@@ -305,7 +323,7 @@ public class ContentService extends AsynchronousRequestsService {
 		if(score == null) {
 			return;
 		}
-		if(updateScore(requestIntent, score) && !requestIntent.getBooleanExtra(ACTIONS.EXTRAS_KEEP_BACKUP, false)) {
+		if(updateScore(requestIntent, score)) {
 			dropSessionCopy(score.getId());
 		}
 	}

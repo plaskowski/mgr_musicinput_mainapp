@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout 
+	xmlns:android="http://schemas.android.com/apk/res/android"    
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:fillViewport="true"
+    android:orientation="vertical"
 >
+	<ScrollView
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent"
+	    android:layout_weight="1"
+	    android:fillViewport="true"
+	>
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -75,12 +82,25 @@
 		        android:orientation="horizontal"
 		    />
 		</HorizontalScrollView>
-        
+		
+        <TextView
+            style="@style/NEWSCORE_h1"
+            android:text="Editor preferences"
+            android:minHeight="56dip"
+            android:gravity="center_vertical"
+            android:clickable="true"
+            android:background="@drawable/newscore_clickable_bg"
+            android:layout_marginBottom="0dip"
+            android:paddingTop="0dip"
+       	/>
+    </LinearLayout>
+	</ScrollView>        
        	<LinearLayout 
     	    android:orientation="horizontal"
     	    android:layout_height="wrap_content"
     	    android:layout_width="fill_parent"
-    	    android:layout_weight="1"
+    	    android:background="#4F4F4F"
+    	    android:paddingTop="3dip"
    	    >
     	    <Button 
     	        android:id="@+id/NEWSCORE_cancelbutton"
@@ -101,6 +121,4 @@
 	    	    android:text="@string/label_create_new_score"
    	        />
 	    </LinearLayout>
-    </LinearLayout>
-
-</ScrollView>
+</LinearLayout>

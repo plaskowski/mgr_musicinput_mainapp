@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector
+	xmlns:android="http://schemas.android.com/apk/res/android"
+>
+    <item android:state_pressed="true" >
+	    <shape>
+            <gradient
+                android:startColor="#FF73DCFF"
+                android:endColor="#458499"
+                android:angle="270" />
+        </shape>
+    </item>
+	<item>
+	    <nine-patch android:src="@drawable/topdivider_bright" />
+	</item>
+</selector>

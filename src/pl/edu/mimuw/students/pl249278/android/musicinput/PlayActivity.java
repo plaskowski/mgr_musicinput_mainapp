@@ -37,7 +37,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.FilterByRequestIdReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.WorkerService;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_ShowScore;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_ProgressDialog_ShowScore;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
@@ -56,7 +56,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.OnInterc
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.OnInterceptTouchObservable.OnInterceptListener;
 import pl.edu.mimuw.students.pl249278.midi.MidiFile;
 import pl.edu.mimuw.students.pl249278.midi.MidiFormatException;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
@@ -88,11 +87,17 @@ import android.widget.HorizontalScrollView;
 import android.widget.ScrollView;
 import android.widget.ViewAnimator;
 
-public class PlayActivity extends FragmentActivity_ErrorDialog_ShowScore implements OnLayoutListener {
+public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_ShowScore implements OnLayoutListener {
 	private static LogUtils log = new LogUtils(PlayActivity.class);
 	
 	/** of type long */
 	public static final String STARTINTENT_EXTRAS_SCORE_ID = "score_id";
+	/**
+	 * Allows caller to specify score content that is different from state in DB, 
+	 * by providing Score object directly. It must have valid identifier that matches 
+	 * existing Score id DB. Value Type: {@link ParcelableScore} 
+	 */
+	public static final String STARTINTENT_EXTRAS_SCORE = null;
 	private static final String INSTANCE_STATE_SCORE = "score";
 	private static final String INSTANCE_STATE_VISCONF = "visual_conf";
 	private static final String INSTANCE_STATE_PLAYCONF = "play_conf";
@@ -119,10 +124,10 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 	private File midiLocalFile;
 	/** If play configuration (besides .loop field) has changed since last {@link #resumePlaying()} call */
 	private boolean configurationUpdated = false;
+	private GetScoreReceiver getScoreReceiver;	
 	
 	/** Maps given Score element to View that represents it */
 	private Map<ScoreContentElem, SheetAlignedElementView> modelToViewsMapping = new HashMap<ScoreContentElem, SheetAlignedElementView>();
-	private ProgressDialog progressDialog;
 	private ViewGroup sheet;
 	private ScrollView vertscroll;
 	private HorizontalScrollView hscroll;
@@ -228,20 +233,26 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 				isScaleValid = true;
 			}
 		}
-		if(savedInstanceState != null && savedInstanceState.containsKey(INSTANCE_STATE_SCORE)) {
+		if(savedInstanceState != null && savedInstanceState.containsKey(INSTANCE_STATE_PLAYCONF)) {
+			// everything is already loaded
 			ParcelableScore parcelable = savedInstanceState.getParcelable(INSTANCE_STATE_SCORE);
 			ScoreVisualizationConfig conf = savedInstanceState.getParcelable(INSTANCE_STATE_VISCONF);
 			PlayingConfiguration pconf = savedInstanceState.getParcelable(INSTANCE_STATE_PLAYCONF);
 			onModelLoaded(parcelable.getSource(), conf, pconf);
 		} else {
-			long scoreId = getIntent().getLongExtra(STARTINTENT_EXTRAS_SCORE_ID, -1);
-			if(scoreId == -1) {
+			// load required model objects first
+			Intent startIntent = getIntent();
+			long scoreId = startIntent.getLongExtra(STARTINTENT_EXTRAS_SCORE_ID, -1);
+			ParcelableScore pScore = startIntent.getParcelableExtra(STARTINTENT_EXTRAS_SCORE);
+			if(pScore != null) {
+				this.score = pScore.getSource();
+				scoreId = this.score.getId();
+			} else if(scoreId == -1) {
 				log.e("Activity started without score id in intent");
 				showErrorDialog(R.string.errormsg_unrecoverable, null, true);
 				return;
 			}
-			// sending request for Score object
-			GetScoreReceiver getScoreReceiver = new GetScoreReceiver();	
+			getScoreReceiver = new GetScoreReceiver();	
 			Intent requestIntent = AsyncHelper.prepareServiceIntent(
 				this, 
 				ContentService.class, 
@@ -256,8 +267,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 			registerReceiver(getScoreReceiver, new IntentFilter(CALLBACK_ACTION_GET));
 	    	log.v("Sending "+CALLBACK_ACTION_GET+" for id "+scoreId);
 	    	startService(requestIntent);
-	    	progressDialog = ProgressDialog.show(this, "", 
-				getString(R.string.msg_loading_please_wait), true);
+	    	showProgressDialog();
 		}
 	}
 
@@ -693,20 +703,19 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 		@Override
 		protected void onFailure(Intent response) {
 			log.e("Failed to get score: " + AsyncHelper.getError(response));
-			unregisterReceiver(this);
-			dismissProgressDialog();
+			cleanUp();
 			showErrorDialog(R.string.errormsg_unrecoverable, null, true);
 		}
 
-		private void dismissProgressDialog() {
-			progressDialog.dismiss();
-			progressDialog = null;
+		private void cleanUp() {
+			unregisterReceiver(this);
+			getScoreReceiver = null;
+			hideProgressDialog();
 		}
 		
 		@Override
 		protected void onSuccess(Intent response) {
-			unregisterReceiver(this);
-			dismissProgressDialog();
+			cleanUp();
 			ParcelableScore parcelable = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_ENTITY);
 			ScoreVisualizationConfig config = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF);
 			PlayingConfiguration playConf = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_PLAY_CONF);
@@ -718,7 +727,8 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 					false
 				);
 			}
-			onModelLoaded(parcelable.getSource(), config, playConf);
+			// take into account that Score object may have already been provided by in STARTINTENT_EXTRAS_SCORE
+			onModelLoaded(ifNotNull(score, parcelable.getSource()), config, playConf);
 		}
 	}
 
@@ -793,7 +803,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 		public void onScaleEnd() {
 		}
 	};
-		
+
 	private void fixLine0VisibleY(int visY) {
 		((HackedScrollViewChild) vertscroll.getChildAt(0)).fixRulerVisibleY(visY - lines.getPaddingTop());
 	}
@@ -965,7 +975,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
-		if(score != null) {
+		if(playConf != null) {
 			try {
 				outState.putParcelable(INSTANCE_STATE_SCORE, score.prepareParcelable());
 				outState.putParcelable(INSTANCE_STATE_VISCONF, visualConf);
@@ -979,6 +989,15 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 		if(isScaleValid) {
 			outState.putFloat(INSTANCE_STATE_SCALE, sheetParams.getScale());
 		}
+	}
+	
+	@Override
+	protected void onDestroy() {
+		if(getScoreReceiver != null) {
+			unregisterReceiver(getScoreReceiver);
+			getScoreReceiver = null;
+		}
+		super.onDestroy();
 	}
 	
 	private void setUiHidden(boolean hide) {

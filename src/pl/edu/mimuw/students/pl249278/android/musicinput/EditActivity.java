@@ -36,7 +36,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Action;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.IndicatorOrigin;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TimeStepDialog;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_ShowScore;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_ProgressDialog_ShowScore;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType;
@@ -67,7 +67,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.Intercep
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.ScrollingLockable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.TouchInputLockable;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -95,7 +94,7 @@ import android.widget.HorizontalScrollView;
 import android.widget.ScrollView;
 import android.widget.Toast;
 
-public class EditActivity extends FragmentActivity_ErrorDialog_ShowScore implements TimeStepDialog.OnPromptResult {
+public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_ShowScore implements TimeStepDialog.OnPromptResult {
 	private static LogUtils log = new LogUtils(EditActivity.class);
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	/** of type long */
@@ -137,8 +136,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 	private ScrollView vertscroll;
 	private ViewGroup scaleGestureDetector;
 	private Animator animator = new EditActivity.Animator(this);
-	private ProgressDialog progressDialog;	
 	private QuickActionsView qActionsView; 
+	private GetScoreReceiver getScoreReceiver;
 	
 	private boolean isScaleValid = false;
 	private ArrayList<Time> times = new ArrayList<EditActivity.Time>();
@@ -256,23 +255,21 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 				showErrorDialog(R.string.errormsg_unrecoverable, null, true);
 				return;
 			}
-			// sending request for Score object
-			GetScoreReceiver getScoreReceiver = new GetScoreReceiver();	
+			getScoreReceiver = new GetScoreReceiver();	
 			Intent requestIntent = AsyncHelper.prepareServiceIntent(
 				this, 
 				ContentService.class, 
 				ContentService.ACTIONS.GET_SCORE_BY_ID, 
 				getScoreReceiver.getUniqueRequestID(true), 
 				AsyncHelper.getBroadcastCallback(CALLBACK_ACTION_GET), 
-				true
+				false
 			);
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, scoreId);
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, true);
 			registerReceiver(getScoreReceiver, new IntentFilter(CALLBACK_ACTION_GET));
         	log.v("Sending GET_SCORE_BY_ID for id "+scoreId);
         	startService(requestIntent);
-        	progressDialog = ProgressDialog.show(this, "", 
-    			getString(R.string.msg_loading_please_wait), true);
+        	showProgressDialog();
 		}
 	}
 	
@@ -281,8 +278,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 		protected void onFailure(Intent response) {
 			log.e("Failed to get score: " + AsyncHelper.getError(response));
 			unregisterReceiver(this);
-			progressDialog.dismiss();
-			progressDialog = null;
+			hideProgressDialog();
 			showErrorDialog(R.string.errormsg_unrecoverable, null, true);
 		}
 		
@@ -328,9 +324,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 	private static final int MENU_SAVE = 1;
 	private static final int MENU_SAVE_AND_CLOSE = 2;
 	private static final int MENU_DISCARD = 3;
+	private static final int MENU_PLAY = 4;
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
+		menu.add(Menu.NONE, MENU_PLAY, Menu.NONE, R.string.menu_label_play);
 		menu.add(Menu.NONE, MENU_SAVE, Menu.NONE, R.string.menu_label_save);
 		menu.add(Menu.NONE, MENU_SAVE_AND_CLOSE, Menu.NONE, R.string.menu_label_save_exit);
 		menu.add(Menu.NONE, MENU_DISCARD, Menu.NONE, R.string.menu_label_discard_changes);
@@ -353,6 +351,17 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 			sendCleanCopy();
 			skipOnStopCopy = true;
 			finish();
+			break;
+		case MENU_PLAY:
+			try {
+				score.setContent(parseModifiedCotentModel());
+				Intent i = new Intent(this, PlayActivity.class);
+				i.putExtra(PlayActivity.STARTINTENT_EXTRAS_SCORE, score.prepareParcelable());
+				startActivity(i);
+			} catch (SerializationException e) {
+				showErrorDialog(R.string.errormsg_exception_try_later, e, false);
+				log.e("Failed to serialize", e);
+			}
 			break;
 		default:
 			return super.onOptionsItemSelected(item);
@@ -455,10 +464,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ShowScore impleme
 			}
 		});
 		hscroll.requestLayout();
-		if(progressDialog != null) {
-			progressDialog.dismiss();
-			progressDialog = null;
-		}
+		hideProgressDialog();
 	}
 	
 	@Override

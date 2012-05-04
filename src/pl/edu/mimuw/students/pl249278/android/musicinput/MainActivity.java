@@ -21,14 +21,11 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.services.WorkerService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogBuilder;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogListener;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.FragmentUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ParcelablePrimitives.ParcelableLong;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ProgressDialog;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ProgressDialog.ProgressDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog.TextInputDialogListener;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_TipDialog;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_TipDialog_ProgressDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
@@ -52,7 +49,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog implements TextInputDialogListener, ProgressDialogListener, ConfirmDialogListener {
+public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_ProgressDialog implements TextInputDialogListener, ConfirmDialogListener {
 	private static LogUtils log = new LogUtils(MainActivity.class);
 	private static final String CALLBACK_ACTION_GET = MainActivity.class.getName()+".callback_get";
 	protected static final String CALLBACK_ACTION_DELETE = MainActivity.class.getName()+".callback_delete";
@@ -61,7 +58,6 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog impleme
 	
 	protected static final String DIALOGTAG_NEW_TITLE = "dialog_newtitle";
 	protected static final String DIALOGTAG_COPY_TITLE = "dialog_copytitle";
-	protected static final String DIALOGTAG_PROGRESS = "dialog_progress";
 	protected static final String DIALOGTAG_CONFIRM_DELETE = "dialog_confirm_delete";
 	protected static final String DIALOGTAG_EXPORT_MIDI = "dialog_export_midi";
 	protected static final String DIALOGTAG_INFO = "dialog_info";
@@ -176,8 +172,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog impleme
 		}
 		registerReceiver(receiver, new IntentFilter(CALLBACK_ACTION_GET));
 		startService(requestIntent);
-		FragmentUtils.showDialogFragment(this, DIALOGTAG_PROGRESS, 
-			ProgressDialog.newInstance(this, R.string.msg_loading_please_wait, true));
+		showProgressDialog();
 	}
 	
 	private class ContentReceiver extends FilterByRequestIdReceiver {
@@ -198,7 +193,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog impleme
 			}
 			unregisterReceiver(this);
 			receiver = null;
-			FragmentUtils.dismissDialogFragment(MainActivity.this, DIALOGTAG_PROGRESS);
+			hideProgressDialog();
 			showErrorDialog(R.string.errormsg_unrecoverable, null, true);
 		}
 		
@@ -210,7 +205,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog impleme
 			}
 			unregisterReceiver(this);
 			receiver = null;
-			FragmentUtils.dismissDialogFragment(MainActivity.this, DIALOGTAG_PROGRESS);
+			hideProgressDialog();
 			Parcelable[] scoresArr = response.getParcelableArrayExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_SCORES);
 			ArrayList<ParcelableScore> scores = new ArrayList<Score.ParcelableScore>(scoresArr.length);
 			for (int i = 0; i < scoresArr.length; i++) {
@@ -763,7 +758,6 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog impleme
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		FragmentUtils.dismissDialogFragment(MainActivity.this, DIALOGTAG_PROGRESS);
 		if(receiver != null) {
 			outState.putString(STATE_REQUEST_ID, receiver.getUniqueRequestID(false));
 			unregisterReceiver(receiver);
@@ -817,12 +811,6 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog impleme
 		receivers.clear();
 	}
 	
-	@Override
-	public void onCancel(ProgressDialog dialog) {
-		// user dismissed "loading ..." dialog so we exit
-		finish();
-	}
-
 	private void sendCleanRequest(String requestId) {
 		Intent cleanRequest = AsyncHelper.prepareCleanCallbackIntent(MainActivity.this, ContentService.class, requestId);
 		startService(cleanRequest);

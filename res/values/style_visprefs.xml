@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="VISPREFS_entry">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/topdivider_bright</item>
+        <item name="android:paddingTop">5dip</item>
+        <item name="android:paddingBottom">5dip</item>
+        <item name="android:paddingLeft">@dimen/prefs_label_paddingLeft</item>
+    </style>
+	<style name="VISPREFS_entry_label" parent="prefs_label">
+	    <item name="android:layout_marginRight">10dip</item>
+        <item name="android:paddingLeft">0dip</item>
+	</style>
+	<style name="VISPREFS_entry_descr">
+	    <item name="android:layout_width">fill_parent</item>
+	    <item name="android:layout_height">wrap_content</item>
+	    <item name="android:padding">3dip</item>
+	</style>
+</resources>

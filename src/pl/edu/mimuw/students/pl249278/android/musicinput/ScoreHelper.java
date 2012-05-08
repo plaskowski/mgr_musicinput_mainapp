@@ -18,7 +18,7 @@ public class ScoreHelper {
 			return length(timeStep.getTempoBaseLength(), measureBaseUnit)*timeStep.getBaseMultiplier();
 	}
 	
-	public static ElementSpec.NormalNote elementSpecNN(NoteSpec spec, ScoreVisualizationConfig visualConf) {
+	public static int noteOrientation(NoteSpec spec, ScoreVisualizationConfig visualConf) {
 		int orientation;
 		ScoreVisualizationConfig.DisplayMode mode = visualConf.getDisplayMode();
 		switch (mode) {
@@ -34,7 +34,11 @@ public class ScoreHelper {
 		default:
 			throw CodeLogicError.unhandledEnumValue(mode);
 		}
-		return new ElementSpec.NormalNote(spec, orientation);
+		return orientation;
+	}
+	
+	public static ElementSpec.NormalNote elementSpecNN(NoteSpec spec, ScoreVisualizationConfig visualConf) {
+		return new ElementSpec.NormalNote(spec, noteOrientation(spec, visualConf));
 	}
 
 	public static abstract class InsertDivided extends DivideLengthStrategy {

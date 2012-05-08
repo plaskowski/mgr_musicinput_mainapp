@@ -9,6 +9,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.Key
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreContentFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfigFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.SerializationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
@@ -51,12 +52,15 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 	private static final KeySignature defaultKeySign = KeySignature.C_DUR;
 	private static final TimeStep defaultCustomTimeSign = new TimeStep(1 << NoteConstants.LEN_QUATERNOTE, NoteConstants.LEN_QUATERNOTE);
 	private static final TimeSignatureType defaultTimeSignatureType = TimeSignatureType.CUSTOM;
+	protected static final int REQUEST_CODE_VISCONF = 1;
 	private InsertRequestReceiver insertRequestReceiver;
+	private ScoreVisualizationConfig visConf;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.newscore);
+		visConf = ScoreVisualizationConfigFactory.createWithDefaults(this);
 		
 		Resources res = getResources();
 		SheetParams params = new SheetParams(
@@ -135,7 +139,28 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 			public void onClick(View v) {
 				finish();
 			}
-		});		
+		});
+		findViewById(R.id.NEWSCORE_button_editor_prefs).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent i = new Intent(getApplicationContext(), VisualPreferencesActivity.class);
+				i.putExtra(VisualPreferencesActivity.START_EXTRAS_VISCONF, visConf);
+				startActivityForResult(i, REQUEST_CODE_VISCONF);
+			}
+		});
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		switch(requestCode) {
+		case REQUEST_CODE_VISCONF:
+			if(resultCode == RESULT_OK) {
+				visConf = data.getParcelableExtra(VisualPreferencesActivity.RESULT_EXTRAS_VISCONF);
+			}
+			break;
+		default:
+			super.onActivityResult(requestCode, resultCode, data);
+		}
 	}
 	
 	@Override
@@ -183,10 +208,12 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 	private static final String INSTANCE_EXTRA_KEY = "key";
 	private static final String INSTANCE_EXTRA_METRUM_TYPE = "metrum_signature_type";
 	private static final String INSTANCE_EXTRA_INSERT_REQUEST_ID = "insert_requestid";
+	private static final String INSTANCE_VISCONF = "visconf";
 	
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
+		outState.putParcelable(INSTANCE_VISCONF, visConf);
 		outState.putInt(INSTANCE_EXTRA_BASE, meterSignBaseCtrl.getValue());
 		outState.putInt(INSTANCE_EXTRA_MULTIPLIER, meterSignMultipierCtrl.getValue());
 		saveSelectedViewEnumTag(outState, R.id.NEWSCORE_clefs_container, INSTANCE_EXTRA_CLEF);
@@ -206,6 +233,7 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 	protected void onRestoreInstanceState(Bundle savedInstanceState) {
 		super.onRestoreInstanceState(savedInstanceState);
 		if(savedInstanceState == null) return;
+		visConf = savedInstanceState.getParcelable(INSTANCE_VISCONF);
 		meterSignBaseCtrl.setValue(savedInstanceState.getInt(INSTANCE_EXTRA_BASE, meterSignBaseCtrl.getValue()));
 		meterSignMultipierCtrl.setValue(savedInstanceState.getInt(INSTANCE_EXTRA_MULTIPLIER, meterSignMultipierCtrl.getValue()));
 		selectRadioViewByEnumTag(savedInstanceState, INSTANCE_EXTRA_CLEF, R.id.NEWSCORE_clefs_container);
@@ -313,12 +341,6 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 				);
 				break;
 			}
-			// FIXME obtain this from user
-			ScoreVisualizationConfig config = new ScoreVisualizationConfig(
-				ScoreVisualizationConfig.DisplayMode.NORMAL,
-				getResources().getInteger(R.integer.minSpaceDefault),
-				getResources().getInteger(R.integer.maxSpaceDefault)
-			);
 			Score score = new Score(
 				title,
 				ScoreContentFactory.initialContent(
@@ -341,7 +363,7 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 				return;
 			}
-			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_SCORE_VISUAL_CONF, config);
+			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_SCORE_VISUAL_CONF, visConf);
 			registerReceiver(insertRequestReceiver, new IntentFilter(CALLBACK_ACTION_INSERT));
         	log.v("Sending "+CALLBACK_ACTION_INSERT);
         	startService(requestIntent);

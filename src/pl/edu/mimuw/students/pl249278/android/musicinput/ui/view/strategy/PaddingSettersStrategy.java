@@ -29,8 +29,18 @@ public class PaddingSettersStrategy extends View {
 		updatePadding();
 	}
 	
+	public void setPaddingTop(int top) {
+		lastCall.top = top;
+		updatePadding();
+	}
+	
 	public void setPaddingRight(int right) {
 		lastCall.right = right;
+		updatePadding();
+	}
+	
+	public void setPaddingBottom(int bottom) {
+		lastCall.bottom = bottom;
 		updatePadding();
 	}
 

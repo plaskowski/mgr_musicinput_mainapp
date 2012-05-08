@@ -84,8 +84,9 @@
 		</HorizontalScrollView>
 		
         <TextView
+            android:id="@+id/NEWSCORE_button_editor_prefs"
             style="@style/NEWSCORE_h1"
-            android:text="Editor preferences"
+            android:text="@string/NEWSCORE_button_editor_preferences"
             android:minHeight="56dip"
             android:gravity="center_vertical"
             android:clickable="true"

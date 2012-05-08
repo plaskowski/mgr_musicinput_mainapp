@@ -26,23 +26,17 @@ public class InfoDialog extends DialogFragment {
 		void onDismiss(InfoDialog dialog, int arg);
 	}
 
-	public static InfoDialog newInstance(Context ctx, int messageStringId, int listenerArg, String[] msgArgs) {
+	public static InfoDialog newInstance(Context ctx, int titleId, int messageStringId, int buttonLabelId, Throwable e, int listenerArg) {
 		Bundle args = new Bundle();
+		args.putInt(ARG_TITLEID, titleId);
 		args.putInt(ARG_MSGID, messageStringId);
-		args.putInt(ARG_LISTENER_ARG, 0);
-		args.putStringArray(ARG_MSG_ARGS, msgArgs);
+		args.putStringArray(ARG_MSG_ARGS, null);
+        args.putInt(ARG_BUTTONLABEL_ID, buttonLabelId);
+        args.putSerializable(ARG_THROWABLE, e);
+		args.putInt(ARG_LISTENER_ARG, listenerArg);
 		InfoDialog dialog = new InfoDialog();
 		dialog.setArguments(args);
 		return dialog;
-	}
-	
-	public static InfoDialog newInstance(Context ctx, int titleId, int messageStringId, int buttonLabelId, Throwable e, int listenerArg) {
-		InfoDialog newInstance = newInstance(ctx, messageStringId, listenerArg, null);
-		Bundle args = newInstance.getArguments();
-		args.putInt(ARG_TITLEID, titleId);
-        args.putSerializable(ARG_THROWABLE, e);
-        args.putInt(ARG_BUTTONLABEL_ID, buttonLabelId);
-		return newInstance;
 	}
 	
 	@Override

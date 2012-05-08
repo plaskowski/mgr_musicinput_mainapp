@@ -97,6 +97,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	/** of type long */
 	public static final String STARTINTENT_EXTRAS_SCORE_ID = EditActivity.class.getCanonicalName()+".score_id";
+	private static final int REQUEST_CODE_PREFS = 1;
 	private static final int ANIM_TIME = 150;
 	
 	private static final String INSTANCE_STATE_SCORE = "state_score";
@@ -320,6 +321,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private static final int MENU_SAVE_AND_CLOSE = 2;
 	private static final int MENU_DISCARD = 3;
 	private static final int MENU_PLAY = 4;
+	private static final int MENU_PREFS = 5;
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -327,6 +329,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		menu.add(Menu.NONE, MENU_SAVE, Menu.NONE, R.string.menu_label_save);
 		menu.add(Menu.NONE, MENU_SAVE_AND_CLOSE, Menu.NONE, R.string.menu_label_save_exit);
 		menu.add(Menu.NONE, MENU_DISCARD, Menu.NONE, R.string.menu_label_discard_changes);
+		menu.add(Menu.NONE, MENU_PREFS, Menu.NONE, R.string.menu_label_editor_prefs);
 		return super.onCreateOptionsMenu(menu);
 	}
 	
@@ -358,10 +361,63 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				log.e("Failed to serialize", e);
 			}
 			break;
+		case MENU_PREFS:
+			Intent i = new Intent(this, VisualPreferencesActivity.class);			
+			i.putExtra(VisualPreferencesActivity.START_EXTRAS_VISCONF, new ScoreVisualizationConfig(visualConf));
+			startActivityForResult(i, REQUEST_CODE_PREFS);
+			break;
 		default:
 			return super.onOptionsItemSelected(item);
 		}
 		return true;
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		switch(requestCode) {
+		case REQUEST_CODE_PREFS:
+			if(resultCode == RESULT_OK) {
+				ScoreVisualizationConfig oldVisConf = visualConf;
+				visualConf = data.getParcelableExtra(VisualPreferencesActivity.RESULT_EXTRAS_VISCONF);
+				if(visualConf.getDisplayMode() != oldVisConf.getDisplayMode()) {
+					try {
+						// displayMode changed, we must rebuild all note views
+						updateSavedPosition();
+						int endIndex = elementViews.size()-1;
+						clearJoinArcs(0, endIndex);
+						clearNoteGroups(0, endIndex);
+						for(SheetAlignedElementView elView: elementViews) {
+							ElementSpec spec = elView.model().getElementSpec();
+							if(spec.getType() == ElementType.NOTE) {
+								ElementSpec.NormalNote noteSpec = (ElementSpec.NormalNote) spec;
+								noteSpec.clear(ScoreHelper.noteOrientation(noteSpec.noteSpec(), visualConf));
+							} else {
+								spec.clear();
+							}
+							elView.setModel(createDrawingModel(spec));
+						}
+						buildNoteGroups(0, endIndex);
+						buildJoinArcs(0, endIndex);
+						updateScaleFactor(sheetParams.getScale(), false);						
+						initialScrollTo();
+					} catch(Exception e) {
+						log.e("Failed to rebuild after DisplayMode change", e);
+						showErrorDialog(R.string.errormsg_unrecoverable, e, true);
+					}
+				} else {
+					// correct size to cover vertical area between given boundaries
+					int line0visPos = abs2visibleY(line0Top());
+					updateLinesViewSizeAndPosition();
+					for(SheetAlignedElementView elView: elementViews) {
+						updatePosition(elView, null, sheetElementY(elView));
+					}
+					fixLine0VisibleY(line0visPos);
+				}
+			}
+			break;
+		default:
+			super.onActivityResult(requestCode, resultCode, data);
+		}
 	}
 
 	private void sendCleanCopy() {
@@ -476,15 +532,23 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			if(isScaleValid) {
 				outState.putFloat(INSTANCE_STATE_SCALE, sheetParams.getScale());
 			}
-			if(rightToIA < elementViews.size()) {
-				SheetAlignedElementView view = elementViews.get(rightToIA);
-				int middleX = viewStableX(view) + middleX(view);
-				outState.putInt(INSTANCE_STATE_RIGHT_TO_IA_POSITION, abs2visibleX(middleX) - moveLeftBorder());
-			}
+			updateSavedPosition();
+			outState.putInt(INSTANCE_STATE_RIGHT_TO_IA_POSITION, rightToIAsavedPosition);
 			outState.putInt(INSTANCE_STATE_CONTEXT_TIME_INDEX, contextTimeIndex);
 			outState.putInt(INSTANCE_STATE_CURRENT_NOTE_LENGTH, currentNoteLength);
 		}
 		super.onSaveInstanceState(outState);
+	}
+
+	/**
+	 * Updates {@link #rightToIAsavedPosition} field value
+	 */
+	private void updateSavedPosition() {
+		if(rightToIA < elementViews.size()) {
+			SheetAlignedElementView view = elementViews.get(rightToIA);
+			int middleX = viewStableX(view) + middleX(view);
+			rightToIAsavedPosition = abs2visibleX(middleX) - moveLeftBorder();
+		}
 	}
 
 	private List<ScoreContentElem> parseModifiedCotentModel() {
@@ -1839,7 +1903,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		int linesHalf = sheetParams.anchorOffset(NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE), AnchorPart.MIDDLE);
 		fixLine0VisibleY((visibleRectHeight/2) - linesHalf);
 		
-    	// scroll according to rightToIA
+		initialScrollTo();
+	}
+
+	/** scrolls according to {@link #rightToIA} and {@link #rightToIAsavedPosition} */
+	private void initialScrollTo() {
 		final int startScrollX;
 		if(rightToIA >= elementViews.size()) {
 			startScrollX = declaredWidth(sheet);
@@ -1884,25 +1952,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		NOTE_DRAW_PADDING = Math.max(MIN_DRAW_SPACING, NOTE_DRAW_PADDING);
 		delta = (int) (sheetParams.getScale()*noteMinDistToIA);
 		log.d("updateScaleFactor(%f): delta = %d", newScaleFactor, delta);
-		// <!-- correct "5 lines" View to assure that min/maxSpaceAnchor is visible
-		int minLinespaceTopOffset = sheetParams.anchorOffset(
-			NoteConstants.anchorIndex(visualConf.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE), 
-			AnchorPart.TOP_EDGE
-		);
-		int maxLinespaceBottomOffset = sheetParams.anchorOffset(
-			NoteConstants.anchorIndex(visualConf.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE),
-			AnchorPart.BOTTOM_EDGE
-		);
-		int line4bottomOffset = sheetParams.anchorOffset(
-			NoteConstants.LINE4_ABSINDEX,
-			AnchorPart.BOTTOM_EDGE
-		);
-		lines.setParams(sheetParams, 
-			Math.abs(minLinespaceTopOffset), 
-			Math.abs(maxLinespaceBottomOffset - line4bottomOffset)
-		);
-		updatePosition(lines, null, 0);
-		// -->
+		updateLinesViewSizeAndPosition();
 		onFirstTimeDividerChanged();
 		
 		int spacingAfter = notesAreaX;
@@ -1933,6 +1983,29 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 //			log.i("onScaleFactor() note[%d] at: %dx%d", i, xpos, ypos);
 		}
 		correctSheetWidth();
+	}
+
+	/**
+	 * correct "5 lines" View to assure that min/maxSpaceAnchor is visible
+	 */
+	private void updateLinesViewSizeAndPosition() {
+		int minLinespaceTopOffset = sheetParams.anchorOffset(
+			NoteConstants.anchorIndex(visualConf.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE), 
+			AnchorPart.TOP_EDGE
+		);
+		int maxLinespaceBottomOffset = sheetParams.anchorOffset(
+			NoteConstants.anchorIndex(visualConf.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE),
+			AnchorPart.BOTTOM_EDGE
+		);
+		int line4bottomOffset = sheetParams.anchorOffset(
+			NoteConstants.LINE4_ABSINDEX,
+			AnchorPart.BOTTOM_EDGE
+		);
+		lines.setParams(sheetParams, 
+			Math.abs(minLinespaceTopOffset), 
+			Math.abs(maxLinespaceBottomOffset - line4bottomOffset)
+		);
+		updatePosition(lines, null, 0);
 	}
 
 	private void updateTimeSpacingBase(int timeIndex, boolean refreshSheetParams) {

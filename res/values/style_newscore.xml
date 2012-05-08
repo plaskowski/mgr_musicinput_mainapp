@@ -1,14 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="NEWSCORE_h1">
+    <style name="NEWSCORE_h1" parent="prefs_label">
         <item name="android:layout_width">fill_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:textColor">#FFFFFF</item>
-        <item name="android:textSize">20sp</item>
         <item name="android:background">@drawable/topdivider_bright</item>
-        <item name="android:layout_marginBottom">5sp</item>
-        <item name="android:paddingLeft">10sp</item>
-        <item name="android:paddingTop">5sp</item>
 	</style>
     
     <style name="NEWSCORE_wrapperscroll">

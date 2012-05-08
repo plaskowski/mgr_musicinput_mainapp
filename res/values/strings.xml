@@ -47,4 +47,16 @@
     <string name="tipdialog_title">Tip</string>
     <string name="MAIN_label_create_new_score">Create new score</string>
     <string name="menu_label_play">Play</string>
+    <string name="spinner_label_normal_voice">single voice</string>
+    <string name="spinner_label_upper_voice">upper voice</string>
+    <string name="spinner_label_lower_voice">lower voice</string>
+    <string name="spinner_displaymode">Display as</string>
+    <string name="NEWSCORE_button_editor_preferences">Editor preferences</string>
+    <string name="VISPREFS_title">Editor preferences</string>
+    <string name="VISPREFS_max_upper_added_line">Max. upper added line</string>
+    <string name="VISPREFS_max_lower_added_line">Max. lower added line</string>
+    <string name="VISPREFS_descr_mode">Determines orientation of the notes stems.</string>
+    <string name="VISPREFS_descr_upper">Allows to adjust highest pitch you can entry.</string>
+    <string name="VISPREFS_descr_lower">Allows to adjust lowest pitch you can entry.</string>
+    <string name="menu_label_editor_prefs">Preferences</string>
 </resources>

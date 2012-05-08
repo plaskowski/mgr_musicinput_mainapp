@@ -9,6 +9,11 @@ public class ScoreVisualizationConfig implements Parcelable {
 	private int minSpaceAnchor;
 	private int maxSpaceAnchor;
 	
+	/** copy constructor */
+	public ScoreVisualizationConfig(ScoreVisualizationConfig orig) {
+		this(orig.displayMode, orig.minSpaceAnchor, orig.maxSpaceAnchor);
+	}
+	
 	public ScoreVisualizationConfig(DisplayMode displayMode,
 			int minSpaceAnchor, int maxSpaceAnchor) {
 		this.displayMode = displayMode;

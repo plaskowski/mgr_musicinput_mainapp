@@ -41,7 +41,8 @@ public class Sheet5LinesView extends PaddingSettersStrategy {
 		totalVerticalSpan = params.anchorOffset(LINE4_ABSINDEX, AnchorPart.BOTTOM_EDGE);
 		int shadowThickness = params.getLineThickness()/2;
 		lineHighlightedPaint.setShadowLayer(shadowThickness, 0, params.getLineThickness()/4, Color.BLACK);
-		setPadding(0, Math.max(shadowThickness, topPaddingMin), 0, Math.max(shadowThickness, bottomPaddingMin));
+		setPaddingTop(Math.max(shadowThickness, topPaddingMin));
+		setPaddingBottom(Math.max(shadowThickness, bottomPaddingMin));
 		setMeasuredDimension(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
 		requestLayout();
 		invalidate();

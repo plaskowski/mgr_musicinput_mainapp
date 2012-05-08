@@ -112,6 +112,11 @@ public abstract class ElementSpec {
 			this.forcedSpacing = forcedSpacing;
 		}
 		
+		public void clear(int initOrientation) {
+			setFlag(FLAG_ORIGINAL_ORIENT, initOrientation);
+			clear();
+		}
+		
 		@Override
 		public void clear() {
 			super.clear();

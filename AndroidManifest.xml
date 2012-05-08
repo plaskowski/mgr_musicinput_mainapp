@@ -42,7 +42,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
- 
+        
+        <activity android:name=".VisualPreferencesActivity" 
+            android:theme="@android:style/Theme.NoTitleBar"
+        />
+        
         <activity android:name=".EditActivity"
                   android:label="@string/app_name"
 		/>

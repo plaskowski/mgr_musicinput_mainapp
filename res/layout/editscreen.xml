@@ -139,7 +139,18 @@
     		custom:buttonIconPaintSetup="@array/InvertedEmboss"
 	    />
    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.RelativeLayout_InterceptScale_LockTouchInput>
-    
+   
+	<include 
+    	layout="@layout/editscreen_title"
+    	android:id="@+id/EDIT_title"
+    	android:layout_width="wrap_content" 
+    	android:layout_height="wrap_content" 
+    	android:layout_alignParentTop="true" 
+    	android:layout_toRightOf="@id/EDIT_note_value_wrapper"
+    	android:layout_marginLeft="5dip"
+    	android:layout_marginTop="5dip"
+   	/>
+	
    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_ExtendedBackground
 		android:id="@+id/EDIT_info_popup"   
    		android:orientation="vertical"

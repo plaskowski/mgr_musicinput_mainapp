@@ -1,5 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
+import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.middleX;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.timeCapacity;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
@@ -90,6 +91,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.HorizontalScrollView;
 import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_ShowScore_ManagedReceiver implements TimeStepDialog.OnPromptResult {
@@ -516,6 +518,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		});
 		hscroll.requestLayout();
 		hideProgressDialog();
+		((TextView) findViewById(R.id.EDIT_title)).setText(ifNotNull(score.getTitle(), getString(android.R.string.untitled)));
 	}
 	
 	@Override
@@ -1726,6 +1729,13 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		);
 	}
 	
+	/**
+	 * Updates timeSpacingBase of times that overlaps rebuild range.
+	 * Calculates new {@link #rightToIA}, scrolls "sheet" and 
+	 * moves element views to their appropriate horizontal positions inside "sheet".
+	 * @param rebuildStart indicates the leftmost element that was modified
+	 * @param rebuildEnd indicates the rightmost element that was modified
+	 */
 	private void animatedRepositioning(int rebuildStart, int rebuildEnd, int pinnedElementIndex, int pinVisiblePositionX, long animationDuration) {
 		animator.forceFinishAll();
 		isPositioning = true;
@@ -2531,6 +2541,52 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		
 	}
 	
+	private class DeleteTimeBar extends SvgIconAction {
+		public DeleteTimeBar(int svgResId) throws LoadingSvgException {
+			super(svgResId);
+		}
+		
+		@Override
+		protected void perform(int elementIndex) {
+			int timeIndex = findTime(elementIndex);
+			int timebarIndex = times.get(timeIndex).rangeStart;
+			int pinnedElIndex = timebarIndex-1;
+			int pinnedElVisX = abs2visibleX(viewStableX(elementViews.get(pinnedElIndex)));
+			int groupsRebuildStart = findPossibleNoteGroupStart(timebarIndex);
+			int arcsRebuildStart = findPossibleJoinArcStart(groupsRebuildStart);
+			int endIndex = elementViews.size()-1;
+			try {
+				clearJoinArcs(arcsRebuildStart, endIndex);
+				clearNoteGroups(groupsRebuildStart, endIndex);
+				Time removed = times.remove(timeIndex);
+				removeElementView(removed.view);
+				rebuildTimes(timeIndex-1);
+				endIndex = elementViews.size()-1;
+				buildNoteGroups(groupsRebuildStart, endIndex);
+				buildJoinArcs(arcsRebuildStart, endIndex);
+				assertTimesValidity();
+				animatedRepositioning(
+					arcsRebuildStart, endIndex, pinnedElIndex, pinnedElVisX, 300
+				);
+			} catch (CreationException e) {
+				log.e("", e);
+				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
+			}
+		}
+		
+		@Override
+		protected boolean isValidOn(int elementIndex) {
+			if(isValidIndex(elementIndex)) {
+				int timeIndex = findTime(elementIndex);
+				return timeIndex > 0 
+				&& getCurrentTimeStep(timeIndex-1) == null
+				&& times.get(timeIndex).spec.getTimeStep() == null;
+			} else {
+				return false;
+			}
+		}
+	}
+	
 	private abstract class ToggleTimebarMark extends SvgIconAction {
 		private AdditionalMark mark;
 
@@ -2707,7 +2763,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				protected int getTimeIndex(int elementIndex) {
 					return findTime(elementIndex);
 				}
-			}
+			},
+			new DeleteTimeBar(R.xml.button_trash)
 		};
 	}
 	private View.OnTouchListener quickActionsDismiss = new OnTouchListener() {

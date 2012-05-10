@@ -18,6 +18,7 @@
     <declare-styleable name="NoteValueSpinner">
 		<attr name="itemPaint" format="reference" />
 		<attr name="selectedItemPaint" format="reference" />
+		<attr name="spacing" format="float" />
 	</declare-styleable>
     	
 	<declare-styleable name="ExtendedBackground">

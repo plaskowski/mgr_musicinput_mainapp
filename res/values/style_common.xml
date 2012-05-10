@@ -12,4 +12,6 @@
 	
 	<dimen name="prefs_label_paddingLeft">10sp</dimen>
 	<dimen name="prefs_label_verticalPadding">5sp</dimen>
+	
+	<dimen name="horizontalScrollBarConflict">4dip</dimen>	
 </resources>

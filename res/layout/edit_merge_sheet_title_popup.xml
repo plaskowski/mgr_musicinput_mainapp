@@ -54,21 +54,12 @@
 		    android:layout_width="48dip"
 		    android:layout_height="48dip"
 		    android:background="@drawable/button_bluegradient"
-		    android:layout_alignRight="@id/EDIT_inputArea"
-		    android:layout_alignBottom="@id/EDIT_inputArea"
-		    android:layout_marginRight="-49dip"
 		    custom:extendedImage="@style/insertButton"
 		    android:scaleType="fitXY"
 		    custom:iconMaxHeight="28dip"
 		    style="@style/EDIT_button_insert"
-	    /><!-- 
-		    android:layout_gravity="right|bottom"
-		    android:layout_toRightOf="@id/EDIT_inputArea"
-		    android:layout_alignBottom="@id/EDIT_inputArea"
-		    android:layout_marginBottom="5dip"
-		    android:layout_marginRight="5dip"
-	     -->
-	    	    
+	    />
+	   		    	    
 	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.QuickActionsView 
 	    	android:orientation="horizontal"
 	    	android:id="@+id/EDIT_quickactions"
@@ -107,6 +98,8 @@
 			android:layout_height="wrap_content"
 			android:layout_gravity="center_horizontal"
 			android:textColor="@android:color/white"
+			android:layout_marginLeft="4dip"
+			android:layout_marginRight="4dip"
 			android:layout_marginBottom="5dip"
 		/>
 		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView

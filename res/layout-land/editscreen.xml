@@ -27,6 +27,7 @@
 			android:scrollbars="none"
 			custom:itemPaint="@style/spinnerNoSelection"
 			custom:selectedItemPaint="@style/spinnerSelection"
+			custom:spacing="0.45"
 			android:layout_centerVertical="true"
 			custom:maxHeight="300dip"
 			android:background="#000000"

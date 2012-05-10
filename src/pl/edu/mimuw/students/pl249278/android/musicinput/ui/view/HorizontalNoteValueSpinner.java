@@ -39,7 +39,7 @@ public class HorizontalNoteValueSpinner extends NoteValueSpinner_Horizontal {
 		int h = getHeight();
         // align notes on scrollbar
         int availableHeight = h - notesContainer.getPaddingTop()-notesContainer.getPaddingBottom();
-        int distanceBetweenMiddles = (int) (w*0.4);
+        int distanceBetweenMiddles = (int) (w*itemSpacing);
         int verticalSpaceLeft = w/2;
         SheetAlignedElementView current = null;
         // calculate scale so that all notes fits vertically

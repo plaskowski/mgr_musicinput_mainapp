@@ -14,4 +14,12 @@
     	<item name="android:layout_marginLeft">5dip</item>
     	<item name="android:layout_marginTop">5dip</item>        
     </style>
+
+	<style name="EDIT_button_insert">
+       <item name="android:layout_alignRight">@id/EDIT_inputArea</item>
+       <item name="android:layout_alignBottom">@id/EDIT_inputArea</item>
+       <item name="android:layout_marginRight">-49dip</item>
+    </style>
+    
+	<dimen name="inputAreaRightMargin">80dip</dimen>	
 </resources>

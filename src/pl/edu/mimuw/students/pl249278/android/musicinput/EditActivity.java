@@ -1725,7 +1725,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			rebuildRange.y, 
 			isLastNoteOfTime && times.get(timeIndex).isFull() ? insertIndex+1 : insertIndex, 
 			visibleRectWidth - inputAreaWidth - iaRightMargin - delta, 
-			500
+			300
 		);
 	}
 	

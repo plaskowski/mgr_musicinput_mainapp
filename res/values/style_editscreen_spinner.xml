@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<color name="spinnerSelectionColor">#FFFFD700</color>
+    
    	<style name="spinnerNoSelection" parent="PaintAntialias">
 	    <!-- PaintSetup -->
     	<item name="drawRadius">1dip</item>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Music Input</string>
-    <string name="EDIT_current_note_value">Aktualna długość nuty:</string>
+    <string name="EDIT_current_note_value">Current time value</string>
     <string name="EDIT_msg_inserterror_notetolong">This note won\'t fit into current time</string>
     <string name="no_timestep">No metrum specified.</string>
     <string name="dialog_timestep_custom">custom:</string>
@@ -59,4 +59,6 @@
     <string name="VISPREFS_descr_upper">Allows to adjust highest pitch you can entry.</string>
     <string name="VISPREFS_descr_lower">Allows to adjust lowest pitch you can entry.</string>
     <string name="menu_label_editor_prefs">Preferences</string>
+    <string name="PLAY_options_play_with_metronome">play with metronome</string>
+    <string name="PLAY_options_prepend_intro">prepend empty bar</string>
 </resources>

@@ -50,7 +50,7 @@
 	    android:id="@+id/PLAY_checkbox_metronome"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="dźwięk metronomu"
+        android:text="@string/PLAY_options_play_with_metronome"
         android:textColor="?android:panelColorForeground"
         android:minHeight="48dip"
     />
@@ -58,7 +58,7 @@
 	    android:id="@+id/PLAY_checkbox_intro"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="takt wstępu"
+        android:text="@string/PLAY_options_prepend_intro"
         android:textColor="?android:panelColorForeground"
         android:minHeight="48dip"
     />

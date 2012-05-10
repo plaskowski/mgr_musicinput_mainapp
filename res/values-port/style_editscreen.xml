@@ -12,10 +12,15 @@
     	<item name="android:layout_alignParentTop">true</item> 
     	<item name="android:layout_alignParentLeft">true</item> 
     	<item name="android:layout_marginLeft">5dip</item>
-    	<item name="android:layout_marginTop">5dip</item>        
+    	<item name="android:layout_marginTop">10dip</item>        
     </style>
     
     <style name="EDIT_button_insert">
-        <item name="android:layout_marginBottom">3dip</item>
-    </style>
+       <item name="android:layout_marginBottom">3dip</item>
+       <item name="android:layout_alignLeft">@id/EDIT_inputArea</item>
+       <item name="android:layout_alignBottom">@id/EDIT_inputArea</item>
+       <item name="android:layout_marginLeft">-49dip</item>
+	</style>
+	
+	<dimen name="inputAreaRightMargin">40dip</dimen>    
 </resources>

@@ -29,4 +29,7 @@
 	<integer name="defaultPlayTempoBPM">90</integer>
 	<string name="midiArtist">MusicInput</string>
 	<string name="midiAlbum">MusicInput</string>
+	
+	<integer name="lineThickness">10</integer>
+ 	<integer name="linespaceThickness">100</integer>	
 </resources>

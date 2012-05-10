@@ -27,7 +27,8 @@ public abstract class NoteValueSpinner extends DummyViewGroup implements NoteVal
 	
 	private Paint itemPaint = new Paint();
 	private Paint itemSelectedPaint = new Paint();
-	private int maxPaintRadius = 0;	
+	private int maxPaintRadius = 0;
+	protected float itemSpacing;
 	protected ViewGroup notesContainer;	
 	protected int minNoteValue;
 	private int currentValue = 0;	
@@ -68,6 +69,7 @@ public abstract class NoteValueSpinner extends DummyViewGroup implements NoteVal
 				maxPaintRadius = (int) Math.max(maxPaintRadius, Math.ceil(setup.drawRadius));
 				itemSelectedPaint = setup.paint;
 			}
+			itemSpacing = values.getFloat(R.styleable.NoteValueSpinner_spacing, 0.5f);
 		} finally {
 			values.recycle();
 		}

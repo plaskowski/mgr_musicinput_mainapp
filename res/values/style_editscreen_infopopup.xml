@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<dimen name="infoPopupIconHeight">70dip</dimen>
-	<integer name="infoPopupLife">1500</integer>
+	<integer name="infoPopupLife">600</integer>
 	
 	<style name="infoPopupIconPaint" parent="PaintAntialias">
 	    <item name="color">#FFFFFFFF</item>

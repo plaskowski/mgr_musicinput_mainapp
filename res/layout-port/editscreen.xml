@@ -32,6 +32,7 @@
 			android:scrollbars="none"
 			custom:itemPaint="@style/spinnerNoSelection"
 			custom:selectedItemPaint="@style/spinnerSelection"
+			custom:spacing="0.37"
 			android:layout_centerHorizontal="true"
 			android:background="#000000"
 		>

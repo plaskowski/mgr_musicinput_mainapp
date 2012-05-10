@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources>	
+	<dimen name="optimalLinespaceThickness">60dp</dimen>
+	<dimen name="maxLinespaceThickness">100dp</dimen>    
+	<dimen name="inputAreaWidth">88dip</dimen>
+	<string name="minDistToIA">1.5s</string>
+	<string name="fakePauseEffectRadius">0.1s</string>
+		
     <array name="EmbossGray">
     	<item>@style/EmbossGray_edge</item>
     	<item>@style/EmbossGray_fill</item>

@@ -4,9 +4,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.Intercep
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-import android.view.ViewGroup;
 
-public abstract class InterceptTouchEventStrategy extends ViewGroup implements InterceptableTouch {
+public class InterceptTouchEventStrategy extends DummyViewGroup implements InterceptableTouch {
 
 	public InterceptTouchEventStrategy(Context context, AttributeSet attrs) {
 		super(context, attrs);

@@ -8,9 +8,8 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.OnScaleGestureListener;
-import android.view.ViewGroup;
 
-public abstract class InterceptScaleGestureStrategy extends ViewGroup implements InterceptsScaleGesture {
+public class InterceptScaleGestureStrategy extends DummyViewGroup implements InterceptsScaleGesture {
 	protected static final float MIN_SCALE_STEP = 0.05f;
 	protected static final float MAX_SCALE_STEP = 0.5f;
 	protected static LogUtils log = new LogUtils(InterceptScaleGestureStrategy.class);

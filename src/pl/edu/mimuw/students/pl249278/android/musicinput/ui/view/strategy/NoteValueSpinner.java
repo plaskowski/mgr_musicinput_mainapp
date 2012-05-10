@@ -1,5 +1,5 @@
 
-package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
+package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
@@ -12,6 +12,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModel
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.NoteValueWidget;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Paint;
@@ -19,15 +21,22 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 
-public class NoteValueSpinner extends ScrollView {
+public abstract class NoteValueSpinner extends DummyViewGroup implements NoteValueWidget {	
+	private static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
+	
 	private Paint itemPaint = new Paint();
 	private Paint itemSelectedPaint = new Paint();
-	private int maxPaintRadius = 0;
-	private int mMaxHeight = Integer.MAX_VALUE;
-	
-	private static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
+	private int maxPaintRadius = 0;	
+	protected ViewGroup notesContainer;	
+	protected int minNoteValue;
+	private int currentValue = 0;	
+	private OnValueChanged<Integer> onValueChangedListener = null;
+	protected SheetParams params;
+	/**
+	 * If we need to scroll to currently selected element in next {@link #onLayout(boolean, int, int, int, int)} pass.
+	 */
+	private boolean scrollInOnLayout = false;
 
 	public NoteValueSpinner(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
@@ -38,11 +47,6 @@ public class NoteValueSpinner extends ScrollView {
 		super(context, attrs);
 		init(ExtendedResourcesFactory.styleResolver(context, attrs));
 	}
-	
-	private ViewGroup notesContainer;
-	
-	private int minNoteValue;
-	private int currentValue = 0;
 	
 	private void init(StyleResolver resolver) {
 		minNoteValue = resolver.getResources().getInteger(R.integer.spinnerDefaultMinNoteValue);
@@ -67,10 +71,6 @@ public class NoteValueSpinner extends ScrollView {
 		} finally {
 			values.recycle();
 		}
-		
-		values = resolver.obtainStyledAttributes(R.styleable.CustomizableView);
-		mMaxHeight = values.getDimensionPixelSize(R.styleable.CustomizableView_maxHeight, mMaxHeight);
-		values.recycle();
 	}
 	
 	public void setupNoteViews(SheetParams globalParams, int initialCurrentValue) throws CreationException {
@@ -78,6 +78,7 @@ public class NoteValueSpinner extends ScrollView {
 		currentValue = Math.min(initialCurrentValue, minNoteValue);
 	}
 	
+	/** Setup views, set scale to 1 */
 	public void setupNoteViews(SheetParams globalParams) throws CreationException {
 		if(getChildCount() == 1) {
 			notesContainer = (ViewGroup) getChildAt(0);
@@ -87,7 +88,6 @@ public class NoteValueSpinner extends ScrollView {
         notesContainer.removeAllViews();
         params = new SheetParams(globalParams);
         params.setScale(1);
-        maxNoteHorizontalHalfWidth = 0;
         for (int i = 0; i <= minNoteValue; i++) {
 			SheetAlignedElement model = DrawingModelFactory.createDrawingModel(getContext(), 
 				new ElementSpec.NormalNote(new NoteSpec(i, LINE4_ABSINDEX), NoteConstants.ORIENT_UP)
@@ -95,104 +95,55 @@ public class NoteValueSpinner extends ScrollView {
 			SheetAlignedElementView noteView = new SheetAlignedElementView(getContext(), model);
 			noteView.setSheetParams(params);
 			noteView.setPaint(itemPaint, maxPaintRadius);
-			maxNoteHorizontalHalfWidth = Math.max(maxNoteHorizontalHalfWidth, Math.max(
-				middleX(noteView),
-				noteView.measureWidth()-middleX(noteView)
-			));
 			notesContainer.addView(noteView, new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
 		}
 	}
 	
-	private static int middleX(SheetAlignedElementView noteView) {
+	protected static int middleX(SheetAlignedElementView noteView) {
 		return noteView.getPaddingLeft()+noteView.model().getMiddleX();
 	}
 
 	@Override
 	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
 		super.onSizeChanged(w, h, oldw, oldh);
-		
-        // align notes on scrollbar
-        int visibleRectHeight = h, availableWidth = w - notesContainer.getPaddingLeft()-notesContainer.getPaddingRight();
-        int distanceBetweenNotesHeads = (int) (visibleRectHeight*0.4);
-        
-        int horizontalSpaceLeft = visibleRectHeight/2;
-        SheetAlignedElementView current = null;
-        // calculate scale so that any "half" of any note will fit in half of available width
-        params.setScale((availableWidth/2)/((float) maxNoteHorizontalHalfWidth));
-        LinearLayout.LayoutParams params = null, templateParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        for(int i = 0; i <= minNoteValue; i++) {
-        	current = (SheetAlignedElementView) notesContainer.getChildAt(i);
-        	current.setSheetParams(this.params);
-			params = new LinearLayout.LayoutParams(templateParams);
-    		params.leftMargin = availableWidth/2-middleX(current);
-    		int verticalAlignLine = verticalAlignLine(current);
-			params.topMargin = Math.max(0, horizontalSpaceLeft - verticalAlignLine);
-        	current.setLayoutParams(params);
-        	horizontalSpaceLeft = distanceBetweenNotesHeads-(current.measureHeight()-verticalAlignLine);
-        }
-        // bottomMargin for last
-		params.bottomMargin = Math.max(0, visibleRectHeight/2 - (current.measureHeight()-verticalAlignLine(current)));
-        current.setLayoutParams(params);
-	}
-
-	private int verticalAlignLine(SheetAlignedElementView noteView) {
-		return noteView.measureHeight()/2;
+		// post outside layout pass so changes in layout parameters will take effect
+		post(new Runnable() {
+			@Override
+			public void run() {
+				layoutViews();
+				scrollInOnLayout = true;
+			}
+		});
+		getChildAt(0).setVisibility(View.INVISIBLE);
 	}
 	
+	/** layout note views, called when size of scrolling widget is known, outside of layout pass */
+	protected abstract void layoutViews();
+
 	@Override
 	protected void onLayout(boolean changed, int l, int t, int r, int b) {
 		super.onLayout(changed, l, t, r, b);
 		if(changed) {
-	        // position according to current value
-	        View currentView = notesContainer.getChildAt(currentValue);
-	        scrollTo(0, 
-	          currentView.getTop()
-			  + verticalAlignLine((SheetAlignedElementView) currentView)
-			  - getHeight()/2);
         	setIsSelected(currentValue, true);
+		}
+		if(scrollInOnLayout) {
+			scrollInOnLayout = false;
+			getChildAt(0).setVisibility(VISIBLE);
+			scrollToCurrent();
 		}
 	}
 	
-	@Override
-	protected void onScrollChanged(int l, int t, int oldl, int oldt) {
-		super.onScrollChanged(l, t, oldl, oldt);
-		if(t == oldt) return;
-		boolean down = t > oldt;
-		
-		// find which of notes head is nearest center of ScrollView
-        int cH = this.getHeight();
-        int prevDist = notesContainer.getHeight();
-        int newNoteHeight = currentValue;
-        for(int i = currentValue; i >= 0 && i <= minNoteValue; i += down ? 1 : -1) {
-        	SheetAlignedElementView current = (SheetAlignedElementView) notesContainer.getChildAt(i);
-        	int dist = Math.abs(t+cH/2-(current.getTop()+verticalAlignLine(current)));
-        	if(dist > prevDist) break;
-        	newNoteHeight = i;
-        	prevDist = dist;
-        }
-        if(newNoteHeight == currentValue) return;
+	/** scroll this container so that currently selected value will be centered */ 
+	protected abstract void scrollToCurrent();
+
+	protected void changeValue(int newNoteHeight) {
         setIsSelected(currentValue, false);
-//        info("NoteStemAndFlag change: %d -> %d", currentNoteLength, newNoteHeight);
-        int oldValue = currentValue;
+		int oldValue = currentValue;
         currentValue = newNoteHeight;
         setIsSelected(currentValue, true);
         if(onValueChangedListener != null) {
         	onValueChangedListener.onValueChanged(currentValue, oldValue);
         }
-	}
-	
-	private OnValueChanged<Integer> onValueChangedListener = null;
-	private SheetParams params;
-	/**
-	 * Max value from widths of notes horizontal parts:
-	 * - from left edge of View to headMiddleX
-	 * - from headMiddleX to right edge of View
-	 * with sheetParams.scale = 1
-	 */
-	private int maxNoteHorizontalHalfWidth = 0;
-
-	public static interface OnValueChanged<ValueType> {
-		public void onValueChanged(ValueType newValue, ValueType oldValue);
 	}
 	
 	private void setIsSelected(int value, boolean isSelected) {
@@ -201,32 +152,15 @@ public class NoteValueSpinner extends ScrollView {
 		);
 	}
 
+	@Override
 	public void setOnValueChangedListener(
 			OnValueChanged<Integer> onValueChangedListener) {
 		this.onValueChangedListener = onValueChangedListener;
 	}
 
+	@Override
 	public int getCurrentValue() {
 		return currentValue;
 	}
 	
-	@Override
-	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		switch(MeasureSpec.getMode(heightMeasureSpec)) {
-		case MeasureSpec.EXACTLY:
-		case MeasureSpec.AT_MOST:
-			heightMeasureSpec = MeasureSpec.makeMeasureSpec(
-				MeasureSpec.getMode(heightMeasureSpec), 
-				Math.min(mMaxHeight, MeasureSpec.getSize(heightMeasureSpec))
-			);
-			break;
-		case MeasureSpec.UNSPECIFIED:
-			heightMeasureSpec = MeasureSpec.makeMeasureSpec(
-				MeasureSpec.AT_MOST, 
-				mMaxHeight
-			);
-			break;
-		}
-		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-	}
 }

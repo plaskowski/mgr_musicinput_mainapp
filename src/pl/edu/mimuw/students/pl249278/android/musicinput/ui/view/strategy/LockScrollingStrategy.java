@@ -4,12 +4,16 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.Scrollin
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-import android.view.ViewGroup;
 
-public abstract class LockScrollingStrategy extends ViewGroup implements ScrollingLockable {
+public class LockScrollingStrategy extends DummyViewGroup implements ScrollingLockable {
 	
 	public LockScrollingStrategy(Context context, AttributeSet attrs) {
 		super(context, attrs);
+	}
+	
+	public LockScrollingStrategy(Context context, AttributeSet attrs,
+			int defStyle) {
+		super(context, attrs, defStyle);
 	}
 
 	public LockScrollingStrategy(Context context) {

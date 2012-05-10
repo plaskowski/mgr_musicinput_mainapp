@@ -5,7 +5,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
 
-public abstract class InterceptOnScrollChangedStrategy extends View implements InterceptableOnScrollChanged {
+public class InterceptOnScrollChangedStrategy extends View implements InterceptableOnScrollChanged {
 	
 	public InterceptOnScrollChangedStrategy(Context context, AttributeSet attrs) {
 		super(context, attrs);

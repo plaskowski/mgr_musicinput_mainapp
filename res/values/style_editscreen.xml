@@ -17,4 +17,13 @@
     	<item name="paintStyle">STROKE</item>
     	<item name="strokeWidth">2px</item>
     </style>
+    
+    <style name="EDIT_menuButton">
+	    <item name="android:background">@drawable/button_darkgraygradient</item>
+	    <item name="android:scaleType">fitXY</item>
+   	    <item name="extendedImage">@style/SvgCompoundDrawable</item>
+	    <item name="svgResource">@xml/button_menu</item>
+	    <item name="paintsSetup">@array/EmbossGray</item>
+	    <item name="iconMaxHeight">32dip</item>
+    </style>
 </resources>

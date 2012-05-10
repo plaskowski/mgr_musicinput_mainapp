@@ -53,8 +53,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualP
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.CompoundTouchListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollViewChild;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner.OnValueChanged;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.QuickActionsView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView;
@@ -64,6 +62,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils.OnLay
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptableOnScrollChanged;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptableOnScrollChanged.OnScrollChangedListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptsScaleGesture;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.NoteValueWidget;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.NoteValueWidget.OnValueChanged;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.ScrollingLockable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.TouchInputLockable;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
@@ -220,7 +220,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		noteMinDistToIA = readParametrizedFactor(R.string.minDistToIA);
 		maxLinespaceThickness = getResources().getDimensionPixelSize(R.dimen.maxLinespaceThickness);
 		
-		NoteValueSpinner valueSpinner = (NoteValueSpinner) findViewById(R.id.EDIT_note_value_scroll);
+		NoteValueWidget valueSpinner = (NoteValueWidget) findViewById(R.id.EDIT_note_value_scroll);
 		try {
 			int newNoteLength = savedInstanceState == null ? 
 				-1 : savedInstanceState.getInt(INSTANCE_STATE_CURRENT_NOTE_LENGTH, -1);
@@ -593,7 +593,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			elementTouchListener
 		));
 		// setup noteValue spinner
-		NoteValueSpinner valueSpinner = (NoteValueSpinner) findViewById(R.id.EDIT_note_value_scroll);
+		NoteValueWidget valueSpinner = (NoteValueWidget) findViewById(R.id.EDIT_note_value_scroll);
 		valueSpinner.setOnValueChangedListener(new OnValueChanged<Integer>() {
 			@Override
 			public void onValueChanged(Integer newValue, Integer oldValue) {

@@ -6,7 +6,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 
-public abstract class CorrectTopMarginStrategy extends ViewGroup {
+public class CorrectTopMarginStrategy extends DummyViewGroup {
 
 	public CorrectTopMarginStrategy(Context context, AttributeSet attrs) {
 		super(context, attrs);

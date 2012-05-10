@@ -10,6 +10,11 @@ public class LazyScrollToStrategy extends View implements LazyScrolling {
 	public LazyScrollToStrategy(Context context, AttributeSet attrs) {
 		super(context, attrs);
 	}
+	
+	public LazyScrollToStrategy(Context context, AttributeSet attrs,
+			int defStyle) {
+		super(context, attrs, defStyle);
+	}
 
 	public LazyScrollToStrategy(Context context) {
 		super(context);

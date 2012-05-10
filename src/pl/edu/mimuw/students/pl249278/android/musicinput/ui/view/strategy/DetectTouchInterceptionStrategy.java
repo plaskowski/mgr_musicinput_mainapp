@@ -4,9 +4,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.OnInterc
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-import android.view.ViewGroup;
 
-public abstract class DetectTouchInterceptionStrategy extends ViewGroup implements OnInterceptTouchObservable {
+public class DetectTouchInterceptionStrategy extends DummyViewGroup implements OnInterceptTouchObservable {
 	private OnInterceptListener listener;
 
 	@Override
@@ -25,6 +24,11 @@ public abstract class DetectTouchInterceptionStrategy extends ViewGroup implemen
 	
 	public DetectTouchInterceptionStrategy(Context context, AttributeSet attrs) {
 		super(context, attrs);
+	}
+	
+	public DetectTouchInterceptionStrategy(Context context, AttributeSet attrs,
+			int defStyle) {
+		super(context, attrs, defStyle);
 	}
 
 	public DetectTouchInterceptionStrategy(Context context) {

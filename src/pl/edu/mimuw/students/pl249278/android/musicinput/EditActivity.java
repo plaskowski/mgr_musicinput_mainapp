@@ -2861,9 +2861,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	}
 
 	private void hideQuickActionsPopup() {
-		qActionsView.setModel(null);
-		qActionsView.setVisibility(View.GONE);
-		elementActionIndex = -1;
+		if(qActionsView.getVisibility() != View.GONE) {
+			qActionsView.setModel(null);
+			qActionsView.setVisibility(View.GONE);
+			elementActionIndex = -1;
+		}
 	}
 	
 	@Override

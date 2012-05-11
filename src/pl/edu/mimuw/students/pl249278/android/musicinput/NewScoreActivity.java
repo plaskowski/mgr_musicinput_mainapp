@@ -68,7 +68,13 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 		);
 		float destLineThickness = res.getDimensionPixelSize(R.dimen.NEWSCORE_thumbs_lineThickness);
 		params.setScale(destLineThickness / params.getLineThickness());
-		RadioGroup radioGroup = new RadioGroup();
+		RadioGroup radioGroup = new RadioGroup(), clefsRadioGroup = new RadioGroup() {
+			@Override
+			public void onClick(View radioView) {
+				super.onClick(radioView);
+				updateKeySignatureModels();
+			}
+		};
 		
 		// fill clefs images
 		ViewGroup clefsContainer = (ViewGroup) findViewById(R.id.NEWSCORE_clefs_container);
@@ -78,7 +84,7 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 				AdjustableSizeImage img = NotePartFactory.prepareClefImage(this, clef);
 				SheetElement model = new SimpleSheetElement(img);
 				LinedSheetElementView sheetElementView = setupThumbnailView(params, clefsContainer, model);
-				sheetElementView.setOnClickListener(radioGroup);
+				sheetElementView.setOnClickListener(clefsRadioGroup);
 				sheetElementView.setTag(clef);
 			} catch (LoadingSvgException e) {
 				log.e("Failed to prepare clef "+clef.name(), e);
@@ -94,7 +100,7 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 		for (int i = 0; i < KeySignature.values().length; i++) {
 			KeySignature key = KeySignature.values()[i];
 			try {
-				SheetElement model = new KeySignatureElement(this, key);
+				SheetElement model = new KeySignatureElement(this, defaultClef, key);
 				LinedSheetElementView sheetElementView = setupThumbnailView(params, keysContainer, model);
 				sheetElementView.setTag(key);
 				sheetElementView.setOnClickListener(radioGroup);
@@ -150,6 +156,28 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 		});
 	}
 	
+	private void updateKeySignatureModels() {
+		View selectedClef = findSelected((ViewGroup) findViewById(R.id.NEWSCORE_clefs_container));
+		if(selectedClef == null) {
+			return;
+		}
+		Clef currentClef = (Clef) selectedClef.getTag();
+		ViewGroup keysContainer = (ViewGroup) findViewById(R.id.NEWSCORE_keys_container);
+		for (int i = 0; i < KeySignature.values().length; i++) {
+			KeySignature key = KeySignature.values()[i];
+			try {
+				SheetElement model = new KeySignatureElement(this, currentClef, key);
+				LinedSheetElementView sheetElementView = (LinedSheetElementView) keysContainer.findViewWithTag(key);
+				sheetElementView.setFrontModel(model);
+			} catch (LoadingSvgException e) {
+				log.e("Failed to prepare key signature "+key.name(), e);
+				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
+				return;
+			}
+		}
+		alignVertically(keysContainer);
+	}
+	
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		switch(requestCode) {
@@ -166,11 +194,12 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
+		updateKeySignatureModels();
 		ViewUtils.addActivityOnLayout(this, new OnLayoutListener() {
 			@Override
 			public void onFirstLayoutPassed() {
 				scrollToSelected((ViewGroup) findViewById(R.id.NEWSCORE_clefs_container));
-				scrollToSelected((ViewGroup) findViewById(R.id.NEWSCORE_keys_container));
+				scrollToSelected((ViewGroup) findViewById(R.id.NEWSCORE_keys_container), 0.5f, -0.5f);
 				scrollToSelected((ViewGroup) findViewById(R.id.NEWSCORE_meter_container));
 			}
 		});
@@ -190,16 +219,22 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 	}
 	
 	private static ThreadLocal<Rect> threadLocal = new ThreadLocal<Rect>() { protected Rect initialValue() { return new Rect(); } };
-	private void scrollToSelected(ViewGroup wrapper) {
+	private void scrollToSelected(ViewGroup wrapper, float childWidthFactor, float scrollWidthFactor) {
 		View selectedChild = findSelected(wrapper);
 		if(selectedChild == null)
 			return;
 		Rect rectangle = threadLocal.get();
 		selectedChild.getHitRect(rectangle);
+		rectangle.offset((int) (selectedChild.getWidth()*childWidthFactor), 0);
 		rectangle.offset(wrapper.getPaddingLeft(), wrapper.getPaddingTop());
 		View scroll = (View) wrapper.getParent();
 		rectangle.offset(-scroll.getHorizontalFadingEdgeLength(), -scroll.getVerticalFadingEdgeLength());
+		rectangle.offset((int) (scroll.getWidth()*scrollWidthFactor), 0);
 		scroll.scrollTo(rectangle.left, rectangle.top);
+	}
+	
+	private void scrollToSelected(ViewGroup wrapper) {
+		scrollToSelected(wrapper, 0, 0);
 	}
 	
 	private static final String INSTANCE_EXTRA_BASE = "metrum_base";
@@ -519,6 +554,7 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 		int maxToBottom = Integer.MIN_VALUE;
 		for(int i = 0; i < container.getChildCount(); i++) {
 			LinedSheetElementView sheetElementView = (LinedSheetElementView) container.getChildAt(i);
+			sheetElementView.setPadding(0, 0, 0, 0, false);
 			int offsetToAnchor = sheetElementView.getOffsetToAnchor(NoteConstants.LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
 			maxOffset = Math.max(maxOffset, offsetToAnchor);
 			int toBottom = sheetElementView.measureHeight() - offsetToAnchor;

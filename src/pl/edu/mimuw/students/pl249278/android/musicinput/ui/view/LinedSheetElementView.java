@@ -46,18 +46,19 @@ public class LinedSheetElementView extends SheetElementView<Lines> {
 	public void setSheetParams(SheetVisualParams params) {
 		if(frontModel != null) {
 			frontModel.setSheetParams(params);
-			refreshWidth();
 		}
 		super.setSheetParams(params);
+		recalculateSize();
 	}
 
-	private void refreshWidth() {
+	private void recalculateSize() {
 		if(model != null && frontModel != null && frontModel.getSheetParams() != null) {
 			model.setForcedWidth(Math.max(
 				frontModel.measureWidth()+2*linesHorizontalPadding,
 				minLinesWidth
 			));
 		}
+		measureHeight();
 	}
 	
 	public void setFrontModel(SheetElement frontModel) {
@@ -66,7 +67,7 @@ public class LinedSheetElementView extends SheetElementView<Lines> {
 			SheetVisualParams sheetParams = model.getSheetParams();
 			if(sheetParams != null) {
 				frontModel.setSheetParams(sheetParams);
-				refreshWidth();
+				recalculateSize();
 				invalidate();
 				requestLayout();
 			}
@@ -109,11 +110,11 @@ public class LinedSheetElementView extends SheetElementView<Lines> {
 
 	public void setLinesHorizontalPadding(int linesHorizontalPadding) {
 		this.linesHorizontalPadding = linesHorizontalPadding;
-		refreshWidth();
+		recalculateSize();
 	}
 
 	public void setMinLinesWidth(int minLinesWidth) {
 		this.minLinesWidth = minLinesWidth;
-		refreshWidth();
+		recalculateSize();
 	}
 }

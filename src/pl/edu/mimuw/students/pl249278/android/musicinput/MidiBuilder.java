@@ -10,14 +10,13 @@ import java.util.Iterator;
 import java.util.List;
 
 import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ChromaticScalePitch;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.Clef;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.DiatonicPitch;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.DiatonicScalePitch;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.KeySignature.Accidental;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.NoteModifier;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.Pitch;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.PauseSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.PlayingConfiguration;
@@ -188,12 +187,11 @@ public class MidiBuilder {
 				barAccidentals.clear();
 				if(time.getKeySignature() != null) {
 					keySignAccidentals.clear();
-					Accidental[] accidentals = time.getKeySignature().accidentals;
-					for (int i = 0; i < accidentals.length; i++) {
-						Accidental accidental = accidentals[i];
+					DiatonicScalePitch[] pitches = time.getKeySignature().pitches;
+					for (int i = 0; i < pitches.length; i++) {
 						keySignAccidentals.put(
-							cycle(clef.diatonicNote.basePitch, clef.anhorIndex - accidental.anchor, DiatonicScalePitch.values()),
-							accidental.accidental
+							pitches[i],
+							time.getKeySignature().modifier
 						);
 					}
 				}

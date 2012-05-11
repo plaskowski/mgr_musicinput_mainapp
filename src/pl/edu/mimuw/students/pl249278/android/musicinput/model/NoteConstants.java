@@ -1,5 +1,7 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.model;
 
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.NoteModifier.*;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.DiatonicScalePitch.*;
 
 public class NoteConstants {
 	public static final int ANCHOR_TYPE_LINE = 0;
@@ -51,40 +53,30 @@ public class NoteConstants {
 	 * tonacja (zbiór znaków chromatycznych umieszczanych za kluczem)
 	 */
 	public static enum KeySignature {
-		C_DUR(),
-		G_DUR(S(LINE0_ABSINDEX)),
-		D_DUR(S(LINE0_ABSINDEX), S(SPACE1_ABSINDEX)),
-		A_DUR(S(LINE0_ABSINDEX), S(SPACE1_ABSINDEX), S(SPACEm1_ABSINDEX)),
-		F_DUR(F(LINE2_ABSINDEX)),
-		B_DUR(F(LINE2_ABSINDEX), F(SPACE0_ABSINDEX)),
-		ES_DUR(F(LINE2_ABSINDEX), F(SPACE0_ABSINDEX), F(SPACE2_ABSINDEX))
-		// TODO dodać resztę tonacji
+		CIS_DUR(SHARP, F, C, G, D, A, E, H),
+		FIS_DUR(SHARP, F, C, G, D, A, E),
+		H_DUR(SHARP, F, C, G, D, A),
+		E_DUR(SHARP, F, C, G, D),
+		A_DUR(SHARP, F, C, G),
+		D_DUR(SHARP, F, C),
+		G_DUR(SHARP, F),
+		C_DUR(NoteModifier.NATURAL),
+		D_MOLL(FLAT, H),
+		G_MOLL(FLAT, H, E),
+		C_MOLL(FLAT, H, E, A),
+		F_MOLL(FLAT, H, E, A, D),
+		B_MOLL(FLAT, H, E, A, D, G),
+		ES_MOLL(FLAT, H, E, A, D, G, C),
+		AS_MOLL(FLAT, H, E, A, D, G, C, F)
 		;
 		
-		private KeySignature(Accidental... accidentals) {
-			this.accidentals = accidentals;
+		private KeySignature(NoteModifier modifier, DiatonicScalePitch... pitches) {
+			this.modifier = modifier;
+			this.pitches = pitches;
 		}
 		
-		public final Accidental[] accidentals;
-		
-		public static class Accidental {
-			public final int anchor;
-			public final NoteModifier accidental;
-			public Accidental(int anchor, NoteModifier accidental) {
-				this.anchor = anchor;
-				this.accidental = accidental;
-			}
-		}
-
-		private static Accidental S(int anchor) {
-			return acc(anchor, NoteModifier.SHARP);
-		}
-		private static Accidental F(int anchor) {
-			return acc(anchor, NoteModifier.FLAT);
-		}
-		private static Accidental acc(int anchor, NoteModifier accidental) {
-			return new Accidental(anchor, accidental);
-		}
+		public final NoteModifier modifier;
+		public final DiatonicScalePitch[] pitches;
 	}
 	
 	/** scientific index of octave that is started by "middle C" on piano 88 keys keyboard */

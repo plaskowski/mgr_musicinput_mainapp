@@ -1,15 +1,19 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.Clef;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.DiatonicScalePitch;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.KeySignature;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.KeySignature.Accidental;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.NoteModifier;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.LoadingSvgException;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
 public class KeySignatureElement extends SheetElement {
+	private static final int SCALE_LENGTH = DiatonicScalePitch.values().length;
 	/** image[i].top - line0.y */ 
 	private int[] relativeYPositions;
 	private SimpleSheetElement[] images;
@@ -19,25 +23,42 @@ public class KeySignatureElement extends SheetElement {
 	/** max({for image in this.images: image.bottom}) - line0.y */
 	private int maxBottom;
 
-	public KeySignatureElement(Context ctx, KeySignature keySignature) throws LoadingSvgException {
-		Accidental[] accidentals = keySignature.accidentals;
-		relativeYPositions = new int[accidentals.length];
-		images = new SimpleSheetElement[accidentals.length];
-		
-		for (int i = 0; i < accidentals.length; i++) {
-			Accidental accidental = accidentals[i];
+	public KeySignatureElement(Context ctx, Clef clef, KeySignature keySignature) throws LoadingSvgException {
+		DiatonicScalePitch[] pitches = keySignature.pitches;
+		relativeYPositions = new int[pitches.length];
+		images = new SimpleSheetElement[pitches.length];
+		if(pitches.length <= 0) {
+			return;
+		}
+		// find starting one
+		DiatonicScalePitch startPitch = pitches[0];
+		// find its position that must be at least LINE0
+		int startAnhor = clef.anhorIndex + (clef.diatonicNote.basePitch.ordinal() - startPitch.ordinal());
+		startAnhor = limit(startAnhor - SCALE_LENGTH, LINE0_ABSINDEX);
+		int minAnhor = startAnhor - (keySignature.modifier == NoteModifier.SHARP ? 1 : 3);
+		for(int i = 0; i < pitches.length; i++) {
+			DiatonicScalePitch pitch = pitches[i];
+			int anhor = startAnhor + (startPitch.ordinal() - pitch.ordinal());
+			anhor = limit(anhor - SCALE_LENGTH, minAnhor);
 			images[i] = new SimpleSheetElement(
 				NotePartFactory.prepareModifier(
 					ctx, 
-					ElementModifier.map(accidental.accidental), 
+					ElementModifier.map(keySignature.modifier), 
 					NoteConstants.ORIENT_UP, 
-					accidental.anchor
+					anhor
 				), 
-				accidental.anchor
+				anhor
 			);
 		}
 	}
 	
+	private int limit(int anhorIndex, int minValue) {
+		while(anhorIndex < minValue) {
+			anhorIndex += SCALE_LENGTH;
+		}
+		return anhorIndex;
+	}
+
 	@Override
 	public void setSheetParams(SheetVisualParams params) {
 		super.setSheetParams(params);

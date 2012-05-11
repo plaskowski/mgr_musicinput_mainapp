@@ -56,7 +56,7 @@ public class TimeDivider extends SheetAlignedElement {
 				));
 			}
 			if(rightTime.getKeySignature() != null) {
-				rightParts.add(new KeySignatureElement(ctx, rightTime.getKeySignature()));
+				rightParts.add(new KeySignatureElement(ctx, rightTime.getClef(), rightTime.getKeySignature()));
 			}
 			TimeStep rTS = rightTime.getTimeStep();
 			if(rTS != null) {

@@ -1,5 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
+import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivity.ReceiverType;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -9,32 +10,66 @@ import android.os.Parcelable;
  * for clarity purpose.
  */
 public class MainActivityHelper {
-	static class DuplicateRequest implements Parcelable {
-		long scoreId;
+	static class ReceiverState implements Parcelable {
+		final ReceiverType type;
 		String requestId;
-		
-		public DuplicateRequest(long scoreId, String requestId) {
-			this.scoreId = scoreId;
+
+		public ReceiverState(ReceiverType type, String requestId) {
+			this.type = type;
 			this.requestId = requestId;
+		}
+		
+		public ReceiverState(Parcel in) {
+			this(ReceiverType.values()[in.readInt()], in.readString());
+		}
+		
+		@Override
+		public void writeToParcel(Parcel dest, int flags) {
+			dest.writeInt(type.ordinal());
+			dest.writeString(requestId);
+		}
+		
+		public static final Parcelable.Creator<ReceiverState> CREATOR = new Parcelable.Creator<ReceiverState>() {
+			public ReceiverState createFromParcel(Parcel in) {
+				return new ReceiverState(in);
+			}
+			
+			public ReceiverState[] newArray(int size) {
+				return new ReceiverState[size];
+			}
+		};
+		
+		@Override
+		public int describeContents() {
+			return 0;
+		}
+	}
+	
+	static class ByScoreIdRequest extends ReceiverState {
+		long scoreId;
+		
+		public ByScoreIdRequest(ReceiverType type, long scoreId, String requestId) {
+			super(type, requestId);
+			this.scoreId = scoreId;
 		}
 
 		public void writeToParcel(Parcel out, int flags) {
+			super.writeToParcel(out, flags);
 			out.writeLong(scoreId);
-			out.writeString(requestId);
 		}
 		
-		private DuplicateRequest(Parcel in) {
+		private ByScoreIdRequest(Parcel in) {
+			super(in);
 			scoreId = in.readLong();
-			requestId = in.readString();
 		}
 		
-		public static final Parcelable.Creator<DuplicateRequest> CREATOR = new Parcelable.Creator<DuplicateRequest>() {
-			public DuplicateRequest createFromParcel(Parcel in) {
-				return new DuplicateRequest(in);
+		public static final Parcelable.Creator<ByScoreIdRequest> CREATOR = new Parcelable.Creator<ByScoreIdRequest>() {
+			public ByScoreIdRequest createFromParcel(Parcel in) {
+				return new ByScoreIdRequest(in);
 			}
 			
-			public DuplicateRequest[] newArray(int size) {
-				return new DuplicateRequest[size];
+			public ByScoreIdRequest[] newArray(int size) {
+				return new ByScoreIdRequest[size];
 			}
 		};
 		
@@ -43,26 +78,26 @@ public class MainActivityHelper {
 		}
 	}	
 
-	static class ExportMidiRequest implements Parcelable {
+	static class ExportMidiRequest extends ReceiverState {
 		long scoreId;
 		String filename;
-		String requestId;
 		
 		public ExportMidiRequest(long scoreId, String filename) {
+			super(ReceiverType.SCORE_EXPORTED, null);
 			this.scoreId = scoreId;
 			this.filename = filename;
 		}
 
 		public void writeToParcel(Parcel out, int flags) {
+			super.writeToParcel(out, flags);
 			out.writeLong(scoreId);
 			out.writeString(filename);
-			out.writeString(requestId);
 		}
 
 		private ExportMidiRequest(Parcel in) {
-			scoreId = in.readLong();
-			filename = in.readString();
-			requestId = in.readString();
+			super(in);
+			this.scoreId = in.readLong();
+			this.filename = in.readString();
 		}
 
 		public static final Parcelable.Creator<ExportMidiRequest> CREATOR = new Parcelable.Creator<ExportMidiRequest>() {
@@ -78,8 +113,6 @@ public class MainActivityHelper {
 		public int describeContents() {
 			return 0;
 		}
-
-
 	}
 
 }

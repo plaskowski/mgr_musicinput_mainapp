@@ -143,6 +143,7 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 		cancelButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				setResult(RESULT_CANCELED);
 				finish();
 			}
 		});
@@ -410,6 +411,7 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 	}
 	
 	private static final String CALLBACK_ACTION_INSERT = NewScoreActivity.class.getName()+ ".insert";
+	public static final String RESULT_CREATED_SCORE_ID = "createdScoreId";
 	
 	private class InsertRequestReceiver extends FilterByRequestIdReceiver {
 		
@@ -441,6 +443,9 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 			}
 			Intent i = new Intent(getApplicationContext(), EditActivity.class);
 			i.putExtra(EditActivity.STARTINTENT_EXTRAS_SCORE_ID, scoreId);
+			Intent result = new Intent();
+			result.putExtra(RESULT_CREATED_SCORE_ID, scoreId);
+			NewScoreActivity.this.setResult(RESULT_OK, result);
 			startActivity(i);
 			finish();
 		}

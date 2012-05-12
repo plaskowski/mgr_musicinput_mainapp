@@ -273,7 +273,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 	}
 	
-	private class GetScoreReceiver extends ManagedReceiver {
+	private class GetScoreReceiver extends SingleManagedReceiver {
 		@Override
 		protected void onFailureReceived(Intent response) {
 			log.e("Failed to get score: " + AsyncHelper.getError(response));

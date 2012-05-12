@@ -61,4 +61,5 @@
     <string name="menu_label_editor_prefs">Preferences</string>
     <string name="PLAY_options_play_with_metronome">play with metronome</string>
     <string name="PLAY_options_prepend_intro">prepend empty bar</string>
+    <string name="errormsg_failed_to_refresh">Ops, failed to refresh.</string>
 </resources>

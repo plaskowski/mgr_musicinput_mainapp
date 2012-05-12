@@ -59,6 +59,12 @@
 		    custom:iconMaxHeight="28dip"
 		    style="@style/EDIT_button_insert"
 	    />
+   
+		<include 
+	    	layout="@layout/editscreen_title"
+	    	android:id="@+id/EDIT_title"
+	    	style="@style/EDIT_title"
+	   	/>
 	   		    	    
 	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.QuickActionsView 
 	    	android:orientation="horizontal"
@@ -68,19 +74,13 @@
 	    	android:layout_marginLeft="30dip"
 	    	android:layout_marginTop="50dip"
 		    android:layout_gravity="left|top"
-		    custom:itemSpacing="1dip"
 		    custom:buttonStyle="@layout/button_template"
 		    custom:toggleButtonStyle="@layout/statebutton_template"
 		    custom:extendedBackground="@style/TooltipBg1"
     		custom:buttonIconPaintSetup="@array/InvertedEmboss"
+    		custom:inactiveButtonIconPaintSetup="@style/inactive_button_icon_dark"
 	    />
    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.RelativeLayout_InterceptScale_LockTouchInput>
-   
-	<include 
-    	layout="@layout/editscreen_title"
-    	android:id="@+id/EDIT_title"
-    	style="@style/EDIT_title"
-   	/>
 	
    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_ExtendedBackground
 		android:id="@+id/EDIT_info_popup"   

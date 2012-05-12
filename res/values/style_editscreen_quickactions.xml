@@ -3,11 +3,11 @@
 	
 	<style name="BlueLinear" parent="LinearSimpleVertical">
 		<item name="color0">#5CB0CC</item>
-		<item name="color1">#73DCFF</item>
+		<item name="color1">#5CB0CC</item>
 	</style>
 	
 	<style name="TooltipBg1" parent="TooltipDrawable">
-		<item name="padding">2dip</item>
+		<item name="padding">1dip</item>
 		<item name="outlineCornerRadius">2dip</item>
 		<item name="borderThickness">1dip</item>
 		<item name="borderColor">#458499</item>
@@ -19,6 +19,15 @@
     	<item name="android:layout_width">50dip</item>
     	<item name="android:layout_height">50dip</item>
     	<item name="android:scaleType">fitXY</item>
+    	<item name="android:layout_margin">0.5dip</item>
+	</style>
+	
+	<color name="inactive_bg">#BFBFBF</color>
+	<color name="inactive_stroke">#808080</color>
+    
+    <style name="inactive_button_icon_dark" parent="PaintAntialias">
+        <item name="color">#808080</item>
+        <item name="drawRadius">4px</item>
     </style>
     
     <array name="InvertedEmboss">
@@ -31,7 +40,7 @@
     	<item name="drawRadius">3px</item>
     </style>
     <style name="InvertedEmboss_edge" parent="PaintAntialias">
-    	<item name="color">#FF5CB0CC</item>
+    	<item name="color">#30FFFFFF</item>
     	<item name="offsetX">1px</item>
     	<item name="offsetY">1px</item>
     	<item name="drawRadius">1px</item>

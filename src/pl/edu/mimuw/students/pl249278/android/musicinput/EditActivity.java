@@ -2142,6 +2142,15 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		public Boolean getState() {
 			return getState(elementActionIndex);
 		}
+		
+		@Override
+		public final boolean isActive() {
+			return isActive(elementActionIndex);
+		}
+
+		protected boolean isActive(int elementIndex) {
+			return true;
+		}
 	};
 	
 	private abstract class SvgIconAction extends IndexAwareAction {
@@ -2241,10 +2250,13 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			if(!isValidIndex(elementIndex))
 				return false;
 			ElementSpec elementSpec = elementViews.get(elementIndex).model().getElementSpec();
-			if(!JoinArc.couldStartWithJA(elementSpec))
-				return false;
+			return JoinArc.couldStartWithJA(elementSpec);
+		}
+		
+		@Override
+		public boolean isActive(int elementIndex) {
 			for(int i = elementIndex+1; i < elementViews.size(); i++) {
-				elementSpec = elementViews.get(i).model().getElementSpec();
+				ElementSpec elementSpec = elementViews.get(i).model().getElementSpec();
 				if(JoinArc.canEndJA(elementSpec)) {
 					return true;
 				} else if(!JoinArc.canSkipOver(elementSpec)) {
@@ -2282,11 +2294,15 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		protected boolean isValidOn(int elementIndex) {
 			if(isValidIndex(elementIndex)) {
 				ElementSpec elementSpec = elementViews.get(elementIndex).model().getElementSpec();
-				if(elementSpec.getType() == type) {
-					return willFitInTime(elementIndex, toggledCopy((T) elementSpec));
-				}
+				return elementSpec.getType() == type;
 			}
 			return false;
+		}
+		
+		@Override
+		protected boolean isActive(int elementIndex) {
+			ElementSpec elementSpec = elementViews.get(elementIndex).model().getElementSpec();
+			return willFitInTime(elementIndex, toggledCopy((T) elementSpec));
 		}
 		
 		@Override
@@ -2358,6 +2374,13 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 		}
 		
+		@Override
+		protected boolean isActive(int elementIndex) {
+			if(elementIndex != lastElementIndex)
+				throw new InvalidParameterException("Called isActive() without calling isValidOn() first");
+			return wrappedElement.isActive(startIndex);
+		}
+		
 		protected abstract Integer getActualIndex(int elementIndex);
 
 		@Override
@@ -2409,13 +2432,21 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 
 		@Override
 		protected boolean isValidOn(int elementIndex) {
-			if(!isValidIndex(elementIndex) || !isValidIndex(elementIndex+1))
+			if(!isValidIndex(elementIndex))
 				return false;
 			ElementSpec elementSpec = elementViews.get(elementIndex).model().getElementSpec();
-			ElementSpec nextElementSpec = elementViews.get(elementIndex+1).model().getElementSpec();
-			return 
-			NotesGroup.GroupBuilder.couldExtendGroup(elementSpec)
-			&& NotesGroup.GroupBuilder.canEndGroup(nextElementSpec);
+			return NotesGroup.GroupBuilder.couldExtendGroup(elementSpec);
+		}
+		
+		@Override
+		protected boolean isActive(int elementIndex) {
+			int nextIndex = elementIndex + 1;
+			if(isValidIndex(nextIndex)) {
+				ElementSpec nextElementSpec = elementViews.get(nextIndex).model().getElementSpec();
+				return NotesGroup.GroupBuilder.canEndGroup(nextElementSpec);
+			} else {
+				return false;
+			}
 		}
 		
 		@Override
@@ -2436,6 +2467,12 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			return elementIndex-1;
 		}
 		
+		@Override
+		protected boolean isValidOn(int elementIndex) {
+			return isValidIndex(elementIndex) 
+			&& GroupBuilder.canEndGroup(specAt(elementIndex))
+			&& super.isValidOn(elementIndex);
+		}
 	}
 	
 	private class ToggleNoteModifier extends UpdateElementAction {
@@ -2504,6 +2541,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			if(spec == null) {
 				spec = new ElementSpec.Pause(new PauseSpec(pauseLength));
 			}
+			return true;
+		}
+		
+		@Override
+		protected boolean isActive(int elementIndex) {
 			return willFitInTime(elementIndex, spec);
 		}
 		
@@ -2578,12 +2620,18 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		protected boolean isValidOn(int elementIndex) {
 			if(isValidIndex(elementIndex)) {
 				int timeIndex = findTime(elementIndex);
-				return timeIndex > 0 
-				&& getCurrentTimeStep(timeIndex-1) == null
-				&& times.get(timeIndex).spec.getTimeStep() == null;
+				return timeIndex > 0;
 			} else {
 				return false;
 			}
+		}
+		
+		@Override
+		protected boolean isActive(int elementIndex) {
+			int timeIndex = findTime(elementIndex);
+			return timeIndex > 0 
+			&& getCurrentTimeStep(timeIndex-1) == null
+			&& times.get(timeIndex).spec.getTimeStep() == null;
 		}
 	}
 	
@@ -2695,7 +2743,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				protected void perform(int elementIndex) {
 					if(!isValidIndex(elementIndex))
 						throw new InvalidParameterException();
-					showElementQuickActions(elementIndex, modifiersActions);
+					showElementQuickActions(elementIndex, modifiersActions, true);
 				}
 				@Override
 				protected boolean isValidOn(int elementIndex) {
@@ -2721,6 +2769,10 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 			@Override
 			protected boolean isValidOn(int elementIndex) {
+				return true;
+			}
+			@Override
+			public boolean isActive(int elementIndex) {
 				return 
 				(rightToIA >= elementViews.size() || elementViews.get(rightToIA).model().getElementSpec().getType() != ElementType.TIMES_DIVIDER)
 				&&
@@ -2779,11 +2831,16 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		showQuickActions(
 			actionsTargetIndex, possibleActions,
 			view.getLeft() + view.getWidth()/2,
-			view.getTop()
+			view.getTop(),
+			false
 		);
 	}
 	
 	private void showElementQuickActions(int contextElementIndex, IndexAwareAction[] possibleActions) {
+		showElementQuickActions(contextElementIndex, possibleActions, false);
+	}
+	
+	private void showElementQuickActions(int contextElementIndex, IndexAwareAction[] possibleActions, boolean preserveOrientation) {
 		int middleX, middleY;
 		SheetAlignedElementView view = elementViews.get(contextElementIndex);
 		switch(view.model().getElementSpec().getType()) {
@@ -2802,10 +2859,10 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		int refPointVisibleX = abs2visibleX(viewStableX(view)) + middleX;
 		int refPointVisibleY = abs2visibleY(top(view)) + middleY;
 		
-		showQuickActions(contextElementIndex, possibleActions, refPointVisibleX, refPointVisibleY);
+		showQuickActions(contextElementIndex, possibleActions, refPointVisibleX, refPointVisibleY, preserveOrientation);
 	}
 	
-	private void showQuickActions(int contextElementIndex, IndexAwareAction[] possibleActions, int refPointVisibleX, int refPointVisibleY) {
+	private void showQuickActions(int contextElementIndex, IndexAwareAction[] possibleActions, int refPointVisibleX, int refPointVisibleY, boolean preserveOrientation) {
 		List<Action> model = new ArrayList<Action>(possibleActions.length);
 		for(int i = 0; i < possibleActions.length; i++) {
 			IndexAwareAction action = possibleActions[i];
@@ -2821,18 +2878,23 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			refPointVisibleX = Math.min(Math.max(0, refPointVisibleX), visibleRectWidth);
 			refPointVisibleY = Math.min(Math.max(0, refPointVisibleY), visibleRectHeight);
 			
-			// validate ref point y-coordinate according to action bar height
+			Point size = new Point();
+			IndicatorOrigin oldOrigin = qActionsView.getIndicatorOrigin();
+			// try to show above in 1 row
 			qActionsView.setIndicatorOrigin(IndicatorOrigin.BOTTOM);
-			int height = qActionsView.measureHeight();
-			qActionsView.setIndicatorOrigin(IndicatorOrigin.TOP);
-			int heightUpdown = qActionsView.measureHeight();
-			if(refPointVisibleY - height >= 0) {
-				qActionsView.setIndicatorOrigin(IndicatorOrigin.BOTTOM);
-			} else if(refPointVisibleY + heightUpdown <= visibleRectHeight) {
-				qActionsView.setIndicatorOrigin(IndicatorOrigin.TOP);
+			qActionsView.measure(visibleRectWidth, 1, size);
+			if(size.y <= refPointVisibleY && (!preserveOrientation || oldOrigin == IndicatorOrigin.BOTTOM)) {
+				// will fit above
 			} else {
-				qActionsView.setIndicatorOrigin(IndicatorOrigin.NONE);
-				refPointVisibleY -= qActionsView.measureHeight()/2;
+				qActionsView.setIndicatorOrigin(IndicatorOrigin.TOP);
+				qActionsView.measure(visibleRectWidth, 1, size);
+				if(refPointVisibleY + size.y <= visibleRectHeight && (!preserveOrientation || oldOrigin == IndicatorOrigin.TOP)) {
+					// will fit below
+				} else {
+					// won't fit any way
+					qActionsView.setIndicatorOrigin(IndicatorOrigin.NONE);
+					refPointVisibleY -= size.y/2;
+				}
 			}
 			
 			Rect margins = new Rect();
@@ -2840,7 +2902,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			qActionsView.getOriginPostionMargin(margins);
 			int mL = margins.left;
 			int mR = margins.top;
-			int width = qActionsView.measureWidth();
+			int width = size.x;
 			int defX = mL+(width-mL-mR)/2;
 			int originX = defX;
 			if(refPointVisibleX < defX && width < visibleRectWidth) {
@@ -2850,7 +2912,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 			qActionsView.setOriginX(originX);
 			
-			qActionsView.measure();
 			updateMargins(
 				qActionsView,
 				refPointVisibleX - originX,

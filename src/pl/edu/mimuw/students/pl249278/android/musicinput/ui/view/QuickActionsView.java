@@ -1,5 +1,7 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
 
+import static android.view.View.MeasureSpec.makeMeasureSpec;
+
 import java.util.Collection;
 
 import pl.edu.mimuw.students.pl249278.android.common.ContextUtils;
@@ -13,16 +15,18 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.CompoundDra
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.SvgCompoundDrawable;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 
-public class QuickActionsView extends LinearLayout {
-	private int spacing, buttonStyleId, toggleButtonStyleId;
-	private Collection<PaintSetup> iconPaintSetup;
+import com.gridlayout.GridLayout;
+
+public class QuickActionsView extends GridLayout {
+	private int buttonStyleId, toggleButtonStyleId;
+	private Collection<PaintSetup> iconPaintSetup, inactivePaintSetup;
 	private static final int UNDEFINED = -1;
 
  	public QuickActionsView(Context context, AttributeSet attrs) {
@@ -39,7 +43,6 @@ public class QuickActionsView extends LinearLayout {
 		if(attrs != null) {
 			ExtendedResourcesFactory.loadExtendedBackground(this, ctx, attrs);
 			TypedArray styledAttributes = ctx.obtainStyledAttributes(attrs,R.styleable.QuickActions);
-			spacing = styledAttributes.getDimensionPixelOffset(R.styleable.QuickActions_itemSpacing, 0);
 			buttonStyleId = styledAttributes.getResourceId(R.styleable.QuickActions_buttonStyle, UNDEFINED);
 			toggleButtonStyleId = styledAttributes.getResourceId(R.styleable.QuickActions_toggleButtonStyle, UNDEFINED);
 			int paintsSetupId = styledAttributes.getResourceId(R.styleable.QuickActions_buttonIconPaintSetup, UNDEFINED);
@@ -49,20 +52,16 @@ public class QuickActionsView extends LinearLayout {
 					paintsSetupId
 				);
 			}
-		}
-	}
-	
-	@Override
-	public void addView(View child, int index,
-			android.view.ViewGroup.LayoutParams params) {
-		if(params instanceof MarginLayoutParams && getChildCount() > 0) {
-			if(index != 0) {
-				((MarginLayoutParams) params).leftMargin = spacing;
+			paintsSetupId = styledAttributes.getResourceId(R.styleable.QuickActions_inactiveButtonIconPaintSetup, UNDEFINED);
+			if(paintsSetupId != UNDEFINED) {
+				inactivePaintSetup = ExtendedResourcesFactory.createPaintsSetup(
+					ExtendedResourcesFactory.styleResolver(ctx, attrs), 
+					paintsSetupId
+				);
 			} else {
-				((MarginLayoutParams) params).rightMargin = spacing;
+				inactivePaintSetup = iconPaintSetup;
 			}
 		}
-		super.addView(child, index, params);
 	}
 
 	public void setModel(Collection<Action> model) {
@@ -79,17 +78,21 @@ public class QuickActionsView extends LinearLayout {
 			int index = 0;
 			for(Action action: model) {
 				Boolean state = action.getState();
+				boolean isActive = action.isActive();
 				final int styleId = state != null ? toggleButtonStyleId : buttonStyleId;
 				ContextUtils.getLayoutInflater(getContext()).inflate(styleId, this);
 				ImageView button = (ImageView) getChildAt(index++);
 				CompoundDrawable compoundDrawable = new SvgCompoundDrawable(action.icon());
+				Collection<PaintSetup> iconPaintSetup = isActive ? this.iconPaintSetup : this.inactivePaintSetup;
 				if(iconPaintSetup != null) for(PaintSetup ps: iconPaintSetup) {
 					compoundDrawable.addPaintSetup(ps);
 				}
 				button.setImageDrawable(compoundDrawable);
-				
+				button.setEnabled(isActive);
 				button.setOnClickListener(clickListener);
-				button.setTag(action);
+				if(isActive) {
+					button.setTag(action);
+				}
 				if(state != null)
 					button.setSelected(state);
 			}
@@ -100,8 +103,10 @@ public class QuickActionsView extends LinearLayout {
 		@Override
 		public void onClick(View v) {
 			Action action = (Action) v.getTag();
-			action.perform();
-			v.setSelected(!v.isSelected());
+			if(action != null) {
+				action.perform();
+				v.setSelected(!v.isSelected());
+			}
 		}
 	};
 	
@@ -112,10 +117,21 @@ public class QuickActionsView extends LinearLayout {
 			setBackgroundDrawable(getBackground());
 		}
 	}
+	
+	public IndicatorOrigin getIndicatorOrigin() {
+		Drawable bg = getBackground();
+		if(bg != null && bg instanceof IndicatorAware) {
+			return ((IndicatorAware) bg).getIndicatorOrigin();
+		} else {
+			return IndicatorOrigin.NONE;
+		}
+	}
+	
 	public void setOriginX(int indicatorOriginX) {
 		Drawable bg = getBackground();
 		if(bg != null && bg instanceof IndicatorAware) {
 			((IndicatorAware) bg).setOriginX(indicatorOriginX);
+			setBackgroundDrawable(bg);
 		}
 	}
 	public void getOriginPostionMargin(Rect margins) {
@@ -143,18 +159,20 @@ public class QuickActionsView extends LinearLayout {
 	}
 	
 	//=== helper methods ===//
-	public int measureHeight() {
-		onMeasure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
-		return this.getMeasuredHeight();
-	}
-	
-	public int measureWidth() {
-		onMeasure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
-		return this.getMeasuredWidth();
-	}
-	
-	public void measure() {
-		onMeasure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+	/**
+	 * Tries to pack all buttons in given rows number in given width, if to wide tries with more rows.
+	 */
+	public void measure(int maxWidth, int minRows, Point out) {
+		int unsp = makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+		int total = getChildCount();
+		for(int rows = Math.max(minRows, 1); rows <= total; rows++) {
+			setColumnCount((total+rows-1)/rows);
+			onMeasure(unsp, unsp);
+			if(getMeasuredWidth() <= maxWidth) {
+				break;
+			}
+		}
+		out.set(getMeasuredWidth(), getMeasuredHeight());
 	}
 
 }

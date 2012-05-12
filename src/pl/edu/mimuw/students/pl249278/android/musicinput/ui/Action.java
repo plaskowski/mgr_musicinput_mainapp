@@ -7,4 +7,5 @@ public interface Action {
 	void perform();
 	/** if action is toogle kind, return current state, otherwise null */
 	Boolean getState();
+	boolean isActive();
 }

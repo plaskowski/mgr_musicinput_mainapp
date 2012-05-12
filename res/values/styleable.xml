@@ -45,10 +45,10 @@
 	</declare-styleable>
 	
 	<declare-styleable name="QuickActions">
-		<attr name="itemSpacing" format="dimension" />
 		<attr name="buttonStyle" format="reference" />
 		<attr name="toggleButtonStyle" format="reference" />
 		<attr name="buttonIconPaintSetup" format="reference" />
+		<attr name="inactiveButtonIconPaintSetup" format="reference" />
 	</declare-styleable>
 	
 	<declare-styleable name="TooltipStyle">

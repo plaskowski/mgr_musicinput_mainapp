@@ -85,24 +85,26 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 		);
 	}
 	
+	private PointF mHeadJLStart = new PointF(), mEndingJLEnd = new PointF();
+	
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
-		PointF headJLStart = new PointF(elementDrawOffset.x, elementDrawOffset.y);
-		headJLStart.offset(
+		mHeadJLStart.set(elementDrawOffset.x, elementDrawOffset.y);
+		mHeadJLStart.offset(
 			wrappedElement.joinLineLeft(), 
 			wrappedElement.joinLineY()
 		);
-		PointF endingJLEnd = new PointF(wrapperDrawOffset.x, wrapperDrawOffset.y);
-		endingJLEnd.offset(ending.getJoinLine().second.x*scaleE, ending.getJoinLine().second.y * scaleE);
+		mEndingJLEnd.set(wrapperDrawOffset.x, wrapperDrawOffset.y);
+		mEndingJLEnd.offset(ending.getJoinLine().second.x*scaleE, ending.getJoinLine().second.y * scaleE);
 		
 		// draw in appropriate order (so shadow effect would compound correctly)
 		if(elementDrawOffset.y > wrapperDrawOffset.y) {
 			drawEndingImage(canvas, paint);
-			drawStem(canvas, paint, headJLStart, endingJLEnd);
+			drawStem(canvas, paint, mHeadJLStart, mEndingJLEnd);
 			super.onDraw(canvas, paint);
 		} else {
 			super.onDraw(canvas, paint);
-			drawStem(canvas, paint, headJLStart, endingJLEnd);
+			drawStem(canvas, paint, mHeadJLStart, mEndingJLEnd);
 			drawEndingImage(canvas, paint);
 		}
 	}

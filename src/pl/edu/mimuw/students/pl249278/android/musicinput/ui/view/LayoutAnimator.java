@@ -1,7 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import android.os.Handler;
 import android.view.View;
@@ -116,8 +115,9 @@ public class LayoutAnimator<ContextType> implements Runnable {
 		long currTime = System.currentTimeMillis();
 		long tick = currTime-lastticktime;
 		lastticktime = currTime;
-		for (Iterator<LayoutAnimation<ContextType, ?>> it = animations.iterator(); it.hasNext();) {
-			LayoutAnimation<ContextType, ?> anim = (LayoutAnimation<ContextType, ?>) it.next();
+		int total = animations.size();
+		for(int i = 0; i < total; i++) {
+			LayoutAnimation<ContextType, ?> anim = (LayoutAnimation<ContextType, ?>) animations.get(i);
 			anim.elapsed = Math.min(anim.elapsed+tick, anim.duration);
 			IS_APPLY_CALL = true;
 			anim.apply(ctx);
@@ -130,9 +130,12 @@ public class LayoutAnimator<ContextType> implements Runnable {
 				lazyRemoved.add(anim);
 			}
 		}
-		animations.addAll(lazyAdded);
+		for(int i = 0; i < lazyAdded.size(); i++) {
+			animations.add(lazyAdded.get(i));
+		}
 		lazyAdded.clear();
-		for(LayoutAnimation<ContextType, ?> anim: lazyRemoved) {
+		for(int i = 0; i < lazyRemoved.size(); i++) {
+			LayoutAnimation<ContextType, ?> anim = lazyRemoved.get(i);
 			animations.remove(anim);
 			if(anim.getOnAnimationEndListener() != null) {
 				anim.getOnAnimationEndListener().run();

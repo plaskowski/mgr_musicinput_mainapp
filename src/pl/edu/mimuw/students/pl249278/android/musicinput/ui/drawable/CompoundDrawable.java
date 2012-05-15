@@ -75,6 +75,8 @@ public abstract class CompoundDrawable extends TranscluentDrawable {
 		return (int) (value+0.5f);
 	}
 	
+	private PointF mTrDelta = new PointF();
+	
 	@Override
 	public void draw(Canvas canvas) {
 		// actual size of drawing outline
@@ -82,14 +84,14 @@ public abstract class CompoundDrawable extends TranscluentDrawable {
 		float height = getBounds().height() + offsetExtremum.top - offsetExtremum.bottom;
 		
 		canvas.save();
-		PointF trDelta = new PointF(offsetExtremum.left, offsetExtremum.top);
+		mTrDelta.set(offsetExtremum.left, offsetExtremum.top);
 		for(int i = 0; i < paints.size(); i++) {
 			PaintSetup ps = paints.get(i);
 			canvas.translate(
-				ps.offsetToBase.x - trDelta.x,
-				ps.offsetToBase.y - trDelta.y
+				ps.offsetToBase.x - mTrDelta.x,
+				ps.offsetToBase.y - mTrDelta.y
 			);
-			trDelta.set(ps.offsetToBase);
+			mTrDelta.set(ps.offsetToBase);
 			this.draw(canvas, ps.paint, width, height);
 		}
 		canvas.restore();

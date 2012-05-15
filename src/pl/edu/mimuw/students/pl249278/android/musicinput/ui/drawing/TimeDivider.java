@@ -3,7 +3,6 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
@@ -20,7 +19,7 @@ import android.graphics.Paint;
 public class TimeDivider extends SheetAlignedElement {
 	private static final int EL_SPACING = 2;
 	private ElementSpec.TimeDivider spec;
-	private List<SheetElement> rightParts = null;
+	private ArrayList<SheetElement> rightParts = null;
 	private int line0Yoffset, totalWidth, totalHeight;
 	
 	public TimeDivider(Context ctx, pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.TimeDivider elementSpec) throws LoadingSvgException {
@@ -131,7 +130,9 @@ public class TimeDivider extends SheetAlignedElement {
 		int totalDX = 0;
 		int dy2line0 = 0;
 		int xLazyShift = -spacing;
-		for(SheetElement el: rightParts) {
+		int total = rightParts.size();
+		for(int i = 0; i < total; i++) {
+			SheetElement el = rightParts.get(i);
 			int eldY = el.getOffsetToAnchor(LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
 			int dx = xLazyShift+spacing;
 			canvas.translate(dx, eldY-dy2line0);

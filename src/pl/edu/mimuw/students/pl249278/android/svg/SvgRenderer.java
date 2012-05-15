@@ -15,7 +15,9 @@ public class SvgRenderer {
 	private static PathsCacheKey temp = new PathsCacheKey(null, 0);
 	
 	public static void drawSvgImage(Canvas c, SvgImage img, float scale, Paint paint) {
-		for(SvgObject obj: img.objects) {
+		int total = img.objects.size();
+		for(int i = 0; i < total; i++) {
+			SvgObject obj = img.objects.get(i);
 			if(obj instanceof SvgPath) {
 				SvgPath svgPath = (SvgPath) obj;
 				temp.path = svgPath;

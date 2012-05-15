@@ -5,6 +5,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsoluteLayout;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
@@ -64,11 +65,11 @@ class GenDeclarations {
 	)
 	static Class<? extends View> CUSTOM6; // = HorizontalScrollView_InterceptOnScrollChanged.class;
 	@JoinClasses(
-		superClass = RelativeLayout.class,
+		superClass = AbsoluteLayout.class,
 		ancestors = {
-			CorrectTopMarginStrategy.class
+			CorrectTopPositionStrategy.class
 		},
-		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.RelativeLayout_CorrectTopMargin"
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.AbsoluteLayout_CorrectTopPosition"
 	)
 	static Class<? extends View> CUSTOM7; // = RelativeLayout_CorrectTopMargin.class;
 	@JoinClasses(

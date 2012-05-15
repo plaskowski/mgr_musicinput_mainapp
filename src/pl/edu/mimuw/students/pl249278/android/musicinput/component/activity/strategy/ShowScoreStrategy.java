@@ -4,7 +4,6 @@ import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.midd
 import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ANCHOR_TYPE_LINE;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.length;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.TOP_EDGE;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateMargins;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSize;
 
 import java.util.ArrayList;
@@ -37,7 +36,10 @@ import android.graphics.Paint;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsoluteLayout;
+import android.widget.AbsoluteLayout.LayoutParams;
 
+@SuppressWarnings("deprecation")
 public class ShowScoreStrategy extends Activity {
 	private static final LogUtils log = new LogUtils(ShowScoreStrategy.class);
 	protected List<SheetAlignedElementView> elementViews = new ArrayList<SheetAlignedElementView>();
@@ -259,10 +261,10 @@ public class ShowScoreStrategy extends Activity {
 	}
 	
 	protected static int left(View view) {
-		return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).leftMargin;
+		return ((AbsoluteLayout.LayoutParams) view.getLayoutParams()).x;
 	}
 	protected static int top(View view) {
-		return ((ViewGroup.MarginLayoutParams) view.getLayoutParams()).topMargin;
+		return ((AbsoluteLayout.LayoutParams) view.getLayoutParams()).y;
 	}
 
 	protected ElementSpec specAt(int elementIndex) {
@@ -283,7 +285,10 @@ public class ShowScoreStrategy extends Activity {
 	}
 	
 	protected void updatePosition(View v, Integer left, Integer top) {
-		updateMargins(v, left, top);
+		AbsoluteLayout.LayoutParams params = (LayoutParams) v.getLayoutParams();
+		if(left != null) params.x = left;
+		if(top != null) params.y = top;
+		v.setLayoutParams(params);
 		if(v instanceof SheetAlignedElementView) {
 			SheetAlignedElementView view = (SheetAlignedElementView) v;
 			Set<ElementsOverlay> overlays = bindMap.get(view);

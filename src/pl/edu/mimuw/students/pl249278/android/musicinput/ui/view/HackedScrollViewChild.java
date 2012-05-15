@@ -1,13 +1,14 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
 
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.setVerticalPadding;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.topMargin;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
+import android.widget.AbsoluteLayout;
 import android.widget.LinearLayout;
 
+@SuppressWarnings("deprecation")
 public class HackedScrollViewChild extends LinearLayout {
 	@SuppressWarnings("unused")
 	private static final LogUtils log = new LogUtils(HackedScrollViewChild.class);
@@ -41,7 +42,7 @@ public class HackedScrollViewChild extends LinearLayout {
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 		computePadding(
 			rulerVisibleY,
-			topMargin(ruler),
+			((AbsoluteLayout.LayoutParams) ruler.getLayoutParams()).y,
 			ruler.getMeasuredHeight(),
 			ruler.getPaddingTop() + (ruler.getMeasuredHeight() - ruler.getPaddingTop() - ruler.getPaddingBottom())/2,
 			this.getMeasuredHeight()

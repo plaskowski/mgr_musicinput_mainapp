@@ -12,6 +12,10 @@ public class LayoutAnimator<ContextType> implements Runnable {
 	private ContextType ctx = null;
 	private int refreshInterval;
 	
+	public LayoutAnimator(ContextType ctx) {
+		this(ctx, 0);
+	}
+	
 	public LayoutAnimator(ContextType ctx, int refreshInterval) {
 		this.ctx = ctx;
 		this.refreshInterval = refreshInterval;
@@ -144,7 +148,11 @@ public class LayoutAnimator<ContextType> implements Runnable {
 		lazyRemoved.clear();
 		mIsRunning = !animations.isEmpty();
 		if(mIsRunning) {
-			mHandler.postDelayed(this, refreshInterval);
+			if(refreshInterval == 0) {
+				mHandler.post(this);
+			} else {
+				mHandler.postDelayed(this, refreshInterval);
+			}
 		}
 	}
 	

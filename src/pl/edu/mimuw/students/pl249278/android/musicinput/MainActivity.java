@@ -5,6 +5,8 @@ import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -30,6 +32,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog.TextInputDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_TipDialog_ProgressDialog_ManagedReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator.LayoutAnimation;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -41,9 +44,9 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.text.format.DateUtils;
 import android.view.View;
+import android.view.View.MeasureSpec;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
@@ -58,6 +61,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	private static final String CALLBACK_ACTION_DUPLICATE = MainActivity.class.getName()+".callback_duplicate";
 	private static final String CALLBACK_ACTION_EXPORTMIDI = MainActivity.class.getName()+".callback_export";
 	private static final String CALLBACK_ACTION_GET_CREATED = MainActivity.class.getName()+".callback_get_created";
+	private static final String CALLBACK_ACTION_GET_EDITED = MainActivity.class.getName()+".callback_get_edited";
 	
 	protected static final String DIALOGTAG_NEW_TITLE = "dialog_newtitle";
 	protected static final String DIALOGTAG_COPY_TITLE = "dialog_copytitle";
@@ -78,8 +82,11 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	private static final String STATE_SCORES = "scores";
 	private static final String STATE_EXPANDED_ENTRY_SCOREID = "expanded_scoreid";
 	private static final String STATE_RECEIVERS_STATES = "receivers_states";
+	/** key for persisting {@link #editedScoreId} field */
+	private static final String STATE_EDITED_SCOREID = "edited_score";
 	
 	protected static final int REQUEST_NEW_SCORE = 1;
+	protected static final int REQUEST_EDIT = 2;
 	
 	/**
 	 * Not null means whole model has been successfully loaded.
@@ -87,15 +94,18 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	private ArrayList<ParcelableScore> scores = null;
 	
 	private List<EnqueuedReceiver> receivers = new ArrayList<MainActivity.EnqueuedReceiver>();
-	private LayoutAnimator<MainActivity> animator = new LayoutAnimator<MainActivity>(this);
+	private LayoutAnimator<MainActivity> animator = new LayoutAnimator<MainActivity>(this, 25);
 	protected View expandedEntry;
 	private Handler uiHandler;
+	/** Id of {@link Score} on which "EDIT" action was requested most lately. */
+	protected long editedScoreId = -1;
 	
 	static enum ReceiverType {
 		SCORE_DELETED(ContentService.class),
 		SCORE_DUPLICATED(ContentService.class),
 		SCORE_EXPORTED(WorkerService.class), 
-		GET_CREATED(ContentService.class);
+		GET_CREATED(ContentService.class), 
+		GET_EDITED(ContentService.class);
 		
 		final Class<AsynchronousRequestsService> serviceClass;
 		
@@ -106,7 +116,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	};
 	
 	private abstract class EnqueuedReceiver extends ManagedReceiver {		
-		private ReceiverType type;
+		protected final ReceiverType type;
 		
 		public EnqueuedReceiver(ReceiverType type) {
 			this.type = type;
@@ -147,7 +157,19 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		
 		if(savedState != null && savedState.containsKey(STATE_SCORES)) {
 			ArrayList<ParcelableScore> scores = savedState.getParcelableArrayList(STATE_SCORES);
+			Collections.sort(scores, new Comparator<ParcelableScore>() {
+				@Override
+				public int compare(ParcelableScore lhs, ParcelableScore rhs) {
+					long diff = lhs.getSource().getModificationUtcStamp() - rhs.getSource().getModificationUtcStamp();
+					if(diff == 0) {
+						return 0;
+					} else {
+						return diff > 0 ? -1 : 1;
+					}
+				}
+			});
 			onModelLoaded(scores);
+			editedScoreId = savedState.getLong(STATE_EDITED_SCOREID, -1);
 			if(savedState.containsKey(STATE_EXPANDED_ENTRY_SCOREID)) {
 				View entry = findEntryView(savedState.getLong(STATE_EXPANDED_ENTRY_SCOREID));
 				if(entry != null) {
@@ -182,6 +204,18 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 					registerEnqueueAndRequestRepeat(
 						new GetCreatedReceiver((ByScoreIdRequest) state), 
 						CALLBACK_ACTION_GET_CREATED);
+					break;
+				case GET_EDITED:
+					long scoreId = ((ByScoreIdRequest) state).scoreId;
+					entryView = findEntryView(scoreId);
+					if(entryView == null) {
+						log.w("Couldn't find entry view for edited Score#%d", scoreId);
+					} else {
+						addProgressLock(entryView);
+						registerEnqueueAndRequestRepeat(
+							new GetEditedReceiver((ByScoreIdRequest) state), 
+							CALLBACK_ACTION_GET_EDITED);
+					}
 					break;
 				}
 			}
@@ -272,10 +306,35 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 				registerAndEnqueue(recv, CALLBACK_ACTION_GET_CREATED);
 				Intent i = AsyncHelper.prepareServiceIntent(this, ContentService.class, 
 					ContentService.ACTIONS.GET_SCORE_BY_ID, 
-					recv.getCurrentRequestId(), AsyncHelper.getBroadcastCallback(CALLBACK_ACTION_GET_CREATED),
+					recv.getCurrentRequestId(), getBroadcastCallback(CALLBACK_ACTION_GET_CREATED),
 					true
 				);
 				i.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, scoreId);
+				// TODO if request visConf
+				startService(i);
+			}
+			break;
+		case REQUEST_EDIT:
+			long scoreId = editedScoreId;
+			Score score = findScoreById(scoreId);
+			if(score == null) {
+				log.w("Couldn't find Score#%d that was edited most lately", editedScoreId);
+			} else {
+				// refresh edited score data
+				GetEditedReceiver recv = new GetEditedReceiver(scoreId);
+				registerAndEnqueue(recv, CALLBACK_ACTION_GET_EDITED);
+				Intent i = AsyncHelper.prepareServiceIntent(this, ContentService.class, 
+					ContentService.ACTIONS.GET_SCORE_BY_ID, 
+					recv.getCurrentRequestId(), getBroadcastCallback(CALLBACK_ACTION_GET_EDITED),
+					true
+				);
+				i.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, scoreId);
+				View entry = findEntryView(scoreId);
+				if(entry == null) {
+					log.w("Couldn't find entry View for Score#%d that was edited", scoreId);
+				} else {
+					addProgressLock(entry);
+				}
 				// TODO if request visConf
 				startService(i);
 			}
@@ -285,23 +344,23 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		}
 	}
 	
-	private class GetCreatedReceiver extends EnqueuedReceiver {
+	private abstract class GetScoreReceiver extends EnqueuedReceiver {
 		long scoreId;
 
-		private GetCreatedReceiver(long scoreId) {
-			super(ReceiverType.GET_CREATED);
+		public GetScoreReceiver(ReceiverType type, long scoreId) {
+			super(type);
 			this.scoreId = scoreId;
 		}
 		
-		public GetCreatedReceiver(ByScoreIdRequest state) {
-			super(state.requestId, ReceiverType.GET_CREATED);
+		public GetScoreReceiver(ReceiverType type, ByScoreIdRequest state) {
+			super(state.requestId, type);
 			this.scoreId = state.scoreId;
 		}
 		
 		@Override
 		protected void onFailureReceived(Intent response) {
 			sendCleanSilently();
-			dismissReceiversByType(ReceiverType.GET_CREATED);
+			dismissReceiversByType(type);
 			showErrorDialog(R.string.errormsg_failed_to_refresh, ERRORDIALOG_CALLBACKARG_RELOAD);
 		}
 		
@@ -309,6 +368,28 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		protected void onSuccessReceived(Intent response) {
 			sendCleanSilently();
 			ParcelableScore pScore = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_ENTITY);
+			onScoreReceived(pScore);
+		}
+		
+		protected abstract void onScoreReceived(ParcelableScore pScore);
+
+		@Override
+		public ReceiverState getState() {
+			return new ByScoreIdRequest(type, scoreId, getCurrentRequestId());
+		}
+	}
+	
+	private class GetCreatedReceiver extends GetScoreReceiver {		
+		private GetCreatedReceiver(ByScoreIdRequest state) {
+			super(ReceiverType.GET_CREATED, state);
+		}
+
+		private GetCreatedReceiver(long scoreId) {
+			super(ReceiverType.GET_CREATED, scoreId);
+		}
+
+		@Override
+		protected void onScoreReceived(ParcelableScore pScore) {
 			long stamp = pScore.getSource().getModificationUtcStamp();
 			// find index in list ordered by modification stamp
 			int i = 0;
@@ -317,12 +398,45 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 					break;
 				}
 			}
-			onNewScoreArrived(i, pScore);
+			onNewScoreArrived(i, pScore, null);
+		}
+	}
+	
+	private class GetEditedReceiver extends GetScoreReceiver {
+		private GetEditedReceiver(ByScoreIdRequest state) {
+			super(ReceiverType.GET_EDITED, state);
+		}
+
+		private GetEditedReceiver(long scoreId) {
+			super(ReceiverType.GET_EDITED, scoreId);
 		}
 		
 		@Override
-		public ReceiverState getState() {
-			return new ByScoreIdRequest(ReceiverType.GET_CREATED, scoreId, getCurrentRequestId());
+		protected void onScoreReceived(ParcelableScore pScore) {
+			long scoreId = pScore.getSource().getId();
+			View entryView = findEntryView(scoreId);
+			if(entryView == null) {
+				log.w("Couldn't find a view for edited Score#%d so can't refresh it", scoreId);
+			} else {
+				removeProgressLock(entryView);
+				int index = scores.indexOf(findParcelableScoreById(scoreId));
+				if(index < 0) {
+					log.w("Couldn't find an original ParcelableScore#%d object to swap with", scoreId);
+				} else {
+					// update object in model
+					scores.remove(index);
+					scores.add(index, pScore);
+					// update modification time stamp text field
+					populateEntryTextViews(pScore.getSource(), entryView);
+					AnimatedMoveUp moveUpAnim = new AnimatedMoveUp(scoreId, true);
+					if(moveUpAnim.isRequired() && expandedEntry == entryView) {
+						// collapse first
+						entryClickListener.collapseExpanded(moveUpAnim);
+					} else {
+						moveUpAnim.run();
+					}
+				}
+			}
 		}
 	}
 
@@ -343,8 +457,11 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 				formatDate(score.getModificationUtcStamp()));
 	}
 	
-	private OnClickListener entryClickListener = new OnClickListener() {
+	private ToggleEntryToolbar entryClickListener = new ToggleEntryToolbar();
+	
+	private class ToggleEntryToolbar implements OnClickListener {
 		private View prev = null;
+		
 		@Override
 		public void onClick(View view) {
 			ViewGroup entry = (ViewGroup) view;
@@ -357,6 +474,16 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 				prev = toolbar;
 				expandedEntry = view;
 			} else {
+				prev = null;
+				expandedEntry = null;
+			}
+		}
+		
+		public void collapseExpanded(Runnable onAnimationEnd) {
+			if(expandedEntry != null) {
+				ViewHeightAnimation.CollapseAnimation<MainActivity> anim = new ViewHeightAnimation.CollapseAnimation<MainActivity>(prev, 300);
+				anim.setOnAnimationEndListener(onAnimationEnd);
+				animator.startAnimation(anim);
 				prev = null;
 				expandedEntry = null;
 			}
@@ -398,7 +525,8 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			public void onClick(View v) {
 				Intent intent = new Intent(getApplicationContext(), EditActivity.class);
 				intent.putExtra(EditActivity.STARTINTENT_EXTRAS_SCORE_ID, score.getId());
-				startActivity(intent);
+				editedScoreId = score.getId();
+				startActivityForResult(intent, REQUEST_EDIT);
 			}
 		});
 		toolbar.findViewById(R.id.button_play).setOnClickListener(new OnClickListener() {
@@ -521,13 +649,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
     		entryView.setTag(null);
     	}
     	// remove Score from model
-    	ParcelableScore pScore = null;
-    	for(ParcelableScore obj: scores) {
-    		if(obj.getSource() == score) {
-    			pScore = obj;
-    			break;
-    		}
-    	}
+    	ParcelableScore pScore = findParcelableScoreById(score.getId());
     	if(pScore != null) {
     		scores.remove(pScore);
     	} else {
@@ -680,7 +802,8 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			}
 			// create and reveal entry with received copy
 			ParcelableScore pScore = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_ENTITY);
-			onNewScoreArrived(scores.indexOf(findParcelableScoreById(originalScoreId))+1, pScore);
+			int insertIndex = Math.max(0, scores.indexOf(findParcelableScoreById(originalScoreId)));
+			onNewScoreArrived(insertIndex, pScore, new AnimatedMoveUp(pScore.getSource().getId()));
 		}
 
 		@Override
@@ -700,30 +823,145 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		}
 		
 	}
+	
+	/** 
+	 * Utility class that checks if given Score is at its right place in model ({@link MainActivity#scores}) that is ordered by modification stamp.
+	 * If not it starts an {@link LayoutAnimation} of swapping given Score with the one above 
+	 * and updates immediately {@link ParcelableScore} object position in model. 
+	 * This task is repeated until Score object reaches its correct position in model. 
+	 */
+	private class AnimatedMoveUp implements Runnable {
+		long scoreId;
+		boolean keepVisible;
+		
+		private AnimatedMoveUp(long scoreId) {
+			this(scoreId, false);
+		}
+		
+		private AnimatedMoveUp(long scoreId, boolean keepVisible) {
+			this.scoreId = scoreId;
+			this.keepVisible = keepVisible;
+		}
+
+		public boolean isRequired() {
+			ParcelableScore pScore = findParcelableScoreById(scoreId);
+			int indexInModel;
+			if(pScore == null || (indexInModel = scores.indexOf(pScore)) < 0) {
+				log.v("Score#%d to move up not found in model", scoreId);
+				return false;
+			}
+			long stamp = pScore.getSource().getModificationUtcStamp();
+			return indexInModel > 0 && scores.get(indexInModel-1).getSource().getModificationUtcStamp() <= stamp;
+		}
+		
+		@Override
+		public void run() {
+			if(isRequired()) {
+				ParcelableScore pScore = findParcelableScoreById(scoreId);
+				int indexInModel = scores.indexOf(pScore);
+				ParcelableScore upper = scores.get(indexInModel-1);
+				scores.remove(pScore);
+				scores.add(indexInModel-1, pScore);
+				moveEntryUpAnimation(
+					findEntryViewIndex(pScore.getSource().getId()),
+					findEntryViewIndex(upper.getSource().getId())
+				);
+			}
+		}
+
+		private void moveEntryUpAnimation(int lowerEntryIndex, int upperEntryIndex) {
+			ViewGroup container = (ViewGroup) findViewById(R.id.entries_container);
+			View upperView = container.getChildAt(upperEntryIndex);
+			int unspc = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+			upperView.measure(unspc, unspc);
+			final int upperH = upperView.getMeasuredHeight();
+			View lowerView = container.getChildAt(lowerEntryIndex);
+			lowerView.measure(unspc, unspc);
+			final int lowerH = lowerView.getMeasuredHeight();
+			int time = 250;
+			animator.startAnimation(new LayoutAnimation<MainActivity, View>(upperView, 0, 0, time) {
+				@Override
+				protected void apply(MainActivity ctx, float state) {
+					float revState = 1-state;
+					int top = (int) (-upperH*revState) + (int) (-lowerH*revState);
+					int bottom = (int) (lowerH*revState);
+					setVMargins(view, top, bottom);
+					int hdiff = (int) (-4 * state * (state -1) * 30);
+					setHMargins(view, hdiff, -hdiff);
+				}
+			});
+			animator.startAnimation(new LayoutAnimation<MainActivity, View>(lowerView, 0, 0, time, this) {
+				@Override
+				protected void apply(MainActivity ctx, float state) {
+					float revState = 1-state;
+					int top = (int) (upperH*revState);
+					setVMargins(view, 
+						top, 
+						0);
+					int hdiff = (int) (-4 * state * (state -1) * 30);
+					setHMargins(view, -hdiff, hdiff);
+					if(keepVisible) {
+						ensureViewIsVisible(view, true);
+					}
+				}
+			});
+			container.removeView(lowerView);
+			container.addView(lowerView, upperEntryIndex);
+			setVMargins(upperView, -upperH-lowerH, lowerH);
+			setVMargins(lowerView, upperH, 0);
+		}
+		
+		private void setHMargins(View view, int left, int right) {
+			ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+			params.leftMargin = left;
+			params.rightMargin = right;
+			view.setLayoutParams(params);
+		}
+		
+		private void setVMargins(View view, int top, int bottom) {
+			ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+			params.topMargin = top;
+			params.bottomMargin = bottom;
+			view.setLayoutParams(params);
+		}
+	}
 
 	/**
 	 * Add object to {@link MainActivity#scores}, inflates new entry view and start animation to reveal it
 	 * @param insertAt index in model
+	 * @param onAnimFinish task to run on "reveal" animation end
 	 */
-	private void onNewScoreArrived(int insertAt, ParcelableScore pScore) {
+	private void onNewScoreArrived(int insertAt, ParcelableScore pScore, final Runnable onAnimFinish) {
 		insertAt = Math.max(insertAt, 0);
 		int viewInsertIndex = 0;
 		if(insertAt < scores.size()) {
 			viewInsertIndex = findEntryViewIndex(scores.get(insertAt).getSource().getId());
 		}
 		scores.add(insertAt, pScore);
-		ViewGroup container = (ViewGroup) findViewById(R.id.entries_container);
+		final ViewGroup container = (ViewGroup) findViewById(R.id.entries_container);
 		final View entryView = inflateAndPopulateEntry(pScore.getSource(), container);
 		container.addView(entryView, viewInsertIndex);
-		ViewHeightAnimation.ExpandAnimation.fillBefore(entryView);
-		ExpandKeepVisibleAnimation anim = new ExpandKeepVisibleAnimation(entryView, 200);
-		anim.setOnAnimationEndListener(new Runnable() {
+		Animation inAnim = AnimationUtils.makeInAnimation(this, true);
+		inAnim.setDuration(500);
+		inAnim.setFillBefore(true);
+		inAnim.setFillAfter(true);
+		entryView.setAnimation(inAnim);
+		inAnim.setAnimationListener(new AnimationListener() {
 			@Override
-			public void run() {
-				entryView.getLayoutParams().height = LayoutParams.WRAP_CONTENT;
+			public void onAnimationStart(Animation animation) {
+			}
+			@Override
+			public void onAnimationRepeat(Animation animation) {
+			}
+			@Override
+			public void onAnimationEnd(Animation animation) {
+				entryView.setAnimation(null);
+				if(onAnimFinish != null) {
+					onAnimFinish.run();
+				}
 			}
 		});
-		animator.startAnimation(anim);
+		inAnim.startNow();		
 	}
 	
 	private void sendCreateDuplicate(Score score, String newTitle) {
@@ -843,7 +1081,8 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 				unregisterReceiver(receiver);
 			}
 			receivers.clear();
-			outState.putParcelableArrayList(STATE_RECEIVERS_STATES, states);			
+			outState.putParcelableArrayList(STATE_RECEIVERS_STATES, states);
+			outState.putLong(STATE_EDITED_SCOREID, editedScoreId);
 		}
 	}
 	

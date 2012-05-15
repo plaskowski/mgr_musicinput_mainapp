@@ -11,11 +11,13 @@ import android.view.animation.Interpolator;
 public class LayoutAnimator<ContextType> implements Runnable {
 	private static Interpolator interpolator = new AccelerateDecelerateInterpolator();
 	private ContextType ctx = null;
+	private int refreshInterval;
 	
-	public LayoutAnimator(ContextType ctx) {
-		super();
+	public LayoutAnimator(ContextType ctx, int refreshInterval) {
 		this.ctx = ctx;
+		this.refreshInterval = refreshInterval;
 	}
+	
 	public static abstract class LayoutAnimation<ContextType, ViewType extends View> {
 		protected int start_value;
 		protected int delta;
@@ -139,7 +141,7 @@ public class LayoutAnimator<ContextType> implements Runnable {
 		lazyRemoved.clear();
 		mIsRunning = !animations.isEmpty();
 		if(mIsRunning) {
-			mHandler.post(this);
+			mHandler.postDelayed(this, refreshInterval);
 		}
 	}
 	

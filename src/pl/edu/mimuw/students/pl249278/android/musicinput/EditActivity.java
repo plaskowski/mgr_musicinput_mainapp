@@ -136,7 +136,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private HorizontalScrollView hscroll;
 	private ScrollView vertscroll;
 	private ViewGroup scaleGestureDetector;
-	private Animator animator = new EditActivity.Animator(this);
+	private Animator animator = new EditActivity.Animator(this, 10);
 	private QuickActionsView qActionsView;
 	
 	private boolean isScaleValid = false;
@@ -1840,8 +1840,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	}
 
 	private static class Animator extends LayoutAnimator<EditActivity> {
-		public Animator(EditActivity ctx) {
-			super(ctx);
+		public Animator(EditActivity ctx, int refreshInterval) {
+			super(ctx, refreshInterval);
 		}
 		
 		private static class RLAnimation extends LayoutAnimation<EditActivity, View> {

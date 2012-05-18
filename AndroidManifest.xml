@@ -3,7 +3,7 @@
       package="pl.edu.mimuw.students.pl249278.android.musicinput"
       android:versionCode="1"
       android:versionName="1.0">
-    <uses-sdk android:minSdkVersion="7" />
+    <uses-sdk android:minSdkVersion="8" />
     <!-- required for exporting .midi files -->
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	 <uses-permission android:name="android.permission.VIBRATE"/>

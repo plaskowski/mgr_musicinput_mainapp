@@ -22,7 +22,7 @@
 	    		android:layout_height="wrap_content"
 	    		android:orientation="vertical"
    		    >
-				<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.RelativeLayout_CorrectTopMargin
+				<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.AbsoluteLayout_CorrectTopPosition
 					android:id='@+id/PLAY_sheet_container'  
 			    	android:background="@android:color/white"
 			    	android:layout_width="fill_parent"
@@ -35,7 +35,7 @@
 			    	android:layout_height="fill_parent"
 			    	android:background="#FFFFFF"
 			   		/>
-			   	</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.RelativeLayout_CorrectTopMargin>
+			   	</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.AbsoluteLayout_CorrectTopPosition>
 			</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollViewChild>
 		</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollView>
 	</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HorizontalScrollView_ObserveInterceptTouch_LazyScrolling>

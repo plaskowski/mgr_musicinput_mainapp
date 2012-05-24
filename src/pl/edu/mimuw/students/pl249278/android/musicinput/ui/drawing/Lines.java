@@ -1,10 +1,13 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
+import java.util.ArrayList;
+
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.GradientDrawable.Orientation;
 
@@ -92,5 +95,10 @@ public class Lines extends SheetElement {
 	@Override
 	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {
 		return sheetParams.anchorOffset(anchorAbsIndex, part);
+	}
+	
+	@Override
+	public void getCollisionRegions(ArrayList<Rect> areas,
+			ArrayList<Rect> rectsPool) {
 	}
 }

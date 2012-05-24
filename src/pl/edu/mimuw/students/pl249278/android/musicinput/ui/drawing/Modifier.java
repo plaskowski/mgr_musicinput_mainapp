@@ -1,5 +1,7 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
+import java.util.ArrayList;
+
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.LoadingSvgException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
@@ -7,6 +9,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.Adjustab
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 
 public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement> {
 	protected SimpleSheetElement modifierElement;
@@ -49,6 +52,13 @@ public abstract class Modifier extends AlignedElementWrapper<SheetAlignedElement
 			super.collisionRegionRight(),
 			wrapperDrawOffset.x + modifierElement.measureWidth()
 		);
+	}
+	
+	@Override
+	public void getCollisionRegions(ArrayList<Rect> areas,
+			ArrayList<Rect> rectsPool) {
+		super.getCollisionRegions(areas, rectsPool);
+		collectChildRegionsAndOffset(modifierElement, wrapperDrawOffset, areas, rectsPool);
 	}
 	
 	protected abstract int elementOffsetX(int spacing);

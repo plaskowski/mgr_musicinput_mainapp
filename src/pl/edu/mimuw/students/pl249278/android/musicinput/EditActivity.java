@@ -67,6 +67,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.NoteValu
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.NoteValueWidget.OnValueChanged;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.ScrollingLockable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.TouchInputLockable;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy.NoteValueSpinner;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 import android.content.Context;
 import android.content.Intent;
@@ -134,7 +135,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	
 	private ViewGroup sheet;
 	private View inputArea;
-	private HorizontalScrollView hscroll;
 	private ScrollView vertscroll;
 	private ViewGroup scaleGestureDetector;
 	private Animator animator = new EditActivity.Animator(this);
@@ -204,7 +204,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 
 		scaleGestureDetector = (ViewGroup) findViewById(R.id.EDIT_scale_detector);
 		scaleGestureDetector.setOnTouchListener(quickActionsDismiss);
-		hscroll = (HorizontalScrollView) findViewById(R.id.EDIT_outer_hscrollview);
 		vertscroll = (ScrollView) findViewById(R.id.EDIT_vertscrollview);
 		sheet = (ViewGroup) findViewById(R.id.EDIT_sheet_container);
 		lines = (Sheet5LinesView) findViewById(R.id.EDIT_sheet_5lines);
@@ -1022,7 +1021,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		int x;
 		if(elementIndex >= 0) {
 			SheetAlignedElementView prevEl = elementViews.get(elementIndex);
-			x = middleAbsoluteX(prevEl) + afterElementSpacing(times.get(findTime(elementIndex)), prevEl.model());
+			x = middleAbsoluteX(prevEl) + afterElementSpacing(times.get(findTime(elementIndex)), elementIndex);
 		} else {
 			x = notesAreaX;
 		}
@@ -1038,7 +1037,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			if(model.getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
 				timeIndex++;
 			}
-			xstart += afterElementSpacing(times.get(timeIndex), model);
+			xstart += afterElementSpacing(times.get(timeIndex), elementI);
 		}
 	}
 	
@@ -1161,7 +1160,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	}
 	
 	private View.OnTouchListener elementTouchListener = new OnTouchListener() {
-		Rect hitRect = new Rect();
 		int selectedIndex = -1;
 		IndexAwareAction[] actions;
 		
@@ -1169,14 +1167,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		public boolean onTouch(View v, MotionEvent event) {
 			switch(event.getActionMasked()) {
 			case MotionEvent.ACTION_DOWN:
-				int i = 0;
-				for(; i < elementViews.size(); i++) {
-					elementViews.get(i).getHitRect(hitRect);
-					if(hitRect.contains((int) event.getX(), (int) event.getY())) {
-						break;
-					}
-				}
-				if(i < elementViews.size()) {
+				int i = findPressedElementIndex(event);
+				if(i != -1) {
 					switch(specAt(i).getType()) {
 					case PAUSE:
 						actions = possibleActions;
@@ -1214,7 +1206,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		private boolean touchSlopPassed;
 		private int downEventY;
 		
-		Rect hitRect = new Rect();
 		private int selectedIndex;
 		private int touchYoffset;
 		private int currentAnchor, startAnchor;
@@ -1225,14 +1216,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		public boolean onTouch(View v, MotionEvent event) {
 			switch(event.getActionMasked()) {
 			case MotionEvent.ACTION_DOWN:
-				int i = 0;
-				for(; i < elementViews.size(); i++) {
-					elementViews.get(i).getHitRect(hitRect);
-					if(hitRect.contains((int) event.getX(), (int) event.getY())) {
-						break;
-					}
-				}
-				if(i >= elementViews.size() || specAt(i).getType() != ElementType.NOTE) {
+				int i = findPressedElementIndex(event);
+				if(i == -1 || specAt(i).getType() != ElementType.NOTE) {
 					break;
 				}
 				this.selectedIndex = i;
@@ -1750,8 +1735,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			int currX = pinVisiblePositionX;
 			int i = pinnedElementIndex-1;
 			for(; i >= 0; i--) {
-				SheetAlignedElementView view = elementViews.get(i);
-				currX -= afterElementSpacing(times.get(findTime(i)), view.model());
+				currX -= afterElementSpacing(times.get(findTime(i)), i);
 				if(currX < moveLeftBorder())
 					break;
 			}
@@ -1760,8 +1744,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			int nextX = pinVisiblePositionX;
 			int i = pinnedElementIndex;
 			for(; i < elementsCount-1; i++) {
-				SheetAlignedElementView view = elementViews.get(i);
-				nextX += afterElementSpacing(times.get(findTime(i)), view.model());
+				nextX += afterElementSpacing(times.get(findTime(i)), i);
 				if(nextX > moveRightBorder())
 					break;
 			}
@@ -1798,7 +1781,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			if(v.model().getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
 				timeIndex++;
 			}
-			x += afterElementSpacing(times.get(timeIndex), v.model());
+			x += afterElementSpacing(times.get(timeIndex), i);
 		}
 		if(rescrollDest == -1) {
 			throw new RuntimeException();
@@ -1989,7 +1972,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				timeIndex++;
 				updateTimeSpacingBase(timeIndex, true);
 			}
-			spacingAfter = afterElementSpacing(times.get(timeIndex), v.model());
+			spacingAfter = afterElementSpacing(times.get(timeIndex), i);
 			int xpos = x-middleX(v);
 			int ypos = sheetElementY(v);
 			updatePosition(
@@ -2999,8 +2982,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		return ScoreHelper.elementSpecNN(spec, visualConf.getDisplayMode());
 	}
 
-	private int afterElementSpacing(Time time, SheetAlignedElement sheetAlignedElement) {
-		return afterElementSpacing(time.rangeStart, time.spacingBase, sheetAlignedElement);
+	private int afterElementSpacing(Time time, int elementIndex) {
+		return afterElementSpacing(time.spacingBase, elementIndex);
 	}
 	
 	private int timeDividerSpacing(Time time, boolean updateSheetParams) {
@@ -3039,10 +3022,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 
 	private int moveRightBorder() {
 		return visibleRectWidth - inputAreaWidth - iaRightMargin - delta + mTouchSlop;
-	}
-	
-	private int abs2visibleX(int absoluteX) {
-		return absoluteX - hscroll.getScrollX();
 	}
 	
 	private int visible2absX(int visibleX) {

@@ -7,7 +7,7 @@
    	android:layout_height="fill_parent"
 >
 	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HorizontalScrollView_ObserveInterceptTouch_LazyScrolling
-	   	android:id="@+id/PLAY_hscrollview"
+	   	android:id="@id/ShowScore_horizontal_scrollview"
 	   	android:layout_width="fill_parent" 
 	   	android:layout_height="fill_parent"
 	   	android:fillViewport="true"

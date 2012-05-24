@@ -1,15 +1,21 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.length;
+
+import java.util.ArrayList;
+
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.TimeDivider;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Rect;
 
 public class ScorePositioningStrategy {
-	private float defaultSpacingBaseFactor;
 	private int minPossibleValue;
 	private float minDrawSpacingFactor;
 	private float afterTimeDividerVisualSpacingFactor;
@@ -33,7 +39,6 @@ public class ScorePositioningStrategy {
 		SheetParams params = new SheetParams(
 			res.getInteger(R.integer.lineThickness),
 			res.getInteger(R.integer.linespaceThickness));
-		defaultSpacingBaseFactor = 	params.readParametrizedFactor(res.getString(R.string.defaultTimeSpacingBaseFactor));
 		minPossibleValue = res.getInteger(R.integer.minNotePossibleValue) + 1;
 		minDrawSpacingFactor = params.readParametrizedFactor(res.getString(R.string.minDrawSpacing));
 		afterTimeDividerVisualSpacingFactor = params.readParametrizedFactor(res.getString(R.string.timeDividerDrawAfterSpacingFactor));
@@ -51,7 +56,6 @@ public class ScorePositioningStrategy {
 		int spacingAfter = paddingLeft;
 		int x = 0;
 		int currentSpacingBase = 0;
-		int currentTimeDividerIndex = 0;
 		for(int i = 0; env.isValid(i); i++) {
 			x += spacingAfter;
 			posEnv.preVisit(i);
@@ -64,39 +68,49 @@ public class ScorePositioningStrategy {
 					}
 				}
 				lastTimeEl--;
-				currentTimeDividerIndex = i;
 				currentSpacingBase = computeTimeSpacingBase(env, i, lastTimeEl, sheetParams, updateSheetParams);
 			}
-			spacingAfter = afterElementSpacing(env, currentTimeDividerIndex, currentSpacingBase, model, sheetParams);
+			spacingAfter = afterElementSpacing(env, currentSpacingBase, i, sheetParams);
 			int xpos = x-posEnv.middleX(i);
 			posEnv.onPositionChanged(i, xpos);
 		}
 	}
 	
-	public int timeDividerSpacing(SpacingEnv env, int timeDividerIndex, SheetParams sheetParams, boolean updateSheetParams) {
+	/**
+	 * @param elementIndex index of {@link TimeDivider} or it's predecessor
+	 * @return spacing fitted for space between element and TimeDivider
+	 */
+	public int timeDividerSpacing(SpacingEnv env, int elementIndex, SheetParams sheetParams, boolean updateSheetParams) {
 		if(updateSheetParams) {
-			env.updateSheetParams(timeDividerIndex, sheetParams);
+			env.updateSheetParams(elementIndex, sheetParams);
 		}
-		SheetAlignedElement dividerModel = env.getModel(timeDividerIndex);
+		SheetAlignedElement dividerModel = env.getModel(elementIndex);
 		int minSpacing = dividerModel.collisionRegionRight()-dividerModel.getMiddleX()+(int) (afterTimeDividerVisualSpacingFactor*sheetParams.getScale());
-		if(env.isValid(timeDividerIndex + 1)) {			
-			SheetAlignedElement firstElModel = env.getModel(timeDividerIndex + 1);
+		if(env.isValid(elementIndex + 1)) {			
+			SheetAlignedElement firstElModel = env.getModel(elementIndex + 1);
 			if(updateSheetParams) {
-				env.updateSheetParams(timeDividerIndex + 1, sheetParams);
+				env.updateSheetParams(elementIndex + 1, sheetParams);
 			}
 			minSpacing += firstElModel.getMiddleX()-firstElModel.collisionRegionLeft();
 		}
 		return minSpacing;
 	}
 	
-	public int afterElementSpacing(SpacingEnv env, int timeDividerIndex, int timeSpacingBase, SheetAlignedElement sheetAlignedElement, SheetParams sheetParams) {
-		ElementSpec elementSpec = sheetAlignedElement.getElementSpec();
+	public int afterElementSpacing(SpacingEnv env, int timeSpacingBase, int elementIndex, SheetParams sheetParams) {
+		SheetAlignedElement elementModel = env.getModel(elementIndex);
+		ElementSpec elementSpec = elementModel.getElementSpec();
 		if(elementSpec.getType() == ElementType.TIMES_DIVIDER) {
-			return timeDividerSpacing(env, timeDividerIndex, sheetParams, false);
+			return timeDividerSpacing(env, elementIndex, sheetParams, false);
 		} else {
-			return length2spacing(timeSpacingBase, elementSpec.spacingLength(minPossibleValue), minPossibleValue);
+			int spacing = length2spacing(timeSpacingBase, elementSpec.spacingLength(minPossibleValue), minPossibleValue);
+			if(env.isValid(elementIndex + 1) && env.getModel(elementIndex + 1).getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
+				spacing = Math.max(spacing, timeDividerSpacing(env, elementIndex, sheetParams, false));
+			}
+			return spacing;
 		}
 	}
+	
+	private ArrayList<Rect> areas = new ArrayList<Rect>(), nextAreas = new ArrayList<Rect>(), rectsPool = new ArrayList<Rect>();
 
 	public int computeTimeSpacingBase(SpacingEnv env, int firstElementIndex, int lastElementIndex, SheetParams params, boolean refreshSheetParams) {
 		if(env.getModel(firstElementIndex).getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
@@ -108,19 +122,70 @@ public class ScorePositioningStrategy {
 		if(refreshSheetParams && env.isValid(firstElementIndex)) { // update first element of Time if present
 			env.updateSheetParams(firstElementIndex, params);
 		}
-		int spacingBase = (int) (defaultSpacingBaseFactor * params.getScale()); // calculate default spacing base
+		int spacingBase = 0;
 		int baseLength = length(0, minPossibleValue);
 		int minDrawSpacing = (int) (minDrawSpacingFactor * params.getScale());
+		// prepare areas of first element
+		if(firstElementIndex <= lastElementIndex) {
+			SheetAlignedElement model = env.getModel(firstElementIndex);
+			getAreas(model, areas, rectsPool);
+		}
 		for(int i = firstElementIndex; i <= lastElementIndex; i++) { // for each element inside Time 
 			SheetAlignedElement model = env.getModel(i);
 			/** minimal visual spacing between 2 element's middles so that they don't collide */
-			int minSpacing = model.collisionRegionRight()-model.getMiddleX() + minDrawSpacing;
+			int minSpacing;
 			if(env.isValid(i+1)) {
 				if(refreshSheetParams) {
 					env.updateSheetParams(i+1, params);
 				}
 				SheetAlignedElement next = env.getModel(i+1);
-				minSpacing += next.getMiddleX()-next.collisionRegionLeft();
+				getAreas(next, nextAreas, rectsPool);
+				/* 
+				 * Obliczam o ile muszę odsunąć zestaw obszarów nextAreas w prawo 
+				 * aby był minDrawSpacing odstęp między nimi a zestawem areas
+				 */
+				int areasTotal = areas.size(), nextAreasTotal = nextAreas.size();
+				for(int areaIndex = 0; areaIndex < areasTotal; areaIndex++) {
+					areas.get(areaIndex).inset(-minDrawSpacing, -minDrawSpacing);
+				}
+				int requiredMoveDist;
+				int totalMoveDist = 0;
+				do {
+					requiredMoveDist = 0;
+					for(int areaIndex = 0; areaIndex < areasTotal; areaIndex++) {
+						Rect area = areas.get(areaIndex);
+						for(int nextAreaIndex = 0; nextAreaIndex < nextAreasTotal; nextAreaIndex++) {
+							Rect nextArea = nextAreas.get(nextAreaIndex);
+							if(Rect.intersects(area, nextArea)) {
+								int moveDist = area.right - nextArea.left;
+								if(moveDist > requiredMoveDist) {
+									requiredMoveDist = moveDist;
+								}
+							}
+						}
+					}
+					translate(areas, -requiredMoveDist, 0);
+					totalMoveDist += requiredMoveDist;
+				} while(requiredMoveDist > 0);
+				minSpacing = Math.max(
+					totalMoveDist + next.getMiddleX() - model.getMiddleX(),
+					minDrawSpacing);
+				clear(areas, rectsPool);
+				// switch references to save areas of next for next iteration
+				ArrayList<Rect> temp = areas;
+				areas = nextAreas;
+				nextAreas = temp;				
+			} else {
+				int maxRight = 0;
+				int areasTotal = areas.size();
+				for(int areaIndex = 0; areaIndex < areasTotal; areaIndex++) {
+					Rect area = areas.get(areaIndex);
+					maxRight = Math.max(area.right, maxRight);
+				}
+				minSpacing = Math.max(
+					maxRight - model.getMiddleX() + minDrawSpacing,
+					minDrawSpacing
+				);
 			}
 			spacingBase = (int) Math.max(
 				spacingBase,
@@ -128,6 +193,24 @@ public class ScorePositioningStrategy {
 			);
 		}
 		return spacingBase;
+	}
+
+	private static void getAreas(SheetAlignedElement model, ArrayList<Rect> areas, ArrayList<Rect> rectsPool) {
+		clear(areas, rectsPool);
+		model.getCollisionRegions(areas, rectsPool);
+		translate(areas, 0, model.getOffsetToAnchor(LINE0_ABSINDEX, AnchorPart.TOP_EDGE));
+	}
+
+	private static void clear(ArrayList<Rect> areas, ArrayList<Rect> rectsPool) {
+		rectsPool.addAll(areas);
+		areas.clear();
+	}
+	
+	private static void translate(ArrayList<Rect> rects, int dx, int dy) {
+		int total = rects.size();
+		for(int i = 0; i < total; i++) {
+			rects.get(i).offset(dx, dy);
+		}
 	}
 	
 	private static int length2spacing(int spacingBase, double lengthInMU, int measureUnit) {

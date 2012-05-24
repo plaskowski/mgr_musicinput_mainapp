@@ -1,6 +1,9 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
 import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
+
+import java.util.ArrayList;
+
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.Clef;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.DiatonicScalePitch;
@@ -11,6 +14,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualP
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 
 public class KeySignatureElement extends SheetElement {
 	private static final int SCALE_LENGTH = DiatonicScalePitch.values().length;
@@ -108,6 +112,18 @@ public class KeySignatureElement extends SheetElement {
 			lazyXTranslate = image.measureWidth();
 		}
 		canvas.translate(-totalDx, -minTop-totalDy);
+	}
+	
+	@Override
+	public void getCollisionRegions(ArrayList<Rect> areas,
+			ArrayList<Rect> rectsPool) {
+		int x = 0;
+		for (int i = 0; i < images.length; i++) {
+			SimpleSheetElement image = images[i];
+			int y = minTop + relativeYPositions[i];
+			collectChildRegionsAndOffset(image, x, y, areas, rectsPool);
+			x += image.measureWidth();
+		}
 	}
 
 }

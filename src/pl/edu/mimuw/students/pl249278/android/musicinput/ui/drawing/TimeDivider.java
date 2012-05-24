@@ -15,8 +15,10 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 
 public class TimeDivider extends SheetAlignedElement {
+	// TODO make this a paramsFactor
 	private static final int EL_SPACING = 2;
 	private ElementSpec.TimeDivider spec;
 	private ArrayList<SheetElement> rightParts = null;
@@ -143,6 +145,21 @@ public class TimeDivider extends SheetAlignedElement {
 			xLazyShift = el.measureWidth();
 		}
 		canvas.translate(-totalDX, -(line0Yoffset+dy2line0));
+	}
+	
+	@Override
+	public void getCollisionRegions(ArrayList<Rect> areas,
+			ArrayList<Rect> rectsPool) {
+		int total = rightParts.size();
+		int spacing = EL_SPACING*sheetParams.getLineThickness();
+		int x = 0;
+		for(int i = 0; i < total; i++) {
+			SheetElement el = rightParts.get(i);
+			int elY = el.getOffsetToAnchor(LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
+			int y = elY + line0Yoffset;
+			collectChildRegionsAndOffset(el, x, y, areas, rectsPool);
+			x += el.measureWidth() + spacing;
+		}
 	}
 
 	@SuppressWarnings("unused")

@@ -1,5 +1,7 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
+import java.util.ArrayList;
+
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.StaticConfigurationError;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.LengthSpec;
@@ -9,6 +11,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualP
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 
 public class PauseElement extends SheetAlignedElement {
 	private Pause spec;
@@ -62,6 +65,12 @@ public class PauseElement extends SheetAlignedElement {
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
 		image.onDraw(canvas, paint);
+	}
+	
+	@Override
+	public void getCollisionRegions(ArrayList<Rect> areas,
+			ArrayList<Rect> rectsPool) {
+		image.getCollisionRegions(areas, rectsPool);
 	}
 	
 	public static class PauseDot extends Modifier {

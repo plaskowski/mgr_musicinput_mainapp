@@ -3,7 +3,8 @@
 	<string name="minDrawSpacing">2l</string>
 	<string name="notesAreaHorizontalPadding">2l</string>
 	<string name="timeDividerDrawAfterSpacingFactor">1s</string>
-	<string name="defaultTimeSpacingBaseFactor">8s</string>
 	<color name="highlightColor">#FF73DCFF</color>
 	<string name="noteShadow">0.07s</string>
+	<item name="ShowScore_horizontal_scrollview" type="id" />
+	<dimen name="minHitArea">48dip</dimen>	
 </resources>

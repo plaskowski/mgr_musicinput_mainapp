@@ -1,6 +1,9 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
 import static pl.edu.mimuw.students.pl249278.android.svg.SvgRenderer.drawSvgImage;
+
+import java.util.ArrayList;
+
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.NoteDescriptionLoadingException;
@@ -10,6 +13,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteHead
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 
 public class NoteHeadElement extends SheetAlignedElement {
 	static int METAVAL_JOINLINE_LEFT = registerIndex();
@@ -71,6 +75,14 @@ public class NoteHeadElement extends SheetAlignedElement {
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
 		drawSvgImage(canvas, head, scale, paint);
+	}
+	
+	@Override
+	public void getCollisionRegions(ArrayList<Rect> areas,
+			ArrayList<Rect> rectsPool) {
+		Rect rect = obtain(rectsPool);
+		rect.set(0, 0, measureWidth(), measureHeight());
+		areas.add(rect);
 	}
 	
 	@Override

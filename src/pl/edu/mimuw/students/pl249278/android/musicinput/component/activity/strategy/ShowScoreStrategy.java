@@ -1,5 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy;
 
+import static pl.edu.mimuw.students.pl249278.android.common.IntUtils.pow2;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.middleX;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ANCHOR_TYPE_LINE;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.TOP_EDGE;
@@ -33,10 +34,13 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedEle
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetElementView;
 import android.app.Activity;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsoluteLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.AbsoluteLayout.LayoutParams;
 
 @SuppressWarnings("deprecation")
@@ -49,6 +53,7 @@ public class ShowScoreStrategy extends Activity {
 	protected int minPossibleValue;
 	protected ScorePositioningStrategy positioningStrategy;
 	
+	protected HorizontalScrollView hscroll;
 	protected Sheet5LinesView lines;
 	
 	@Override
@@ -60,6 +65,12 @@ public class ShowScoreStrategy extends Activity {
 		);
 		positioningStrategy = new ScorePositioningStrategy(this.getApplicationContext());
 		minPossibleValue = getResources().getInteger(R.integer.minNotePossibleValue) + 1;
+	}
+	
+	@Override
+	public void onContentChanged() {
+		super.onContentChanged();
+		hscroll = (HorizontalScrollView) findViewById(R.id.ShowScore_horizontal_scrollview);
 	}
 	
 	/** Does nothing */
@@ -94,8 +105,8 @@ public class ShowScoreStrategy extends Activity {
 		return positioningStrategy.timeDividerSpacing(spacingEnv, timeDividerIndex, sheetParams, updateSheetParams);
 	}
 	
-	protected int afterElementSpacing(int timeDividerIndex, int timeSpacingBase, SheetAlignedElement sheetAlignedElement) {
-		return positioningStrategy.afterElementSpacing(spacingEnv, timeDividerIndex, timeSpacingBase, sheetAlignedElement, sheetParams);
+	protected int afterElementSpacing(int timeSpacingBase, int elementIndex) {
+		return positioningStrategy.afterElementSpacing(spacingEnv, timeSpacingBase, elementIndex, sheetParams);
 	}
 	
 	/**
@@ -210,6 +221,59 @@ public class ShowScoreStrategy extends Activity {
 		updatePosition(ovView, left, top);
 	}	
 	
+	private ArrayList<Rect> areas = new ArrayList<Rect>();
+	private ArrayList<Rect> rectsPool = new ArrayList<Rect>();
+	
+	/**
+	 * Finds which element (if any) was targeted by given DOWN event
+	 * @param event DOWN event
+	 * @return index in elementViews or -1
+	 */
+	protected int findPressedElementIndex(MotionEvent event) {
+		// find leftmost element that is visible
+		int i = 0;
+		for(; i < elementViews.size(); i++) {
+			View elView = elementViews.get(i);
+			if(abs2visibleX(elView.getRight()) >= 0) {
+				break;
+			}
+		}
+		int minHitArea = getResources().getDimensionPixelSize(R.dimen.minHitArea);
+		int touchX = (int) event.getX();
+		int touchY = (int) event.getY();
+		int minDist = Integer.MAX_VALUE;
+		int minDistIndex = -1;
+		for(; i < elementViews.size(); i++) {
+			SheetAlignedElementView elView = elementViews.get(i);
+			if(abs2visibleX(elView.getLeft()) > hscroll.getWidth()) {
+				break;
+			}
+			rectsPool.addAll(areas);
+			areas.clear();
+			elView.model().getCollisionRegions(areas, rectsPool);
+			int pL = elView.getPaddingLeft(), pT = elView.getPaddingTop();
+			for(int arI = 0; arI < areas.size(); arI++) {
+				Rect area = areas.get(arI);
+				area.offset(left(elView) + pL, top(elView) + pT);
+				// assure that it's size is at least hitArea x hitArea
+				area.inset(
+					Math.min(0, (area.width() - minHitArea)/2),
+					Math.min(0, (area.height() - minHitArea)/2)
+				);
+				if(area.contains(touchX, touchY)) {
+					// touch fits in hitArea
+					int dist = pow2(touchX - area.centerX())
+					 + pow2(touchY - area.centerY());
+					if(dist < minDist) {
+						minDist = dist;
+						minDistIndex = i;
+					}
+				}
+			}
+		}
+		return minDistIndex;
+	}	
+	
 	protected int sheetElementY(SheetElementView<?> v) {
 		return line0Top() + v.getOffsetToAnchor(NoteConstants.anchorIndex(0, ANCHOR_TYPE_LINE), TOP_EDGE);
 	}
@@ -219,6 +283,10 @@ public class ShowScoreStrategy extends Activity {
 	 */
 	protected static int middleAbsoluteX(SheetAlignedElementView view) {
 		return left(view)+middleX(view);
+	}
+	
+	protected int abs2visibleX(int absoluteX) {
+		return absoluteX - hscroll.getScrollX();
 	}
 	
 	protected int line0Top() {

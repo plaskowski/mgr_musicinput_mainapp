@@ -1,11 +1,14 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
+import java.util.ArrayList;
+
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.AdjustableSizeImage;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.EnhancedSvgImage.IMarker;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgRenderer;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 
 public class SimpleSheetElement extends SheetElement {
 
@@ -55,6 +58,14 @@ public class SimpleSheetElement extends SheetElement {
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
 		SvgRenderer.drawSvgImage(canvas, image, scale, paint);
+	}
+	
+	@Override
+	public void getCollisionRegions(ArrayList<Rect> areas,
+			ArrayList<Rect> rectsPool) {
+		Rect rect = obtain(rectsPool);
+		rect.set(0, 0, measureWidth(), measureHeight());
+		areas.add(rect);
 	}
 	
 	public int getOffsetToAnchor(int anchorAbsIndex, AnchorPart part) {

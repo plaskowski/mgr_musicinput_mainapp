@@ -1,9 +1,12 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
+import java.util.ArrayList;
+
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.Rect;
 
 public abstract class AlignedElementWrapper<WrappedType extends SheetAlignedElement> extends SheetAlignedElement {
 	protected WrappedType wrappedElement;
@@ -68,6 +71,13 @@ public abstract class AlignedElementWrapper<WrappedType extends SheetAlignedElem
 	@Override
 	public int collisionRegionRight() {
 		return elementDrawOffset.x+wrappedElement.collisionRegionRight();
+	}
+	
+	/** Adds wrappedElement regions. */
+	@Override
+	public void getCollisionRegions(ArrayList<Rect> areas,
+			ArrayList<Rect> rectsPool) {
+		collectChildRegionsAndOffset(wrappedElement, elementDrawOffset, areas, rectsPool);
 	}
 
 	@Override

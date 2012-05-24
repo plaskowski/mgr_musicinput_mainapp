@@ -8,7 +8,7 @@
 		style="@style/EDIT_scale_detector"
 	>
 	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HorizontalScrollView_InterceptOnScrollChanged
-	    	android:id="@+id/EDIT_outer_hscrollview"
+	    	android:id="@id/ShowScore_horizontal_scrollview"
 	    	android:layout_width="fill_parent" 
 	    	android:layout_height="fill_parent"
 	    >

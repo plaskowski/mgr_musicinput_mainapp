@@ -1,5 +1,9 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
+import java.util.ArrayList;
+
+import android.graphics.Rect;
+
 public abstract class ElementsOverlay extends SheetElement {
 	public abstract void positionChanged(SheetAlignedElement element, int newX, int newY);
 	
@@ -60,5 +64,11 @@ public abstract class ElementsOverlay extends SheetElement {
 	}
 	public Object getTag() {
 		return tag;
+	}
+	
+	@Override
+	public void getCollisionRegions(ArrayList<Rect> areas,
+			ArrayList<Rect> rectsPool) {
+		// overlays don't generate collision regions by default
 	}
 }

@@ -1,5 +1,7 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
+import java.util.ArrayList;
+
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import android.graphics.Canvas;
@@ -36,10 +38,11 @@ public class Tempo extends SheetElement {
 		paint.setAntiAlias(true);
 	}
 
-	private int upperY;
+	private int upperY, upperTop;
 	private int lowerY;
 	private float width;
 	private float textSize;
+	
 	private void calculate() {
 		int start = sheetParams.anchorOffset(LINE0_ABSINDEX, AnchorPart.BOTTOM_EDGE);
 		int horizontalSpace = sheetParams.anchorOffset(LINE2_ABSINDEX, AnchorPart.TOP_EDGE)-start;
@@ -53,6 +56,8 @@ public class Tempo extends SheetElement {
 		
 		width = Math.max(textPaint.measureText(upper), textPaint.measureText(lower));
 		upperY = start + horizontalSpace;
+		textPaint.getTextBounds(upper, 0, 1, bounds);
+		upperTop = upperY - bounds.height();
 		textPaint.getTextBounds(lower, 0, 1, bounds);
 		lowerY = sheetParams.anchorOffset(LINE2_ABSINDEX, AnchorPart.BOTTOM_EDGE) + bounds.height();
 	}
@@ -66,6 +71,14 @@ public class Tempo extends SheetElement {
 		setPaintTextAttributes(textPaint);
 		canvas.drawText(upper, width/2, upperY, textPaint);
 		canvas.drawText(lower, width/2, lowerY, textPaint);
+	}
+
+	@Override
+	public void getCollisionRegions(ArrayList<Rect> areas,
+			ArrayList<Rect> rectsPool) {
+		Rect rect = obtain(rectsPool);
+		rect.set(0, upperTop, (int) width, lowerY);
+		areas.add(rect);
 	}
 
 	@Override

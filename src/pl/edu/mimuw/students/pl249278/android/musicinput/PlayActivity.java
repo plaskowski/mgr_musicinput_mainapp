@@ -61,7 +61,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PointF;
-import android.graphics.Rect;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
@@ -73,6 +72,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.FloatMath;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
@@ -83,7 +83,6 @@ import android.view.Window;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
-import android.widget.HorizontalScrollView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.ViewAnimator;
@@ -130,7 +129,6 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private Map<ScoreContentElem, SheetAlignedElementView> modelToViewsMapping = new HashMap<ScoreContentElem, SheetAlignedElementView>();
 	private ViewGroup sheet;
 	private ScrollView vertscroll;
-	private HorizontalScrollView hscroll;
 	IntegerSpinner.IntegerSpinnerController tempoController;
 	private View menuPanel;
 	private Paint normalPaint = PaintBuilder.init().antialias(true).build();
@@ -153,7 +151,6 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		sheet = (ViewGroup) findViewById(R.id.PLAY_sheet_container);
 		lines = (Sheet5LinesView) findViewById(R.id.PLAY_sheet_5lines);
-		hscroll = (HorizontalScrollView) findViewById(R.id.PLAY_hscrollview);
 		((OnInterceptTouchObservable) hscroll).setListener(new OnInterceptListener() {
 			@Override
 			public void onTouchIntercepted() {
@@ -297,7 +294,6 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	 * fires {@link #listener#seek(LengthSpec)}, unless isPlayingState
 	 */
 	private final class NoteOrPauseOnClickListener implements OnTouchListener {
-		private Rect hitRect = new Rect();
 		private int selectedIndex = -1;
 		private Paint prevPaint;
 
@@ -308,14 +304,8 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			switch(event.getActionMasked()) {
 			case MotionEvent.ACTION_DOWN:
 				// check if some note was clicked
-				int i = 0;
-				for(; i < elementViews.size(); i++) {
-					elementViews.get(i).getHitRect(hitRect);
-					if(hitRect.contains((int) event.getX(), (int) event.getY())) {
-						break;
-					}
-				}
-				if(i >= elementViews.size() || !(specAt(i).getType() == ElementType.NOTE
+				int i = findPressedElementIndex(event);
+				if(i == -1 || !(specAt(i).getType() == ElementType.NOTE
 				  || specAt(i).getType() == ElementType.PAUSE)) {
 					break;
 				}
@@ -809,7 +799,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	/** fired when model was loaded, views created so now we need to position them. */
 	@Override
 	public void onFirstLayoutPassed() {
-		int visibleHeight = findViewById(R.id.PLAY_hscrollview).getHeight();
+		int visibleHeight = hscroll.getHeight();
 		sheet.setVisibility(View.VISIBLE);
 		findViewById(R.id.PLAY_barAnimator).setVisibility(View.VISIBLE);
 		
@@ -845,7 +835,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		super.onScaleChanged();
 		float highlightShadow = highlightShadowFactor*sheetParams.getScale();
 		highlightPaint.setShadowLayer(highlightShadow, highlightShadow/2, highlightShadow, Color.BLACK);		
-		NOTE_DRAW_PADDING = (int) Math.floor(2*highlightShadow);
+		NOTE_DRAW_PADDING = (int) FloatMath.floor(2*highlightShadow);
 		lines.setParams(sheetParams, 0, 0);
 		if(positioningEnv == null) {
 			positioningEnv = new PositioningEnv() {

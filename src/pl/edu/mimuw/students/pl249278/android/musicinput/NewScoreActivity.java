@@ -1,5 +1,7 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
+import java.util.ArrayList;
+
 import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
 import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
@@ -614,5 +616,10 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 		public void onDraw(Canvas canvas, Paint paint) {
 		}
 		
+		@Override
+		public void getCollisionRegions(ArrayList<Rect> areas,
+				ArrayList<Rect> rectsPool) {
+			// there are none
+		}
 	}
 }

@@ -33,4 +33,8 @@ public class IntUtils {
 	public static int log2(int value) {
 		return 31 - Integer.numberOfLeadingZeros(value);
 	}
+	
+	public static int pow2(int i) {
+		return i*i;
+	}
 }

@@ -1,5 +1,7 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
+import java.util.ArrayList;
+
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
@@ -11,6 +13,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PointF;
+import android.graphics.Rect;
+import android.util.FloatMath;
 
 public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 	@SuppressWarnings("unused")
@@ -67,6 +71,14 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 			(int) Math.ceil(ending.getWidth()*scaleE),
 			(int) Math.ceil(ending.getHeight()*scaleE)
 		);
+		
+		mHeadJLStart.set(elementDrawOffset.x, elementDrawOffset.y);
+		mHeadJLStart.offset(
+			wrappedElement.joinLineLeft(), 
+			wrappedElement.joinLineY()
+		);
+		mEndingJLEnd.set(wrapperDrawOffset.x, wrapperDrawOffset.y);
+		mEndingJLEnd.offset(ending.getJoinLine().second.x*scaleE, ending.getJoinLine().second.y * scaleE);
 	}
 	
 	@Override
@@ -89,33 +101,46 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 	
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
-		mHeadJLStart.set(elementDrawOffset.x, elementDrawOffset.y);
-		mHeadJLStart.offset(
-			wrappedElement.joinLineLeft(), 
-			wrappedElement.joinLineY()
-		);
-		mEndingJLEnd.set(wrapperDrawOffset.x, wrapperDrawOffset.y);
-		mEndingJLEnd.offset(ending.getJoinLine().second.x*scaleE, ending.getJoinLine().second.y * scaleE);
-		
 		// draw in appropriate order (so shadow effect would compound correctly)
 		if(elementDrawOffset.y > wrapperDrawOffset.y) {
 			drawEndingImage(canvas, paint);
-			drawStem(canvas, paint, mHeadJLStart, mEndingJLEnd);
+			drawStem(canvas, paint);
 			super.onDraw(canvas, paint);
 		} else {
 			super.onDraw(canvas, paint);
-			drawStem(canvas, paint, mHeadJLStart, mEndingJLEnd);
+			drawStem(canvas, paint);
 			drawEndingImage(canvas, paint);
 		}
 	}
+	
+	@Override
+	public void getCollisionRegions(ArrayList<Rect> areas,
+			ArrayList<Rect> rectsPool) {
+		super.getCollisionRegions(areas, rectsPool);
+		Rect endingRect = obtain(rectsPool);
+		endingRect.set(0, 0, (int) FloatMath.ceil(ending.getWidth()*scaleE), (int) FloatMath.ceil(ending.getHeight()*scaleE));
+		endingRect.offset(wrapperDrawOffset.x, wrapperDrawOffset.y);
+		areas.add(endingRect);
+		Rect stemRect = obtain(rectsPool);
+		stemRect.set(
+			(int) mHeadJLStart.x,
+			(int) Math.min(mHeadJLStart.y, mEndingJLEnd.y)-1,
+			ceil(mEndingJLEnd.x + Xcorrection),
+			ceil(Math.max(mHeadJLStart.y, mEndingJLEnd.y)+1)
+		);
+		areas.add(stemRect);
+	}
+	
+	private static int ceil(float value) {
+		return (int) FloatMath.ceil(value);
+	}
 
-	private void drawStem(Canvas canvas, Paint paint, PointF headJLStart,
-			PointF endingJLEnd) {
+	private void drawStem(Canvas canvas, Paint paint) {
 		canvas.drawRect(
-			headJLStart.x,
-			Math.min(headJLStart.y, endingJLEnd.y)-1,
-			endingJLEnd.x + Xcorrection,
-			Math.max(headJLStart.y, endingJLEnd.y)+1,
+			mHeadJLStart.x,
+			Math.min(mHeadJLStart.y, mEndingJLEnd.y)-1,
+			mEndingJLEnd.x + Xcorrection,
+			Math.max(mHeadJLStart.y, mEndingJLEnd.y)+1,
 			paint
 		);
 	}

@@ -18,9 +18,8 @@ public class ScoreHelper {
 			return length(timeStep.getTempoBaseLength(), measureBaseUnit)*timeStep.getBaseMultiplier();
 	}
 	
-	public static int noteOrientation(NoteSpec spec, ScoreVisualizationConfig visualConf) {
+	public static int noteOrientation(NoteSpec spec, ScoreVisualizationConfig.DisplayMode mode) {
 		int orientation;
-		ScoreVisualizationConfig.DisplayMode mode = visualConf.getDisplayMode();
 		switch (mode) {
 		case LOWER_VOICE:
 			orientation = NoteConstants.ORIENT_DOWN;
@@ -37,8 +36,8 @@ public class ScoreHelper {
 		return orientation;
 	}
 	
-	public static ElementSpec.NormalNote elementSpecNN(NoteSpec spec, ScoreVisualizationConfig visualConf) {
-		return new ElementSpec.NormalNote(spec, noteOrientation(spec, visualConf));
+	public static ElementSpec.NormalNote elementSpecNN(NoteSpec spec, ScoreVisualizationConfig.DisplayMode mode) {
+		return new ElementSpec.NormalNote(spec, noteOrientation(spec, mode));
 	}
 
 	public static abstract class InsertDivided extends DivideLengthStrategy {

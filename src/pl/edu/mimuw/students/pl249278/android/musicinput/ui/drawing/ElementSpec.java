@@ -12,7 +12,6 @@ public abstract class ElementSpec {
 		NOTE,
 		PAUSE,
 		FAKE_PAUSE,
-		SPECIAL_SIGN,
 		TIMES_DIVIDER
 	};
 	
@@ -136,36 +135,6 @@ public abstract class ElementSpec {
 		
 		public PauseSpec pauseSpec() {
 			return spec;
-		}
-	}
-	
-	public static class SpecialSign extends ElementSpec implements PositonSpec {
-		private int position, length;
-		
-		public SpecialSign(int position, int length) {
-			super(ElementType.SPECIAL_SIGN);
-			this.position = position;
-			this.length = length;
-		}
-
-		@Override
-		public int timeValue(int metricUnit) {
-			return 0;
-		}
-		
-		@Override
-		public int spacingLength(int measureUnit) {
-			return length(length, measureUnit);
-		}
-		
-		@Override
-		public PositonSpec positonSpec() {
-			return this;
-		}
-
-		@Override
-		public int positon() {
-			return position;
 		}
 	}
 	

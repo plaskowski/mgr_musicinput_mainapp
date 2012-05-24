@@ -12,4 +12,8 @@
 		<item name="className">pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.SvgCompoundDrawable</item>
 	</style>
 	
+	<style name="RectDrawable">
+        <item name="className">pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.RectDrawable$ConstantState</item>
+	</style>
+	
 </resources>

@@ -18,9 +18,6 @@ public class NoteConstants {
 	/** stem is drawn below the head */
 	public static final int ORIENT_DOWN = 1;
 	
-	/** 
-	 * TODO call this rather an Accidental
-	 */
 	public static enum NoteModifier {
 		SHARP, // krzyżyk
 		FLAT, // bemol
@@ -148,8 +145,14 @@ public class NoteConstants {
 	}
 
 	public static int stemEnd(PositonSpec noteSpec, int orientation) {
-		// FIXME real logic for discovering anchors
-		return noteSpec.positon() + (orientation == ORIENT_UP ? -MIN_STEM_SPAN : MIN_STEM_SPAN);
+		int position = noteSpec.positon();
+		if(orientation == ORIENT_UP && position >= anchorIndex(7, ANCHOR_TYPE_LINE)) {
+			return anchorIndex(3, ANCHOR_TYPE_LINE);
+		} else if(orientation == ORIENT_DOWN && position <= anchorIndex(-3, ANCHOR_TYPE_LINE)) {
+			return anchorIndex(1, ANCHOR_TYPE_LINE);
+		} else {
+			return position + (orientation == ORIENT_UP ? -MIN_STEM_SPAN : MIN_STEM_SPAN);
+		}
 	}
 
 	public static boolean hasStem(int noteLength) {

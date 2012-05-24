@@ -14,7 +14,6 @@ import android.graphics.drawable.GradientDrawable.Orientation;
 import android.util.AttributeSet;
 import android.util.Log;
 
-// TODO should I extract logic to SheetElement object?
 public class Sheet5LinesView extends PaddingSettersStrategy {
 
 	private static final int LINESPACE3_ABSINDEX = NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINESPACE);

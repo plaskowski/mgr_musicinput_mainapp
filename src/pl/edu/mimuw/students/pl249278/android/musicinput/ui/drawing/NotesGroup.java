@@ -20,6 +20,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.util.FloatMath;
 import android.util.Log;
 
 public class NotesGroup extends ElementsOverlay {
@@ -59,7 +60,7 @@ public class NotesGroup extends ElementsOverlay {
 		recalculate();
 	}
 
-	Point start = new Point(), end = new Point();
+	private Point start = new Point(), end = new Point(), mStemEndExtremum = new Point();
 	private void recalculate() {
 		assert(elements.length > 1);
 		if(!isValid()) {
@@ -87,15 +88,15 @@ public class NotesGroup extends ElementsOverlay {
 		slope = slopesSum / (elements.length-1);
 		
 		int sign = groupOrientation == ORIENT_DOWN ? 1 : -1;
-		Point stemEndExtremum = new Point(absJMiddeX(0), stemTop(0));
+		mStemEndExtremum.set(absJMiddeX(0), stemTop(0));
 		int jlYextremum = joinLineY(0);
 		for(int i = 1; i < elements.length; i++) {
 			int middleX = absJMiddeX(i);
-			int actualTop = (int) (slope*(middleX-stemEndExtremum.x) + stemEndExtremum.y);
+			int actualTop = (int) (slope*(middleX-mStemEndExtremum.x) + mStemEndExtremum.y);
 			int minimumTop = stemTop(i);
 			if(minimumTop*sign > actualTop*sign) {
-				stemEndExtremum.x = absJMiddeX(i);
-				stemEndExtremum.y = minimumTop;
+				mStemEndExtremum.x = absJMiddeX(i);
+				mStemEndExtremum.y = minimumTop;
 			}
 			int currentJLy = joinLineY(i);
 			if(currentJLy*sign < jlYextremum*sign) {
@@ -106,9 +107,9 @@ public class NotesGroup extends ElementsOverlay {
 		int last = elements.length-1;
 		int el0JLeft = (int) jLeft(0);
 		start.x = 0;
-		start.y = (int) (stemEndExtremum.y - slope * (stemEndExtremum.x - absJLLeft(0)));
-		end.x = (xpositions[last] + (int) Math.ceil(jRight(last))) - (xpositions[0] + el0JLeft);
-		end.y = (int) (slope * (absJRight(last) - stemEndExtremum.x) + stemEndExtremum.y);
+		start.y = (int) (mStemEndExtremum.y - slope * (mStemEndExtremum.x - absJLLeft(0)));
+		end.x = (xpositions[last] + (int) FloatMath.ceil(jRight(last))) - (xpositions[0] + el0JLeft);
+		end.y = (int) (slope * (absJRight(last) - mStemEndExtremum.x) + mStemEndExtremum.y);
 		
 		offset2line0 = Math.min(Math.min(
 			start.y, end.y), jlYextremum
@@ -119,15 +120,27 @@ public class NotesGroup extends ElementsOverlay {
 			Math.abs(start.y-jlYextremum)
 		)));
 		
+		isDirty = true;
 		onMeasureInvalidated();
 	}
+	
+	private Path mPath = new Path();
+	private boolean isDirty = true;
 	
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
 		int translateY = -offset2line0;
 		canvas.translate(0, translateY);
-		
-		Path path = new Path();
+		if(isDirty) {
+			mPath.reset();
+			generateDrawingPath(mPath);
+			isDirty = false;
+		}
+		canvas.drawPath(mPath, paint);
+		canvas.translate(0, -translateY);
+	}
+	
+	private void generateDrawingPath(Path path) {
 		int sign = groupOrientation == ORIENT_UP ? 1 : -1;
 		int thickness = 4 * sheetParams.getLineThickness();
 		int linesSpacing = 2 * sheetParams.getLineThickness();
@@ -181,9 +194,6 @@ public class NotesGroup extends ElementsOverlay {
 			prevLength = currLength;
 		}
 		path.close();
-		canvas.drawPath(path, paint);
-		
-		canvas.translate(0, -translateY);
 	}
 
 	private boolean isValid() {
@@ -219,7 +229,7 @@ public class NotesGroup extends ElementsOverlay {
 		return xpositions[index] + (int) jLeft(index);		
 	}
 	private int absJRight(int index) {
-		return xpositions[index] + (int) Math.ceil(jRight(index));		
+		return xpositions[index] + (int) FloatMath.ceil(jRight(index));		
 	}
 	private float jLeft(int index) {
 		SheetAlignedElement el = elements[index];
@@ -256,20 +266,13 @@ public class NotesGroup extends ElementsOverlay {
 		return index < elements.length-1 ? minSpacingLength : maxSpacingLength;
 	}
 	
-	private void onPositionChanged(int elementIndex, int newAbsoluteX) {
-//		if(xpositions[elementIndex] != newAbsoluteX) {
-			xpositions[elementIndex] = newAbsoluteX;
-			recalculate();
-//		}
-	}
-	
 	@Override
 	public void positionChanged(SheetAlignedElement element, int newX, int newY) {
 		for (int i = 0; i < elements.length; i++) {
 			if(elements[i] == element) {
 				line0absTop = newY - element.getOffsetToAnchor(LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
-				// FIXME uwzględnić, że Y wpływa
-				onPositionChanged(i, newX);
+				xpositions[i] = newX;
+				recalculate();
 				return;
 			}
 		}
@@ -335,6 +338,10 @@ public class NotesGroup extends ElementsOverlay {
 		
 		public boolean isValid() {
 			return specs.size() > 1;
+		}
+		
+		public int total() {
+			return specs.size();
 		}
 
 		/**

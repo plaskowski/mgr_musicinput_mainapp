@@ -22,6 +22,7 @@ import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.common.PaintBuilder;
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.InsertDivided;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ScorePositioningStrategy.PositioningEnv;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.LengthSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
@@ -47,6 +48,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollVie
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils.OnLayoutListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptsScaleGesture;
@@ -445,7 +447,6 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				resetIterator();
 			}
 			if(currentElement == null) {
-				// TODO moze wskazac na kreske taktu zamiast przypalowo 0
 				return 0;
 			}
 			ScoreContentElem next;
@@ -795,6 +796,8 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 	};
 
+	private PositioningEnv positioningEnv;
+
 	private void fixLine0VisibleY(int visY) {
 		((HackedScrollViewChild) vertscroll.getChildAt(0)).fixRulerVisibleY(visY - lines.getPaddingTop());
 	}
@@ -836,49 +839,42 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	@Override
 	protected void onScaleChanged() {
 		super.onScaleChanged();
-		NOTE_DRAW_PADDING = MIN_DRAW_SPACING;
 		float highlightShadow = highlightShadowFactor*sheetParams.getScale();
 		highlightPaint.setShadowLayer(highlightShadow, highlightShadow/2, highlightShadow, Color.BLACK);		
-		NOTE_DRAW_PADDING = Math.max(NOTE_DRAW_PADDING, (int) Math.floor(highlightShadow));
+		NOTE_DRAW_PADDING = (int) Math.floor(2*highlightShadow);
 		lines.setParams(sheetParams, 0, 0);
-		SheetAlignedElementView firstTimeDivider = elementViews.get(0);
-		firstTimeDivider.setSheetParams(sheetParams);
-		int paddingLeft = (int) (notesAreaHorizontalPaddingFactor * sheetParams.getScale())
-		 + middleX(elementViews.get(0));
-		lines.setPaddingLeft(paddingLeft);
-		notesAreaX = paddingLeft;
-		
+		if(positioningEnv == null) {
+			positioningEnv = new PositioningEnv() {
+				@Override
+				public void notesAreaPaddingLeftChanged(int paddingLeft) {
+					lines.setPaddingLeft(paddingLeft);
+					notesAreaX = paddingLeft;
+				}
+				@Override
+				public int middleX(int index) {
+					SheetAlignedElementView v = elementViews.get(index);
+					return ScoreHelper.middleX(v);
+				}
+				@Override
+				public void preVisit(int index) {
+					elementViews.get(index).updateDrawRadius(NOTE_DRAW_PADDING);
+				}			
+				@Override
+				public void onPositionChanged(int index, int x) {
+					SheetElementView<?> v = elementViews.get(index);
+					int ypos = sheetElementY(v);
+					updatePosition(
+						v, 
+						x,
+						ypos
+					);
+				}			
+			};
+		}		
 		for(int i = 0; i < overlaysViews.size(); i++) {
 			overlaysViews.get(i).updateDrawRadius(NOTE_DRAW_PADDING);
 		}
-		int spacingAfter = notesAreaX;
-		int x = 0;
-		int currentSpacingBase = 0;
-		int currentTimeDividerIndex = 0;
-		for(int i = 0; i < elementViews.size(); i++) {
-			x += spacingAfter;
-			SheetAlignedElementView v = elementViews.get(i);
-			v.updateDrawRadius(NOTE_DRAW_PADDING);
-			if(v.model().getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
-				int lastTimeEl = i+1;
-				for(; lastTimeEl < elementViews.size(); lastTimeEl++) {
-					if(specAt(lastTimeEl).getType() == ElementType.TIMES_DIVIDER) {
-						break;
-					}
-				}
-				lastTimeEl--;
-				currentTimeDividerIndex = i;
-				currentSpacingBase = computeTimeSpacingBase(i, lastTimeEl, true);
-			}
-			spacingAfter = afterElementSpacing(currentTimeDividerIndex, currentSpacingBase, v.model());
-			int xpos = x-middleX(v);
-			int ypos = sheetElementY(v);
-			updatePosition(
-				v, 
-				xpos,
-				ypos
-			);
-		}
+		positioningStrategy.calculatePositions(positioningEnv, spacingEnv, sheetParams, true);
 		correctSheetWidth();
 	}
 	
@@ -888,7 +884,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private void correctSheetWidth() {
 		int lastElIndex = elementViews.size()-1;
 		SheetAlignedElementView lastView = elementViews.get(lastElIndex);
-		int hPadding = (int) (notesAreaHorizontalPaddingFactor * sheetParams.getScale());
+		int hPadding = (int) (positioningStrategy.getNotesAreaHorizontalPaddingFactor() * sheetParams.getScale());
 		lines.setPaddingRight(hPadding + middleX(lastView));
 		int newSheetWidth = left(lastView) + lastView.measureWidth() + hPadding;
 		updateSize(sheet, newSheetWidth, null);
@@ -903,7 +899,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			ScoreContentElem elem = iterator.next();
 			ElementSpec spec;
 			if(elem instanceof NoteSpec) {
-				spec = elementSpecNN((NoteSpec) elem, visualConf);
+				spec = elementSpecNN((NoteSpec) elem, visualConf.getDisplayMode());
 			} else if(elem instanceof PauseSpec) {
 				spec = new ElementSpec.Pause((PauseSpec) elem);
 			} else if(elem instanceof TimeSpec) {

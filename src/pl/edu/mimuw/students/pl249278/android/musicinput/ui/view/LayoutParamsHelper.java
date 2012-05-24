@@ -13,6 +13,13 @@ public class LayoutParamsHelper {
 		v.setLayoutParams(params);
 	}
 	
+	public static void updateSizeDirect(View v, int width, int height) {
+		LayoutParams params = v.getLayoutParams();
+		params.width = width;
+		params.height = height;
+		v.setLayoutParams(params);
+	}
+	
 	public static ViewGroup.MarginLayoutParams updateMargins(View v, Integer left, Integer top) {
 		ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
 		if(left != null) params.leftMargin = left;

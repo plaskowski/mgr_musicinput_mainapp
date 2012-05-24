@@ -111,8 +111,8 @@ public class ContentService extends AsynchronousRequestsService {
 		 */
 		public static final String DELETE_SCORE = ContentService.class.getName()+".delete_score";
 		 /**
-		  * Parameters: {@link #EXTRAS_ENTITY_ID} - id of Score to copy, {@link #EXTRAS_NEW_TITLE} 
-		  * Output: {@link #RESPONSE_EXTRAS_ENTITY} - copy with valid id and time stamps
+		  * Parameters: {@link #EXTRAS_ENTITY_ID} - id of Score to copy, {@link #EXTRAS_NEW_TITLE}, {@link #EXTRAS_ATTACH_SCORE_VISUAL_CONF}
+		  * Output: {@link #RESPONSE_EXTRAS_ENTITY} - copy with valid id and time stamps, {@link #RESPONSE_EXTRAS_VISUAL_CONF}
 		 */
 		public static final String DUPLICATE_SCORE = ContentService.class.getName()+".duplicate_score";
 		public static final String EXTRAS_NEW_TITLE = "new_title";
@@ -198,6 +198,9 @@ public class ContentService extends AsynchronousRequestsService {
 		try {
 			Intent outData = new Intent();
 			outData.putExtra(ACTIONS.RESPONSE_EXTRAS_ENTITY, score.prepareParcelable());
+			if(requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, false)) {
+				outData.putExtra(ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF, parseVisualConfig(db, id));
+			}
 			onRequestSuccess(requestIntent, outData);
 		} catch (SerializationException e) {
 			onRequestError(requestIntent, "Failed to serialize Score#"+copyId);
@@ -436,7 +439,7 @@ public class ContentService extends AsynchronousRequestsService {
 			onRequestError(requestIntent, "No entity ID provided");
 			return;
 		}
-		Cursor metaCursor = null, playConfCursor = null; 
+		Cursor playConfCursor = null; 
 		try {
 			SQLiteDatabase db = mDb.getReadableDatabase();
 			Score score = loadScore(db, id);
@@ -447,15 +450,7 @@ public class ContentService extends AsynchronousRequestsService {
 			Intent outData = new Intent();
 			outData.putExtra(ACTIONS.RESPONSE_EXTRAS_ENTITY, score.prepareParcelable());
 			if(requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, false)) {
-				ScoreVisualizationConfig scoreConf = ScoreVisualizationConfigFactory.createWithDefaults(this);
-				metaCursor = db.query(
-					SCORES_INTMETA_TABLE_NAME, null,
-					ScoresMeta._ID + " = " + id, null,
-					null, null, null);
-				while(metaCursor.moveToNext()) {
-					fillField(metaCursor, scoreConf);
-				}
-				outData.putExtra(ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF, scoreConf);
+				outData.putExtra(ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF, parseVisualConfig(db, id));
 			}
 			if(requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_PLAY_CONF, false)) {
 				playConfCursor = db.query(
@@ -493,13 +488,29 @@ public class ContentService extends AsynchronousRequestsService {
 			onRequestError(requestIntent, "findScore() exception occured "+e.getMessage());
 		}
 		finally {
-			if(metaCursor != null) {
-				metaCursor.close();
-			}
 			if(playConfCursor != null) {
 				playConfCursor.close();
 			}
 		}
+	}
+	
+	private ScoreVisualizationConfig parseVisualConfig(SQLiteDatabase db, long scoreId) {
+		ScoreVisualizationConfig scoreConf = ScoreVisualizationConfigFactory.createWithDefaults(this);
+		Cursor metaCursor = null;
+		try {
+			metaCursor = db.query(
+				SCORES_INTMETA_TABLE_NAME, null,
+				ScoresMeta._ID + " = " + scoreId, null,
+				null, null, null);
+			while(metaCursor.moveToNext()) {
+				fillField(metaCursor, scoreConf);
+			}
+		} finally {
+			if(metaCursor != null) {
+				metaCursor.close();
+			}
+		}
+		return scoreConf;
 	}
 	
 	private Score loadScore(SQLiteDatabase db, long scoreId) {

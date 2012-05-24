@@ -1,17 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="mainscreen_entry_toolbar">
+	    <item name="android:layout_width">fill_parent</item>
+	    <item name="android:layout_height">0dp</item>
+	    <item name="android:paddingLeft">@dimen/mainscreen_entry_toolbar_spacing</item>
+	    <item name="android:paddingTop">@dimen/mainscreen_entry_toolbar_spacing</item>
+	    <item name="android:background">#FFFFFF</item>
+    </style>
+    
+    <dimen name="mainscreen_entry_toolbar_spacing">1dip</dimen>
+    
     <style name="mainscreen_entry_toolbar_item">
         <item name="android:layout_weight">1</item>
         <item name="android:background">@drawable/button_bluegradient</item>
-        <item name="android:layout_marginRight">1dp</item>
-        <item name="android:layout_marginBottom">1dp</item>
+        <item name="android:layout_marginRight">@dimen/mainscreen_entry_toolbar_spacing</item>
+        <item name="android:layout_marginBottom">@dimen/mainscreen_entry_toolbar_spacing</item>
         <item name="android:layout_width">0dip</item>
         <item name="android:layout_height">48dip</item>
 		<item name="extendedImage">@style/SvgCompoundDrawable</item>
 		<item name="android:scaleType">fitXY</item>
 		<item name="iconMaxHeight">24dip</item>
-		<item name="paintsSetup">@array/InvertedEmboss</item>        
+		<item name="paintsSetup">@array/InvertedEmboss</item>
     </style>
     
-    <item name="viewtag_locks" type="id" />    
+    <item name="viewtag_locks" type="id" />
+    
+    <item name="mainscreen_moveup_duration" type="integer">320</item>
+    <item name="mainscreen_moveup_decrease_step" type="integer">30</item>
+    <item name="mainscreen_moveup_min_duration" type="integer">150</item>
+    <item name="mainscreen_moveup_notanim_duration" type="integer">100</item>
+    <dimen name="mainscreen_moveup_deviation">40dip</dimen>
+    <item name="mainscreen_moveup_highlight_off_delay" type="integer">200</item>
+    
+    <item name="mainscreen_deleted_fadeout_duration" type="integer">300</item>
+    
+    <dimen name="mainscreen_entry_frame_stroke">2dip</dimen>
+    <dimen name="mainscreen_entry_frame_stroke_xM1">-2dip</dimen>
+
+    <style name="main_entry_date_ABSTRACT" parent="android:Widget.TextView">
+        <item name="android:paddingTop">3dip</item>
+        <item name="android:paddingBottom">3dip</item>
+        <item name="android:paddingLeft">5dip</item>
+        <item name="android:paddingRight">5dip</item>
+        <item name="android:layout_marginRight">@dimen/mainscreen_entry_frame_stroke_xM1</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_gravity">right</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="extendedBackground">@style/main_entry_date_bg</item>
+		<item name="android:duplicateParentState">true</item>
+		<item name="android:singleLine">true</item>
+		<item name="android:drawablePadding">2dip</item>
+	</style>
+    	
+	<style name="main_entry_frame" parent="RectDrawable">
+        <item name="strokePaint">@style/main_entry_strokePaint</item>
+        <item name="strokeColorStateList">@color/main_entry</item>
+        <item name="padding">@dimen/mainscreen_entry_frame_stroke</item>
+        <item name="insetTop">2dip</item>
+    </style>
+    
+	<style name="main_entry_title_bg" parent="RectDrawable">
+        <item name="strokePaint">@style/main_entry_strokePaint</item>
+        <item name="strokeColorStateList">@color/main_entry</item>
+        <item name="cornerBottomRight">3dip</item>
+        <item name="fillPaint">@style/FillAntialias</item>
+        <item name="fillColorStateList">@color/main_entry_title_bg</item>
+	</style>
+    
+	<style name="main_entry_date_bg" parent="RectDrawable">
+        <item name="strokePaint">@style/main_entry_strokePaint</item>
+        <item name="strokeColorStateList">@color/main_entry</item>
+        <item name="cornerTopLeft">3dip</item>
+        <item name="cornerBottomLeft">3dip</item>
+        <item name="fillPaint">@style/main_entry_date_fill</item>
+	</style>
+    
+	<style name="main_entry_date_fill" parent="FillAntialias">
+        <item name="color">#E0FFFFFF</item>    
+	</style>
+		
+	<style name="FillAntialias" parent="PaintAntialias">
+        <item name="paintStyle">FILL</item>
+    </style>
+	
+	<style name="main_entry_strokePaint" parent="PaintAntialias">
+        <item name="paintStyle">STROKE</item>
+        <item name="strokeWidth">@dimen/mainscreen_entry_frame_stroke</item>
+    </style>
+    
 </resources>

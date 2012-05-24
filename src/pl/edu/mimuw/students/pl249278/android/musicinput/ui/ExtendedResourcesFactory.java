@@ -9,6 +9,7 @@ import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
 import android.content.res.TypedArray;
@@ -23,6 +24,7 @@ import android.graphics.PointF;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.SparseArray;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -78,14 +80,33 @@ public class ExtendedResourcesFactory {
 			view.setBackgroundDrawable(dr);
 		}
 	}
-
+	
+	private static SparseArray<ExtendedDrawableState> drawableConstantState = new SparseArray<ExtendedDrawableState>();
+	private static Configuration lastConfiguration;
+	
 	private static Drawable inflateExtendedDrawable(Context ctx, AttributeSet attrsSet, int[] attrs, int attribute) {
 		TypedArray styledAttributes = ctx.obtainStyledAttributes(attrsSet, attrs);
 		final int styleId = styledAttributes.getResourceId(attribute, -1);
 		if(styleId != -1) {
+			Configuration currentConf = ctx.getResources().getConfiguration();
+			if(lastConfiguration == null) {
+				lastConfiguration = new Configuration(currentConf);
+			} else if(!currentConf.equals(lastConfiguration)) {
+				// configuration changed, we must discard any cached drawables
+				drawableConstantState.clear();
+				lastConfiguration.setTo(currentConf);
+			}
+			ExtendedDrawableState constState = drawableConstantState.get(styleId);
+			if(constState != null) {
+				return constState.newDrawable();
+			}
 			Object obj = inflateExtendedObject(ctx, attrsSet, styleId);
 			if(obj instanceof Drawable) {
 				return (Drawable) obj;
+			} else if(obj instanceof ExtendedDrawableState) {
+				constState = (ExtendedDrawableState) obj;
+				drawableConstantState.put(styleId, constState);
+				return constState.newDrawable();
 			} else {
 				throw new RuntimeException(
 					"Inflating style "+styleName(styleId)+" expected Drawable object, got "
@@ -318,5 +339,9 @@ public class ExtendedResourcesFactory {
 			return resources;
 		}
 		
+	}
+	
+	public static interface ExtendedDrawableState {
+		Drawable newDrawable();		
 	}
 }

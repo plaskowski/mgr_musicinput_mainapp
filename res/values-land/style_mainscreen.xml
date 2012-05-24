@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="mainscreen_entry_title">
+        <item name="android:layout_gravity">top</item>
+    </style>
+    
+    <style name="main_entry_date" parent="main_entry_date_ABSTRACT">
+        <item name="android:layout_gravity">right|bottom</item>
+    </style>
+    
+    <style name="main_entry_date_last" parent="main_entry_date">
+        <item name="android:layout_marginBottom">5dip</item>
+    </style>
+</resources>

@@ -1,26 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_ExtendedBackground xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res/pl.edu.mimuw.students.pl249278.android.musicinput"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/button_darkgraygradient"
     android:clickable="true"
-    android:orientation="vertical" >
+    android:orientation="vertical"
+    custom:extendedBackground="@style/main_entry_frame" >
 
-    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TextViewWithAnimations
-        android:id="@+id/title"
+    <include
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" 
-        android:drawablePadding="5dip"
-    />
+        android:layout_height="wrap_content"
+        layout="@layout/mainscreen_entry_content" />
 
-    <TextView
-        android:id="@+id/modified"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
-
-    <TextView
-        android:id="@+id/created"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
-
-</LinearLayout>
+</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_ExtendedBackground>

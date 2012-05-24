@@ -34,10 +34,35 @@
 		<attr name="paintsSetup" format="reference" />
 		<attr name="additionalPadding" format="dimension" />
 	</declare-styleable>
-	    	
+	
+	<declare-styleable name="RectDrawable">
+	    <attr name="fillPaint" format="reference" />
+	    <attr name="strokePaint" format="reference" />
+	    <attr name="fillColorStateList" format="color" />
+	    <attr name="strokeColorStateList" format="color" />
+   	</declare-styleable>
+   		    	
 	<declare-styleable name="SvgDrawable">
 		<attr name="svgResource" format="reference" />
 		<attr name="iconMaxHeight" format="dimension" />
+	</declare-styleable>
+	
+	<declare-styleable name="Corners">
+	    <attr name="cornerTopLeft" format="dimension" />
+	    <attr name="cornerTopRight" format="dimension" />
+	    <attr name="cornerBottomLeft" format="dimension" />
+	    <attr name="cornerBottomRight" format="dimension" />
+   	</declare-styleable>
+   	
+	<declare-styleable name="Padding">
+	    <attr name="padding" format="dimension" />
+	</declare-styleable>
+	
+	<declare-styleable name="Inset">
+	    <attr name="insetLeft" format="dimension" />
+	    <attr name="insetTop" format="dimension" />
+	    <attr name="insetRight" format="dimension" />
+	    <attr name="insetBottom" format="dimension" />
 	</declare-styleable>
 	    	
 	<declare-styleable name="StyleableClassDeclaration">
@@ -52,7 +77,6 @@
 	</declare-styleable>
 	
 	<declare-styleable name="TooltipStyle">
-		<attr name="padding" format="dimension" />
 		<attr name="outlineCornerRadius" format="dimension" />
 		<attr name="borderThickness" format="dimension" />
 		<attr name="borderColor" format="color" />

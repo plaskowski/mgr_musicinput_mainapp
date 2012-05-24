@@ -1,5 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TextViewWithAnimations;
 import pl.waw.echo.eclipse.codegenerator.annotation.JoinClasses;
 import android.content.Context;
 import android.util.AttributeSet;
@@ -13,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
+import android.widget.TextView;
 
 class GenDeclarations {
 	@JoinClasses(
@@ -122,6 +124,30 @@ class GenDeclarations {
 		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.NoteValueSpinner_Vertical"
 	)
 	static Class<? extends View> CUSTOM13;
+	@JoinClasses(
+		superClass = TextView.class,
+		ancestors = {
+			ExtendedBackgroundStrategy.class
+		},
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TextView_ExtendedBackground"
+	)
+	static Class<? extends View> CUSTOM14;
+	@JoinClasses(
+		superClass = TextViewWithAnimations.class,
+		ancestors = {
+			ExtendedBackgroundStrategy.class
+		},
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TextView_WithAnimations_ExtendedBackground"
+	)
+	static Class<? extends View> CUSTOM15;
+	@JoinClasses(
+		superClass = LinearLayout.class,
+		ancestors = {
+			BringToFrontStrategy.class
+		},
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_FrontChild"
+	)
+	static Class<? extends View> CUSTOM16; 
 }
 
 /** a stub class, lets a strategy call super.onLayout() */

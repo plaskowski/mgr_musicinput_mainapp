@@ -171,7 +171,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	
 	private int inputAreaWidth;
 	private float noteMinDistToIA;
-	private float noteShadow;
+	private float noteShadowFactor;
 	private float fakePauseEffectRadius;
 	private int maxLinespaceThickness;
 	
@@ -215,7 +215,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		this.inputAreaWidth = getResources().getDimensionPixelSize(R.dimen.inputAreaWidth);
 		ViewConfiguration configuration = ViewConfiguration.get(this);
         this.mTouchSlop = configuration.getScaledTouchSlop();
-		noteShadow = readParametrizedFactor(R.string.noteShadow);
+		noteShadowFactor = readParametrizedFactor(R.string.noteShadow);
 		fakePauseEffectRadius = readParametrizedFactor(R.string.fakePauseEffectRadius);
 		noteMinDistToIA = readParametrizedFactor(R.string.minDistToIA);
 		maxLinespaceThickness = getResources().getDimensionPixelSize(R.dimen.maxLinespaceThickness);
@@ -392,7 +392,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 							ElementSpec spec = elView.model().getElementSpec();
 							if(spec.getType() == ElementType.NOTE) {
 								ElementSpec.NormalNote noteSpec = (ElementSpec.NormalNote) spec;
-								noteSpec.clear(ScoreHelper.noteOrientation(noteSpec.noteSpec(), visualConf));
+								noteSpec.clear(ScoreHelper.noteOrientation(noteSpec.noteSpec(), visualConf.getDisplayMode()));
 							} else {
 								spec.clear();
 							}
@@ -411,7 +411,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 					int line0visPos = abs2visibleY(line0Top());
 					updateLinesViewSizeAndPosition();
 					for(SheetAlignedElementView elView: elementViews) {
-						updatePosition(elView, null, sheetElementY(elView));
+						updateYPosition(elView, sheetElementY(elView));
 					}
 					fixLine0VisibleY(line0visPos);
 				}
@@ -568,9 +568,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			case PAUSE:
 				content.add(((ElementSpec.Pause) spec).pauseSpec());
 				break;
-			case SPECIAL_SIGN:
-				// TODO implement or remove
-				throw new UnsupportedOperationException();
 			case TIMES_DIVIDER:
 				content.add(((ElementSpec.TimeDivider) spec).getRightTime());
 				break;
@@ -624,13 +621,9 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		});
 	}
 	
-	// TODO co jak nie ma ustalonego metrum?
-	// TODO co jak zmienia się metrum? nie powienienem przepychać nuty do istniejących taktów tylko stworzyć nowy takt starego metrum
-	
 	private void rebuildTimes(int startTimeIndex) throws CreationException {
 //		log.i("rebuildTimes(%d)", startTimeIndex);
 		
-		// TODO fix logic when no metrum
 		TimeSpec.TimeStep currentMetrum = getCurrentTimeStep(startTimeIndex);
 		int i = startTimeIndex < times.size() ? times.get(startTimeIndex).rangeStart : 0;
 		int timeIndex = startTimeIndex;
@@ -661,7 +654,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				continue;
 			}
 			int timeValue = elementSpec.timeValue(minPossibleValue);
-			// FIXME problem when timeValue == 0
 			if(timeValue <= currentTime.capLeft) {
 //					log.i("rebuildTimes(): element at %d of timeValue %d will shrink %d cap of time[%d]", i, timeValue, capLeft, timeIndex); 
 				currentTime.capLeft -= timeValue;
@@ -873,7 +865,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			elementSpec.clear();
 			view.setModel(createDrawingModel(elementSpec));
 			view.setSheetParams(sheetParams);
-			updatePosition(view, null, sheetElementY(view));
+			updateYPosition(view, sheetElementY(view));
 		}
 		undoList.clear();
 	}
@@ -972,7 +964,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		int i = index - 1;
 		for(; i > 0; i--) {
 			ElementSpec elementSpec = specAt(i);
-			if(JoinArc.canEndJA(elementSpec) || JoinArc.canStrartJA(elementSpec) || !JoinArc.canSkipOver(elementSpec)) {
+			if(JoinArc.canEndJA(elementSpec) || JoinArc.canStartJA(elementSpec) || !JoinArc.canSkipOver(elementSpec)) {
 				break;
 			}
 			                                                                        
@@ -1038,7 +1030,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		for(int elementI = startIndex; elementI <= endIndex; elementI++) {
 			SheetAlignedElementView v = elementViews.get(elementI);
 			SheetAlignedElement model = v.model();
-			updatePosition(v, xstart-middleX(v), null);
+			updateXPosition(v, xstart-middleX(v));
 			if(model.getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
 				timeIndex++;
 			}
@@ -1160,8 +1152,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 		} catch(CreationException e) {
 			log.e(null, e);
-			// TODO handle exception gracefully
-			finish();
+			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 		}
 	}
 	
@@ -1850,7 +1841,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 
 			protected void apply(EditActivity ctx, float state) {
-				ctx.updatePosition(view, start_value + (int) (delta*state), null);
+				ctx.updateXPosition(view, start_value + (int) (delta*state));
 			}
 		}
 		private static class HScrollAnimation extends LayoutAnimation<EditActivity, HorizontalScrollView> {
@@ -1936,7 +1927,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private void onFirstTimeDividerChanged() {
 		int paddingLeft = 
 		Math.max(
-			(int) (notesAreaHorizontalPaddingFactor * sheetParams.getScale()) + middleX(elementViews.get(0)),
+			(int) (positioningStrategy.getNotesAreaHorizontalPaddingFactor() * sheetParams.getScale()) + middleX(elementViews.get(0)),
 			// assure that when sheet is scrolled to start IA left edge matches start of area where notes are placed
 			visibleRectWidth-inputAreaWidth-iaRightMargin + mTouchSlop - timeDividerSpacing(times.get(0), true)
 		);
@@ -1955,11 +1946,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		log.d("newScaleFactor: %f", newScaleFactor);
 		sheetParams.setScale(newScaleFactor);
 		onScaleChanged();
-		NOTE_DRAW_PADDING = (int) (noteShadow * sheetParams.getScale());
-		noteHighlightPaint.setShadowLayer(NOTE_DRAW_PADDING, NOTE_DRAW_PADDING/2, NOTE_DRAW_PADDING, Color.BLACK);		
+		int noteShadowRadius = (int) (noteShadowFactor * sheetParams.getScale());
+		NOTE_DRAW_PADDING = noteShadowRadius*2;
+		noteHighlightPaint.setShadowLayer(noteShadowRadius, noteShadowRadius/2, noteShadowRadius, Color.BLACK);		
 		fakePausePaint.setMaskFilter(new BlurMaskFilter(fakePauseEffectRadius*sheetParams.getScale(), Blur.OUTER));
 		NOTE_DRAW_PADDING = (int) Math.max(fakePauseEffectRadius*sheetParams.getScale(), NOTE_DRAW_PADDING);
-		NOTE_DRAW_PADDING = Math.max(MIN_DRAW_SPACING, NOTE_DRAW_PADDING);
 		delta = (int) (sheetParams.getScale()*noteMinDistToIA);
 		log.d("updateScaleFactor(%f): delta = %d", newScaleFactor, delta);
 		updateLinesViewSizeAndPosition();
@@ -2015,7 +2006,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			Math.abs(minLinespaceTopOffset), 
 			Math.abs(maxLinespaceBottomOffset - line4bottomOffset)
 		);
-		updatePosition(lines, null, 0);
+		updateYPosition(lines, 0);
 	}
 
 	private void updateTimeSpacingBase(int timeIndex, boolean refreshSheetParams) {
@@ -2184,9 +2175,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				updatePosition(view, absMiddleX-middleX(view), sheetElementY(view));
 				animatedRepositioning(range.x, range.y, elementIndex, abs2visibleX(absMiddleX), 500);
 			} catch (CreationException e) {
-				// TODO more gracefully
-				e.printStackTrace();
-				finish();
+				log.e("", e);
+				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 				return;
 			}
 		}
@@ -2568,7 +2558,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			    newFragment.show(getSupportFragmentManager(), DIALOGTAG_TIMESTEP);
 			} catch (LoadingSvgException e) {
 				log.e("Failed to initialize TimeStep dialog.", e);
-				// TODO display some kind of info to user
+				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 			}
 		}
 
@@ -2646,7 +2636,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 
 		@Override
 		protected void perform(int elementIndex) {
-			// TODO przerobic na updateElementSpec()
 			try {
 				int timeIndex = getTimeIndex(elementIndex);
 				Time time = times.get(timeIndex);
@@ -2659,20 +2648,24 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				int pinVisiblePositionX = abs2visibleX(viewStableX(pinView) + middleX(pinView));
 				recreateTimeDivider(timeIndex);
 				recreateTimeDivider(timeIndex+1);
+				if(timeIndex > 0) {
+					// update because right divider has impact on spacing
+					updateTimeSpacingBase(timeIndex - 1, false);
+				}
+				updateTimeSpacingBase(timeIndex, false);
 				if(timeIndex == 0) {
 					onFirstTimeDividerChanged();
 				}
 				animatedRepositioning(
-					// TODO not from 0
-					0, elementViews.size()-1, 
+					times.get(Math.max(timeIndex-1, 0)).rangeStart,
+					elementViews.size()-1, 
 					elementIndex, 
 					pinVisiblePositionX, 
 					300
 				);				
 			} catch (CreationException e) {
 				log.e("", e);
-				// TODO more gracefully
-				finish();
+				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 			}
 		}
 		
@@ -2699,7 +2692,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		if(timeIndex >= times.size()) {
 			log.w("Tried to alter timestep of incorrect time %d", timeIndex);
 		} else try {
-			// TODO przerobić na updateElementSpec()
 			Time time = times.get(timeIndex);
 			time.spec.setTimeStep(enteredValue);
 			int pinVisiblePositionX = abs2visibleX(viewStableX(time.view) + middleX(time.view));
@@ -2723,8 +2715,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			);
 		} catch(CreationException e) {
 			log.e("", e);
-			// TODO exit gracefully
-			finish();
+			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 		}
 	}
 	
@@ -2783,8 +2774,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		TypedArray iconsMapping = getResources().obtainTypedArray(R.array.insertPauseIcons);
 		if(iconsMapping.length() < minPossibleValue) {
 			log.e("InsertPause svg icons mapping doesn't cover whole range", null);
-			finish();
-			// TODO handle this gracefully
+			showErrorDialog(R.string.errormsg_unrecoverable, null, true);
 			return;
 		}
 		for(int i = 0; i < minPossibleValue; i++) {
@@ -2970,7 +2960,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	}
 	
 	private ElementSpec.NormalNote elementSpecNN(NoteSpec spec) {
-		return ScoreHelper.elementSpecNN(spec, visualConf);
+		return ScoreHelper.elementSpecNN(spec, visualConf.getDisplayMode());
 	}
 
 	private int afterElementSpacing(Time time, SheetAlignedElement sheetAlignedElement) {

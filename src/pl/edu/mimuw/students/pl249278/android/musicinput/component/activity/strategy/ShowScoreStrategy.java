@@ -2,9 +2,8 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.str
 
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.middleX;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ANCHOR_TYPE_LINE;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.length;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.TOP_EDGE;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSize;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSizeDirect;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,12 +14,13 @@ import java.util.Set;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ScorePositioningStrategy;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ScorePositioningStrategy.SpacingEnv;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementsOverlay;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementsOverlay.Observer;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.JoinArc;
@@ -46,12 +46,8 @@ public class ShowScoreStrategy extends Activity {
 	protected ArrayList<SheetElementView<SheetElement>> overlaysViews = new ArrayList<SheetElementView<SheetElement>>();
 	protected SheetParams sheetParams;
 	
-	private float defaultSpacingBaseFactor;
 	protected int minPossibleValue;
-	private float minDrawSpacingFactor;
-	protected float notesAreaHorizontalPaddingFactor;
-	private float afterTimeDividerVisualSpacingFactor;
-	protected int MIN_DRAW_SPACING;
+	protected ScorePositioningStrategy positioningStrategy;
 	
 	protected Sheet5LinesView lines;
 	
@@ -62,70 +58,44 @@ public class ShowScoreStrategy extends Activity {
 			getResources().getInteger(R.integer.lineThickness),
 			getResources().getInteger(R.integer.linespaceThickness)
 		);
-		defaultSpacingBaseFactor = readParametrizedFactor(R.string.defaultTimeSpacingBaseFactor);
+		positioningStrategy = new ScorePositioningStrategy(this.getApplicationContext());
 		minPossibleValue = getResources().getInteger(R.integer.minNotePossibleValue) + 1;
-		minDrawSpacingFactor = readParametrizedFactor(R.string.minDrawSpacing);
-		afterTimeDividerVisualSpacingFactor = readParametrizedFactor(R.string.timeDividerDrawAfterSpacingFactor);
-		notesAreaHorizontalPaddingFactor = readParametrizedFactor(R.string.notesAreaHorizontalPadding);
 	}
 	
-	/** Updates {@link #MIN_DRAW_SPACING} */
+	/** Does nothing */
 	protected void onScaleChanged() {
-		MIN_DRAW_SPACING = (int) (minDrawSpacingFactor*sheetParams.getScale());
 	}
 	
 	protected float readParametrizedFactor(int stringResId) {
 		return sheetParams.readParametrizedFactor(getResources().getString(stringResId));
 	}
 	
+	protected SpacingEnv spacingEnv = new SpacingEnv() {		
+		@Override
+		public void updateSheetParams(int index, SheetParams sheetParams) {
+			elementViews.get(index).setSheetParams(sheetParams);
+		}		
+		@Override
+		public boolean isValid(int index) {
+			return index >= 0 && index < elementViews.size();
+		}
+		
+		@Override
+		public SheetAlignedElement getModel(int index) {
+			return elementViews.get(index).model();
+		}
+	};
+	
 	protected int computeTimeSpacingBase(int timeDividerIndex, int lastTimeElementIndex, boolean refreshSheetParams) {
-		if(refreshSheetParams) {
-			elementViews.get(timeDividerIndex).setSheetParams(sheetParams); // update left TimeDivider
-		}
-		int spacingBase = (int) (defaultSpacingBaseFactor * sheetParams.getScale()); // calculate default spacing base
-		int baseLength = length(0, minPossibleValue);
-		int firstEl = timeDividerIndex+1;
-		if(refreshSheetParams && firstEl < elementViews.size()) { // update first element of Time if present
-			elementViews.get(firstEl).setSheetParams(sheetParams); 
-		}
-		for(int i = firstEl; i <= lastTimeElementIndex; i++) { // for each element inside Time 
-			SheetAlignedElementView el = elementViews.get(i);
-			/** minimal visual spacing between 2 element's middles so that they don't collide */
-			int minSpacing = el.model().collisionRegionRight()-el.model().getMiddleX() + MIN_DRAW_SPACING;
-			if(i+1 < elementViews.size()) {
-				SheetAlignedElementView next = elementViews.get(i+1);
-				if(refreshSheetParams) { 
-					next.setSheetParams(sheetParams); 
-				}
-				minSpacing += next.model().getMiddleX()-next.model().collisionRegionLeft();
-			}
-			spacingBase = (int) Math.max(
-				spacingBase,
-				minSpacing * baseLength / el.model().getElementSpec().spacingLength(minPossibleValue)
-			);
-		}
-		return spacingBase;
+		return positioningStrategy.computeTimeSpacingBase(spacingEnv, timeDividerIndex, lastTimeElementIndex, sheetParams, refreshSheetParams);
 	}
 	
 	protected int timeDividerSpacing(int timeDividerIndex, boolean updateSheetParams) {
-		SheetAlignedElementView v = elementViews.get(timeDividerIndex);
-		if(updateSheetParams) v.setSheetParams(sheetParams);
-		int minSpacing = v.model().collisionRegionRight()-v.model().getMiddleX()+(int) (afterTimeDividerVisualSpacingFactor*sheetParams.getScale());
-		if(timeDividerIndex + 1 < elementViews.size()) {
-			SheetAlignedElementView firstTimeEl = elementViews.get(timeDividerIndex + 1);
-			if(updateSheetParams) firstTimeEl.setSheetParams(sheetParams);
-			minSpacing += firstTimeEl.model().getMiddleX()-firstTimeEl.model().collisionRegionLeft();
-		}
-		return minSpacing;
+		return positioningStrategy.timeDividerSpacing(spacingEnv, timeDividerIndex, sheetParams, updateSheetParams);
 	}
 	
 	protected int afterElementSpacing(int timeDividerIndex, int timeSpacingBase, SheetAlignedElement sheetAlignedElement) {
-		ElementSpec elementSpec = sheetAlignedElement.getElementSpec();
-		if(elementSpec.getType() == ElementType.TIMES_DIVIDER) {
-			return timeDividerSpacing(timeDividerIndex, false);
-		} else {
-			return length2spacing(timeSpacingBase, elementSpec.spacingLength(minPossibleValue), minPossibleValue);
-		}
+		return positioningStrategy.afterElementSpacing(spacingEnv, timeDividerIndex, timeSpacingBase, sheetAlignedElement, sheetParams);
 	}
 	
 	/**
@@ -163,7 +133,7 @@ public class ShowScoreStrategy extends Activity {
 				group.wrapNext(model);
 				bind(group, view);
 				model.setSheetParams(sheetParams);
-				updatePosition(view, null, sheetElementY(view));
+				updateYPosition(view, sheetElementY(view));
 				if(!group.hasNext()) {
 					 group = null;
 				 }
@@ -202,7 +172,7 @@ public class ShowScoreStrategy extends Activity {
 					arcStart = null;
 				}
 			}
-			if(arcStart == null && elementI <= endIndex && JoinArc.canStrartJA(spec)) {
+			if(arcStart == null && elementI <= endIndex && JoinArc.canStartJA(spec)) {
 				arcStart = view;
 				if(elementI == extendedEndIndex) {
 					extendedEndIndex = Math.min(extendedEndIndex+1, lastPossibleEl);
@@ -229,7 +199,7 @@ public class ShowScoreStrategy extends Activity {
 				ovView.invalidate();
 				// reposition it
 				updateOverlayPosition(overlay, ovView);
-				updateSize(ovView, ovView.measureWidth(), ovView.measureHeight());
+				updateSizeDirect(ovView, ovView.measureWidth(), ovView.measureHeight());
 			}
 		});
 	}
@@ -239,11 +209,6 @@ public class ShowScoreStrategy extends Activity {
 		int top = line0Top() + overlay.top()-ovView.getPaddingTop();
 		updatePosition(ovView, left, top);
 	}	
-	
-	protected static int length2spacing(int spacingBase, double lengthInMU, int measureUnit) {
-		int baseLength = length(0, measureUnit);
-		return (int) (spacingBase * lengthInMU / baseLength);
-	}
 	
 	protected int sheetElementY(SheetElementView<?> v) {
 		return line0Top() + v.getOffsetToAnchor(NoteConstants.anchorIndex(0, ANCHOR_TYPE_LINE), TOP_EDGE);
@@ -283,11 +248,27 @@ public class ShowScoreStrategy extends Activity {
 		bindMap.get(view).add(overlay);
 		dispatchPositionChanged(overlay, view);
 	}
-	
-	protected void updatePosition(View v, Integer left, Integer top) {
+
+	protected void updateXPosition(View v, int left) {
 		AbsoluteLayout.LayoutParams params = (LayoutParams) v.getLayoutParams();
-		if(left != null) params.x = left;
-		if(top != null) params.y = top;
+		params.x = left;
+		onPositionUpdated(v, params);
+	}
+
+	protected void updateYPosition(View v, int top) {
+		AbsoluteLayout.LayoutParams params = (LayoutParams) v.getLayoutParams();
+		params.y = top;
+		onPositionUpdated(v, params);
+	}
+	
+	protected void updatePosition(View v, int left, int top) {
+		AbsoluteLayout.LayoutParams params = (LayoutParams) v.getLayoutParams();
+		params.x = left;
+		params.y = top;
+		onPositionUpdated(v, params);
+	}
+
+	private void onPositionUpdated(View v, AbsoluteLayout.LayoutParams params) {
 		v.setLayoutParams(params);
 		if(v instanceof SheetAlignedElementView) {
 			SheetAlignedElementView view = (SheetAlignedElementView) v;

@@ -7,8 +7,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
 import pl.edu.mimuw.students.pl249278.android.async.AsynchronousRequestsService;
@@ -20,6 +22,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivityHelper.Rece
 import pl.edu.mimuw.students.pl249278.android.musicinput.component.ManagedReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score.ParcelableScore;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.SerializationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.FilterByRequestIdReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.WorkerService;
@@ -30,14 +34,21 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ParcelablePrimitives.ParcelableLong;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog.TextInputDialogListener;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.WorkerThread;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_TipDialog_ProgressDialog_ManagedReceiver;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.ScoreThumbnailDrawable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator.LayoutAnimation;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.DrawingChildOnTop;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.PaintDrawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -80,6 +91,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	protected static final String TIP_MIDI_ON_STORAGE = MainActivity.class.getCanonicalName()+".midi_exported_to_storage";
 	
 	private static final String STATE_SCORES = "scores";
+	private static final String STATE_VISCONFS = "configs";
 	private static final String STATE_EXPANDED_ENTRY_SCOREID = "expanded_scoreid";
 	private static final String STATE_RECEIVERS_STATES = "receivers_states";
 	/** key for persisting {@link #editedScoreId} field */
@@ -92,6 +104,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	 * Not null means whole model has been successfully loaded.
 	 */
 	private ArrayList<ParcelableScore> scores = null;
+	private Map<Long, ScoreVisualizationConfig> scoreConfig = null;
 	
 	private List<EnqueuedReceiver> receivers = new ArrayList<MainActivity.EnqueuedReceiver>();
 	private LayoutAnimator<MainActivity> animator = new LayoutAnimator<MainActivity>(this, 25);
@@ -99,6 +112,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	private Handler uiHandler;
 	/** Id of {@link Score} on which "EDIT" action was requested most lately. */
 	protected long editedScoreId = -1;
+	private WorkerThread thumbnailsThread = new WorkerThread("Score thumbnails");
 	
 	static enum ReceiverType {
 		SCORE_DELETED(ContentService.class),
@@ -157,6 +171,11 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		
 		if(savedState != null && savedState.containsKey(STATE_SCORES)) {
 			ArrayList<ParcelableScore> scores = savedState.getParcelableArrayList(STATE_SCORES);
+			ArrayList<ScoreVisualizationConfig> confs = savedState.getParcelableArrayList(STATE_VISCONFS);
+			Map<Long, ScoreVisualizationConfig> scoreConfigMapping = new HashMap<Long, ScoreVisualizationConfig>();
+			for(int i = 0; i < scores.size(); i++) {
+				scoreConfigMapping.put(scores.get(i).getSource().getId(), confs.get(i));
+			}
 			Collections.sort(scores, new Comparator<ParcelableScore>() {
 				@Override
 				public int compare(ParcelableScore lhs, ParcelableScore rhs) {
@@ -168,7 +187,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 					}
 				}
 			});
-			onModelLoaded(scores);
+			onModelLoaded(scores, scoreConfigMapping);
 			editedScoreId = savedState.getLong(STATE_EDITED_SCOREID, -1);
 			if(savedState.containsKey(STATE_EXPANDED_ENTRY_SCOREID)) {
 				View entry = findEntryView(savedState.getLong(STATE_EXPANDED_ENTRY_SCOREID));
@@ -267,18 +286,20 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			hideProgressDialog();
 			Parcelable[] scoresArr = response.getParcelableArrayExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_SCORES);
 			ArrayList<ParcelableScore> scores = new ArrayList<Score.ParcelableScore>(scoresArr.length);
+			Parcelable[] configsArr = response.getParcelableArrayExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_VISUAL_CONFS);
+			Map<Long, ScoreVisualizationConfig> configMapping = new HashMap<Long, ScoreVisualizationConfig>();
 			for (int i = 0; i < scoresArr.length; i++) {
-				Parcelable parcelable = scoresArr[i];
-				scores.add((ParcelableScore) parcelable);
+				ParcelableScore pScore = (ParcelableScore) scoresArr[i];
+				scores.add(pScore);
+				configMapping.put(pScore.getSource().getId(), (ScoreVisualizationConfig) configsArr[i]);
 			}
-			onModelLoaded(scores);
-			// TODO handle vis confs
-			response.getParcelableArrayExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_VISUAL_CONFS);
+			onModelLoaded(scores, configMapping);
 		}
 	}
 	
-	private void onModelLoaded(ArrayList<ParcelableScore> scores) {
+	private void onModelLoaded(ArrayList<ParcelableScore> scores, Map<Long, ScoreVisualizationConfig> scoreConfigMapping) {
 		this.scores = scores;
+		this.scoreConfig = scoreConfigMapping;
 		ViewGroup container = (ViewGroup) findViewById(R.id.entries_container);
 		for(ParcelableScore pScore: scores) {
 			Score score = pScore.getSource();
@@ -310,7 +331,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 					true
 				);
 				i.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, scoreId);
-				// TODO if request visConf
+				i.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, true);
 				startService(i);
 			}
 			break;
@@ -329,13 +350,13 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 					true
 				);
 				i.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, scoreId);
+				i.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, true);
 				View entry = findEntryView(scoreId);
 				if(entry == null) {
 					log.w("Couldn't find entry View for Score#%d that was edited", scoreId);
 				} else {
 					addProgressLock(entry);
 				}
-				// TODO if request visConf
 				startService(i);
 			}
 			break;
@@ -368,10 +389,11 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		protected void onSuccessReceived(Intent response) {
 			sendCleanSilently();
 			ParcelableScore pScore = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_ENTITY);
-			onScoreReceived(pScore);
+			ScoreVisualizationConfig config = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF);
+			onScoreReceived(pScore, config);
 		}
 		
-		protected abstract void onScoreReceived(ParcelableScore pScore);
+		protected abstract void onScoreReceived(ParcelableScore pScore, ScoreVisualizationConfig config);
 
 		@Override
 		public ReceiverState getState() {
@@ -389,7 +411,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		}
 
 		@Override
-		protected void onScoreReceived(ParcelableScore pScore) {
+		protected void onScoreReceived(ParcelableScore pScore, ScoreVisualizationConfig config) {
 			long stamp = pScore.getSource().getModificationUtcStamp();
 			// find index in list ordered by modification stamp
 			int i = 0;
@@ -398,7 +420,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 					break;
 				}
 			}
-			onNewScoreArrived(i, pScore, null);
+			onNewScoreArrived(i, pScore, config, new AnimatedMoveUp(pScore.getSource().getId(), true));
 		}
 	}
 	
@@ -412,7 +434,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		}
 		
 		@Override
-		protected void onScoreReceived(ParcelableScore pScore) {
+		protected void onScoreReceived(ParcelableScore pScore, ScoreVisualizationConfig config) {
 			long scoreId = pScore.getSource().getId();
 			View entryView = findEntryView(scoreId);
 			if(entryView == null) {
@@ -423,13 +445,19 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 				if(index < 0) {
 					log.w("Couldn't find an original ParcelableScore#%d object to swap with", scoreId);
 				} else {
+					Score prevVersion = scores.get(index).getSource();
+					if(pScore.getSource().getModificationUtcStamp() <= prevVersion.getModificationUtcStamp()) {
+						// no modification saved on this Score so there is nothing to refresh
+						return;
+					}
 					// update object in model
-					scores.remove(index);
-					scores.add(index, pScore);
-					// update modification time stamp text field
-					populateEntryTextViews(pScore.getSource(), entryView);
+					scores.set(index, pScore);
+					scoreConfig.put(scoreId, config);
+					// update view with new data
+					populateEntry(pScore.getSource(), entryView);
 					AnimatedMoveUp moveUpAnim = new AnimatedMoveUp(scoreId, true);
 					if(moveUpAnim.isRequired() && expandedEntry == entryView) {
+						entryView.setSelected(true);
 						// collapse first
 						entryClickListener.collapseExpanded(moveUpAnim);
 					} else {
@@ -442,10 +470,29 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 
 	private View inflateAndPopulateEntry(Score score, ViewGroup container) {
 		View entry = getLayoutInflater().inflate(R.layout.mainscreen_entry, container, false);
-		populateEntryTextViews(score, entry);
 		entry.setOnClickListener(entryClickListener);
-		entry.setTag(score);
+		populateEntry(score, entry);
 		return entry;
+	}
+	
+	private void populateEntry(Score score, View entry) {
+		populateEntryTextViews(score, entry);
+		entry.setTag(score);
+		// prepare background (under content, without toolbar) drawable with Score preview
+		try {			
+			ScoreThumbnailDrawable thumb = new ScoreThumbnailDrawable(getApplicationContext(), 
+				thumbnailsThread, getResources().getColorStateList(R.color.main_entry_thumbnail));
+			thumb.setModel(score.getContent(), scoreConfig.get(score.getId()).getDisplayMode());
+			thumb.setLoadingIcon(getResources().getDrawable(R.drawable.spinner_16dp));
+			LayerDrawable contentBg = new LayerDrawable(new Drawable[] {
+				new PaintDrawable(Color.WHITE),
+				thumb
+			});
+			entry.findViewById(R.id.mainscreen_entry_content).setBackgroundDrawable(contentBg);
+		} catch (SerializationException e) {
+			log.e("Failed to deserialize score content", e);
+			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
+		}
 	}
 
 	private void populateEntryTextViews(Score score, View entry) {
@@ -455,6 +502,21 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			formatDate(score.getCreationUtcStamp()));
 		((TextView) entry.findViewById(R.id.modified)).setText(
 				formatDate(score.getModificationUtcStamp()));
+	}
+	
+	private static class ChangeVisibility implements Runnable {
+		private View view;
+		private int visibility;
+		
+		private ChangeVisibility(View view, int visibility) {
+			this.view = view;
+			this.visibility = visibility;
+		}
+
+		@Override
+		public void run() {
+			view.setVisibility(visibility);
+		}
 	}
 	
 	private ToggleEntryToolbar entryClickListener = new ToggleEntryToolbar();
@@ -467,10 +529,13 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			ViewGroup entry = (ViewGroup) view;
 			View toolbar = setupEntryToolbar(entry);
 			if(prev != null) {
-				animator.startAnimation(new ViewHeightAnimation.CollapseAnimation<MainActivity>(prev, 300));
+				ViewHeightAnimation.CollapseAnimation<MainActivity> anim = new ViewHeightAnimation.CollapseAnimation<MainActivity>(prev, 300);
+				anim.setOnAnimationEndListener(new ChangeVisibility(prev, View.GONE));
+				stopAndStart(anim);
 			}
 			if(toolbar != prev) {
-				animator.startAnimation(new ExpandKeepVisibleAnimation(toolbar, 300));
+				toolbar.setVisibility(View.VISIBLE);
+				stopAndStart(new ExpandKeepVisibleAnimation(toolbar, 300));
 				prev = toolbar;
 				expandedEntry = view;
 			} else {
@@ -483,10 +548,18 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			if(expandedEntry != null) {
 				ViewHeightAnimation.CollapseAnimation<MainActivity> anim = new ViewHeightAnimation.CollapseAnimation<MainActivity>(prev, 300);
 				anim.setOnAnimationEndListener(onAnimationEnd);
-				animator.startAnimation(anim);
+				stopAndStart(anim);
 				prev = null;
 				expandedEntry = null;
 			}
+		}
+		
+		private void stopAndStart(LayoutAnimation<MainActivity, ?> anim) {
+			LayoutAnimation<MainActivity, ?> oldAnim = animator.getAnimation(anim.getView());
+			if(oldAnim != null) {
+				animator.stopAnimation(oldAnim);
+			}
+			animator.startAnimation(anim);
 		}
 	};
 	
@@ -622,7 +695,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
     		log.w("No entryView to hide for deleted Score#%d", score.getId());
     	} else {
     		Animation fadeOut = AnimationUtils.makeOutAnimation(MainActivity.this, true);
-    		fadeOut.setDuration(200);
+    		fadeOut.setDuration(getResources().getInteger(R.integer.mainscreen_deleted_fadeout_duration));
     		fadeOut.setFillAfter(true);
     		fadeOut.setAnimationListener(new AnimationListener() {
 				@Override
@@ -802,8 +875,9 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			}
 			// create and reveal entry with received copy
 			ParcelableScore pScore = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_ENTITY);
+			ScoreVisualizationConfig visConfig = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF);
 			int insertIndex = Math.max(0, scores.indexOf(findParcelableScoreById(originalScoreId)));
-			onNewScoreArrived(insertIndex, pScore, new AnimatedMoveUp(pScore.getSource().getId()));
+			onNewScoreArrived(insertIndex, pScore, visConfig, new AnimatedMoveUp(pScore.getSource().getId()));
 		}
 
 		@Override
@@ -824,6 +898,23 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		
 	}
 	
+	private static class AnimatedMoveUpConsts {
+		int initialDuration, decreaseStep, minDuration, notanimDuration, horizontalDeviation, highlightOffDelay;
+		Handler uiHandler;
+		
+		public AnimatedMoveUpConsts(Resources res) {
+			initialDuration = res.getInteger(R.integer.mainscreen_moveup_duration);
+			decreaseStep = res.getInteger(R.integer.mainscreen_moveup_decrease_step);
+			minDuration = res.getInteger(R.integer.mainscreen_moveup_min_duration);
+			notanimDuration = res.getInteger(R.integer.mainscreen_moveup_notanim_duration);
+			horizontalDeviation = res.getDimensionPixelOffset(R.dimen.mainscreen_moveup_deviation);
+			highlightOffDelay = res.getInteger(R.integer.mainscreen_moveup_highlight_off_delay);
+			uiHandler = new Handler();
+		}
+	}
+	
+	private AnimatedMoveUpConsts consts;
+	
 	/** 
 	 * Utility class that checks if given Score is at its right place in model ({@link MainActivity#scores}) that is ordered by modification stamp.
 	 * If not it starts an {@link LayoutAnimation} of swapping given Score with the one above 
@@ -833,6 +924,9 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	private class AnimatedMoveUp implements Runnable {
 		long scoreId;
 		boolean keepVisible;
+		private int duration;
+		private int loopNo = -1;
+		private boolean wasTopVisible;
 		
 		private AnimatedMoveUp(long scoreId) {
 			this(scoreId, false);
@@ -841,6 +935,10 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		private AnimatedMoveUp(long scoreId, boolean keepVisible) {
 			this.scoreId = scoreId;
 			this.keepVisible = keepVisible;
+			if(consts == null) {
+				consts = new AnimatedMoveUpConsts(getResources());
+			}
+			this.duration = consts.initialDuration;
 		}
 
 		public boolean isRequired() {
@@ -856,29 +954,71 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		
 		@Override
 		public void run() {
-			if(isRequired()) {
-				ParcelableScore pScore = findParcelableScoreById(scoreId);
-				int indexInModel = scores.indexOf(pScore);
+			loopNo++;
+			if(loopNo == 0) {
+				wasTopVisible = isTopVisible();
+			}
+			ViewGroup container = (ViewGroup) findViewById(R.id.entries_container);
+			int entryViewIndex = findEntryViewIndex(scoreId);
+			ParcelableScore pScore = findParcelableScoreById(scoreId);
+			int indexInModel = scores.indexOf(pScore);
+			boolean isRequired = isRequired();
+			final View entryView = container.getChildAt(entryViewIndex);
+			if(isRequired) {
+				entryView.setSelected(true);
 				ParcelableScore upper = scores.get(indexInModel-1);
 				scores.remove(pScore);
 				scores.add(indexInModel-1, pScore);
-				moveEntryUpAnimation(
-					findEntryViewIndex(pScore.getSource().getId()),
-					findEntryViewIndex(upper.getSource().getId())
-				);
+				int upperViewIndex = findEntryViewIndex(upper.getSource().getId());
+				if(duration >= consts.minDuration) {
+					moveEntryUpAnimation(
+						entryViewIndex,
+						upperViewIndex,
+						duration
+					);
+					duration -= consts.decreaseStep;
+				} else {
+					if(keepVisible) {
+						ensureViewIsVisible(container.getChildAt(upperViewIndex), true);
+					}
+					View lowerView = entryView;
+					container.removeView(lowerView);
+					container.addView(lowerView, upperViewIndex);
+					consts.uiHandler.postDelayed(this, consts.notanimDuration);
+				}
+			} else if(keepVisible && indexInModel == 0 && !wasTopVisible && loopNo > 0) {
+				ScrollView scrollView = (ScrollView) findViewById(R.id.main_scrollview);
+				LayoutAnimation<MainActivity, ?> scrollAnim = new LayoutAnimation<MainActivity, ScrollView>(scrollView, 
+						scrollView.getScrollY(), -scrollView.getScrollY(), 300) {
+					@Override
+					protected void apply(MainActivity ctx, float state) {
+						view.scrollTo(0, start_value + (int) (state*delta));
+					}
+				};
+				scrollAnim.setOnAnimationEndListener(new Runnable() {
+					@Override
+					public void run() {
+						consts.uiHandler.postDelayed(new Deselect(entryView), consts.highlightOffDelay);
+					}
+				});
+				animator.startAnimation(scrollAnim);
+			} else {
+				consts.uiHandler.postDelayed(new Deselect(entryView), consts.highlightOffDelay);
 			}
 		}
 
-		private void moveEntryUpAnimation(int lowerEntryIndex, int upperEntryIndex) {
+		private boolean isTopVisible() {
+			ScrollView scrollView = (ScrollView) findViewById(R.id.main_scrollview);
+			View topView = findViewById(R.id.MAIN_entry_addnew);
+			return scrollView.getScrollY() <= topView.getHeight()/2;
+		}
+
+		private void moveEntryUpAnimation(int lowerEntryIndex, int upperEntryIndex, final int time) {
 			ViewGroup container = (ViewGroup) findViewById(R.id.entries_container);
 			View upperView = container.getChildAt(upperEntryIndex);
-			int unspc = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
-			upperView.measure(unspc, unspc);
-			final int upperH = upperView.getMeasuredHeight();
+			final int upperH = viewHeight(upperView);
 			View lowerView = container.getChildAt(lowerEntryIndex);
-			lowerView.measure(unspc, unspc);
-			final int lowerH = lowerView.getMeasuredHeight();
-			int time = 250;
+			final int lowerH = viewHeight(lowerView);
 			animator.startAnimation(new LayoutAnimation<MainActivity, View>(upperView, 0, 0, time) {
 				@Override
 				protected void apply(MainActivity ctx, float state) {
@@ -886,8 +1026,8 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 					int top = (int) (-upperH*revState) + (int) (-lowerH*revState);
 					int bottom = (int) (lowerH*revState);
 					setVMargins(view, top, bottom);
-					int hdiff = (int) (-4 * state * (state -1) * 30);
-					setHMargins(view, hdiff, -hdiff);
+					int hdiff = (int) (-4 * state * (state -1) * consts.horizontalDeviation);
+					setHMargins(view, -hdiff, hdiff);
 				}
 			});
 			animator.startAnimation(new LayoutAnimation<MainActivity, View>(lowerView, 0, 0, time, this) {
@@ -898,8 +1038,8 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 					setVMargins(view, 
 						top, 
 						0);
-					int hdiff = (int) (-4 * state * (state -1) * 30);
-					setHMargins(view, -hdiff, hdiff);
+					int hdiff = (int) (-4 * state * (state -1) * consts.horizontalDeviation);
+					setHMargins(view, hdiff, -hdiff);
 					if(keepVisible) {
 						ensureViewIsVisible(view, true);
 					}
@@ -909,6 +1049,17 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			container.addView(lowerView, upperEntryIndex);
 			setVMargins(upperView, -upperH-lowerH, lowerH);
 			setVMargins(lowerView, upperH, 0);
+			((DrawingChildOnTop) container).setFrontChildView(lowerView);
+		}
+		
+		private int viewHeight(View view) {
+			if(view.getHeight() != 0) {
+				return view.getHeight();
+			} else {
+				int unspc = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+				view.measure(unspc, unspc);
+				return view.getMeasuredHeight();
+			}
 		}
 		
 		private void setHMargins(View view, int left, int right) {
@@ -925,19 +1076,34 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			view.setLayoutParams(params);
 		}
 	}
+	
+	private static class Deselect implements Runnable {
+		private View view;
+
+		private Deselect(View view) {
+			this.view = view;
+		}
+		
+		@Override
+		public void run() {
+			view.setSelected(false);
+		}
+	}
 
 	/**
-	 * Add object to {@link MainActivity#scores}, inflates new entry view and start animation to reveal it
+	 * Add object to {@link MainActivity#scores}, inflates new entry view and start animation to reveal it.
+	 * Add :selected to entry view.
 	 * @param insertAt index in model
 	 * @param onAnimFinish task to run on "reveal" animation end
 	 */
-	private void onNewScoreArrived(int insertAt, ParcelableScore pScore, final Runnable onAnimFinish) {
+	private void onNewScoreArrived(int insertAt, ParcelableScore pScore, ScoreVisualizationConfig visConfig, final Runnable onAnimFinish) {
 		insertAt = Math.max(insertAt, 0);
 		int viewInsertIndex = 0;
 		if(insertAt < scores.size()) {
 			viewInsertIndex = findEntryViewIndex(scores.get(insertAt).getSource().getId());
 		}
 		scores.add(insertAt, pScore);
+		scoreConfig.put(pScore.getSource().getId(), visConfig);
 		final ViewGroup container = (ViewGroup) findViewById(R.id.entries_container);
 		final View entryView = inflateAndPopulateEntry(pScore.getSource(), container);
 		container.addView(entryView, viewInsertIndex);
@@ -962,6 +1128,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			}
 		});
 		inAnim.startNow();		
+		entryView.setSelected(true);
 	}
 	
 	private void sendCreateDuplicate(Score score, String newTitle) {
@@ -972,6 +1139,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			receiver.getCurrentRequestId(), getBroadcastCallback(CALLBACK_ACTION_DUPLICATE), true);
 		request.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, score.getId());
 		request.putExtra(ContentService.ACTIONS.EXTRAS_NEW_TITLE, newTitle);
+		request.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, true);
 		log.v("Sending request DUPLICATE of Score#%d", score.getId());
 		startService(request);
 		// show progress indicator
@@ -1072,6 +1240,11 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		super.onSaveInstanceState(outState);
 		if(scores != null) {
 			outState.putParcelableArrayList(STATE_SCORES, scores);
+			ArrayList<ScoreVisualizationConfig> confs = new ArrayList<ScoreVisualizationConfig>(scores.size());
+			for(int i = 0; i < scores.size(); i++) {
+				confs.add(scoreConfig.get(scores.get(i).getSource().getId()));
+			}
+			outState.putParcelableArrayList(STATE_VISCONFS, confs);
 			if(expandedEntry != null && expandedEntry.getTag() != null) {
 				outState.putLong(STATE_EXPANDED_ENTRY_SCOREID, ((Score) expandedEntry.getTag()).getId());
 			}

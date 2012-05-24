@@ -58,6 +58,9 @@ public class LayoutAnimator<ContextType> implements Runnable {
 		public Runnable getOnAnimationEndListener() {
 			return onAnimationEndListener;
 		}
+		public ViewType getView() {
+			return view;
+		}
 	}
 	
 	private ArrayList<LayoutAnimation<ContextType, ?>> animations = new ArrayList<LayoutAnimator.LayoutAnimation<ContextType, ?>>();
@@ -105,7 +108,9 @@ public class LayoutAnimator<ContextType> implements Runnable {
 	}
 
 	public LayoutAnimation<ContextType, ?> getAnimation(View view) {
-		for (LayoutAnimation<ContextType, ?> anim : animations) {
+		int total = animations.size();
+		for(int i = 0; i < total; i++) {
+			LayoutAnimation<ContextType, ?> anim = animations.get(i);
 			if(anim.view == view) return anim;
 		}
 		return null;

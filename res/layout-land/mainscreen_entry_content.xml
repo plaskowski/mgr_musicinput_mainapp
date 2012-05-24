@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pl.edu.mimuw.students.pl249278.android.ui.view.FlowLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/mainscreen_entry_content"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:duplicateParentState="true"
+	android:verticalSpacing="3dip"    
+>
+
+    <include layout="@layout/mainscreen_entry_content_textfields" />
+
+</pl.edu.mimuw.students.pl249278.android.ui.view.FlowLayout>

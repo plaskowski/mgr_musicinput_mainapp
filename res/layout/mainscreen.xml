@@ -34,7 +34,7 @@
 		        android:layout_gravity="center_vertical"
 	        />
 		</LinearLayout>   
-		<LinearLayout 
+		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_FrontChild 
 		    android:id="@+id/entries_container"
 		    android:layout_width="fill_parent"
 		    android:layout_height="wrap_content"

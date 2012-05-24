@@ -134,7 +134,7 @@ public class JoinArc extends ElementsOverlay {
 		throw new UnsupportedOperationException();
 	}
 	
-	public static boolean canStrartJA(ElementSpec elementSpec) {
+	public static boolean canStartJA(ElementSpec elementSpec) {
 		return couldStartWithJA(elementSpec) && ((NormalNote) elementSpec).noteSpec().hasJoinArc();
 	}
 

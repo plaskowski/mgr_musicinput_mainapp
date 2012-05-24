@@ -69,9 +69,7 @@ public class DrawingModelFactory {
 			} catch (LoadingSvgException e) {
 				throw new CreationException(e, elementSpec);
 			}
-		case SPECIAL_SIGN:
 		default:
-			// TODO impelementacja dla innych SheetElement
 			throw new UnsupportedOperationException("Unhandled type: "+elementSpec.getType().name());
 				
 		}

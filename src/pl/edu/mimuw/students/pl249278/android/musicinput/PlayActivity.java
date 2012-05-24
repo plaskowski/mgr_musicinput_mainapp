@@ -85,6 +85,7 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.ViewAnimator;
 
 public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_ShowScore_ManagedReceiver implements OnLayoutListener {
@@ -217,7 +218,9 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				playConf.setLoop(v.isSelected());
 			}
 		});
-		sheet.setOnClickListener(new OnClickListener() {
+		View mainView = ((ViewGroup) findViewById(R.id.PLAY_vertscrollview)).getChildAt(0);
+		mainView.setClickable(true);
+		mainView.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				exitPlayingState();
@@ -619,6 +622,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 							player.release();
 						} catch (Exception e) {
 						}
+						player = null;
 						return false;
 					}
 				}
@@ -747,7 +751,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			if(scoreTitle == null) {
 				scoreTitle = getString(android.R.string.untitled);
 			}
-			setTitle(getString(R.string.PLAY_title, scoreTitle));
+			((TextView) findViewById(R.id.title)).setText(getString(R.string.PLAY_title, scoreTitle));
 			sheet.requestLayout();			
 		} catch (CreationException e) {
 			log.e("Exception while creating drawing model", e);

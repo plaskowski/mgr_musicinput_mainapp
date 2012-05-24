@@ -56,6 +56,10 @@
    	
 	<declare-styleable name="Padding">
 	    <attr name="padding" format="dimension" />
+	    <attr name="paddingLeft" format="dimension" />
+	    <attr name="paddingTop" format="dimension" />
+   	    <attr name="paddingRight" format="dimension" />
+   	    <attr name="paddingBottom" format="dimension" />	    	    	    
 	</declare-styleable>
 	
 	<declare-styleable name="Inset">

@@ -16,6 +16,7 @@
 	   		android:id="@+id/PLAY_vertscrollview"
 	    	android:layout_width="wrap_content" 
 	   		android:layout_height="fill_parent"
+	   		android:fillViewport="true"
 	   	>
     		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollViewChild
 		    	android:layout_width="wrap_content" 
@@ -28,6 +29,7 @@
 			    	android:layout_width="fill_parent"
 			    	android:layout_height="wrap_content"
 			    	android:visibility="invisible"
+			    	android:clickable="false"
 			   	>
 			   		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView
 			   		android:id='@+id/PLAY_sheet_5lines'  
@@ -43,15 +45,16 @@
 	    android:id="@+id/PLAY_barAnimator"
 	    android:layout_width="wrap_content"
 	    android:layout_height="wrap_content"
-	    android:layout_gravity="top|center_horizontal"
+	    android:layout_gravity="bottom|center_horizontal"
 	    android:visibility="gone"
-	    android:inAnimation="@anim/slidein_from_top"
-	    android:outAnimation="@anim/slideout_to_top"
+	    android:inAnimation="@anim/slidein_from_bottom"
+	    android:outAnimation="@anim/slideout_to_bottom"
     ><!-- top slide in/out action bar with play, replay buttons -->
-   		<LinearLayout 
+   		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_ExtendedBackground
 	        android:id="@+id/PLAY_actionsBar"
 		    android:layout_width="wrap_content"
 		    android:layout_height="wrap_content"
+		    style="@style/playscreen_toolbar"
 		>
     		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage
     		    style="@style/toolbar_blue_button"
@@ -74,10 +77,21 @@
 		        custom:iconMaxHeight="25dip"
 		        android:id="@+id/PLAY_barbutton_configure"
 	       	/>
-   	   	</LinearLayout>
+   	   	</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_ExtendedBackground>
 	   	<View
 	   	    android:layout_width="0dp"
 	   	    android:layout_height="0dp"
 	   	/>
  	</ViewAnimator>
+ 	
+	<include 
+    	layout="@layout/editscreen_title"
+    	android:id="@+id/title"
+    	android:layout_width="wrap_content"
+    	android:layout_height="wrap_content"
+    	android:layout_marginTop="5dip"
+    	android:layout_marginLeft="5dip"
+    	android:layout_gravity="top|left"
+   	/>
+	
 </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.FrameLayout_InterceptScale>

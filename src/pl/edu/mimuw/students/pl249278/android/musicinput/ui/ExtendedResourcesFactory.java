@@ -21,6 +21,7 @@ import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.PathEffect;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
@@ -300,6 +301,27 @@ public class ExtendedResourcesFactory {
 			}
 		}
 		return result;
+	}
+	
+	public static int getPadding(StyleResolver resolver, int defValue) {
+		TypedArray values = resolver.obtainStyledAttributes(R.styleable.Padding);
+		int result = values.getDimensionPixelSize(R.styleable.Padding_padding, defValue);
+		values.recycle();
+		return result;
+	}
+	
+	public static Rect getPadding(StyleResolver resolver, int defValue, Rect out) {
+		TypedArray values = resolver.obtainStyledAttributes(R.styleable.Padding);
+		int padding = values.getDimensionPixelSize(R.styleable.Padding_padding, defValue);
+		Rect rect = out == null ? new Rect() : out;
+		rect.set(
+			values.getDimensionPixelSize(R.styleable.Padding_paddingLeft, padding),
+			values.getDimensionPixelSize(R.styleable.Padding_paddingTop, padding),
+			values.getDimensionPixelSize(R.styleable.Padding_paddingRight, padding),
+			values.getDimensionPixelSize(R.styleable.Padding_paddingBottom, padding)
+		);
+		values.recycle();
+		return rect;
 	}
 
 	public static StyleResolver styleResolver(Context ctx, AttributeSet attrs) {

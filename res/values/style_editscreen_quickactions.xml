@@ -2,15 +2,15 @@
 <resources>
 	
 	<style name="BlueLinear" parent="LinearSimpleVertical">
-		<item name="color0">#5CB0CC</item>
-		<item name="color1">#5CB0CC</item>
+		<item name="color0">@color/blue_buttons_container_background</item>
+		<item name="color1">@color/blue_buttons_container_background</item>
 	</style>
 	
 	<style name="TooltipBg1" parent="TooltipDrawable">
 		<item name="padding">1dip</item>
 		<item name="outlineCornerRadius">2dip</item>
 		<item name="borderThickness">1dip</item>
-		<item name="borderColor">#458499</item>
+		<item name="borderColor">@color/blue_buttons_container_border</item>
 		<item name="fill">@style/BlueLinear</item>
 		<item name="indicatorSize">20dip</item>
     </style>

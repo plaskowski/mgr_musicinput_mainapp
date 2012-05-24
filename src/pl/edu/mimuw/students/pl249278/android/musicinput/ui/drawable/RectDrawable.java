@@ -62,15 +62,15 @@ public class RectDrawable extends Drawable {
 	
 	@Override
 	public boolean getPadding(Rect result) {
-		int padding = constantState.padding;
+		Rect padding = constantState.padding;
 		Rect inset = constantState.inset;
 		result.set(
-			padding + inset.left, 
-			padding + inset.top,
-			padding + inset.right,
-			padding + inset.bottom
+			padding.left + inset.left, 
+			padding.top + inset.top,
+			padding.right + inset.right,
+			padding.bottom + inset.bottom
 		);
-		return padding != 0;
+		return result.left != 0 && result.right != 0 && result.top != 0 && result.bottom != 0;
 	}
 
 	private void apply(Paint paint, ColorStateList colorStateList) {
@@ -114,14 +114,12 @@ public class RectDrawable extends Drawable {
 		Paint strokePaint, fillPaint;
 		ColorStateList strokeColorStateList, fillColorStateList;
 		float[] radii;
-		int padding;
+		Rect padding;
 		Rect inset = new Rect();
 		
 		public ConstantState(StyleResolver resolver) {
-			TypedArray values = resolver.obtainStyledAttributes(R.styleable.Padding);
-			padding = values.getDimensionPixelSize(R.styleable.Padding_padding, 0);
-			values.recycle();
-			values = resolver.obtainStyledAttributes(R.styleable.Inset);
+			padding = ExtendedResourcesFactory.getPadding(resolver, 0, null);
+			TypedArray values = resolver.obtainStyledAttributes(R.styleable.Inset);
 			inset.set(
 				values.getDimensionPixelSize(R.styleable.Inset_insetLeft, 0),
 				values.getDimensionPixelSize(R.styleable.Inset_insetTop, 0),

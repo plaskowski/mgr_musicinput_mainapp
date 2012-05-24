@@ -13,5 +13,8 @@
 	<dimen name="prefs_label_paddingLeft">10sp</dimen>
 	<dimen name="prefs_label_verticalPadding">5sp</dimen>
 	
-	<dimen name="horizontalScrollBarConflict">4dip</dimen>	
+	<dimen name="horizontalScrollBarConflict">4dip</dimen>
+	
+	<color name="blue_buttons_container_background">#5CB0CC</color>
+	<color name="blue_buttons_container_border">#458499</color>
 </resources>

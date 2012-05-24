@@ -19,9 +19,7 @@ public class TooltipDrawable extends CompoundDrawable implements IndicatorAware 
 	private TooltipShape shape;
 
 	public TooltipDrawable(StyleResolver resolver) {
-		TypedArray values = resolver.obtainStyledAttributes(R.styleable.Padding);
-		innerPadding = values.getDimensionPixelSize(R.styleable.Padding_padding, 0);
-		values.recycle();
+		innerPadding = ExtendedResourcesFactory.getPadding(resolver, 0);
 		
 		TypedArray styledAttributes = resolver.obtainStyledAttributes(R.styleable.TooltipStyle);
 		

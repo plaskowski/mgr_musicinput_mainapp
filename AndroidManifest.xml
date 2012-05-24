@@ -51,7 +51,9 @@
 			android:theme="@android:style/Theme.NoTitleBar"
 		/>
         
-        <activity android:name=".PlayActivity" />
+        <activity android:name=".PlayActivity" 
+			android:theme="@android:style/Theme.NoTitleBar"
+        />
         
         <service android:name=".services.ContentService" android:exported="false" />
         

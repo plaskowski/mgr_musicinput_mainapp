@@ -5,6 +5,8 @@
 	<dimen name="inputAreaWidth">88dip</dimen>
 	<string name="minDistToIA">1.5s</string>
 	<string name="fakePauseEffectRadius">0.1s</string>
+	<string name="actionSubjectVisiblePaddingLeft">0.5s</string>
+	<item name="repositioningDuration" type="integer">300</item>
 		
     <array name="EmbossGray">
     	<item>@style/EmbossGray_edge</item>

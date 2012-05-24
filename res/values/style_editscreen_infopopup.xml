@@ -16,7 +16,7 @@
 	    <!-- PaintSetup -->
     	<item name="offsetX">0dip</item>
     	<item name="offsetY">0dip</item>
-    	<item name="drawRadius">5dip</item>
+    	<item name="drawRadius">7dip</item>
     	<!-- Paint -->
        	<item name="paintStyle">FILL</item>
     	<item name="color">#FF73DCFF</item>

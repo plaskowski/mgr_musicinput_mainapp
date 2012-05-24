@@ -53,6 +53,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualP
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.CompoundTouchListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollViewChild;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LazyTouchListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.QuickActionsView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView;
@@ -174,6 +175,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private float noteShadowFactor;
 	private float fakePauseEffectRadius;
 	private int maxLinespaceThickness;
+	private float actionSubjectVisiblePaddingLeft;
 	
 	/** takt muzyki */
 	private class Time {
@@ -219,6 +221,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		fakePauseEffectRadius = readParametrizedFactor(R.string.fakePauseEffectRadius);
 		noteMinDistToIA = readParametrizedFactor(R.string.minDistToIA);
 		maxLinespaceThickness = getResources().getDimensionPixelSize(R.dimen.maxLinespaceThickness);
+		actionSubjectVisiblePaddingLeft = readParametrizedFactor(R.string.actionSubjectVisiblePaddingLeft);
 		
 		NoteValueWidget valueSpinner = (NoteValueWidget) findViewById(R.id.EDIT_note_value_scroll);
 		try {
@@ -991,6 +994,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		buildNoteGroups(ngRebuildIndex, lastEl);
 		buildJoinArcs(jaRebuildIndex, lastEl);
 		
+		updateTimeSpacingBase(newTimeIndex, false);
 		updatePosition(newElement, inIA_noteViewX(newElement), sheetElementY(newElement));
 		updatePositions(timeDividerIndex+1, lastEl, visible2absX(visibleRectWidth-iaRightMargin+delta));
 		postInsert(timeDividerIndex, new Point(jaRebuildIndex, lastEl));
@@ -1207,6 +1211,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private View.OnTouchListener noteTouchListener = new OnTouchListener() {
 		private static final int INVALID_POINTER = -1;
 		private int activePointerId = INVALID_POINTER;
+		private boolean touchSlopPassed;
+		private int downEventY;
 		
 		Rect hitRect = new Rect();
 		private int selectedIndex;
@@ -1214,6 +1220,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		private int currentAnchor, startAnchor;
 		private int absMiddleX;
 		private Point temp = new Point();
+		
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
 			switch(event.getActionMasked()) {
@@ -1237,10 +1244,16 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				touchYoffset = (int) event.getY() - line0Top() - sheetParams.anchorOffset(currentAnchor, AnchorPart.MIDDLE);
 				activePointerId = event.getPointerId(event.getActionIndex());
 				absMiddleX = middleAbsoluteX(view);
+				downEventY = (int) event.getY();
+				touchSlopPassed = false;
 				return true;
 			case MotionEvent.ACTION_MOVE:
 				if(activePointerId != event.getPointerId(event.getActionIndex()))
 					break;
+				else if(!touchSlopPassed && Math.abs(event.getY() - downEventY) < mTouchSlop) {
+					return true;
+				}
+				touchSlopPassed = true;
 				int newAnchor = nearestAnchor((int) event.getY(event.findPointerIndex(activePointerId)) - touchYoffset);
 				if(newAnchor != currentAnchor) {
 					currentAnchor = newAnchor;
@@ -1260,7 +1273,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				if(event.getPointerId(event.getActionIndex()) != activePointerId)
 					break;
 			case MotionEvent.ACTION_UP:
-				if(startAnchor == currentAnchor) {
+				if(startAnchor == currentAnchor && !touchSlopPassed) {
 					showElementQuickActions(selectedIndex, possibleActions);
 				}
 			case MotionEvent.ACTION_CANCEL:
@@ -1272,8 +1285,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 					animatedRepositioning(
 						selectedIndex, selectedIndex, 
 						selectedIndex, 
-						abs2visibleX(middleAbsoluteX(elementViews.get(selectedIndex))), 
-						300
+						abs2visibleX(middleAbsoluteX(elementViews.get(selectedIndex))),
+						true
 					);
 				}				
 				return true;
@@ -1282,82 +1295,69 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 	};
 	
-	private View.OnTouchListener iaTouchListener = new OnTouchListener() {
+	private View.OnTouchListener iaTouchListener = new LazyTouchListener(100, new LazyTouchListener.DelayedDownTouchListener() {
 		private static final int INVALID_POINTER = -1;
-		private int activePointerId = INVALID_POINTER;
+		private int activePointerId;
 		private int currentAnchor;
 		private int insertIndex;
-		private int downPointerId = INVALID_POINTER;
-		private Point downCoords = new Point();
 		private boolean addGroupFlag;
 		
-		private Runnable lazyActionDown = new Runnable() {
-			public void run() {
-				if(downPointerId != INVALID_POINTER && insideIA(downCoords.x)) {
-					insertIndex = rightToIA;
-					currentAnchor = nearestAnchor(downCoords.y);
-					ElementSpec.NormalNote newNoteSpec = elementSpecNN(new NoteSpec(currentNoteLength, currentAnchor));
-					if(!willFitInTime(insertIndex, newNoteSpec)) {
-						disrupt(R.string.EDIT_msg_inserterror_notetolong);
-						downPointerId = INVALID_POINTER;
-						return;
-					}
-					highlightAnchor(currentAnchor);
-					try {
-						activePointerId = downPointerId;
-						downPointerId = INVALID_POINTER;
-						// <!-- check if we insert inside NoteGroup. If so, automatically add GROUP flag.
-						addGroupFlag = GroupBuilder.couldExtendGroup(newNoteSpec);
-						for(int index = insertIndex-1; addGroupFlag && index > 0; index--) {
-							ElementSpec spec = specAt(index);
-							if(GroupBuilder.canStartGroup(spec)) {
-								addGroupFlag = true;
-								break;
-							} else if(!GroupBuilder.canExtendGroup(spec)) {
-								addGroupFlag = false;
-								break;
-							}
-						}
-						addGroupFlag &= insertIndex < elementViews.size() && GroupBuilder.canEndGroup(specAt(insertIndex));
-						newNoteSpec.noteSpec().setIsGrouped(addGroupFlag);
-						// -->
-						insertIndex = insertElementAtIA(insertIndex, newNoteSpec, rebuildRange);
-						rightToIA = insertIndex+1;
-						elementViews.get(insertIndex).setPaint(noteHighlightPaint, NOTE_DRAW_PADDING);
-						setVerticalScrollingLocked(true);
-					} catch (CreationException e) {
-						e.printStackTrace();
-						finish();
+		@Override
+		public boolean tryActionDown(Point coords) {
+			return insideIA(coords.x);
+		}
+		
+		@Override
+		public void actionDown(int downPointerId, Point downCoords, Point lastMoveCoords) {
+			activePointerId = INVALID_POINTER;
+			if(!insideIA(lastMoveCoords.x)) {
+				return;
+			}
+			insertIndex = rightToIA;
+			currentAnchor = nearestAnchor(downCoords.y);
+			ElementSpec.NormalNote newNoteSpec = elementSpecNN(new NoteSpec(currentNoteLength, currentAnchor));
+			if(!willFitInTime(insertIndex, newNoteSpec)) {
+				disrupt(R.string.EDIT_msg_inserterror_notetolong);
+				return;
+			}
+			highlightAnchor(currentAnchor);
+			try {
+				activePointerId = downPointerId;
+				// <!-- check if we insert inside NoteGroup. If so, automatically add GROUP flag.
+				addGroupFlag = GroupBuilder.couldExtendGroup(newNoteSpec);
+				for(int index = insertIndex-1; addGroupFlag && index > 0; index--) {
+					ElementSpec spec = specAt(index);
+					if(GroupBuilder.canStartGroup(spec)) {
+						addGroupFlag = true;
+						break;
+					} else if(!GroupBuilder.canExtendGroup(spec)) {
+						addGroupFlag = false;
+						break;
 					}
 				}
+				addGroupFlag &= insertIndex < elementViews.size() && GroupBuilder.canEndGroup(specAt(insertIndex));
+				newNoteSpec.noteSpec().setIsGrouped(addGroupFlag);
+				// -->
+				insertIndex = insertElementAtIA(insertIndex, newNoteSpec, rebuildRange);
+				rightToIA = insertIndex+1;
+				elementViews.get(insertIndex).setPaint(noteHighlightPaint, NOTE_DRAW_PADDING);
+				setVerticalScrollingLocked(true);
+			} catch (CreationException e) {
+				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
+				activePointerId = INVALID_POINTER;
 			}
-		};
+		}
 		
 		Point temp = new Point(), rebuildRange = new Point();
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
-//			log.i(
-//				"sheet::onTouch(): %s activePointerId %d", 
-//				ReflectionUtils.findConst(MotionEvent.class, "ACTION_", event.getActionMasked()),	
-//				activePointerId
-//			);
+			if(activePointerId == INVALID_POINTER) {
+				cancel();
+				return false;
+			}
 			switch(event.getActionMasked()) {
-			case MotionEvent.ACTION_DOWN:
-				if(insideIA((int) event.getX())) {
-					downCoords.set((int) event.getX(), (int) event.getY());
-					downPointerId = event.getPointerId(event.getActionIndex());
-					v.postDelayed(lazyActionDown, 100);
-					return true;
-				}
-				break;
 			case MotionEvent.ACTION_MOVE:
-				if(activePointerId == INVALID_POINTER) {
-					if(downPointerId != INVALID_POINTER) {
-						downCoords.set((int) event.getX(), (int) event.getY());
-						return true;
-					}
-					break;
-				} else if(!insideIA((int) event.getX())) {
+				if(!insideIA((int) event.getX())) {
 					break;
 				}
 				int newAnchor = nearestAnchor((int) event.getY());
@@ -1387,10 +1387,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			case MotionEvent.ACTION_CANCEL:
 				break;
 			case MotionEvent.ACTION_UP:
-				if(activePointerId == INVALID_POINTER)
-					break;
-				activePointerId = INVALID_POINTER;
 				postInsertClean();
+				activePointerId = INVALID_POINTER;
 				return true;
 			}
 			cancel();
@@ -1412,10 +1410,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			setVerticalScrollingLocked(false);
 			highlightAnchor(null);
 			
-			if(downPointerId != INVALID_POINTER) {
-				hscroll.removeCallbacks(lazyActionDown);
-				log.v("iaTouchListener::cancel() insert reverted");
-			} else if(activePointerId != INVALID_POINTER) {
+			if(activePointerId != INVALID_POINTER) {
 				try {
 					removeElement(insertIndex, null);
 					// przywrócić właściwe pozycje
@@ -1430,7 +1425,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				}
 			}
 			activePointerId = INVALID_POINTER;
-			downPointerId = INVALID_POINTER;
 		}
 
 		/**
@@ -1441,8 +1435,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			int pos = abs2visibleX(x);
 			return pos >= visibleRectWidth-inputAreaWidth-iaRightMargin && pos <= visibleRectWidth-iaRightMargin;
 		}
-
-	};
+	});
 	
 	/**
 	 * find which anchor from range <minSpaceAbsIndex, maxSpaceAbsIndex> is nearest to horizontal line y
@@ -1611,6 +1604,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				rightToIA = originalRightToIA;
 				return;
 			}
+			isScaleValid = true;
 			setTouchInputLocked(true);
 			// find new rightToIA
 			int IAmiddle = visibleRectWidth - iaRightMargin -inputAreaWidth/2;
@@ -1646,7 +1640,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 						scalingFinished();
 					} else {
 						// translate all notes that are on right of leftToIA area to make space for IA */
-						Runnable listn = new WaitManyRunOnce(elementsCount-rightToIA) {
+						WaitManyRunOnce listn = new WaitManyRunOnce() {
 							@Override
 							protected void allFinished() {
 								scalingFinished();
@@ -1654,7 +1648,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 						};
 						for(int i = rightToIA; i < elementsCount; i++) {
 							SheetAlignedElementView view = elementViews.get(i);
-							animator.startRLAnimation(view, moveDistance(), 300, listn);
+							animator.startRLAnimation(view, moveDistance(), 300, listn.countUsage());
 						}
 					}
 				}
@@ -1715,8 +1709,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			rebuildRange.x, 
 			rebuildRange.y, 
 			isLastNoteOfTime && times.get(timeIndex).isFull() ? insertIndex+1 : insertIndex, 
-			visibleRectWidth - inputAreaWidth - iaRightMargin - delta, 
-			300
+			visibleRectWidth - inputAreaWidth - iaRightMargin - delta,
+			false
 		);
 	}
 	
@@ -1727,14 +1721,29 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	 * @param rebuildStart indicates the leftmost element that was modified
 	 * @param rebuildEnd indicates the rightmost element that was modified
 	 */
-	private void animatedRepositioning(int rebuildStart, int rebuildEnd, int pinnedElementIndex, int pinVisiblePositionX, long animationDuration) {
+	private void animatedRepositioning(int rebuildStart, int rebuildEnd, int pinnedElementIndex, int pinVisiblePositionX, boolean assurePinnedElementIsVisible) {
 		animator.forceFinishAll();
 		isPositioning = true;
 		int startTime = findTime(rebuildStart), endTime = findTime(rebuildEnd);
 		for(int timeI = startTime; timeI <= endTime; timeI++) {
 			updateTimeSpacingBase(timeI, false);
 		}
-		
+		if(assurePinnedElementIsVisible) {
+			int min = (int) (sheetParams.getScale()*actionSubjectVisiblePaddingLeft) + getResources().getDimensionPixelSize(R.dimen.horizontalScrollBarConflict);
+			int middleX = middleX(elementViews.get(pinnedElementIndex));
+			if(pinVisiblePositionX - middleX < min && pinVisiblePositionX <= moveRightBorder()) {
+				pinVisiblePositionX = Math.min(min + middleX, moveRightBorder());
+			}
+		}
+		animatedRepositioning(pinnedElementIndex, pinVisiblePositionX, times.get(startTime).rangeStart, getResources().getInteger(R.integer.repositioningDuration), null);
+	}
+	
+	/**
+	 * @param repositioningStart 
+	 * @see {@link #animatedRepositioning(int, int, int, int, long)}
+	 */
+	private void animatedRepositioning(int pinnedElementIndex, int pinVisiblePositionX, int repositioningStart, long animationDuration, final Runnable onAnimationEnd) {
+		isPositioning = true;
 		// find new rightToIA
 		int elementsCount = elementViews.size();
 		if(pinVisiblePositionX >= moveLeftBorder()) {
@@ -1759,18 +1768,19 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			rightToIA = i+1;
 		}
 		
-		Time time = times.get(startTime);
-		int repositioningStart = time.rangeStart;
-		WaitManyRunOnce animationsEndListener = new WaitManyRunOnce(1+elementsCount-repositioningStart) {
+		WaitManyRunOnce animationsEndListener = new WaitManyRunOnce() {
 			@Override
 			protected void allFinished() {
 				correctSheetWidth();
 				isPositioning = false;
 				setTouchInputLocked(false);
+				if(onAnimationEnd != null) {
+					onAnimationEnd.run();
+				}
 			}
 		};
-		int x = positionAfter(time.rangeStart-1);
-		int timeIndex = startTime-1;
+		int x = positionAfter(repositioningStart - 1);
+		int timeIndex = findTimeToInsertTo(repositioningStart);
 		int rescrollDest = -1;
 		for(int i = repositioningStart; i < elementsCount; i++) {
 			if(i == rightToIA) {
@@ -1779,7 +1789,9 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			SheetAlignedElementView v = elementViews.get(i);
 			// animate view to it's correct position
 			int dx = (x - middleX(v)) - left(v);
-			animator.startRLAnimation(v, dx, animationDuration, animationsEndListener);
+			if(dx != 0) {
+				animator.startRLAnimation(v, dx, animationDuration, animationsEndListener.countUsage());
+			}
 			if(i == pinnedElementIndex) {
 				rescrollDest = x;
 			}
@@ -1807,14 +1819,19 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			correctSheetWidth();
 		}
 		
-		animator.startHScrollAnimation(
-			hscroll, 
-			abs2visibleX(rescrollDest)-pinVisiblePositionX, 
-			animationDuration, 
-			animationsEndListener
-		);
-		
+		int scrollDelta = abs2visibleX(rescrollDest)-pinVisiblePositionX;
+		if(scrollDelta != 0) {
+			animator.startHScrollAnimation(
+				hscroll, 
+				scrollDelta, 
+				animationDuration, 
+				animationsEndListener.countUsage()
+			);
+		}
 		setTouchInputLocked(true);
+		if(animationsEndListener.getUsagesCount() <= 0) {
+			animationsEndListener.allFinished();
+		}
 	}
 	
 	/**
@@ -1895,7 +1912,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			if(sheetParams.getLineThickness() < 1) {
 				scale = scale * 1 / sheetParams.getLineThickness();
 			}
-			isScaleValid = true;
 		} else {
 			scale = sheetParams.getScale();
 		}
@@ -2173,7 +2189,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				Point range = new Point();
 				updateElementSpec(elementIndex, updatedSpec(view.model().getElementSpec()), range);
 				updatePosition(view, absMiddleX-middleX(view), sheetElementY(view));
-				animatedRepositioning(range.x, range.y, elementIndex, abs2visibleX(absMiddleX), 500);
+				animatedRepositioning(range.x, range.y, elementIndex, abs2visibleX(absMiddleX), true);
 			} catch (CreationException e) {
 				log.e("", e);
 				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
@@ -2200,8 +2216,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				int pinElIndex = elementIndex-1;
 				animatedRepositioning(
 					rebuildRange.x, rebuildRange.y, 
-					pinElIndex, abs2visibleX(middleAbsoluteX(elementViews.get(pinElIndex))), 
-					500
+					pinElIndex, abs2visibleX(middleAbsoluteX(elementViews.get(pinElIndex))), false
 				);
 			} catch (CreationException e) {
 				e.printStackTrace();
@@ -2598,7 +2613,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				buildJoinArcs(arcsRebuildStart, endIndex);
 				assertTimesValidity();
 				animatedRepositioning(
-					arcsRebuildStart, endIndex, pinnedElIndex, pinnedElVisX, 300
+					arcsRebuildStart, endIndex, pinnedElIndex, pinnedElVisX, false
 				);
 			} catch (CreationException e) {
 				log.e("", e);
@@ -2660,8 +2675,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 					times.get(Math.max(timeIndex-1, 0)).rangeStart,
 					elementViews.size()-1, 
 					elementIndex, 
-					pinVisiblePositionX, 
-					300
+					pinVisiblePositionX,
+					true
 				);				
 			} catch (CreationException e) {
 				log.e("", e);
@@ -2710,8 +2725,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			animatedRepositioning(
 				0, elementViews.size()-1, 
 				times.get(Math.min(timeIndex, times.size()-1)).rangeStart, 
-				pinVisiblePositionX, 
-				300
+				pinVisiblePositionX,
+				true
 			);
 		} catch(CreationException e) {
 			log.e("", e);
@@ -2830,9 +2845,9 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		showElementQuickActions(contextElementIndex, possibleActions, false);
 	}
 	
-	private void showElementQuickActions(int contextElementIndex, IndexAwareAction[] possibleActions, boolean preserveOrientation) {
-		int middleX, middleY;
-		SheetAlignedElementView view = elementViews.get(contextElementIndex);
+	private void showElementQuickActions(final int contextElementIndex, final IndexAwareAction[] possibleActions, final boolean preserveOrientation) {
+		final int middleX, middleY;
+		final SheetAlignedElementView view = elementViews.get(contextElementIndex);
 		switch(view.model().getElementSpec().getType()) {
 		case NOTE:
 			middleX = middleX(view);
@@ -2846,10 +2861,31 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			middleX = view.getWidth()/2;
 			middleY = view.measureHeight()/2;
 		}
-		int refPointVisibleX = abs2visibleX(viewStableX(view)) + middleX;
-		int refPointVisibleY = abs2visibleY(top(view)) + middleY;
-		
-		showQuickActions(contextElementIndex, possibleActions, refPointVisibleX, refPointVisibleY, preserveOrientation);
+		// check if element view is fully visible
+		int x = abs2visibleX(viewStableX(view));
+		int minX = getResources().getDimensionPixelSize(R.dimen.horizontalScrollBarConflict) 
+				+ (int) (actionSubjectVisiblePaddingLeft * sheetParams.getScale());
+		int destVisibleMiddleX;
+		if(x < minX) {
+			destVisibleMiddleX = Math.min(minX + middleX, moveRightBorder());
+		} else if(x + middleX > moveRightBorder()) {
+			destVisibleMiddleX = moveRightBorder();
+		} else {
+			// no scrolling is required
+			int refPointVisibleX = abs2visibleX(viewStableX(view)) + middleX;
+			int refPointVisibleY = abs2visibleY(top(view)) + middleY;
+			showQuickActions(contextElementIndex, possibleActions, refPointVisibleX, refPointVisibleY, preserveOrientation);
+			return;
+		}
+		int duration = getResources().getInteger(R.integer.repositioningDuration);
+		animatedRepositioning(contextElementIndex, destVisibleMiddleX, 0, duration, new Runnable() {
+			@Override
+			public void run() {
+				int refPointVisibleX = abs2visibleX(viewStableX(view)) + middleX;
+				int refPointVisibleY = abs2visibleY(top(view)) + middleY;
+				showQuickActions(contextElementIndex, possibleActions, refPointVisibleX, refPointVisibleY, preserveOrientation);
+			}
+		});
 	}
 	
 	private void showQuickActions(int contextElementIndex, IndexAwareAction[] possibleActions, int refPointVisibleX, int refPointVisibleY, boolean preserveOrientation) {
@@ -3047,9 +3083,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	}
 
 	private static abstract class WaitManyRunOnce implements Runnable {
-		private int amount;
-		public WaitManyRunOnce(int amount) {
-			this.amount = amount;
+		private int amount = 0;
+		
+		public WaitManyRunOnce countUsage() {
+			amount++;
+			return this;
 		}
 
 		@Override
@@ -3061,5 +3099,9 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 
 		protected abstract void allFinished();
+
+		public int getUsagesCount() {
+			return amount;
+		}
 	}
 }

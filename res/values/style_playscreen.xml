@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <dimen name="playscreen_lines_maxInitialHeight">150dip</dimen>
+    
     <style name="toolbar_blue_button" parent="toolbar_button_svgbluetemplate">
         <item name="android:background">@drawable/button_bluegradient</item>
         <item name="iconMaxHeight">20dip</item>

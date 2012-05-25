@@ -70,17 +70,28 @@ public class HackedScrollViewChild extends LinearLayout {
 		return result;
 	}
 
+	/**
+	 * @param rulerDestY destination visible Y position of ruler view
+	 * @param rulerRelY ruler relative Y position in it's parent coordinates
+	 * @param rulerHeight height of ruler view
+	 * @param rulerMiddleY vertical middle of ruler that must be able to reach vertical middle of visible estate
+	 * @param rulerContainerHeight height of ruler parent
+	 */
 	public void computePadding(int rulerDestY, int rulerRelY, int rulerHeight, int rulerMiddleY, int rulerContainerHeight) {
 		int topSpacerHeight = Math.max(
 			0, Math.max(
+			// assure we can scroll to forced position
 			rulerDestY - rulerRelY,
+			// assure we can scroll ruler middle to middle
 			scrollViewportHeight/2 - rulerRelY - rulerMiddleY
 		));		
 		int scrollTo = Math.max(0, topSpacerHeight + rulerRelY - rulerDestY);
 		int bottomHeight = Math.max(
 			0, Math.max( 
+			// assure we can scroll to forced position
 			scrollViewportHeight - (topSpacerHeight + rulerContainerHeight - scrollTo),
-			scrollViewportHeight/2 - (rulerContainerHeight - rulerRelY - (rulerHeight - rulerMiddleY))
+			// assure we can scroll ruler middle to middle
+			scrollViewportHeight/2 - (rulerContainerHeight - rulerRelY - rulerMiddleY)
 		));
 //		log.d("compute(rDestY: %d, rRelY: %d, rH: %d, rContH: %d, rMidY: %d, sVP.height: %d) spacers %d %d, scroll %d", 
 //				rulerDestY, rulerRelY, rulerHeight, rulerContainerHeight, rulerMiddleY, scrollViewportHeight

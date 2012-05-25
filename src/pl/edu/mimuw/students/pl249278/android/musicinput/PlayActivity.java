@@ -5,6 +5,7 @@ import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.elem
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.middleX;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.timeCapacity;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE4_ABSINDEX;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.overallLength;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSize;
 
@@ -182,9 +183,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		findViewById(R.id.PLAY_barbutton_play).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if(!isPlayingState) {
-					setUiHidden(true);
-					isPlayingState = true;
+				if(enterPlayingState()) {
 					resumePlaying();
 				}
 			}
@@ -192,9 +191,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		findViewById(R.id.PLAY_barbutton_replay).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if(!isPlayingState) {
-					setUiHidden(true);
-					isPlayingState = true;
+				if(enterPlayingState()) {
 					// rewind
 					listener.seek(0);
 					resumePlaying();
@@ -623,8 +620,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 					playerIsPlaying = false;
 					listener.stopListening();
 					lazySeek = 0;
-					isPlayingState = false;
-					setUiHidden(false);
+					exitPlayingState();
 				}
 			});
 		}
@@ -638,6 +634,9 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		listener.startListening();
 	}
 	
+	/**
+	 * If player is playing ({@link #playerIsPlaying}) then pause it or cancel task that was preparing MIDI file
+	 */
 	private void pausePlaying() {
 		if(buildMidiTask.getStatus() == Status.RUNNING) {
 			buildMidiTask.cancel(true);
@@ -651,8 +650,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	
 	@Override
 	protected void onPause() {
-		pausePlaying();
-		isPlayingState = false;
+		exitPlayingState();
 		super.onPause();
 	}
 	
@@ -771,6 +769,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			onScaleChanged();
 			hscroll.scrollTo((int) (fpNewRelX+notesAreaX-focusPoint.x), 0);
 			fixLine0VisibleY(line0NewVisibleY);
+			isScaleValid = true;			
 		}
 		
 		private int abs2visibleY(int absoluteY) {
@@ -821,7 +820,11 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			if(sheetParams.getLineThickness() < 1) {
 				sheetParams.setScale(1f / sheetParams.getLineFactor());
 			}
-			isScaleValid = true;
+			int max = getResources().getDimensionPixelSize(R.dimen.playscreen_lines_maxInitialHeight);
+			int basicLinesHeight = sheetParams.anchorOffset(LINE4_ABSINDEX, AnchorPart.BOTTOM_EDGE);
+			if(basicLinesHeight > max) {
+				sheetParams.setScale(sheetParams.getScale() * max / basicLinesHeight);
+			}
 		}
 		onScaleChanged();
 		int linesHalf = sheetParams.anchorOffset(NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE), AnchorPart.MIDDLE);
@@ -837,6 +840,8 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		highlightPaint.setShadowLayer(highlightShadow, highlightShadow/2, highlightShadow, Color.BLACK);		
 		NOTE_DRAW_PADDING = (int) FloatMath.floor(2*highlightShadow);
 		lines.setParams(sheetParams, 0, 0);
+		lines.setPaddingTop(sheetParams.getLinespacingThickness());
+		lines.setPaddingBottom(sheetParams.getLinespacingThickness());
 		if(positioningEnv == null) {
 			positioningEnv = new PositioningEnv() {
 				@Override
@@ -880,9 +885,11 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		SheetAlignedElementView lastView = elementViews.get(lastElIndex);
 		int hPadding = (int) (positioningStrategy.getNotesAreaHorizontalPaddingFactor() * sheetParams.getScale());
 		lines.setPaddingRight(hPadding + middleX(lastView));
-		int newSheetWidth = left(lastView) + lastView.measureWidth() + hPadding;
+		int linesWidth = left(lastView) + lastView.measureWidth() + hPadding;
+		int newSheetWidth = Math.max(linesWidth, 
+				hscroll.getWidth());
 		updateSize(sheet, newSheetWidth, null);
-		updateSize(lines, newSheetWidth, null);
+		updateSize(lines, linesWidth, null);
 	}
 
 	/** create views for Score elements */
@@ -987,10 +994,29 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		animator.setDisplayedChild(b ? i+1 : i);
 	}
 
+	/**
+	 * If not in playing state ({@link #isPlayingState}), enter it by hiding toolbar and setting {@link #isPlayingState} to true.
+	 * @return whether change happened (so return false if already in playing state)
+	 */
+	private boolean enterPlayingState() {
+		if(!isPlayingState) {
+			setUiHidden(true);
+			isPlayingState = true;
+			hscroll.setKeepScreenOn(true);
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	/**
+	 * If {@link #isPlayingState}, set it to false, show toolbar and call {@link #pausePlaying()}
+	 */
 	private void exitPlayingState() {
 		if(isPlayingState) {
 			setUiHidden(false);
 			isPlayingState = false;
+			hscroll.setKeepScreenOn(false);
 			pausePlaying();
 		}
 	}

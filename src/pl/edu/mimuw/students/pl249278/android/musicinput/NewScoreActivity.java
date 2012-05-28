@@ -141,14 +141,6 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 		
 		View okButton = findViewById(R.id.NEWSCORE_okbutton);
 		okButton.setOnClickListener(new OkListener());
-		View cancelButton = findViewById(R.id.NEWSCORE_cancelbutton);
-		cancelButton.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				setResult(RESULT_CANCELED);
-				finish();
-			}
-		});
 		findViewById(R.id.NEWSCORE_button_editor_prefs).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -581,8 +573,6 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 		okButton.setCompoundDrawablesWithIntrinsicBounds(dr, null, null, null);
 		dr.start();
 		okButton.setEnabled(false);
-		View cancelButton = findViewById(R.id.NEWSCORE_cancelbutton);
-		cancelButton.setEnabled(false);
 	}
 	
 	private void unlockUi() {
@@ -591,8 +581,6 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 		okButton.setCompoundDrawablesWithIntrinsicBounds(dr, null, null, null);
 		dr.stop();
 		okButton.setEnabled(true);
-		View cancelButton = findViewById(R.id.NEWSCORE_cancelbutton);
-		cancelButton.setEnabled(true);
 	}
 
 	private static class EmptyElement extends SheetElement {

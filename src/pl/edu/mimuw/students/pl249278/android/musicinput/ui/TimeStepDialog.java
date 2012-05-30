@@ -30,6 +30,8 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.CompoundButton;
+import android.widget.HorizontalScrollView;
+import android.widget.ScrollView;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner.*;
@@ -152,10 +154,65 @@ public class TimeStepDialog extends DialogFragment {
 		return dialog;
 	}
 	
-	private void prepare(ViewGroup wrapper) {
+	private void prepare(final ViewGroup wrapper) {
 		log.v("::prepare()");
+		// custom code for RadioGroup to scroll to reveal whole selected container when selection changes
+		RadioGroup group = new RadioGroup(wrapper)  {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView,
+					boolean isChecked) {
+				super.onCheckedChanged(buttonView, isChecked);
+				if(!isChecked) {
+					return;
+				}
+				ViewGroup scroll = (ViewGroup) wrapper.findViewById(R.id.EDIT_dialog_timestep_scroll);
+				// find container
+				View container = buttonView;
+				while(inArray(RadioGroup.containers, container.getId()) < 0 && container != scroll
+						&& container.getParent() instanceof View) {
+					container = (View) container.getParent();
+				}
+				ScrollToOne scrollToOne = new ScrollToOne(scroll, container) {
+					@Override
+					protected void handle(Point dOffset) {
+						// ensure that decendant is visible
+						dOffset.offset(-scroll.getScrollX(), -scroll.getScrollY());
+						int dx = 0, dy = 0;
+						int rightOutside = dOffset.x + scrollDescendant.getWidth() - scroll.getWidth();
+						if(dOffset.x < 0) {
+							dx = dOffset.x;
+						} else if(rightOutside > 0) {
+							dx = rightOutside;
+						}
+						int bottomOutside = dOffset.y + scrollDescendant.getHeight() - scroll.getHeight();
+						if(dOffset.y < 0) {
+							dy = dOffset.y;
+						} else if(bottomOutside > 0) {
+							dy = bottomOutside;
+						}
+						if(scroll instanceof ScrollView && dy != 0) {
+							((ScrollView) scroll).smoothScrollBy(dx, dy);
+						} else if(scroll instanceof HorizontalScrollView && dx != 0) {
+							((HorizontalScrollView) scroll).smoothScrollBy(dx, dy);
+						} else if(dx != 0 && dy != 0) {
+							scroll.scrollBy(dx, dy);
+						}
+					}
+				};
+				scrollToOne.run();
+			}
+
+			private int inArray(int[] ids, int id) {
+				for (int i = 0; i < ids.length; i++) {
+					int curr = ids[i];
+					if(curr == id) {
+						return i;
+					}
+				}
+				return -1;
+			}
+		};
 		
-		RadioGroup group = new RadioGroup(wrapper);
 		for (int i = 0; i < RadioGroup.containers.length; i++) {
 			int id = RadioGroup.containers[i];
 			View container = wrapper.findViewById(id);
@@ -244,20 +301,23 @@ public class TimeStepDialog extends DialogFragment {
 	}	
 	
 	private static class ScrollToOne implements OnGlobalLayoutListener {
-		private ViewGroup scroll;
-		private View scrollDecendant;
+		protected ViewGroup scroll;
+		protected View scrollDescendant;
 		
 		public ScrollToOne(ViewGroup scroll, View scrollDecendant) {
 			super();
 			this.scroll = scroll;
-			this.scrollDecendant = scrollDecendant;
+			this.scrollDescendant = scrollDecendant;
 		}
 
 		@Override
 		public void onGlobalLayout() {
 			scroll.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-			
-			View current = scrollDecendant;
+			run();
+		}
+		
+		public void run() {			
+			View current = scrollDescendant;
 			Point offset = new Point(current.getLeft(), current.getTop());
 			while(current.getParent() != scroll) {
 				ViewParent parent = current.getParent();
@@ -268,13 +328,17 @@ public class TimeStepDialog extends DialogFragment {
 			}
 			if(current.getParent() != scroll) {
 				log.w("%s not a descendant of %s",
-					ReflectionUtils.findConstName(R.id.class, "", scrollDecendant.getId()),
+					ReflectionUtils.findConstName(R.id.class, "", scrollDescendant.getId()),
 					ReflectionUtils.findConstName(R.id.class, "", scroll.getId())
 				);
 			} else {
-				scroll.scrollTo(offset.x, offset.y);
+				handle(offset);
 				log.v("scrolled to "+offset);
 			}
+		}
+
+		protected void handle(Point descendantOffset) {
+			scroll.scrollTo(descendantOffset.x, descendantOffset.y);
 		}
 	}
 

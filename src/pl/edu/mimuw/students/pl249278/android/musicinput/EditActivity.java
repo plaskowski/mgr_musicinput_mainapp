@@ -2973,10 +2973,12 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			int msgId;
 			if(isScoreDirty()) {
 				msgId = R.string.confirmmsg_if_save_changes;
-			} else if(isScoreDirty()) {
+			} else if(isConfigDirty()) {
 				msgId = R.string.EDIT_confirmmsg_if_save_preferences;
 			} else {
 				log.v("No changes were made so don't ask for SAVE");
+				skipOnStopCopy = true;
+				sendCleanCopy();
 				super.onBackPressed();
 				return;
 			}

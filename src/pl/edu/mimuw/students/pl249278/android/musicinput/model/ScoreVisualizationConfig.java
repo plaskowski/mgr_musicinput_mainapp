@@ -80,4 +80,8 @@ public class ScoreVisualizationConfig implements Parcelable {
 		this.maxSpaceAnchor = maxSpaceAnchor;
 	}
 
+	public boolean isEqual(ScoreVisualizationConfig other) {
+		return displayMode == other.displayMode && minSpaceAnchor == other.minSpaceAnchor && maxSpaceAnchor == other.maxSpaceAnchor;
+	}
+
 }

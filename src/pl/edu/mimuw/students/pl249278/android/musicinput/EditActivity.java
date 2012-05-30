@@ -33,6 +33,9 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.AsyncServiceToastReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.Action;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogBuilder;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.IndicatorOrigin;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TimeStepDialog;
@@ -81,6 +84,7 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.os.Vibrator;
 import android.support.v4.app.DialogFragment;
 import android.view.Menu;
@@ -96,7 +100,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_ShowScore_ManagedReceiver implements TimeStepDialog.OnPromptResult {
+public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_ShowScore_ManagedReceiver implements TimeStepDialog.OnPromptResult, ConfirmDialogListener {
 	private static LogUtils log = new LogUtils(EditActivity.class);
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	/** of type long */
@@ -120,6 +124,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private static final String INSTANCE_STATE_CONTEXT_TIME_INDEX = "ctxTime";
 	/** Instance key for {@link #currentNoteLength} */
  	private static final String INSTANCE_STATE_CURRENT_NOTE_LENGTH = "newNoteLength";
+	private static final String INSTANCE_STATE_LAST_SAVED_CONTENT = "savedContent";
+	private static final String INSTANCE_STATE_LAST_SAVED_CONFIG = "savedConfig";
 	
 	private static final String CALLBACK_ACTION_GET = EditActivity.class.getName()+".callback_get";
 	
@@ -143,7 +149,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private boolean isScaleValid = false;
 	private ArrayList<Time> times = new ArrayList<EditActivity.Time>();
 	private Score score = null;
-	private ScoreVisualizationConfig visualConf = null;
+	private ScoreVisualizationConfig visualConf = null, lastSavedConf = null;
+	private String lastSavedContent = null;
 	private boolean skipOnStopCopy = false;	
 	
 	/**
@@ -249,6 +256,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 			rightToIAsavedPosition = savedInstanceState.getInt(INSTANCE_STATE_RIGHT_TO_IA_POSITION);
 			contextTimeIndex = savedInstanceState.getInt(INSTANCE_STATE_CONTEXT_TIME_INDEX);
+			lastSavedContent = savedInstanceState.getString(INSTANCE_STATE_LAST_SAVED_CONTENT);
+			lastSavedConf = savedInstanceState.getParcelable(INSTANCE_STATE_LAST_SAVED_CONFIG);
 			onModelLoaded();
 		} else {
 			long scoreId = getIntent().getLongExtra(STARTINTENT_EXTRAS_SCORE_ID, -1);
@@ -288,6 +297,13 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			ParcelableScore parcelable = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_ENTITY);
 			score = parcelable.getSource();
 			visualConf = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF);
+			try {
+				lastSavedContent = score.getRawContent();
+			} catch (SerializationException e) {
+				// very unlikely because we deserialized content a second ago
+				log.e("", e);
+			}
+			lastSavedConf = new ScoreVisualizationConfig(visualConf);
 			onModelLoaded();
 		}
 	}
@@ -301,8 +317,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	@Override
 	protected void onStop() {
 		if(score != null && !skipOnStopCopy) {
-			// parse Score::content from model
-			score.setContent(parseModifiedCotentModel());
+			parseModifiedCotentModel();
 			// save a working copy
 			Intent request = AsyncHelper.prepareServiceIntent(
 				this, ContentService.class, 
@@ -311,19 +326,35 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			try {
 				request.putExtra(ContentService.ACTIONS.EXTRAS_SCORE, score.prepareParcelable());
 				request.putExtra(ContentService.ACTIONS.EXTRAS_SCORE_VISUAL_CONF, visualConf);
-				log.v("Sending request SAVE_SCORE_COPY of Score#%d", score.getId());
-				startService(request);
+				// check if backup is required: if any changes where made since last SAVE action
+				if(isScoreDirty() || isConfigDirty()) {
+					log.v("Sending request SAVE_SCORE_COPY of Score#%d", score.getId());
+					startService(request);
+				} else {
+					log.v("No changes were made, skipping backup in onStop()");
+				}
 			} catch (SerializationException e) {
 				log.e("Failed to serialize model", e);
 			}
 		}
-		
 		super.onStop();
 	}
 	
+	/** Checks whether content in {@link #score} is different from the one most recently saved. */
+	private boolean isScoreDirty() {
+		try {
+			return score != null && (lastSavedContent == null || !score.getRawContent().equals(lastSavedContent));
+		} catch (SerializationException e) {
+			log.e("Exception while checking if score is dirty", e);
+			return true;
+		}
+	}
+	
+	private boolean isConfigDirty() {
+		return visualConf != null && (lastSavedConf == null || !visualConf.isEqual(lastSavedConf));
+	}
+	
 	private static final int MENU_SAVE = 1;
-	private static final int MENU_SAVE_AND_CLOSE = 2;
-	private static final int MENU_DISCARD = 3;
 	private static final int MENU_PLAY = 4;
 	private static final int MENU_PREFS = 5;
 	
@@ -331,8 +362,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	public boolean onCreateOptionsMenu(Menu menu) {
 		menu.add(Menu.NONE, MENU_PLAY, Menu.NONE, R.string.menu_label_play);
 		menu.add(Menu.NONE, MENU_SAVE, Menu.NONE, R.string.menu_label_save);
-		menu.add(Menu.NONE, MENU_SAVE_AND_CLOSE, Menu.NONE, R.string.menu_label_save_exit);
-		menu.add(Menu.NONE, MENU_DISCARD, Menu.NONE, R.string.menu_label_discard_changes);
 		menu.add(Menu.NONE, MENU_PREFS, Menu.NONE, R.string.menu_label_editor_prefs);
 		return super.onCreateOptionsMenu(menu);
 	}
@@ -344,19 +373,9 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		case MENU_SAVE:
 			saveChanges();
 			break;
-		case MENU_SAVE_AND_CLOSE:
-			saveChanges();
-			skipOnStopCopy = true;
-			finish();
-			break;
-		case MENU_DISCARD:
-			sendCleanCopy();
-			skipOnStopCopy = true;
-			finish();
-			break;
 		case MENU_PLAY:
 			try {
-				score.setContent(parseModifiedCotentModel());
+				parseModifiedCotentModel();
 				Intent i = new Intent(this, PlayActivity.class);
 				i.putExtra(PlayActivity.STARTINTENT_EXTRAS_SCORE, score.prepareParcelable());
 				startActivity(i);
@@ -440,7 +459,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			Toast.makeText(this, "Score not loaded yet.", Toast.LENGTH_SHORT).show();
 			log.v("Trying to save changes when score is null");
 		} else {
-			score.setContent(parseModifiedCotentModel());
+			parseModifiedCotentModel();
 			String scoreTitle = score.getTitle();
 			if(scoreTitle == null) {
 				scoreTitle = getString(android.R.string.untitled);
@@ -460,6 +479,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				request.putExtra(ContentService.ACTIONS.EXTRAS_SCORE_VISUAL_CONF, visualConf);
 				log.v("Sending request UPDATE of Score#%d", score.getId());
 				startService(request);
+				lastSavedContent = score.getRawContent();
+				lastSavedConf = new ScoreVisualizationConfig(visualConf);
 			} catch (SerializationException e) {
 				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 				log.e("Failed to serialize model", e);
@@ -526,7 +547,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		if(score != null) {
-			score.setContent(parseModifiedCotentModel());
+			parseModifiedCotentModel();
 			try {
 				outState.putParcelable(INSTANCE_STATE_SCORE, score.prepareParcelable());
 			} catch (SerializationException e) {
@@ -541,6 +562,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			outState.putInt(INSTANCE_STATE_RIGHT_TO_IA_POSITION, rightToIAsavedPosition);
 			outState.putInt(INSTANCE_STATE_CONTEXT_TIME_INDEX, contextTimeIndex);
 			outState.putInt(INSTANCE_STATE_CURRENT_NOTE_LENGTH, currentNoteLength);
+			outState.putString(INSTANCE_STATE_LAST_SAVED_CONTENT, lastSavedContent);
+			outState.putParcelable(INSTANCE_STATE_LAST_SAVED_CONFIG, lastSavedConf);
 		}
 		super.onSaveInstanceState(outState);
 	}
@@ -556,7 +579,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 	}
 
-	private List<ScoreContentElem> parseModifiedCotentModel() {
+	/** Collects modified content from editor back into {@link #score} field. */
+	private void parseModifiedCotentModel() {
 		// collect new Score content
 		List<ScoreContentElem> content = new ArrayList<ScoreContentElem>(elementViews.size());
 		for(SheetAlignedElementView view: elementViews) {
@@ -577,7 +601,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				throw new UnsupportedOperationException();
 			}
 		}
-		return content;
+		score.setContent(content);
 	}
 
 	
@@ -2540,6 +2564,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	};
 	
 	private static final String DIALOGTAG_TIMESTEP = "timestep";
+	private static final String DIALOGTAG_CONFIRM_SAVE_ON_EXIT = "save_changes_on_exit";
+	private static final int CONFIRMDIALOG_SAVE_ON_EXIT = 1;
 	
 	private class AlterTimeStep extends SvgIconAction {
 
@@ -2943,10 +2969,52 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		if(qActionsView.getVisibility() == View.VISIBLE) {
 			hideQuickActionsPopup();
 		} else {
-			skipOnStopCopy = true;
-			sendCleanCopy();
-			super.onBackPressed();
+			parseModifiedCotentModel();
+			int msgId;
+			if(isScoreDirty()) {
+				msgId = R.string.confirmmsg_if_save_changes;
+			} else if(isScoreDirty()) {
+				msgId = R.string.EDIT_confirmmsg_if_save_preferences;
+			} else {
+				log.v("No changes were made so don't ask for SAVE");
+				super.onBackPressed();
+				return;
+			}
+			ConfirmDialogBuilder.init(CONFIRMDIALOG_SAVE_ON_EXIT)
+			.setTitle(msgId)
+			.setIcon(android.R.drawable.ic_menu_save)
+			.setButtons(R.string.yes, android.R.string.cancel, R.string.no)
+			.showNew(getSupportFragmentManager(), DIALOGTAG_CONFIRM_SAVE_ON_EXIT);
 		}
+	}
+	
+	@Override
+	public void onDialogResult(ConfirmDialog dialog, int dialogId,
+			DialogAction action, Parcelable state) {
+		switch(dialogId) {
+		case CONFIRMDIALOG_SAVE_ON_EXIT:
+			switch(action) {
+			case BUTTON_POSITIVE:
+				saveChanges();
+				cleanCopyAndFinish();
+				break;
+			case BUTTON_NEGATIVE:
+				log.v("User asked not to save changes when exiting edit activity");
+				cleanCopyAndFinish();
+				break;
+			case CANCEL:
+			case BUTTON_NEUTRAL:
+				// user decided he actually didn't want to exit activity so do noting
+				break;
+			}
+			break;
+		}
+	}
+
+	private void cleanCopyAndFinish() {
+		skipOnStopCopy = true;
+		sendCleanCopy();
+		finish();
 	}
 
 	protected void addOverlayView(ElementsOverlay overlay) {

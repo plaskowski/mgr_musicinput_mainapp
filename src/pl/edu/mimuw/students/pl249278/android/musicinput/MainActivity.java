@@ -641,35 +641,36 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	}
 	
 	@Override
-	public void onConfirm(ConfirmDialog dialog, int dialogId, Parcelable state) {
+	public void onDialogResult(ConfirmDialog dialog, int dialogId,
+			DialogAction action, Parcelable state) {
 		switch(dialogId) {
 		case CONFIRMDIALOG_CALLBACKARG_DELETESCORE:
-			Long scoreId = ((ParcelableLong) state).value;
-			Score score = findScoreById(scoreId);
-			if(score != null) {
-				deleteScore(score);
-			} else {
-				log.w("Received delete confirmation for non-existient Score#%d", scoreId);
+			switch(action) {
+			case BUTTON_POSITIVE:
+				Long scoreId = ((ParcelableLong) state).value;
+				Score score = findScoreById(scoreId);
+				if(score != null) {
+					deleteScore(score);
+				} else {
+					log.w("Received delete confirmation for non-existient Score#%d", scoreId);
+				}
+				break;
 			}
 			break;
 		case CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE:
-			// user chose to overwrite existing MIDI file
-			sendExportMidiRequest((ExportMidiRequest) state);
+			switch(action) {
+			case BUTTON_POSITIVE:
+				// user chose to overwrite existing MIDI file
+				sendExportMidiRequest((ExportMidiRequest) state);
+				break;
+			case BUTTON_NEUTRAL:
+				ExportMidiRequest request = (ExportMidiRequest) state;
+				showExportMidiDialog(findScoreById(request.scoreId), request.filename);
+				break;
+			}
 			break;
 		default:
-			super.onConfirm(dialog, dialogId, state);
-		}
-	}
-	
-	@Override
-	public void onNeutral(ConfirmDialog dialog, int dialogId, Parcelable state) {
-		switch(dialogId) {
-		case CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE:
-			ExportMidiRequest request = (ExportMidiRequest) state;
-			showExportMidiDialog(findScoreById(request.scoreId), request.filename);
-			break;
-		default:
-			super.onNeutral(dialog, dialogId, state);
+			super.onDialogResult(dialog, dialogId, action, state);
 		}
 	}
 	

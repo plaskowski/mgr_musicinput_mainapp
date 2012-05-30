@@ -5,14 +5,14 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ParcelablePrimitives.ParcelableString;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_EmptyConfirmDialogListener;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Parcelable;
-import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
-public class TipDialogStrategy extends FragmentActivity implements ConfirmDialogListener {
+public class TipDialogStrategy extends FragmentActivity_EmptyConfirmDialogListener implements ConfirmDialogListener {
 	protected static final int CONFIRMDIALOG_CALLBACKARG_TIP = 1;
 	protected static final String DIALOGTAG_TIP = "tipdialog";
 	private static final String REGISTRY_FILE = "tips_registry";
@@ -41,25 +41,21 @@ public class TipDialogStrategy extends FragmentActivity implements ConfirmDialog
 	}
 	
 	@Override
-	public void onConfirm(ConfirmDialog dialog, int dialogId, Parcelable state) {
-	}
-	
-	@Override
-	public void onNeutral(ConfirmDialog dialog, int dialogId, Parcelable state) {
+	public void onDialogResult(ConfirmDialog dialog, int dialogId,
+			DialogAction action, Parcelable state) {
 		if(dialogId == CONFIRMDIALOG_CALLBACKARG_TIP) {
-			// save that user dismissed dialog permanently
-			SharedPreferences prefs = getSharedPreferences(REGISTRY_FILE, Context.MODE_PRIVATE);
-			Editor editor = prefs.edit();
-			String tipTag = ((ParcelableString) state).value;
-			editor.putBoolean(tipTag, true);
-			editor.commit();
-			Log.v(LogUtils.COMMON_TAG, "Permanently dismissed tip: "+tipTag);
+			if(action == DialogAction.BUTTON_NEUTRAL) {
+				// save that user dismissed dialog permanently
+				SharedPreferences prefs = getSharedPreferences(REGISTRY_FILE, Context.MODE_PRIVATE);
+				Editor editor = prefs.edit();
+				String tipTag = ((ParcelableString) state).value;
+				editor.putBoolean(tipTag, true);
+				editor.commit();
+				Log.v(LogUtils.COMMON_TAG, "Permanently dismissed tip: "+tipTag);
+			}
+		} else {
+			super.onDialogResult(dialog, dialogId, action, state);
 		}
 	}
 	
-	@Override
-	public void onCancel(ConfirmDialog dialog, int dialogId, Parcelable state) {
-	}
-	
 }
-

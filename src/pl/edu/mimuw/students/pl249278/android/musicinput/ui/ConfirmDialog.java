@@ -1,6 +1,7 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
 import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogListener.DialogAction;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -24,6 +25,9 @@ public class ConfirmDialog extends DialogFragment {
 	public static class ConfirmDialogBuilder {
 		private Bundle args = new Bundle();
 		
+		public static ConfirmDialogBuilder init(int dialogId) {
+			return new ConfirmDialogBuilder(dialogId);
+		}
 		public ConfirmDialogBuilder(int dialogId) {
 			args.putInt(ARG_DIALOG_ID, dialogId);
 		}
@@ -71,17 +75,25 @@ public class ConfirmDialog extends DialogFragment {
 	}
 	
 	public static interface ConfirmDialogListener {
-		void onConfirm(ConfirmDialog dialog, int dialogId, Parcelable state);
-		void onCancel(ConfirmDialog dialog, int dialogId, Parcelable state);
-		void onNeutral(ConfirmDialog dialog, int dialogId, Parcelable state);		
+		public static enum DialogAction {
+			BUTTON_POSITIVE,
+			BUTTON_NEUTRAL,
+			BUTTON_NEGATIVE,
+			CANCEL
+		}
+		
+		void onDialogResult(ConfirmDialog dialog, int dialogId, DialogAction action, Parcelable state);
 	}
 
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 	    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 	    Bundle args = getArguments();
-	    String msg = getString(args.getInt(ARG_MSGID), 
-    		ifNotNull((Object[]) args.getStringArray(ARG_MSG_PARAMS), new Object[0]));
+	    int msgId = args.getInt(ARG_MSGID, -1);
+	    if(msgId != -1) {
+			builder.setMessage(getString(msgId, 
+	    		ifNotNull((Object[]) args.getStringArray(ARG_MSG_PARAMS), new Object[0])));
+	    }
 	    if(args.getInt(ARG_TITLEID) > 0) {
 	    	builder.setTitle(args.getInt(ARG_TITLEID));
 	    }
@@ -89,15 +101,15 @@ public class ConfirmDialog extends DialogFragment {
 	    	builder.setIcon(args.getInt(ARG_ICON_ID));
 	    }
 		builder
-	    .setMessage(msg)
 		.setCancelable(false)
 		.setPositiveButton(getString(args.getInt(ARG_POSITIVELABEL_ID)),
 			new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int id) {
 					FragmentActivity a = getActivity();
 					if(a != null && a instanceof ConfirmDialogListener) {
-						((ConfirmDialogListener) a).onConfirm(
+						((ConfirmDialogListener) a).onDialogResult(
 							ConfirmDialog.this, getArguments().getInt(ARG_DIALOG_ID), 
+							DialogAction.BUTTON_POSITIVE,
 							getArguments().getParcelable(ARG_STATE));
 					}
 				}
@@ -109,8 +121,9 @@ public class ConfirmDialog extends DialogFragment {
 					public void onClick(DialogInterface dialog, int which) {
 						FragmentActivity a = getActivity();
 						if(a != null && a instanceof ConfirmDialogListener) {
-							((ConfirmDialogListener) a).onCancel(
+							((ConfirmDialogListener) a).onDialogResult(
 								ConfirmDialog.this, getArguments().getInt(ARG_DIALOG_ID), 
+								DialogAction.BUTTON_NEGATIVE,
 								getArguments().getParcelable(ARG_STATE));
 						}
 					}
@@ -123,8 +136,9 @@ public class ConfirmDialog extends DialogFragment {
 				public void onClick(DialogInterface dialog, int which) {
 					FragmentActivity a = getActivity();
 					if(a != null && a instanceof ConfirmDialogListener) {
-						((ConfirmDialogListener) a).onNeutral(
+						((ConfirmDialogListener) a).onDialogResult(
 							ConfirmDialog.this, getArguments().getInt(ARG_DIALOG_ID), 
+							DialogAction.BUTTON_NEUTRAL,
 							getArguments().getParcelable(ARG_STATE));
 					}
 				}
@@ -137,7 +151,8 @@ public class ConfirmDialog extends DialogFragment {
 	public void onCancel(DialogInterface dialog) {
 		FragmentActivity a = getActivity();
 		if(a != null && a instanceof ConfirmDialogListener) {
-			((ConfirmDialogListener) a).onCancel(this, getArguments().getInt(ARG_DIALOG_ID), 
+			((ConfirmDialogListener) a).onDialogResult(this, getArguments().getInt(ARG_DIALOG_ID), 
+				DialogAction.CANCEL,
 				getArguments().getParcelable(ARG_STATE));
 		}
 		super.onCancel(dialog);

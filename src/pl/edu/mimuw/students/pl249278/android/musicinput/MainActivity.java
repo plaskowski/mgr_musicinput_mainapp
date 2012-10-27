@@ -39,17 +39,14 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.F
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.ScoreThumbnailDrawable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator.LayoutAnimation;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation.ExpandAnimation;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.DrawingChildOnTop;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
-import android.graphics.drawable.PaintDrawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -498,11 +495,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 				thumbnailsThread, getResources().getColorStateList(R.color.main_entry_thumbnail));
 			thumb.setModel(score.getContent(), scoreConfig.get(score.getId()).getDisplayMode());
 			thumb.setLoadingIcon(getResources().getDrawable(R.drawable.spinner_16dp));
-			LayerDrawable contentBg = new LayerDrawable(new Drawable[] {
-				new PaintDrawable(Color.WHITE),
-				thumb
-			});
-			entry.findViewById(R.id.mainscreen_entry_content).setBackgroundDrawable(contentBg);
+			entry.findViewById(R.id.mainscreen_entry_content).setBackgroundDrawable(thumb);
 		} catch (SerializationException e) {
 			log.e("Failed to deserialize score content", e);
 			showErrorDialog(R.string.errormsg_unrecoverable, e, true);

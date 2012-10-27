@@ -5,7 +5,6 @@
 	    <item name="android:layout_height">0dp</item>
 	    <item name="android:paddingLeft">@dimen/mainscreen_entry_toolbar_spacing</item>
 	    <item name="android:paddingTop">@dimen/mainscreen_entry_toolbar_spacing</item>
-	    <item name="android:background">#FFFFFF</item>
     </style>
     
     <dimen name="mainscreen_entry_toolbar_spacing">1dip</dimen>
@@ -56,6 +55,8 @@
 	<style name="main_entry_frame" parent="RectDrawable">
         <item name="strokePaint">@style/main_entry_strokePaint</item>
         <item name="strokeColorStateList">@color/main_entry</item>
+        <item name="fillPaint">@style/FillAntialias</item>
+        <item name="fillColorStateList">@color/main_entry_bg</item>
         <item name="padding">@dimen/mainscreen_entry_frame_stroke</item>
         <item name="insetTop">2dip</item>
     </style>
@@ -73,11 +74,8 @@
         <item name="strokeColorStateList">@color/main_entry</item>
         <item name="cornerTopLeft">3dip</item>
         <item name="cornerBottomLeft">3dip</item>
-        <item name="fillPaint">@style/main_entry_date_fill</item>
-	</style>
-    
-	<style name="main_entry_date_fill" parent="FillAntialias">
-        <item name="color">#E0FFFFFF</item>    
+        <item name="fillPaint">@style/FillAntialias</item>
+        <item name="fillColorStateList">@color/main_entry_date_bg</item>
 	</style>
 		
 	<style name="FillAntialias" parent="PaintAntialias">
@@ -104,5 +102,9 @@
     <style name="main_shadow_inverted_blackShadow" parent="PaintAntialias">
     	<item name="color">#000000</item>
     </style>
+    
+    <color name="main_entry_stroke_selected">#FFE500</color>
+   	<color name="main_entry_bg_darker_selected">#FFEE54</color>
+    <color name="main_entry_bg_selected">#FFF497</color>
     
 </resources>

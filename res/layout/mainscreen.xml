@@ -5,40 +5,58 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
 	android:id="@+id/main_scrollview"
+	android:fillViewport="true"
 >
 	<LinearLayout
 	    android:layout_width="fill_parent"
 	    android:layout_height="wrap_content"
 	    android:orientation="vertical"
     >
-		<LinearLayout
+    	<FrameLayout 
 		    android:id="@+id/MAIN_entry_addnew"
 		    android:layout_width="fill_parent"
 		    android:layout_height="wrap_content"
-		    android:background="@drawable/button_darkgraygradient"
+		    android:background="@drawable/button_bluegradient"
 		    android:clickable="true"
-		    android:orientation="horizontal"
-	    >
-		    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageView_ExtendedImage
-		        android:layout_width="wrap_content"
-		        android:layout_height="60dip"
-		        custom:extendedImage="@style/SvgCompoundDrawable"
-		        custom:svgResource="@xml/icon_add" 
-		        custom:paintsSetup="@style/NEWSCORE_thumbsPaint"
-		        android:paddingRight="5dip"
-	        />
-		    <TextView
-		        android:layout_width="fill_parent"
-		        android:layout_height="wrap_content"
-		        android:text="@string/MAIN_label_create_new_score"
-		        android:layout_gravity="center_vertical"
-	        />
-		</LinearLayout>   
+    	    >
+		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy.ExtendedDrawableLeftStrategy
+		    android:layout_width="wrap_content"
+		    android:layout_height="60dp"
+		    android:layout_gravity="center"
+	        android:text="@string/MAIN_label_create_new_score"
+	        android:gravity="center"
+	        android:textSize="24dp"
+	        android:textColor="#FFFFFF"
+	        android:shadowColor="#000000"
+	        android:shadowDx="-1"
+	        android:shadowDy="-1"
+	        android:shadowRadius="1"
+	        android:drawablePadding="10dp"
+	        custom:extendedDrawableLeft="@style/SvgCompoundDrawable"
+	        custom:svgResource="@xml/icon_add" 
+	        custom:paintsSetup="@array/main_shadow_inverted"
+	        custom:intrinsicWidth="28dip"
+	        custom:intrinsicHeight="28dip"
+        />
+		</FrameLayout>
 		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_FrontChild 
 		    android:id="@+id/entries_container"
 		    android:layout_width="fill_parent"
 		    android:layout_height="wrap_content"
 		    android:orientation="vertical"
+	    />
+		<TextView 
+		    android:id="@+id/MAIN_msg_on_empty"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="30dp"
+			android:layout_weight="1"
+			android:background="@drawable/main_msg_border"
+			android:text="@string/MAIN_msg_no_scores_yet"
+			android:textColor="@android:color/white"
+			android:textSize="20dp"
+			android:gravity="center"
+			android:visibility="gone"
 	    />
 	</LinearLayout>
 </ScrollView>

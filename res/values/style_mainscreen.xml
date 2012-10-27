@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
     <style name="mainscreen_entry_toolbar">
 	    <item name="android:layout_width">fill_parent</item>
 	    <item name="android:layout_height">0dp</item>
@@ -87,6 +87,22 @@
 	<style name="main_entry_strokePaint" parent="PaintAntialias">
         <item name="paintStyle">STROKE</item>
         <item name="strokeWidth">@dimen/mainscreen_entry_frame_stroke</item>
+    </style>
+    
+	<array name="main_shadow_inverted">
+	    <item>@style/main_shadow_inverted_blackShadow</item>
+   	    <item>@style/main_shadow_inverted_white</item>
+	</array>
+
+	<style name="main_shadow_inverted_white" parent="@style/PaintAntialias">
+	    <item name="paintStyle">FILL</item>
+	    <item name="color">#FFFFFF</item>
+    	<item name="offsetX">1dp</item>
+    	<item name="offsetY">1dp</item>
+   	</style>
+    
+    <style name="main_shadow_inverted_blackShadow" parent="PaintAntialias">
+    	<item name="color">#000000</item>
     </style>
     
 </resources>

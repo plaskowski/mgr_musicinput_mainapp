@@ -64,4 +64,5 @@
     <string name="EDIT_confirmmsg_if_save_preferences">Do you want to save changes in preferences?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="MAIN_msg_no_scores_yet">You have no saved scores yet. Use button above to create one.</string>
 </resources>

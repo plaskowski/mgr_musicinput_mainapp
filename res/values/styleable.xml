@@ -24,6 +24,10 @@
 	<declare-styleable name="ExtendedBackground">
 		<attr name="extendedBackground" format="reference" />
 	</declare-styleable>
+	
+	<declare-styleable name="ExtendedTextDrawable">
+		<attr name="extendedDrawableLeft" format="reference" />
+	</declare-styleable>
 
 	<declare-styleable name="ExtendedImage">
 		<attr name="extendedImage" format="reference" />
@@ -45,6 +49,8 @@
 	<declare-styleable name="SvgDrawable">
 		<attr name="svgResource" format="reference" />
 		<attr name="iconMaxHeight" format="dimension" />
+		<attr name="intrinsicWidth" format="dimension" />
+		<attr name="intrinsicHeight" format="dimension" />
 	</declare-styleable>
 	
 	<declare-styleable name="Corners">

@@ -85,7 +85,7 @@ public class ExtendedResourcesFactory {
 	private static SparseArray<ExtendedDrawableState> drawableConstantState = new SparseArray<ExtendedDrawableState>();
 	private static Configuration lastConfiguration;
 	
-	private static Drawable inflateExtendedDrawable(Context ctx, AttributeSet attrsSet, int[] attrs, int attribute) {
+	public static Drawable inflateExtendedDrawable(Context ctx, AttributeSet attrsSet, int[] attrs, int attribute) {
 		TypedArray styledAttributes = ctx.obtainStyledAttributes(attrsSet, attrs);
 		final int styleId = styledAttributes.getResourceId(attribute, -1);
 		if(styleId != -1) {

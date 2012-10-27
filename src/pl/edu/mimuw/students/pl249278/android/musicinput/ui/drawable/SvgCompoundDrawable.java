@@ -13,6 +13,7 @@ import android.graphics.Paint;
 public class SvgCompoundDrawable extends CompoundDrawable {
 	private SvgImage svgImage;
 	private float iconMaxHeight = -1;
+	private int intrinsicWidth = -1, intrinsicHeight = -1;
 	
 	public SvgCompoundDrawable(SvgImage svgImage) {
 		this.svgImage = svgImage;
@@ -27,6 +28,8 @@ public class SvgCompoundDrawable extends CompoundDrawable {
 				this.svgImage = NotePartFactory.prepareSvgImage(resolver.getResources(), xmlId);
 			}
 			iconMaxHeight = values.getDimension(R.styleable.SvgDrawable_iconMaxHeight, -1);
+			intrinsicWidth = values.getDimensionPixelSize(R.styleable.SvgDrawable_intrinsicWidth, -1);
+			intrinsicHeight = values.getDimensionPixelSize(R.styleable.SvgDrawable_intrinsicHeight, -1);
 		} catch (LoadingSvgException e) {
 			throw new RuntimeException(e);
 		} finally {
@@ -55,11 +58,11 @@ public class SvgCompoundDrawable extends CompoundDrawable {
 	
 	@Override
 	public int getIntrinsicWidth() {
-		return (int) svgImage.getWidth();
+		return intrinsicWidth != -1 ? intrinsicWidth : (int) svgImage.getWidth();
 	}
 	
 	@Override
 	public int getIntrinsicHeight() {
-		return (int) svgImage.getHeight();
+		return intrinsicHeight != -1 ? intrinsicHeight : (int) svgImage.getHeight();
 	}
 }

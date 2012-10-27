@@ -39,6 +39,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.F
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.ScoreThumbnailDrawable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator.LayoutAnimation;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation.ExpandAnimation;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.DrawingChildOnTop;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation;
 import android.content.Intent;
@@ -306,6 +307,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			View entry = inflateAndPopulateEntry(score, container);
 			container.addView(entry);
 		}
+		updateMsgOnEmptyState();
 		// FIXME ugly hack to force loading of SVG icons used in entry toolbar
 		getLayoutInflater().inflate(R.layout.mainscreen_entry_toolbar, null);
 		findViewById(R.id.MAIN_entry_addnew).setOnClickListener(new OnClickListener() {
@@ -317,6 +319,18 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		});
 	}
 	
+	private void updateMsgOnEmptyState() {
+		ViewGroup container = (ViewGroup) findViewById(R.id.entries_container);
+		boolean notEmpty = false;
+		int childCount = container.getChildCount();
+		for(int i = 0; i < childCount; i++) {
+			View child = container.getChildAt(i);
+			if(notEmpty |= (child.getVisibility() != View.GONE))
+				break;
+		}
+		findViewById(R.id.MAIN_msg_on_empty).setVisibility(notEmpty ? View.GONE : View.VISIBLE);
+	}
+
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		switch(requestCode) {
@@ -712,6 +726,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 						@Override
 						public void run() {
 				    		entryView.setVisibility(View.GONE);
+				    		updateMsgOnEmptyState();
 						}
 					});
 					animator.startAnimation(anim);
@@ -1108,28 +1123,42 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		final ViewGroup container = (ViewGroup) findViewById(R.id.entries_container);
 		final View entryView = inflateAndPopulateEntry(pScore.getSource(), container);
 		container.addView(entryView, viewInsertIndex);
-		Animation inAnim = AnimationUtils.makeInAnimation(this, true);
-		inAnim.setDuration(500);
-		inAnim.setFillBefore(true);
-		inAnim.setFillAfter(true);
-		entryView.setAnimation(inAnim);
-		inAnim.setAnimationListener(new AnimationListener() {
+		entryView.setVisibility(View.INVISIBLE);
+		final int height = entryView.getLayoutParams().height;
+		ExpandAnimation<MainActivity> anim = new ViewHeightAnimation.ExpandAnimation<MainActivity>(entryView, 200);
+		ExpandAnimation.fillBefore(entryView);
+		anim.setOnAnimationEndListener(new Runnable() {
 			@Override
-			public void onAnimationStart(Animation animation) {
-			}
-			@Override
-			public void onAnimationRepeat(Animation animation) {
-			}
-			@Override
-			public void onAnimationEnd(Animation animation) {
-				entryView.setAnimation(null);
-				if(onAnimFinish != null) {
-					onAnimFinish.run();
-				}
+			public void run() {
+				updateMsgOnEmptyState();
+				Animation inAnim = AnimationUtils.makeInAnimation(MainActivity.this, true);
+				inAnim.setDuration(500);
+				inAnim.setFillBefore(true);
+				inAnim.setFillAfter(true);
+				entryView.setVisibility(View.VISIBLE);
+				entryView.getLayoutParams().height = height;
+				entryView.requestLayout();
+				entryView.setAnimation(inAnim);
+				inAnim.setAnimationListener(new AnimationListener() {
+					@Override
+					public void onAnimationStart(Animation animation) {
+					}
+					@Override
+					public void onAnimationRepeat(Animation animation) {
+					}
+					@Override
+					public void onAnimationEnd(Animation animation) {
+						entryView.setAnimation(null);
+						if(onAnimFinish != null) {
+							onAnimFinish.run();
+						}
+					}
+				});
+				inAnim.startNow();		
+				entryView.setSelected(true);
 			}
 		});
-		inAnim.startNow();		
-		entryView.setSelected(true);
+		animator.startAnimation(anim);
 	}
 	
 	private void sendCreateDuplicate(Score score, String newTitle) {

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   width="48"
+   height="48"
+   id="svg2"
+   inkscape:version="0.47 r22583"
+   sodipodi:docname="icon_edit_mini.svg"
+   inkscape:export-filename="/mnt/e/projects/workspaces/android_workspace/MusicInput/res/drawable-hdpi/icon_edit_mini_14dp.png"
+   inkscape:export-xdpi="48.75"
+   inkscape:export-ydpi="48.75">
+  <metadata
+     id="metadata8">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1280"
+     inkscape:window-height="751"
+     id="namedview6"
+     showgrid="false"
+     inkscape:zoom="6.9826795"
+     inkscape:cx="39.444907"
+     inkscape:cy="14.500182"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <defs
+     id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 24 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="48 : 24 : 1"
+       inkscape:persp3d-origin="24 : 16 : 1"
+       id="perspective10" />
+    <inkscape:perspective
+       id="perspective4044"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <clipPath
+       id="clipPath2980"
+       clipPathUnits="userSpaceOnUse">
+      <path
+         id="path2982"
+         d="m 0,2221 1709,0 L 1709,0 0,0 0,2221 z" />
+    </clipPath>
+    <clipPath
+       id="clipPath3128"
+       clipPathUnits="userSpaceOnUse">
+      <path
+         id="path3130"
+         d="m 0,2221 1709,0 L 1709,0 0,0 0,2221 z" />
+    </clipPath>
+    <clipPath
+       id="clipPath3322"
+       clipPathUnits="userSpaceOnUse">
+      <path
+         id="path3324"
+         d="m 0,2221 1709,0 L 1709,0 0,0 0,2221 z" />
+    </clipPath>
+  </defs>
+  <g
+     id="g2841"
+     transform="matrix(-0.63151959,0.63151959,0.63151959,0.63151959,26.472212,-4.6187738)"
+     style="fill:#4d4d4d"
+     inkscape:export-filename="/mnt/e/projects/workspaces/android_workspace/MusicInput/res/drawable-hdpi/icon_edit_mini.png"
+     inkscape:export-xdpi="30.860001"
+     inkscape:export-ydpi="30.860001">
+    <rect
+       transform="matrix(0,-1,1,0,0,0)"
+       y="-0.47672892"
+       x="-32.447433"
+       height="39.790665"
+       width="23.49766"
+       id="rect2828"
+       style="fill:#4d4d4d;fill-opacity:1;stroke:none" />
+    <path
+       sodipodi:nodetypes="cccc"
+       id="rect2830"
+       d="m 42.514944,32.447431 0,-23.4976585 19.150963,11.7488295 -19.150963,11.748829 z"
+       style="fill:#4d4d4d;fill-opacity:1;stroke:none" />
+  </g>
+</svg>

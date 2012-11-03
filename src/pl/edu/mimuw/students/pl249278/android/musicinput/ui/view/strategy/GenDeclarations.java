@@ -1,5 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinedSheetElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TextViewWithAnimations;
 import pl.waw.echo.eclipse.codegenerator.annotation.JoinClasses;
 import android.content.Context;
@@ -14,6 +15,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
+import android.widget.TableRow;
 import android.widget.TextView;
 
 class GenDeclarations {
@@ -148,6 +150,22 @@ class GenDeclarations {
 		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_FrontChild"
 	)
 	static Class<? extends View> CUSTOM16; 
+	@JoinClasses(
+		superClass = LinedSheetElementView.class,
+		ancestors = {
+			ExtendedBackgroundStrategy.class
+		},
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinedSheetElementView_ExtendedBackground"
+	)
+	static Class<? extends View> CUSTOM17; 
+	@JoinClasses(
+		superClass = TableRow.class,
+		ancestors = {
+			ExtendedBackgroundStrategy.class
+		},
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TableRow_ExtendedBackground"
+	)
+	static Class<? extends View> CUSTOM18; 
 }
 
 /** a stub class, lets a strategy call super.onLayout() */

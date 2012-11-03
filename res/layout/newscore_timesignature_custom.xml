@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TableRow xmlns:android="http://schemas.android.com/apk/res/android"
+<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TableRow_ExtendedBackground 
+	xmlns:custom="http://schemas.android.com/apk/res/pl.edu.mimuw.students.pl249278.android.musicinput"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@drawable/ramka_5dip"
+    custom:extendedBackground="@style/NEWSCORE_frame"
     android:clickable="true"
 >
 	<LinearLayout 
@@ -26,7 +28,6 @@
     
   	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinedSheetElementView
 	    android:id="@+id/NEWSCORE_tempo"
-		xmlns:custom="http://schemas.android.com/apk/res/pl.edu.mimuw.students.pl249278.android.musicinput"
 	    android:layout_width="wrap_content"
 	    android:layout_height="wrap_content"
 	    custom:paint="@style/NEWSCORE_thumbsPaint"
@@ -53,4 +54,4 @@
 	        android:text="+"
 	    />
 	</LinearLayout>    
-</TableRow>
+</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TableRow_ExtendedBackground>

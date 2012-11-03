@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
     <style name="NEWSCORE_h1" parent="prefs_label">
         <item name="android:layout_width">fill_parent</item>
         <item name="android:background">@drawable/topdivider_bright</item>
@@ -23,4 +23,20 @@
         <item name="android:minHeight">50dip</item>
         </style>
 		
+   <style name="NEWSCORE_frame" parent="RectDrawable">
+       <item name="strokePaint">@style/Stroke2dp</item>
+       <item name="strokeColorStateList">@color/selector_frame_stroke</item>
+       <item name="fillPaint">@style/FillAntialias</item>
+       <item name="fillColorStateList">@color/selector_frame_bg</item>
+       <item name="padding">7dp</item>
+       <item name="inset">1dp</item>
+   </style>
+   
+   <style name="Stroke2dp" parent="@style/StrokeAntialias">
+       <item name="strokeWidth">2dp</item>
+   </style>
+   
+	<style name="StrokeAntialias" parent="@style/PaintAntialias">
+	    <item name="paintStyle">STROKE</item>
+	</style>
 </resources>

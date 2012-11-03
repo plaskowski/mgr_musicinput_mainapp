@@ -69,7 +69,8 @@
 	</declare-styleable>
 	
 	<declare-styleable name="Inset">
-	    <attr name="insetLeft" format="dimension" />
+	    <attr name="inset" format="dimension" />
+   	    <attr name="insetLeft" format="dimension" />
 	    <attr name="insetTop" format="dimension" />
 	    <attr name="insetRight" format="dimension" />
 	    <attr name="insetBottom" format="dimension" />

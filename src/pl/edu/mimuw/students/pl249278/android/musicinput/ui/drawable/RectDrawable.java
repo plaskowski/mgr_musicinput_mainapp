@@ -120,11 +120,12 @@ public class RectDrawable extends Drawable {
 		public ConstantState(StyleResolver resolver) {
 			padding = ExtendedResourcesFactory.getPadding(resolver, 0, null);
 			TypedArray values = resolver.obtainStyledAttributes(R.styleable.Inset);
+			int insetCommon = values.getDimensionPixelSize(R.styleable.Inset_inset, 0);
 			inset.set(
-				values.getDimensionPixelSize(R.styleable.Inset_insetLeft, 0),
-				values.getDimensionPixelSize(R.styleable.Inset_insetTop, 0),
-				values.getDimensionPixelSize(R.styleable.Inset_insetRight, 0),
-				values.getDimensionPixelSize(R.styleable.Inset_insetBottom, 0)
+				values.getDimensionPixelSize(R.styleable.Inset_insetLeft, insetCommon),
+				values.getDimensionPixelSize(R.styleable.Inset_insetTop, insetCommon),
+				values.getDimensionPixelSize(R.styleable.Inset_insetRight, insetCommon),
+				values.getDimensionPixelSize(R.styleable.Inset_insetBottom, insetCommon)
 			);
 			values.recycle();
 			values = resolver.obtainStyledAttributes(R.styleable.RectDrawable);

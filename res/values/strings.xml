@@ -65,4 +65,17 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="MAIN_msg_no_scores_yet">You have no saved scores yet. Use button above to create one.</string>
+    <plurals name="format_minutes_ago">
+        <item quantity="one">%d minute ago</item>
+        <item quantity="other">%d minutes ago</item>
+	</plurals>
+    <plurals name="format_hours_ago">
+        <item quantity="one">%d hour ago</item>
+        <item quantity="other">%d hours ago</item>
+	</plurals>
+    <plurals name="format_days_ago">
+        <item quantity="zero">today, %2$2d:%3$2d</item>
+        <item quantity="one">yesterday, %2$2d:%3$2d</item>
+        <item quantity="other">%1$d days ago, %2$2d:%3$2d</item>
+	</plurals>
 </resources>

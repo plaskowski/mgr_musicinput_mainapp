@@ -30,6 +30,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.services.WorkerService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogBuilder;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogListener;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.DateRelativeFormatHelper;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ParcelablePrimitives.ParcelableLong;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog;
@@ -51,7 +52,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Parcelable;
-import android.text.format.DateUtils;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.View.OnClickListener;
@@ -570,9 +570,13 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 		}
 	};
 	
-	private CharSequence formatDate(long UtcStamp) {
-		return DateUtils.getRelativeDateTimeString(this, UtcStamp, 
-			DateUtils.MINUTE_IN_MILLIS, 2*DateUtils.DAY_IN_MILLIS, 0);
+	private DateRelativeFormatHelper dateHelper;
+	
+	private CharSequence formatDate(long utcStamp) {
+		if(dateHelper == null) {
+			dateHelper = new DateRelativeFormatHelper(this);
+		}
+		return dateHelper.formatDate(utcStamp);
 	}
 	
 	/**

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="format_minutes_ago">
+        <item quantity="one">minutę temu</item>
+        <item quantity="few">%d minuty temu</item>
+        <item quantity="other">%d minut temu</item>
+	</plurals>
+    <plurals name="format_hours_ago">
+        <item quantity="one">godzinę temu</item>
+        <item quantity="few">%d godziny temu</item>
+        <item quantity="other">%d godzin temu</item>
+	</plurals>
+    <plurals name="format_days_ago">
+        <item quantity="zero">dzisiaj, %2$2d:%3$2d</item>
+        <item quantity="one">wczoraj, %2$2d:%3$2d</item>
+        <item quantity="other">%1$d dni temu, %2$2d:%3$2d</item>
+	</plurals>
+</resources>

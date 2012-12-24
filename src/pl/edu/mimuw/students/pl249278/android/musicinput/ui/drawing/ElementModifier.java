@@ -15,11 +15,13 @@ public enum ElementModifier {
 	}
 	
 	public static ElementModifier map(NoteModifier modifier) {
-		ElementModifier[] values = ElementModifier.values();
+		ElementModifier[] values = ElementModifier_values;
 		for(int i = 0; i < values.length; i++) {
 			if(modifier.equals(values[i].origin))
 				return values[i];
 		}
 		throw new RuntimeException();
 	}
+	
+	private static ElementModifier[] ElementModifier_values = ElementModifier.values();
 }

@@ -57,6 +57,7 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 	protected static final int REQUEST_CODE_VISCONF = 1;
 	private InsertRequestReceiver insertRequestReceiver;
 	private ScoreVisualizationConfig visConf;
+	private static final KeySignature[] KeySignature_values = KeySignature.values();
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -99,8 +100,8 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 		
 		// fill key signature images
 		ViewGroup keysContainer = (ViewGroup) findViewById(R.id.NEWSCORE_keys_container);
-		for (int i = 0; i < KeySignature.values().length; i++) {
-			KeySignature key = KeySignature.values()[i];
+		for (int i = 0; i < KeySignature_values.length; i++) {
+			KeySignature key = KeySignature_values[i];
 			try {
 				SheetElement model = new KeySignatureElement(this, defaultClef, key);
 				LinedSheetElementView sheetElementView = setupThumbnailView(params, keysContainer, model);
@@ -158,8 +159,8 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 		}
 		Clef currentClef = (Clef) selectedClef.getTag();
 		ViewGroup keysContainer = (ViewGroup) findViewById(R.id.NEWSCORE_keys_container);
-		for (int i = 0; i < KeySignature.values().length; i++) {
-			KeySignature key = KeySignature.values()[i];
+		for (int i = 0; i < KeySignature_values.length; i++) {
+			KeySignature key = KeySignature_values[i];
 			try {
 				SheetElement model = new KeySignatureElement(this, currentClef, key);
 				LinedSheetElementView sheetElementView = (LinedSheetElementView) keysContainer.findViewWithTag(key);

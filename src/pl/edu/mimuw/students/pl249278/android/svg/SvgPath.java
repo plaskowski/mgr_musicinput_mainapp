@@ -38,12 +38,13 @@ public class SvgPath extends SvgObject {
 		}
 	}
 	
+	private static SvgPathCommand mCmd = new SvgPathCommand();
+	
 	public int commandsCount() {
 		if(count == NO_VALUE) {
 			count = 0;
 			for (MemorySaavyIterator<SvgPathCommand> iterator = getIterator(); iterator.hasNext();) {
-				SvgPathCommand cmd = new SvgPathCommand();
-				iterator.readNext(cmd);
+				iterator.readNext(mCmd);
 				count++;
 			}
 		}

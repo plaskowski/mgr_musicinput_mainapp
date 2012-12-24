@@ -22,6 +22,7 @@ import pl.edu.mimuw.students.pl249278.android.svg.SvgParser;
 import android.content.Context;
 import android.content.res.Resources;
 import android.util.Pair;
+import android.util.SparseArray;
 
 public class NotePartFactory {
 	@SuppressWarnings("serial")
@@ -156,8 +157,8 @@ public class NotePartFactory {
 	private static Map<Integer, Integer> pauseMapping = new HashMap<Integer, Integer>();
 	private static Map<Integer, NoteHead> noteHeads = new HashMap<Integer, NoteHead>();
 	private static Map<Integer, NoteEnding> noteEndings = new HashMap<Integer, NoteEnding>();
-	private static Map<Integer, AdjustableSizeImage> adjustableImages = new HashMap<Integer, AdjustableSizeImage>();
-	private static Map<Integer, SvgImage> svgImages = new HashMap<Integer, SvgImage>();
+	private static SparseArray<AdjustableSizeImage> adjustableImages = new SparseArray<AdjustableSizeImage>();
+	private static SparseArray<SvgImage> svgImages = new SparseArray<SvgImage>();
 	
 	static {
 		clefMapping.put(NoteConstants.Clef.VIOLIN, R.xml.key_violin);

@@ -68,10 +68,11 @@ public class SvgRenderer {
 	}
 	
 	private static Map<PathsCacheKey, Path> pathsCache = new HashMap<PathsCacheKey, Path>();
+	private static SvgPathCommand mCmd = new SvgPathCommand();
 	
 	private static Path generate(SvgPath path, float scale) {
 		Path result = new Path();
-		SvgPathCommand cmd = new SvgPathCommand();
+		SvgPathCommand cmd = mCmd;
 		for(MemorySaavyIterator<SvgPathCommand> it = path.getIterator(); it.hasNext();) {
 			it.readNext(cmd);
 			char cmdLabel = cmd.cmd;

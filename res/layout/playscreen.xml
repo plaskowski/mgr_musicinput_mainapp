@@ -58,22 +58,22 @@
 		>
     		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage
     		    style="@style/toolbar_blue_button"
-		        custom:svgResource="@xml/button_rewind"
+		        custom:svgResource="@array/svg_button_rewind"
 		        android:id="@+id/PLAY_barbutton_replay"
     		/>
 			<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage
     		    style="@style/toolbar_blue_button"
-		        custom:svgResource="@xml/button_play"
+		        custom:svgResource="@array/svg_button_play"
 		        android:id="@+id/PLAY_barbutton_play"
     		/>
 			<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage
     		    style="@style/toolbar_blue_statebutton"
-		        custom:svgResource="@xml/button_repeat"
+		        custom:svgResource="@array/svg_button_repeat"
 		        android:id="@+id/PLAY_barbutton_loop"
     		/>
 			<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage
     		    style="@style/toolbar_blue_button"
-		        custom:svgResource="@xml/button_preferences"
+		        custom:svgResource="@array/svg_button_preferences"
 		        custom:iconMaxHeight="25dip"
 		        android:id="@+id/PLAY_barbutton_configure"
 	       	/>

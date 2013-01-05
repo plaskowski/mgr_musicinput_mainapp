@@ -5,7 +5,7 @@
     </style>
     
 	<style name="insertButton" parent="SvgCompoundDrawable">
-		<item name="svgResource">@xml/icon_add</item>
+		<item name="svgResource">@array/svg_icon_add</item>
 		<item name="paintsSetup">@array/InvertedEmboss</item>    
 	</style>
     

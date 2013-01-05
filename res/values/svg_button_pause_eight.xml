@@ -1,0 +1,25 @@
+<?xml version="1.0" ?><resources><array name="svg_button_pause_eight">
+	<item><!--width-->744.0945</item>
+	<item><!--height-->1052.3622</item>
+	<item>@id/svgobject_rect</item>
+		<item>@id/svgattr_fill</item><item>#00ff0000</item>
+		<item>@id/svgattr_fill_opacity</item><item>0.19607843</item>
+		<item>@id/svgattr_frame</item>
+		<item><!--x-->97.37256</item>
+		<item><!--y-->202.25768</item>
+		<item><!--width-->69.825775</item>
+		<item><!--height-->117.91142</item>
+	<item>@id/svgobject_path</item>
+		<item>@id/svgattr_pathspec</item><item>11</item>
+		<item>M</item><item>119.18425</item><item>214.87346</item>
+		<item>c</item><item>-0.56823</item><item>-0.0199</item><item>-1.11804</item><item>0.0</item><item>-1.63406</item><item>0.0453</item>
+		<item>c</item><item>-12.54096</item><item>1.10924</item><item>-24.268152</item><item>17.03021</item><item>-15.342</item><item>28.82299</item>
+		<item>c</item><item>12.55836</item><item>16.59079</item><item>35.24955</item><item>2.51303</item><item>51.836</item><item>-5.35608</item>
+		<item>c</item><item>-2.89309</item><item>20.38382</item><item>-6.85945</item><item>38.90739</item><item>-11.57459</item><item>53.87857</item>
+		<item>l</item><item>12.93631</item><item>0.0</item>
+		<item>c</item><item>0.41381</item><item>-12.92227</item><item>4.57115</item><item>-30.35292</item><item>10.43982</item><item>-64.72691</item>
+		<item>l</item><item>-9.03272</item><item>-0.63547</item>
+		<item>c</item><item>-4.59792</item><item>2.32724</item><item>-8.61673</item><item>5.2891</item><item>-17.11223</item><item>8.76038</item>
+		<item>c</item><item>1.70872</item><item>-12.9031</item><item>-11.99311</item><item>-20.4914</item><item>-20.51653</item><item>-20.78887</item>
+		<item>Z</item>
+</array></resources>

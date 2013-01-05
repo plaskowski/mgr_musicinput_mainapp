@@ -1,0 +1,37 @@
+<?xml version="1.0" ?><resources><array name="svg_button_dot">
+	<item><!--width-->744.0945</item>
+	<item><!--height-->1052.3622</item>
+	<item>@id/svgobject_rect</item>
+		<item>@id/svgattr_fill</item><item>#00ff0000</item>
+		<item>@id/svgattr_fill_opacity</item><item>0.19607843</item>
+		<item>@id/svgattr_frame</item>
+		<item><!--x-->69.37549</item>
+		<item><!--y-->14.064211</item>
+		<item><!--width-->37.37413</item>
+		<item><!--height-->36.14041</item>
+	<item>@id/svgobject_path</item>
+		<item>@id/svgattr_fill</item><item>#00000000</item>
+		<item>@id/svgattr_fill_opacity</item><item>1.0</item>
+		<item>@id/svgattr_pathspec</item><item>21</item>
+		<item>M</item><item>90.5625</item><item>14.15625</item>
+		<item>l</item><item>0.0</item><item>7.96875</item>
+		<item>c</item><item>-2.47916</item><item>-2.047734</item><item>-6.09953</item><item>-2.903711</item><item>-9.71875</item><item>-2.71875</item>
+		<item>c</item><item>-2.895369</item><item>0.147969</item><item>-5.808664</item><item>0.948321</item><item>-8.125</item><item>2.28125</item>
+		<item>c</item><item>-0.982619</item><item>0.565447</item><item>-1.925333</item><item>1.29904</item><item>-2.84375</item><item>2.125</item>
+		<item>l</item><item>0.0</item><item>20.78125</item>
+		<item>c</item><item>4.682135</item><item>1.429384</item><item>10.845004</item><item>0.352368</item><item>14.90625</item><item>-2.0</item>
+		<item>c</item><item>4.41435</item><item>-2.556898</item><item>8.42872</item><item>-7.777512</item><item>8.875</item><item>-12.8125</item>
+		<item>l</item><item>0.03125</item><item>-0.0625</item>
+		<item>l</item><item>0.0</item><item>-0.25</item>
+		<item>c</item><item>0.0264</item><item>-0.426743</item><item>0.0276</item><item>-0.828756</item><item>0.0</item><item>-1.25</item>
+		<item>l</item><item>0.0</item><item>-8.71875</item>
+		<item>l</item><item>0.0</item><item>-5.34375</item>
+		<item>l</item><item>-3.125</item><item>0.0</item>
+		<item>Z</item>
+		<item>m</item><item>9.71875</item><item>11.6875</item>
+		<item>c</item><item>-3.034611</item><item>0.0</item><item>-5.5</item><item>2.465389</item><item>-5.5</item><item>5.5</item>
+		<item>c</item><item>0.0</item><item>3.034611</item><item>2.465389</item><item>5.5</item><item>5.5</item><item>5.5</item>
+		<item>c</item><item>3.03461</item><item>0.0</item><item>5.5</item><item>-2.465389</item><item>5.5</item><item>-5.5</item>
+		<item>c</item><item>0.0</item><item>-3.034611</item><item>-2.46539</item><item>-5.5</item><item>-5.5</item><item>-5.5</item>
+		<item>Z</item>
+</array></resources>

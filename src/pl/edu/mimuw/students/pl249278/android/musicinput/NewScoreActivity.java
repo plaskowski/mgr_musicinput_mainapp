@@ -124,10 +124,10 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 			sheetElementView = setupThumbnailView(params, timeSignContainer, new EmptyElement());
 			sheetElementView.setOnClickListener(radioGroup);
 			sheetElementView.setTag(TimeSignatureType.NONE);
-			sheetElementView = setupThumbnailView(params, timeSignContainer, R.xml.timesignature_commontime);
+			sheetElementView = setupThumbnailView(params, timeSignContainer, R.array.svg_timesignature_commontime);
 			sheetElementView.setOnClickListener(radioGroup);
 			sheetElementView.setTag(TimeSignatureType.COMMON_TIME);
-			sheetElementView = setupThumbnailView(params, timeSignContainer, R.xml.timesignature_cutcommontime);
+			sheetElementView = setupThumbnailView(params, timeSignContainer, R.array.svg_timesignature_cutcommontime);
 			sheetElementView.setOnClickListener(radioGroup);
 			sheetElementView.setTag(TimeSignatureType.CUT_COMMON_TIME);
 			alignVertically(timeSignContainer);

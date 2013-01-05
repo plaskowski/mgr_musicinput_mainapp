@@ -1,0 +1,26 @@
+<?xml version="1.0" ?><resources><array name="svg_button_pause_half">
+	<item><!--width-->744.0945</item>
+	<item><!--height-->1052.3622</item>
+	<item>@id/svgobject_rect</item>
+		<item>@id/svgattr_fill</item><item>#00ff0000</item>
+		<item>@id/svgattr_fill_opacity</item><item>0.19607843</item>
+		<item>@id/svgattr_frame</item>
+		<item><!--x-->82.987816</item>
+		<item><!--y-->64.25435</item>
+		<item><!--width-->100.00001</item>
+		<item><!--height-->100.0</item>
+	<item>@id/svgobject_path</item>
+		<item>@id/svgattr_fill</item><item>#00008000</item>
+		<item>@id/svgattr_fill_opacity</item><item>1.0</item>
+		<item>@id/svgattr_pathspec</item><item>10</item>
+		<item>M</item><item>93.53469</item><item>141.0349</item>
+		<item>l</item><item>0.0</item><item>-10.21875</item>
+		<item>l</item><item>5.3125</item><item>0.0</item>
+		<item>l</item><item>0.0</item><item>-20.40625</item>
+		<item>l</item><item>68.28124</item><item>0.0</item>
+		<item>l</item><item>0.0</item><item>20.40625</item>
+		<item>l</item><item>5.3125</item><item>0.0</item>
+		<item>l</item><item>0.0</item><item>10.21875</item>
+		<item>l</item><item>-78.90624</item><item>0.0</item>
+		<item>Z</item>
+</array></resources>

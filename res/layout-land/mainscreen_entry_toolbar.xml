@@ -8,31 +8,31 @@
         <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
             android:id="@+id/button_play"
             style="@style/mainscreen_entry_toolbar_item"
-            custom:svgResource="@xml/button_play"
+            custom:svgResource="@array/svg_button_play"
         />
         <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
             android:id="@+id/button_edit"
             style="@style/mainscreen_entry_toolbar_item"
-            custom:svgResource="@xml/button_edit"
+            custom:svgResource="@array/svg_button_edit"
         />
         <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
             android:id="@+id/button_delete"
             style="@style/mainscreen_entry_toolbar_item"
-            custom:svgResource="@xml/button_delete"
+            custom:svgResource="@array/svg_button_delete"
         />
         <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
             android:id="@+id/button_rename"
             style="@style/mainscreen_entry_toolbar_item"
-            custom:svgResource="@xml/button_rename"
+            custom:svgResource="@array/svg_button_rename"
         />
         <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
             android:id="@+id/button_duplicate"
             style="@style/mainscreen_entry_toolbar_item"
-            custom:svgResource="@xml/button_copy"
+            custom:svgResource="@array/svg_button_copy"
         />
         <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
             android:id="@+id/button_exportmidi"
             style="@style/mainscreen_entry_toolbar_item"
-            custom:svgResource="@xml/button_export_to_midi"
+            custom:svgResource="@array/svg_button_export_to_midi"
         />
 </LinearLayout>

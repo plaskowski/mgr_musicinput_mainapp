@@ -1,0 +1,29 @@
+<?xml version="1.0" ?><resources><array name="svg_icon_add">
+	<item><!--width-->744.0945</item>
+	<item><!--height-->1052.3622</item>
+	<item>@id/svgobject_rect</item>
+		<item>@id/svgattr_fill</item><item>#00ff0000</item>
+		<item>@id/svgattr_fill_opacity</item><item>0.19607843</item>
+		<item>@id/svgattr_frame</item>
+		<item><!--x-->69.37549</item>
+		<item><!--y-->14.064211</item>
+		<item><!--width-->37.37413</item>
+		<item><!--height-->36.14041</item>
+	<item>@id/svgobject_path</item>
+		<item>@id/svgattr_fill</item><item>#00000000</item>
+		<item>@id/svgattr_pathspec</item><item>14</item>
+		<item>M</item><item>82.6875</item><item>14.96875</item>
+		<item>l</item><item>0.0</item><item>11.75</item>
+		<item>l</item><item>-11.78125</item><item>0.0</item>
+		<item>l</item><item>0.0</item><item>9.15625</item>
+		<item>l</item><item>11.78125</item><item>0.0</item>
+		<item>l</item><item>0.0</item><item>13.4375</item>
+		<item>l</item><item>9.15625</item><item>0.0</item>
+		<item>l</item><item>0.0</item><item>-13.4375</item>
+		<item>l</item><item>13.375</item><item>0.0</item>
+		<item>l</item><item>0.0</item><item>-9.15625</item>
+		<item>l</item><item>-13.375</item><item>0.0</item>
+		<item>l</item><item>0.0</item><item>-11.75</item>
+		<item>l</item><item>-9.15625</item><item>0.0</item>
+		<item>Z</item>
+</array></resources>

@@ -1,0 +1,29 @@
+<?xml version="1.0" ?><resources><array name="svg_button_notegroup_right">
+	<item><!--width-->744.0945</item>
+	<item><!--height-->1052.3622</item>
+	<item>@id/svgobject_rect</item>
+		<item>@id/svgattr_fill</item><item>#00ff0000</item>
+		<item>@id/svgattr_fill_opacity</item><item>0.19607843</item>
+		<item>@id/svgattr_frame</item>
+		<item><!--x-->27.747234</item>
+		<item><!--y-->22.112339</item>
+		<item><!--width-->33.764233</item>
+		<item><!--height-->39.780052</item>
+	<item>@id/svgobject_path</item>
+		<item>@id/svgattr_fill</item><item>#00000000</item>
+		<item>@id/svgattr_fill_opacity</item><item>1.0</item>
+		<item>@id/svgattr_pathspec</item><item>13</item>
+		<item>M</item><item>61.430813</item><item>22.116262</item>
+		<item>l</item><item>0.0</item><item>9.40625</item>
+		<item>l</item><item>-18.625</item><item>0.0</item>
+		<item>l</item><item>0.0</item><item>3.34375</item>
+		<item>l</item><item>18.625</item><item>0.0</item>
+		<item>l</item><item>0.0</item><item>8.4375</item>
+		<item>l</item><item>-18.625</item><item>0.0</item>
+		<item>l</item><item>0.0</item><item>18.25</item>
+		<item>l</item><item>-5.903888</item><item>0.0</item>
+		<item>l</item><item>0.0</item><item>-39.4375</item>
+		<item>l</item><item>5.903888</item><item>0.0</item>
+		<item>l</item><item>18.625</item><item>0.0</item>
+		<item>Z</item>
+</array></resources>

@@ -1,0 +1,29 @@
+<?xml version="1.0" ?><resources><array name="svg_button_rewind">
+	<item><!--width-->48.0</item>
+	<item><!--height-->48.0</item>
+	<item>@id/svgobject_rect</item>
+		<item>@id/svgattr_fill</item><item>#00ff0000</item>
+		<item>@id/svgattr_fill_opacity</item><item>0.19607843</item>
+		<item>@id/svgattr_frame</item>
+		<item><!--x-->9.177621</item>
+		<item><!--y-->9.055501</item>
+		<item><!--width-->32.618694</item>
+		<item><!--height-->29.952633</item>
+	<item>@id/svgobject_path</item>
+		<item>@id/svgattr_fill</item><item>#00008000</item>
+		<item>@id/svgattr_fill_opacity</item><item>1.0</item>
+		<item>@id/svgattr_pathspec</item><item>5</item>
+		<item>M</item><item>41.796314</item><item>9.055501</item>
+		<item>l</item><item>-24.03909</item><item>14.864987</item>
+		<item>l</item><item>24.03909</item><item>14.864988</item>
+		<item>l</item><item>0.0</item><item>-29.729975</item>
+		<item>Z</item>
+	<item>@id/svgobject_rect</item>
+		<item>@id/svgattr_fill</item><item>#00008000</item>
+		<item>@id/svgattr_fill_opacity</item><item>1.0</item>
+		<item>@id/svgattr_frame</item>
+		<item><!--x-->9.177621</item>
+		<item><!--y-->9.055501</item>
+		<item><!--width-->6.4801283</item>
+		<item><!--height-->29.73</item>
+</array></resources>

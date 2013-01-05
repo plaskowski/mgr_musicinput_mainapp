@@ -50,7 +50,7 @@ public class SvgParser {
 	
 	public SvgImage parse(XmlPullParser xmlParser) throws XmlPullParserException, IOException, SvgFormatException {
 		try {
-			SvgImage result = new SvgImage();
+			SvgImage result = null;
 			int eventType = xmlParser.getEventType();
 	        while (eventType != XmlPullParser.END_DOCUMENT) {
 	         if(eventType == XmlPullParser.START_TAG) {
@@ -60,8 +60,11 @@ public class SvgParser {
 	        		 String name = xmlParser.getName();
 		             if(TAG_ROOT.equals(name)) {
 		            	 assertAttrsPresence(xmlParser, ROOT_ATTR_WIDTH, ROOT_ATTR_HEIGHT);
-		            	 result.width = parseFloat(attrValue(xmlParser, ROOT_ATTR_WIDTH));
-		            	 result.height =  parseFloat(attrValue(xmlParser, ROOT_ATTR_HEIGHT));
+		            	 result = new SvgImage(
+	            			 parseFloat(attrValue(xmlParser, ROOT_ATTR_WIDTH)),
+	            			 parseFloat(attrValue(xmlParser, ROOT_ATTR_HEIGHT)),
+	            			 null
+		            	 );
 		             } else if(TAG_DEFS.equals(name)) {
 	        			 log.v("Ignoring <defs> subtree");
 		            	 int startTagDepth = xmlParser.getDepth();
@@ -383,7 +386,7 @@ public class SvgParser {
 				if(exponent != null) {
 					value *= Math.pow(10, parseFloat(exponent));
 				}
-				return new Float(value);
+				return Float.valueOf(value);
 			} else {
 				return defaultValue;
 			}

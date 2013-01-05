@@ -82,7 +82,7 @@ public class EnhancedSvgImage extends SvgImage {
 	}
 
 	public EnhancedSvgImage(SvgImage source) throws InvalidMetaException {
-		super(source.getWidth(), source.getHeight());
+		super(source.getWidth(), source.getHeight(), null);
 		
 		RectF clipArea = null;
 		for (int i = 0; i < source.objects.size(); i++) {

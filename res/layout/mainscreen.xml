@@ -33,7 +33,7 @@
 	        android:shadowRadius="1"
 	        android:drawablePadding="10dp"
 	        custom:extendedDrawableLeft="@style/SvgCompoundDrawable"
-	        custom:svgResource="@xml/icon_add" 
+	        custom:svgResource="@array/svg_icon_add" 
 	        custom:paintsSetup="@array/main_shadow_inverted"
 	        custom:intrinsicWidth="28dip"
 	        custom:intrinsicHeight="28dip"

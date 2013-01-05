@@ -51,9 +51,9 @@ public class TimeStepDialog extends DialogFragment {
 	
 	private static void setupResources(Context ctx) throws LoadingSvgException {
 		if(commonTime == null)
-			commonTime = NotePartFactory.prepareAdujstableImage(ctx, R.xml.timesignature_commontime, false);		
+			commonTime = NotePartFactory.prepareAdujstableImage(ctx, R.array.svg_timesignature_commontime, false);		
 		if(cutCommonTime == null)
-			cutCommonTime = NotePartFactory.prepareAdujstableImage(ctx, R.xml.timesignature_cutcommontime, false);		
+			cutCommonTime = NotePartFactory.prepareAdujstableImage(ctx, R.array.svg_timesignature_cutcommontime, false);		
 	}
 
 	public static TimeStepDialog newInstance(Context ctx, TimeStep value) throws LoadingSvgException {

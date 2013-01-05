@@ -1,0 +1,34 @@
+<?xml version="1.0" ?><resources><array name="svg_pause_quater">
+	<item><!--width-->744.0945</item>
+	<item><!--height-->1052.3622</item>
+	<item>@id/svgobject_rect</item>
+		<item>@id/svgattr_fill</item><item>#00ff0000</item>
+		<item>@id/svgattr_fill_opacity</item><item>0.19607843</item>
+		<item>@id/svgattr_frame</item>
+		<item><!--x-->114.44522</item>
+		<item><!--y-->238.89053</item>
+		<item><!--width-->18.373108</item>
+		<item><!--height-->55.837494</item>
+	<item>@id/svgobject_path</item>
+		<item>@id/svgattr_stroke</item><item>#000ff0ff</item>
+		<item>@id/svgattr_stroke_opacity</item><item>0.5098038</item>
+		<item>@id/svgattr_pathspec</item><item>2</item>
+		<item>M</item><item>54.730297</item><item>242.41856</item>
+		<item>l</item><item>179.37592</item><item>0.0</item>
+	<item>@id/svgobject_path</item>
+		<item>@id/svgattr_stroke</item><item>#000ff0ff</item>
+		<item>@id/svgattr_stroke_opacity</item><item>0.64705884</item>
+		<item>@id/svgattr_pathspec</item><item>2</item>
+		<item>M</item><item>50.433407</item><item>295.24277</item>
+		<item>l</item><item>179.37592</item><item>0.0</item>
+	<item>@id/svgobject_path</item>
+		<item>@id/svgattr_pathspec</item><item>8</item>
+		<item>M</item><item>127.46958</item><item>294.40063</item>
+		<item>c</item><item>-11.00097</item><item>-1.94175</item><item>-18.11845</item><item>-14.23631</item><item>-6.79408</item><item>-18.1198</item>
+		<item>c</item><item>-4.20554</item><item>-4.20554</item><item>-8.25006</item><item>-11.81015</item><item>-4.20554</item><item>-15.85466</item>
+		<item>c</item><item>4.04451</item><item>-4.04452</item><item>7.11883</item><item>-10.02942</item><item>0.9702</item><item>-19.4134</item>
+		<item>c</item><item>7.76563</item><item>2.58854</item><item>10.35417</item><item>11.00097</item><item>10.35417</item><item>17.14825</item>
+		<item>c</item><item>0.0</item><item>6.14729</item><item>-10.35417</item><item>12.29457</item><item>4.53029</item><item>22.3267</item>
+		<item>c</item><item>-9.06193</item><item>0.0</item><item>-14.23902</item><item>4.52893</item><item>-4.85504</item><item>13.91291</item>
+		<item>Z</item>
+</array></resources>

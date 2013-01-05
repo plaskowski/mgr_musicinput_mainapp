@@ -2747,12 +2747,12 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		qActionsView = (QuickActionsView) findViewById(R.id.EDIT_quickactions);
 		qActionsView.setVisibility(View.INVISIBLE);
 		possibleActions = new IndexAwareAction[] {
-			new TogglePauseDot(R.xml.button_dot),
-			new ToggleJoinArcEnd(R.xml.button_joinarc_left),
-			new ToggleNoteGroupEnd(R.xml.button_notegroup_left),
-			new ToggleNoteDot(R.xml.button_dot),
-			new RemoveElementAction(R.xml.button_trash),
-			new SvgIconAction(R.xml.button_tonemodifiers) {
+			new TogglePauseDot(R.array.svg_button_dot),
+			new ToggleJoinArcEnd(R.array.svg_button_joinarc_left),
+			new ToggleNoteGroupEnd(R.array.svg_button_notegroup_left),
+			new ToggleNoteDot(R.array.svg_button_dot),
+			new RemoveElementAction(R.array.svg_button_trash),
+			new SvgIconAction(R.array.svg_button_tonemodifiers) {
 				{ 	this.mPostHide = false; }
 				@Override
 				protected void perform(int elementIndex) {
@@ -2768,16 +2768,16 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 					return view.model().getElementSpec().getType().equals(ElementType.NOTE);
 				}
 			},
-			new ToggleNoteGroup(R.xml.button_notegroup_right),
-			new ToggleJoinArc(R.xml.button_joinarc_right)
+			new ToggleNoteGroup(R.array.svg_button_notegroup_right),
+			new ToggleJoinArc(R.array.svg_button_joinarc_right)
 		};
 		modifiersActions = new IndexAwareAction[] {
-			new ToggleNoteModifier(R.xml.flat, NoteModifier.FLAT),
-			new ToggleNoteModifier(R.xml.sharp_online, NoteModifier.SHARP),
-			new ToggleNoteModifier(R.xml.natural_online, NoteModifier.NATURAL)
+			new ToggleNoteModifier(R.array.svg_flat, NoteModifier.FLAT),
+			new ToggleNoteModifier(R.array.svg_sharp_online, NoteModifier.SHARP),
+			new ToggleNoteModifier(R.array.svg_natural_online, NoteModifier.NATURAL)
 		};
 		ArrayList<IndexAwareAction> insertActions = new ArrayList<EditActivity.IndexAwareAction>();
-		insertActions.add(new SvgIconAction(R.xml.button_timedivider) {
+		insertActions.add(new SvgIconAction(R.array.svg_button_timedivider) {
 			@Override
 			protected void perform(int elementIndex) {
 				forceCloseTime(elementIndex);
@@ -2794,7 +2794,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				(rightToIA-1 < 0 || elementViews.get(rightToIA-1).model().getElementSpec().getType() != ElementType.TIMES_DIVIDER);
 			}
 		});
-		insertActions.add(new AlterTimeStep(R.xml.button_timestep));
+		insertActions.add(new AlterTimeStep(R.array.svg_button_timestep));
 		TypedArray iconsMapping = getResources().obtainTypedArray(R.array.insertPauseIcons);
 		if(iconsMapping.length() < minPossibleValue) {
 			log.e("InsertPause svg icons mapping doesn't cover whole range", null);
@@ -2808,7 +2808,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		iconsMapping.recycle();
 		
 		timedividerActions = new IndexAwareAction[] {
-			new ToggleTimebarMark(R.xml.button_timebar_endrepeat, AdditionalMark.END_REPEAT) {
+			new ToggleTimebarMark(R.array.svg_button_timebar_endrepeat, AdditionalMark.END_REPEAT) {
 				@Override
 				protected int getTimeIndex(int elementIndex) {
 					return findTimeToInsertTo(elementIndex);
@@ -2818,19 +2818,19 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 					return super.isValidOn(elementIndex) && getTimeIndex(elementIndex) >= 0;
 				}
 			},
-			new AlterTimeStep(R.xml.qab_button_timestep) {
+			new AlterTimeStep(R.array.svg_qab_button_timestep) {
 				@Override
 				protected int getTimeIndex(int elementIndex) {
 					return findTime(elementIndex);
 				}
 			},
-			new ToggleTimebarMark(R.xml.button_timebar_beginrepeat, AdditionalMark.BEGIN_REPEAT) {
+			new ToggleTimebarMark(R.array.svg_button_timebar_beginrepeat, AdditionalMark.BEGIN_REPEAT) {
 				@Override
 				protected int getTimeIndex(int elementIndex) {
 					return findTime(elementIndex);
 				}
 			},
-			new DeleteTimeBar(R.xml.button_trash)
+			new DeleteTimeBar(R.array.svg_button_trash)
 		};
 	}
 	private View.OnTouchListener quickActionsDismiss = new OnTouchListener() {

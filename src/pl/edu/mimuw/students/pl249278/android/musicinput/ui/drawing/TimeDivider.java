@@ -33,13 +33,13 @@ public class TimeDivider extends SheetAlignedElement {
 		boolean beginRepeat = rightTime != null && rightTime.hasMark(AdditionalMark.BEGIN_REPEAT);
 		int xmlId;
 		if(beginRepeat && endRepeat) {
-			xmlId = R.xml.timebar_both_repeat;
+			xmlId = R.array.svg_timebar_both_repeat;
 		} else if(beginRepeat) {
-			xmlId = R.xml.timebar_begin_repeat;
+			xmlId = R.array.svg_timebar_begin_repeat;
 		} else if(endRepeat) {
-			xmlId = R.xml.timebar_end_repeat;
+			xmlId = R.array.svg_timebar_end_repeat;
 		} else {
-			xmlId = R.xml.timebar_single;
+			xmlId = R.array.svg_timebar_single;
 		}
 		try {
 			rightParts.add(new SheetAlignedImage(NotePartFactory.prepareAdujstableImage(
@@ -66,14 +66,14 @@ public class TimeDivider extends SheetAlignedElement {
 					metrum = new SimpleSheetElement(
 						NotePartFactory.prepareAdujstableImage(
 							ctx, 
-							R.xml.timesignature_commontime, 
+							R.array.svg_timesignature_commontime, 
 							false
 					));
 				} else if(rTS == TimeStep.cutCommonTime) {
 					metrum = new SimpleSheetElement(
 						NotePartFactory.prepareAdujstableImage(
 							ctx, 
-							R.xml.timesignature_cutcommontime, 
+							R.array.svg_timesignature_cutcommontime, 
 							false
 					));
 				} else {

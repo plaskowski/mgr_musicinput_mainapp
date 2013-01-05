@@ -18,6 +18,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.Enhanced
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteEnding;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.NoteHead;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
+import pl.edu.mimuw.students.pl249278.android.svg.SvgInflater;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgParser;
 import android.content.Context;
 import android.content.res.Resources;
@@ -57,12 +58,8 @@ public class NotePartFactory {
 	private static NoteHead prepareHeadImage(Context context, int noteLength, int anchorType, int orient) throws NoteDescriptionLoadingException {
 		int resId = headMapping.get(noteLength)[mappingIndex(orient, anchorType)];
 		if(noteHeads.get(resId) == null) {
-			SvgParser parser = new SvgParser();
-			XmlPullParser xmlParser = context.getResources().getXml(resId);
-			SvgImage svgImg;
 			try {
-				svgImg = parser.parse(xmlParser);
-				noteHeads.put(resId, new NoteHead(svgImg, hasEnding(noteLength)));
+				noteHeads.put(resId, new NoteHead(parseSvgImage(context.getResources(), resId), hasEnding(noteLength)));
 			} catch (Exception e) {
 				throw new NoteDescriptionLoadingException(e, noteLength, anchorType, orient);
 			}
@@ -86,12 +83,8 @@ public class NotePartFactory {
 	private static NoteEnding prepareEnding(Context context, int length, int orientation, int anchorType) throws NoteDescriptionLoadingException {
 		int resId = endingMapping.get(length)[mappingIndex(orientation, anchorType)];
 		if(noteEndings.get(resId) == null) {
-			SvgParser parser = new SvgParser();
-			XmlPullParser xmlParser = context.getResources().getXml(resId);
-			SvgImage svgImg;
 			try {
-				svgImg = parser.parse(xmlParser);
-				noteEndings.put(resId, new NoteEnding(svgImg));
+				noteEndings.put(resId, new NoteEnding(parseSvgImage(context.getResources(), resId)));
 			} catch (Exception e) {
 				throw new NoteDescriptionLoadingException(e, length, anchorType, orientation);
 			}
@@ -115,12 +108,8 @@ public class NotePartFactory {
 	
 	public static AdjustableSizeImage prepareAdujstableImage(Context context, int xmlResId, Boolean relativeIMarkers) throws LoadingSvgException {
 		if(adjustableImages.get(xmlResId) == null) {
-			SvgParser parser = new SvgParser();
-			XmlPullParser xmlParser = context.getResources().getXml(xmlResId);
-			SvgImage svgImg;
 			try {
-				svgImg = parser.parse(xmlParser);
-				adjustableImages.put(xmlResId, new AdjustableSizeImage(svgImg, relativeIMarkers));
+				adjustableImages.put(xmlResId, new AdjustableSizeImage(parseSvgImage(context.getResources(), xmlResId), relativeIMarkers));
 			} catch (Exception e) {
 				throw new LoadingSvgException(xmlResId, e);
 			}
@@ -128,17 +117,32 @@ public class NotePartFactory {
 		return adjustableImages.get(xmlResId);
 	}
 	
+	private static SvgImage parseSvgImage(Resources res, int resId) throws LoadingSvgException {
+		if(res.getResourceTypeName(resId).equals(res.getResourceTypeName(pl.edu.mimuw.students.pl249278.android.svg.R.array.svggen_dummy_arr))) {
+			SvgInflater inflater = new SvgInflater();
+			return inflater.inflate(res, resId);
+		}
+		return parseSvgImageFromXml(res, resId);
+	}
+
+	private static SvgImage parseSvgImageFromXml(Resources res, int xmlResId)
+			throws LoadingSvgException {
+		SvgParser parser = new SvgParser();
+		XmlPullParser xmlParser = res.getXml(xmlResId);
+		try {
+			return parser.parse(xmlParser);
+		} catch (Exception e) {
+			throw new LoadingSvgException(xmlResId, e);
+		}
+	}
+	
 	public static SvgImage prepareSvgImage(Context context, int svgResId) throws LoadingSvgException {
 		return prepareSvgImage(context.getResources(), svgResId);
 	}
 	public static SvgImage prepareSvgImage(Resources resources, int svgResId) throws LoadingSvgException {
 		if(svgImages.get(svgResId) == null) {
-			SvgParser parser = new SvgParser();
 			try {
-				XmlPullParser xmlParser = resources.getXml(svgResId);
-				SvgImage svgImg;
-				svgImg = parser.parse(xmlParser);
-				svgImages.put(svgResId, new EnhancedSvgImage(svgImg));
+				svgImages.put(svgResId, new EnhancedSvgImage(parseSvgImage(resources, svgResId)));
 			} catch (Exception e) {
 				throw new LoadingSvgException(svgResId, e);
 			}
@@ -161,84 +165,84 @@ public class NotePartFactory {
 	private static SparseArray<SvgImage> svgImages = new SparseArray<SvgImage>();
 	
 	static {
-		clefMapping.put(NoteConstants.Clef.VIOLIN, R.xml.key_violin);
-		clefMapping.put(NoteConstants.Clef.ALTO, R.xml.clef_alto);
-		clefMapping.put(NoteConstants.Clef.BASS, R.xml.clef_bass);
+		clefMapping.put(NoteConstants.Clef.VIOLIN, R.array.svg_key_violin);
+		clefMapping.put(NoteConstants.Clef.ALTO, R.array.svg_clef_alto);
+		clefMapping.put(NoteConstants.Clef.BASS, R.array.svg_clef_bass);
 		
-		pauseMapping.put(NoteConstants.LEN_FULLNOTE, R.xml.pause_whole);
-		pauseMapping.put(NoteConstants.LEN_HALFNOTE, R.xml.pause_half);
-		pauseMapping.put(NoteConstants.LEN_QUATERNOTE, R.xml.pause_quater);
-		pauseMapping.put(NoteConstants.LEN_EIGHTNOTE, R.xml.pause_eight);
-		pauseMapping.put(NoteConstants.LEN_SIXTEENNOTE, R.xml.pause_sixteen);
-		pauseMapping.put(NoteConstants.LEN_SIXTEENNOTE+1, R.xml.pause_32);
+		pauseMapping.put(NoteConstants.LEN_FULLNOTE, R.array.svg_pause_whole);
+		pauseMapping.put(NoteConstants.LEN_HALFNOTE, R.array.svg_pause_half);
+		pauseMapping.put(NoteConstants.LEN_QUATERNOTE, R.array.svg_pause_quater);
+		pauseMapping.put(NoteConstants.LEN_EIGHTNOTE, R.array.svg_pause_eight);
+		pauseMapping.put(NoteConstants.LEN_SIXTEENNOTE, R.array.svg_pause_sixteen);
+		pauseMapping.put(NoteConstants.LEN_SIXTEENNOTE+1, R.array.svg_pause_32);
 		
 		declare(modifiersMapping, ElementModifier.SHARP,
 			anchor(ANCHOR_TYPE_LINE,
-				anyOrient(R.xml.sharp_online)
+				anyOrient(R.array.svg_sharp_online)
 			),
 			anchor(ANCHOR_TYPE_LINESPACE,
-				anyOrient(R.xml.sharp_onspace)
+				anyOrient(R.array.svg_sharp_onspace)
 			)
 		);
 		declare(modifiersMapping, ElementModifier.FLAT,
 			anyAnchor(
-				anyOrient(R.xml.flat)
+				anyOrient(R.array.svg_flat)
 			)
 		);
 		declare(modifiersMapping, ElementModifier.DOT,
 			anchor(ANCHOR_TYPE_LINE,
-				anyOrient(R.xml.dot_online)
+				anyOrient(R.array.svg_dot_online)
 			),
 			anchor(ANCHOR_TYPE_LINESPACE,
-				anyOrient(R.xml.dot_onspace)
+				anyOrient(R.array.svg_dot_onspace)
 			)
 		);
 		declare(modifiersMapping, ElementModifier.NATURAL,
 			anyAnchor(
-				anyOrient(R.xml.natural_online)
+				anyOrient(R.array.svg_natural_online)
 			)
 		);
 		declare(headMapping, 0, 
 			anyAnchor(
-				anyOrient(R.xml.whole)
+				anyOrient(R.array.svg_whole)
 			)
 		);
 		declare(headMapping, 1, 
 			anchor(ANCHOR_TYPE_LINE,
-				normal(R.xml.half_online),
-				updown(R.xml.half_online_updown)
+				normal(R.array.svg_half_online),
+				updown(R.array.svg_half_online_updown)
 			),
 			anchor(ANCHOR_TYPE_LINESPACE,
-				normal(R.xml.half_onspace),
-				updown(R.xml.half_onspaceupdown)
+				normal(R.array.svg_half_onspace),
+				updown(R.array.svg_half_onspaceupdown)
 			)
 		);
 		declare(headMapping, lengths(2, 3, 4), 
 			anchor(ANCHOR_TYPE_LINE,
-				normal(R.xml.quater_online),
-				updown(R.xml.quater_online_updown)
+				normal(R.array.svg_quater_online),
+				updown(R.array.svg_quater_online_updown)
 			),
 			anchor(ANCHOR_TYPE_LINESPACE,
-				normal(R.xml.quater_onspace),
-				updown(R.xml.quater_onspace_updown)
+				normal(R.array.svg_quater_onspace),
+				updown(R.array.svg_quater_onspace_updown)
 			)
 		);
 		declare(endingMapping, lengths(1, 2),
 			anyAnchor(
-				normal(R.xml.straight_ending),
-				updown(R.xml.straight_ending_upsd)
+				normal(R.array.svg_straight_ending),
+				updown(R.array.svg_straight_ending_upsd)
 			)
 		);
 		declare(endingMapping, 3,
 			anyAnchor(
-				normal(R.xml.eight_ending),
-				updown(R.xml.eight_ending_updown)
+				normal(R.array.svg_eight_ending),
+				updown(R.array.svg_eight_ending_updown)
 			)
 		);
 		declare(endingMapping, 4,
 			anyAnchor(
-				normal(R.xml.sixteen_ending),
-				updown(R.xml.sixteen_ending_updown)
+				normal(R.array.svg_sixteen_ending),
+				updown(R.array.svg_sixteen_ending_updown)
 			)
 		);
 	}

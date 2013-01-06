@@ -10,11 +10,11 @@
 	<integer name="minNotePossibleValue">4</integer>
 	
 	<array name="insertPauseIcons">
-	    <item>@xml/button_pause_whole</item>
-	    <item>@xml/button_pause_half</item>
-	    <item>@xml/pause_quater</item>
-   	    <item>@xml/button_pause_eight</item>
-	    <item>@xml/pause_sixteen</item>
+	    <item>@array/svg_button_pause_whole</item>
+	    <item>@array/svg_button_pause_half</item>
+	    <item>@array/svg_pause_quater</item>
+   	    <item>@array/svg_button_pause_eight</item>
+	    <item>@array/svg_pause_sixteen</item>
    	</array>
 	<integer-array name="pauseDotPositions">
 	    <item>3</item>

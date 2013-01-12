@@ -184,11 +184,16 @@ public class EnhancedSvgImage extends SvgImage {
 	}
 
 	private boolean isStraightLine(SvgPath obj) {
-		if(obj.commandsCount() != 2) return false;
 		MemorySaavyIterator<SvgPathCommand> it = obj.getIterator();
 		SvgPathCommand first = new SvgPathCommand(), second = new SvgPathCommand();
+		if(!it.hasNext())
+			return false;
 		it.readNext(first);
+		if(!it.hasNext())
+			return false;
 		it.readNext(second);
+		if(it.hasNext())
+			return false;
 		return ( 
 		(first.cmd == PATH_CMD_MOVETO || first.cmd == PATH_CMD_RMOVETO)
 		&& (

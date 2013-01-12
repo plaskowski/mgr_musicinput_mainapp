@@ -91,9 +91,8 @@ public class ScoreThumbnailDrawable extends Drawable implements Drawable.Callbac
 		if(setup != null && setup.width == bounds.width() && setup.height == bounds.height()) {
 			if(paint == null) {
 				paint = PaintBuilder.init().style(Style.FILL).antialias(true).build();
-			} else {
-				paint.setColor(color.getColorForState(getState(), 0));
 			}
+			paint.setColor(color.getColorForState(getState(), 0));
 			paint.setAlpha(currentAlpha);
 			paint.setColorFilter(currentColorFilter);
 			drawElements(setup.elements, setup.elX, setup.elY, canvas, paint);

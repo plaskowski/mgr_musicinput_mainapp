@@ -121,6 +121,7 @@ public class ScoreThumbnailDrawable extends Drawable implements Drawable.Callbac
 						if(task == pendingTask) {
 							setup = value;
 							pendingTask = null;
+							setLoadingIcon(null);
 							invalidateSelf();
 						}
 					}
@@ -430,7 +431,8 @@ public class ScoreThumbnailDrawable extends Drawable implements Drawable.Callbac
 			this.loadingIcon.setCallback(null);
 		}
 		this.loadingIcon = loadingIcon;
-		loadingIcon.setCallback(this);
+		if(this.loadingIcon != null)
+			loadingIcon.setCallback(this);
 	}
 
 	@Override

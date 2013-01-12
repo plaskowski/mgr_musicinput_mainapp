@@ -2168,14 +2168,23 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	};
 	
 	private abstract class SvgIconAction extends IndexAwareAction {
+		private int svgResId;
 		private SvgImage icon;
 		
 		public SvgIconAction(int svgResId) throws LoadingSvgException {
-			icon = NotePartFactory.prepareSvgImage(EditActivity.this, svgResId);
+			this.svgResId = svgResId;
 		}
 		
 		@Override
 		public SvgImage icon() {
+			if(icon == null) {
+				try {
+					icon = NotePartFactory.prepareSvgImage(EditActivity.this, svgResId);
+				} catch(LoadingSvgException e) {
+					log.w("Failed to load action icon", e);
+					icon = new SvgImage(0, 0, null);
+				}
+			}
 			return icon;
 		}
 	};

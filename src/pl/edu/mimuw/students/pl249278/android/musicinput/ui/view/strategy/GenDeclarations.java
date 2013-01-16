@@ -165,7 +165,15 @@ class GenDeclarations {
 		},
 		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TableRow_ExtendedBackground"
 	)
-	static Class<? extends View> CUSTOM18; 
+	static Class<? extends View> CUSTOM18;
+	@JoinClasses(
+		superClass = LinearLayout.class,
+		ancestors = {
+			CacheDrawStrategy.class,
+		},
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_CacheDraw"
+	)
+	static Class<? extends View> CUSTOM19;
 }
 
 /** a stub class, lets a strategy call super.onLayout() */

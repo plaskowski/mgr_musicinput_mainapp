@@ -7,8 +7,8 @@
 		<item>@id/svgattr_frame</item>
 		<item><!--x-->30.212317</item>
 		<item><!--y-->-1.4432364</item>
-		<item><!--width-->46.497093</item>
-		<item><!--height-->198.91565</item>
+		<item><!--width-->40.256935</item>
+		<item><!--height-->179.32655</item>
 	<item>@id/svgobject_path</item>
 		<item>@id/svgattr_stroke</item><item>#000000ff</item>
 		<item>@id/svgattr_stroke_opacity</item><item>0.49019608</item>
@@ -17,35 +17,29 @@
 		<item>l</item><item>75.30687</item><item>0.0</item>
 	<item>@id/svgobject_path</item>
 		<item>@id/svgattr_fill</item><item>#00000000</item>
-		<item>@id/svgattr_pathspec</item><item>29</item>
+		<item>@id/svgattr_pathspec</item><item>23</item>
 		<item>M</item><item>31.151255</item><item>0.5992682</item>
 		<item>l</item><item>0.0</item><item>32.1875</item>
 		<item>l</item><item>0.0</item><item>61.65625</item>
 		<item>l</item><item>0.0</item><item>32.187504</item>
 		<item>l</item><item>6.125</item><item>0.0</item>
 		<item>l</item><item>0.0</item><item>-32.187504</item>
-		<item>l</item><item>0.0</item><item>-8.15625</item>
-		<item>c</item><item>0.50148</item><item>0.144311</item><item>9.40566</item><item>5.150581</item><item>13.0625</item><item>8.96875</item>
-		<item>c</item><item>6.95738</item><item>7.264312</item><item>13.52513</item><item>15.836492</item><item>15.96875</item><item>25.593752</item>
-		<item>c</item><item>2.66873</item><item>10.65614</item><item>0.37484</item><item>20.6949</item><item>-2.1875</item><item>32.875</item>
-		<item>c</item><item>-1.71197</item><item>8.13788</item><item>-16.84375</item><item>43.78125</item><item>-16.84375</item><item>43.78125</item>
-		<item>c</item><item>0.0</item><item>0.0</item><item>9.29633</item><item>-12.22791</item><item>15.8125</item><item>-25.4375</item>
-		<item>c</item><item>3.25809</item><item>-6.6048</item><item>11.04864</item><item>-23.85579</item><item>12.1875</item><item>-31.40625</item>
-		<item>c</item><item>1.13885</item><item>-7.55046</item><item>1.75966</item><item>-15.29091</item><item>0.09375</item><item>-22.65625</item>
-		<item>c</item><item>-1.00713</item><item>-4.45288</item><item>-2.56639</item><item>-8.78325</item><item>-4.46875</item><item>-12.96875</item>
-		<item>c</item><item>3.85768</item><item>-8.010994</item><item>2.87021</item><item>-18.466452</item><item>1.15625</item><item>-27.218752</item>
-		<item>c</item><item>-1.67716</item><item>-8.564443</item><item>-5.07122</item><item>-13.437706</item><item>-11.53125</item><item>-22.84375</item>
-		<item>c</item><item>-5.55912</item><item>-8.094274</item><item>-15.3958</item><item>-12.915378</item><item>-20.21875</item><item>-21.46875</item>
-		<item>c</item><item>-2.79669</item><item>-4.959864</item><item>-3.18868</item><item>-25.918404</item><item>-4.78125</item><item>-32.90625</item>
+		<item>l</item><item>0.0</item><item>-2.883338</item>
+		<item>c</item><item>12.888154</item><item>20.8241</item><item>21.28397</item><item>31.20111</item><item>24.69894</item><item>41.9181</item>
+		<item>c</item><item>3.414971</item><item>10.717</item><item>2.143452</item><item>20.98904</item><item>-9.332123</item><item>43.17312</item>
+		<item>c</item><item>5.164484</item><item>-4.50028</item><item>7.548903</item><item>-8.21756</item><item>10.217284</item><item>-12.8383</item>
+		<item>c</item><item>2.668381</item><item>-4.62074</item><item>5.026166</item><item>-9.24739</item><item>6.008926</item><item>-14.33426</item>
+		<item>c</item><item>1.215</item><item>-6.28896</item><item>0.611799</item><item>-12.87253</item><item>-0.293209</item><item>-19.21353</item>
+		<item>c</item><item>-0.702624</item><item>-4.92298</item><item>-2.196171</item><item>-8.00437</item><item>-3.954418</item><item>-14.38498</item>
+		<item>C</item><item>70.89681</item><item>98.79377</item><item>62.78254</item><item>71.4876</item><item>53.26547</item><item>56.85536</item>
+		<item>C</item><item>39.190662</item><item>32.067867</item><item>39.55983</item><item>27.620983</item><item>35.526257</item><item>0.5992682</item>
 		<item>l</item><item>-4.375</item><item>0.0</item>
 		<item>Z</item>
-		<item>m</item><item>6.78125</item><item>53.875</item>
-		<item>c</item><item>1.8065</item><item>0.927101</item><item>9.10228</item><item>5.144022</item><item>12.40625</item><item>8.59375</item>
-		<item>c</item><item>6.95738</item><item>7.264314</item><item>10.54967</item><item>10.938264</item><item>13.75</item><item>17.6875</item>
-		<item>c</item><item>3.48105</item><item>7.341256</item><item>4.38331</item><item>7.255579</item><item>5.59375</item><item>21.781252</item>
-		<item>c</item><item>-2.6469</item><item>-5.356971</item><item>-5.80381</item><item>-10.49372</item><item>-9.15625</item><item>-15.375002</item>
-		<item>c</item><item>-5.55912</item><item>-8.094274</item><item>-15.3958</item><item>-12.915378</item><item>-20.21875</item><item>-21.46875</item>
-		<item>c</item><item>-1.08204</item><item>-1.918969</item><item>-1.80106</item><item>-6.240752</item><item>-2.375</item><item>-11.21875</item>
+		<item>m</item><item>6.226207</item><item>51.654827</item>
+		<item>l</item><item>16.954344</item><item>29.92416</item>
+		<item>c</item><item>5.460935</item><item>9.638467</item><item>10.12717</item><item>19.186304</item><item>9.0711</item><item>31.201574</item>
+		<item>L</item><item>37.57004</item><item>65.693016</item>
+		<item>L</item><item>37.37746</item><item>52.254093</item>
 		<item>Z</item>
 	<item>@id/svgobject_path</item>
 		<item>@id/svgattr_stroke</item><item>#0000ff00</item>

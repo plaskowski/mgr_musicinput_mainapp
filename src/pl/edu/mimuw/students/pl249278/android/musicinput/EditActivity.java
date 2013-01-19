@@ -2803,7 +2803,6 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				(rightToIA-1 < 0 || elementViews.get(rightToIA-1).model().getElementSpec().getType() != ElementType.TIMES_DIVIDER);
 			}
 		});
-		insertActions.add(new AlterTimeStep(R.array.svg_button_timestep));
 		TypedArray iconsMapping = getResources().obtainTypedArray(R.array.insertPauseIcons);
 		if(iconsMapping.length() < minPossibleValue) {
 			log.e("InsertPause svg icons mapping doesn't cover whole range", null);

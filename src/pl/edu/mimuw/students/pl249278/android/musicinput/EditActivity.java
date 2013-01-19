@@ -137,6 +137,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		normalPaint.setAntiAlias(true);
 		noteHighlightPaint.setAntiAlias(true);
 		fakePausePaint.setAntiAlias(true);
+		fakePausePaint.setColor(Color.WHITE);
 	}
 	
 	private ViewGroup sheet;
@@ -1972,7 +1973,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		int noteShadowRadius = (int) (noteShadowFactor * sheetParams.getScale());
 		NOTE_DRAW_PADDING = noteShadowRadius*2;
 		noteHighlightPaint.setShadowLayer(noteShadowRadius, noteShadowRadius/2, noteShadowRadius, Color.BLACK);		
-		fakePausePaint.setMaskFilter(new BlurMaskFilter(fakePauseEffectRadius*sheetParams.getScale(), Blur.OUTER));
+		fakePausePaint.setShadowLayer(fakePauseEffectRadius/2, 0, 0, Color.BLACK);
 		NOTE_DRAW_PADDING = (int) Math.max(fakePauseEffectRadius*sheetParams.getScale(), NOTE_DRAW_PADDING);
 		delta = (int) (sheetParams.getScale()*noteMinDistToIA);
 		log.d("updateScaleFactor(%f): delta = %d", newScaleFactor, delta);

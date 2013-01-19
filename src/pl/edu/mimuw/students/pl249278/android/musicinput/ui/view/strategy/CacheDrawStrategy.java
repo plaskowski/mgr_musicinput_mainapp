@@ -14,11 +14,6 @@ public class CacheDrawStrategy extends View {
 		setDrawingCacheEnabled(true);
 	}
 
-	public CacheDrawStrategy(Context context) {
-		super(context);
-		setDrawingCacheEnabled(true);
-	}
-	
     private static Paint mPaint = new Paint();
 	private boolean inCacheContext = false;
     

@@ -193,7 +193,7 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 		updateKeySignatureModels();
 		ViewUtils.addActivityOnLayout(this, new OnLayoutListener() {
 			@Override
-			public void onFirstLayoutPassed() {
+			public void onLayoutPassed() {
 				scrollToSelected((ViewGroup) findViewById(R.id.NEWSCORE_clefs_container));
 				scrollToSelected((ViewGroup) findViewById(R.id.NEWSCORE_keys_container), 0.5f, -0.5f);
 				scrollToSelected((ViewGroup) findViewById(R.id.NEWSCORE_meter_container));
@@ -288,7 +288,7 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
         	
         	ViewUtils.addActivityOnLayout(this, new OnLayoutListener() {
 				@Override
-				public void onFirstLayoutPassed() {
+				public void onLayoutPassed() {
 					View button = findViewById(R.id.NEWSCORE_okbutton);
 					Rect rect = new Rect(0, 0, button.getWidth(), button.getHeight());
 					button.requestRectangleOnScreen(

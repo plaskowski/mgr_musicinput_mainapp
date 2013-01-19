@@ -534,7 +534,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		setupListeners();
 		ViewUtils.addActivityOnLayout(this, new OnLayoutListener() {
 			@Override
-			public void onFirstLayoutPassed() {
+			public void onLayoutPassed() {
 				log.v("onGlobalLayout() >> HSCROLL %dx%d", hscroll.getWidth(), hscroll.getHeight());
 				onContainerResize(hscroll.getWidth(), hscroll.getHeight());
 			}

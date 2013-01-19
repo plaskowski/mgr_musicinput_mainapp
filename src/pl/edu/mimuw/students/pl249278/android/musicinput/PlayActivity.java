@@ -797,10 +797,10 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	
 	/** fired when model was loaded, views created so now we need to position them. */
 	@Override
-	public void onFirstLayoutPassed() {
+	public void onLayoutPassed() {
 		int visibleHeight = hscroll.getHeight();
-		sheet.setVisibility(View.VISIBLE);
-		findViewById(R.id.PLAY_barAnimator).setVisibility(View.VISIBLE);
+		sheet.setVisibility(View.INVISIBLE);
+		findViewById(R.id.PLAY_barAnimator).setVisibility(View.INVISIBLE);
 		
 		((InterceptsScaleGesture) findViewById(R.id.PLAY_scaleInterceptor)).setOnScaleListener(scaleListener);
 		if(!isScaleValid) {
@@ -831,6 +831,13 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		fixLine0VisibleY((visibleHeight/2) - linesHalf);
 		listener.seek(listenerSavedPosition);
 		((LazyScrolling) hscroll).postLayoutScrollTo(listener.computeHorizontalScroll(), 0);
+		ViewUtils.addActivityOnLayout(this, new OnLayoutListener() {
+			@Override
+			public void onLayoutPassed() {
+				sheet.setVisibility(View.VISIBLE);
+				findViewById(R.id.PLAY_barAnimator).setVisibility(View.VISIBLE);
+			}
+		});
 	}
 
 	@Override

@@ -7,7 +7,7 @@ import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 
 public class ViewUtils {
 	public static interface OnLayoutListener {
-		void onFirstLayoutPassed();
+		void onLayoutPassed();
 	}
 	
 	public static void addActivityOnLayout(Activity activity, OnLayoutListener listener) {
@@ -27,7 +27,7 @@ public class ViewUtils {
 		@Override
 		public void onGlobalLayout() {
 			contextView.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-			listener.onFirstLayoutPassed();
+			listener.onLayoutPassed();
 			contextView = null;
 			listener = null;
 		}

@@ -16,41 +16,38 @@
 		<item>M</item><item>19.066217</item><item>195.49695</item>
 		<item>l</item><item>75.30687</item><item>0.0</item>
 	<item>@id/svgobject_path</item>
-		<item>@id/svgattr_fill</item><item>#00000000</item>
-		<item>@id/svgattr_pathspec</item><item>29</item>
-		<item>M</item><item>36.005795</item><item>196.51254</item>
-		<item>l</item><item>0.0</item><item>-32.1875</item>
-		<item>l</item><item>0.0</item><item>-61.65624</item>
-		<item>l</item><item>0.0</item><item>-32.187508</item>
-		<item>l</item><item>6.125</item><item>0.0</item>
-		<item>l</item><item>0.0</item><item>32.187508</item>
-		<item>l</item><item>0.0</item><item>8.15625</item>
-		<item>c</item><item>0.50148</item><item>-0.14432</item><item>9.40566</item><item>-5.15059</item><item>13.0625</item><item>-8.96875</item>
-		<item>c</item><item>6.95738</item><item>-7.264318</item><item>13.52513</item><item>-15.836498</item><item>15.96875</item><item>-25.593758</item>
-		<item>c</item><item>2.66873</item><item>-10.65614</item><item>0.37484</item><item>-20.6949</item><item>-2.1875</item><item>-32.875</item>
-		<item>c</item><item>-1.71197</item><item>-8.13788</item><item>-16.84375</item><item>-43.781254</item><item>-16.84375</item><item>-43.781254</item>
-		<item>c</item><item>0.0</item><item>0.0</item><item>9.29633</item><item>12.227915</item><item>15.8125</item><item>25.437504</item>
-		<item>c</item><item>3.25809</item><item>6.6048</item><item>11.04864</item><item>23.85579</item><item>12.1875</item><item>31.40625</item>
-		<item>c</item><item>1.13885</item><item>7.55046</item><item>1.75966</item><item>15.29091</item><item>0.09375</item><item>22.65625</item>
-		<item>c</item><item>-1.00713</item><item>4.45288</item><item>-2.56639</item><item>8.78325</item><item>-4.46875</item><item>12.96875</item>
-		<item>c</item><item>3.85768</item><item>8.010988</item><item>2.87021</item><item>18.466448</item><item>1.15625</item><item>27.218758</item>
-		<item>c</item><item>-1.67716</item><item>8.56443</item><item>-5.07122</item><item>13.43769</item><item>-11.53125</item><item>22.84374</item>
-		<item>c</item><item>-5.55912</item><item>8.09427</item><item>-15.3958</item><item>12.91537</item><item>-20.21875</item><item>21.46875</item>
-		<item>c</item><item>-2.79669</item><item>4.95986</item><item>-3.18868</item><item>25.9184</item><item>-4.78125</item><item>32.90625</item>
-		<item>l</item><item>-4.375</item><item>0.0</item>
-		<item>Z</item>
-		<item>m</item><item>6.78125</item><item>-53.875</item>
-		<item>c</item><item>1.8065</item><item>-0.92711</item><item>9.10228</item><item>-5.14403</item><item>12.40625</item><item>-8.59375</item>
-		<item>c</item><item>6.95738</item><item>-7.26432</item><item>10.54967</item><item>-10.93826</item><item>13.75</item><item>-17.68749</item>
-		<item>c</item><item>3.48105</item><item>-7.34126</item><item>4.38331</item><item>-7.25558</item><item>5.59375</item><item>-21.781258</item>
-		<item>c</item><item>-2.6469</item><item>5.35697</item><item>-5.80381</item><item>10.493718</item><item>-9.15625</item><item>15.375008</item>
-		<item>c</item><item>-5.55912</item><item>8.09427</item><item>-15.3958</item><item>12.91537</item><item>-20.21875</item><item>21.46874</item>
-		<item>c</item><item>-1.08204</item><item>1.91896</item><item>-1.80106</item><item>6.24075</item><item>-2.375</item><item>11.21875</item>
-		<item>Z</item>
-	<item>@id/svgobject_path</item>
 		<item>@id/svgattr_stroke</item><item>#0000ff00</item>
 		<item>@id/svgattr_stroke_opacity</item><item>0.19607843</item>
 		<item>@id/svgattr_pathspec</item><item>2</item>
 		<item>M</item><item>36.03147</item><item>70.488045</item>
 		<item>l</item><item>6.10421</item><item>0.0</item>
+	<item>@id/svgobject_path</item>
+		<item>@id/svgattr_fill</item><item>#00000000</item>
+		<item>@id/svgattr_pathspec</item><item>26</item>
+		<item>M</item><item>36.01299</item><item>196.49773</item>
+		<item>l</item><item>2.0E-6</item><item>-32.1875</item>
+		<item>l</item><item>0.0</item><item>-61.65625</item>
+		<item>l</item><item>0.0</item><item>-32.187496</item>
+		<item>l</item><item>6.125</item><item>0.0</item>
+		<item>l</item><item>0.0</item><item>32.187496</item>
+		<item>l</item><item>0.0</item><item>2.88333</item>
+		<item>l</item><item>18.954655</item><item>-25.165487</item>
+		<item>c</item><item>5.29874</item><item>-7.034968</item><item>10.142283</item><item>-12.22667</item><item>11.849767</item><item>-17.585165</item>
+		<item>c</item><item>3.414971</item><item>-10.717</item><item>-1.054085</item><item>-31.37306</item><item>-1.054085</item><item>-31.37306</item>
+		<item>c</item><item>0.0</item><item>0.0</item><item>5.677913</item><item>8.253434</item><item>8.225696</item><item>18.597282</item>
+		<item>c</item><item>0.820702</item><item>4.328477</item><item>0.736766</item><item>11.264923</item><item>-0.01569</item><item>16.821312</item>
+		<item>c</item><item>-0.667342</item><item>4.927891</item><item>-2.19617</item><item>8.00437</item><item>-3.95442</item><item>14.38498</item>
+		<item>c</item><item>3.13758</item><item>8.543025</item><item>4.640174</item><item>19.641079</item><item>2.206366</item><item>30.432407</item>
+		<item>c</item><item>-2.433809</item><item>10.79133</item><item>-8.804021</item><item>21.27593</item><item>-13.562556</item><item>28.59206</item>
+		<item>l</item><item>-11.472604</item><item>15.44731</item>
+		<item>c</item><item>-3.38304</item><item>4.5551</item><item>-6.737362</item><item>8.04897</item><item>-7.82299</item><item>11.8429</item>
+		<item>c</item><item>-2.171256</item><item>7.58787</item><item>-3.087356</item><item>15.45502</item><item>-5.104141</item><item>28.96588</item>
+		<item>l</item><item>-4.375</item><item>0.0</item>
+		<item>Z</item>
+		<item>m</item><item>6.226202</item><item>-51.65483</item>
+		<item>l</item><item>23.614876</item><item>-29.92416</item>
+		<item>c</item><item>5.46093</item><item>-9.63847</item><item>10.12717</item><item>-19.186298</item><item>9.0711</item><item>-31.201569</item>
+		<item>l</item><item>-32.493397</item><item>47.68681</item>
+		<item>l</item><item>-0.19258</item><item>13.43892</item>
+		<item>Z</item>
 </array></resources>

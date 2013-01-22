@@ -6,9 +6,9 @@
 		<item>@id/svgattr_fill_opacity</item><item>0.19607843</item>
 		<item>@id/svgattr_frame</item>
 		<item><!--x-->21.812847</item>
-		<item><!--y-->14.644608</item>
-		<item><!--width-->22.040985</item>
-		<item><!--height-->77.97493</item>
+		<item><!--y-->34.76493</item>
+		<item><!--width-->16.074268</item>
+		<item><!--height-->57.854607</item>
 	<item>@id/svgobject_path</item>
 		<item>@id/svgattr_stroke</item><item>#000000ff</item>
 		<item>@id/svgattr_stroke_opacity</item><item>0.49019608</item>
@@ -22,21 +22,19 @@
 		<item>M</item><item>-10.182426</item><item>92.25151</item>
 		<item>l</item><item>75.30688</item><item>0.0</item>
 	<item>@id/svgobject_path</item>
-		<item>@id/svgattr_pathspec</item><item>8</item>
-		<item>M</item><item>25.561184</item><item>92.285</item>
-		<item>c</item><item>0.0</item><item>-22.454</item><item>0.0</item><item>-74.742</item><item>0.0</item><item>-74.742</item>
-		<item>l</item><item>-3.403</item><item>-2.016</item>
-		<item>c</item><item>0.0</item><item>0.0</item><item>0.0</item><item>17.532</item><item>0.0</item><item>35.346</item>
-		<item>c</item><item>0.0</item><item>15.306</item><item>0.0</item><item>30.819</item><item>0.0</item><item>35.604</item>
-		<item>l</item><item>0.0</item><item>5.808</item>
-		<item>l</item><item>3.403</item><item>0.0</item>
+		<item>@id/svgattr_pathspec</item><item>14</item>
+		<item>M</item><item>22.15625</item><item>35.375</item>
+		<item>l</item><item>0.0</item><item>26.21875</item>
+		<item>l</item><item>0.0</item><item>26.375</item>
+		<item>l</item><item>0.0</item><item>4.018144</item>
+		<item>l</item><item>3.6875</item><item>-0.01814</item>
+		<item>c</item><item>11.393913</item><item>-11.242146</item><item>20.30056</item><item>-42.679096</item><item>0.0</item><item>-25.6875</item>
+		<item>l</item><item>0.0</item><item>-29.40625</item>
+		<item>l</item><item>-3.6875</item><item>-1.5</item>
 		<item>Z</item>
-	<item>@id/svgobject_path</item>
-		<item>@id/svgattr_pathspec</item><item>6</item>
-		<item>M</item><item>25.561184</item><item>92.285</item>
-		<item>c</item><item>17.001</item><item>-11.022</item><item>30.637</item><item>-43.511</item><item>0.0</item><item>-25.751</item>
-		<item>c</item><item>0.0</item><item>1.263</item><item>0.0</item><item>1.485</item><item>0.0</item><item>2.664</item>
-		<item>c</item><item>11.278</item><item>-7.874</item><item>25.25</item><item>-0.728</item><item>-1.012</item><item>21.494</item>
-		<item>c</item><item>1.012</item><item>-0.0010</item><item>1.012</item><item>1.593</item><item>1.012</item><item>1.593</item>
+		<item>M</item><item>30.0625</item><item>66.25</item>
+		<item>c</item><item>4.798295</item><item>-0.254936</item><item>6.830803</item><item>7.010823</item><item>-4.21875</item><item>21.8125</item>
+		<item>l</item><item>0.0</item><item>-20.0</item>
+		<item>c</item><item>1.475807</item><item>-1.140747</item><item>2.93697</item><item>-1.744398</item><item>4.21875</item><item>-1.8125</item>
 		<item>Z</item>
 </array></resources>

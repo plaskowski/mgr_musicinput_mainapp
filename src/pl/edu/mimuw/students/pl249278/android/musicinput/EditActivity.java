@@ -2783,7 +2783,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		};
 		modifiersActions = new IndexAwareAction[] {
 			new ToggleNoteModifier(R.array.svg_flat, NoteModifier.FLAT),
-			new ToggleNoteModifier(R.array.svg_sharp_online, NoteModifier.SHARP),
+			new ToggleNoteModifier(R.array.svg_sharp_onspace, NoteModifier.SHARP),
 			new ToggleNoteModifier(R.array.svg_natural_online, NoteModifier.NATURAL)
 		};
 		ArrayList<IndexAwareAction> insertActions = new ArrayList<EditActivity.IndexAwareAction>();

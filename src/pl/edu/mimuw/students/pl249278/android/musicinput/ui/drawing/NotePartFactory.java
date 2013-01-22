@@ -42,9 +42,19 @@ public class NotePartFactory {
 
 		public LoadingSvgException(int xmlResId, Throwable throwable) {
 			super(
-				"Exception while loading EnhancedSvg from xml: " + ReflectionUtils.findConstName(R.xml.class, "", xmlResId),
+				message(xmlResId),
 				throwable
 			);
+		}
+
+		private static String message(int xmlResId) {
+			String constName = ReflectionUtils.findConstName(R.array.class, "svg", xmlResId, null);
+			String type = "array";
+			if(constName == null) {
+				constName = ReflectionUtils.findConstName(R.xml.class, "", xmlResId);
+				type = "xml";
+			}
+			return "Exception while loading EnhancedSvg from " + type + ": " + constName;
 		}
 		
 	}
@@ -178,7 +188,7 @@ public class NotePartFactory {
 		
 		declare(modifiersMapping, ElementModifier.SHARP,
 			anchor(ANCHOR_TYPE_LINE,
-				anyOrient(R.array.svg_sharp_online)
+				anyOrient(R.array.svg_sharp_onspace)
 			),
 			anchor(ANCHOR_TYPE_LINESPACE,
 				anyOrient(R.array.svg_sharp_onspace)

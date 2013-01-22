@@ -1,75 +1,41 @@
 <?xml version="1.0" ?><resources><array name="svg_clef_bass">
-	<item><!--width-->744.0945</item>
-	<item><!--height-->1052.3622</item>
+	<item><!--width-->100.0</item>
+	<item><!--height-->100.0</item>
 	<item>@id/svgobject_rect</item>
 		<item>@id/svgattr_fill</item><item>#00ff0000</item>
 		<item>@id/svgattr_fill_opacity</item><item>0.19607843</item>
 		<item>@id/svgattr_frame</item>
-		<item><!--x-->65.0</item>
-		<item><!--y-->70.0</item>
-		<item><!--width-->83.44147</item>
+		<item><!--x-->20.374481</item>
+		<item><!--y-->4.4900374</item>
+		<item><!--width-->67.74246</item>
 		<item><!--height-->95.509964</item>
 	<item>@id/svgobject_path</item>
 		<item>@id/svgattr_stroke</item><item>#000000ff</item>
 		<item>@id/svgattr_stroke_opacity</item><item>0.49019608</item>
 		<item>@id/svgattr_pathspec</item><item>2</item>
-		<item>M</item><item>58.265903</item><item>70.0</item>
+		<item>M</item><item>0.1</item><item>4.49004</item>
 		<item>l</item><item>75.30687</item><item>0.0</item>
 	<item>@id/svgobject_path</item>
 		<item>@id/svgattr_stroke</item><item>#00ff00ff</item>
 		<item>@id/svgattr_stroke_opacity</item><item>0.60784316</item>
 		<item>@id/svgattr_pathspec</item><item>2</item>
-		<item>M</item><item>68.2224</item><item>158.8763</item>
+		<item>M</item><item>10.056493</item><item>93.36634</item>
 		<item>l</item><item>75.247795</item><item>0.0</item>
 	<item>@id/svgobject_path</item>
-		<item>@id/svgattr_fill</item><item>#00131516</item>
+		<item>@id/svgattr_fill</item><item>#00ff0000</item>
 		<item>@id/svgattr_stroke</item><item>#00131516</item>
-		<item>@id/svgattr_pathspec</item><item>54</item>
-		<item>M</item><item>65.50029</item><item>162.61588</item>
-		<item>c</item><item>7.90535</item><item>-5.33795</item><item>13.80935</item><item>-9.37882</item><item>17.61191</item><item>-12.17251</item>
-		<item>c</item><item>3.80258</item><item>-2.7438</item><item>7.80529</item><item>-6.18602</item><item>11.90807</item><item>-10.27678</item>
-		<item>c</item><item>4.10278</item><item>-4.09076</item><item>7.55512</item><item>-8.73027</item><item>10.35702</item><item>-13.86866</item>
-		<item>c</item><item>2.20149</item><item>-3.79144</item><item>4.10277</item><item>-8.18151</item><item>5.65382</item><item>-13.17024</item>
-		<item>c</item><item>1.55105</item><item>-4.93885</item><item>2.3516</item><item>-9.72802</item><item>2.5017</item><item>-14.267764</item>
-		<item>c</item><item>0.0</item><item>-4.240432</item><item>-0.55037</item><item>-8.2813</item><item>-1.70115</item><item>-12.072731</item>
-		<item>c</item><item>-1.10075</item><item>-3.841323</item><item>-3.00204</item><item>-6.98423</item><item>-5.70386</item><item>-9.528481</item>
-		<item>c</item><item>-2.70184</item><item>-2.49436</item><item>-6.2042</item><item>-3.74154</item><item>-10.55715</item><item>-3.74154</item>
-		<item>c</item><item>-4.20285</item><item>0.0</item><item>-8.15552</item><item>0.84808</item><item>-11.85804</item><item>2.49436</item>
-		<item>c</item><item>-3.65247</item><item>1.696171</item><item>-6.25423</item><item>4.390087</item><item>-7.70521</item><item>8.181518</item>
-		<item>c</item><item>0.0</item><item>0.349208</item><item>-0.20014</item><item>0.798199</item><item>-0.50033</item><item>1.446724</item>
-		<item>c</item><item>0.10007</item><item>0.7982</item><item>0.50033</item><item>1.396854</item><item>1.25084</item><item>1.845835</item>
-		<item>c</item><item>0.7505</item><item>0.448981</item><item>1.40094</item><item>0.648536</item><item>2.00135</item><item>0.648536</item>
-		<item>c</item><item>0.3002</item><item>0.0</item><item>1.15078</item><item>-0.149664</item><item>2.45166</item><item>-0.448991</item>
-		<item>c</item><item>1.35092</item><item>-0.299317</item><item>2.45166</item><item>-0.498872</item><item>3.35227</item><item>-0.498872</item>
-		<item>c</item><item>2.6518</item><item>0.0</item><item>5.00339</item><item>0.947863</item><item>7.15485</item><item>2.793687</item>
-		<item>c</item><item>2.10141</item><item>1.845835</item><item>3.15213</item><item>4.090759</item><item>3.15213</item><item>6.734793</item>
-		<item>c</item><item>0.0</item><item>1.895712</item><item>-0.55036</item><item>3.691666</item><item>-1.60108</item><item>5.337946</item>
-		<item>c</item><item>-1.05072</item><item>1.64628</item><item>-2.5017</item><item>2.99323</item><item>-4.35294</item><item>3.9411</item>
-		<item>c</item><item>-1.85126</item><item>0.99774</item><item>-3.90265</item><item>1.44672</item><item>-6.10415</item><item>1.44672</item>
-		<item>c</item><item>-4.0027</item><item>0.0</item><item>-7.40501</item><item>-1.19729</item><item>-10.2069</item><item>-3.64176</item>
-		<item>c</item><item>-2.75187</item><item>-2.49436</item><item>-4.15282</item><item>-5.637279</item><item>-4.15282</item><item>-9.578376</item>
-		<item>c</item><item>0.0</item><item>-5.038611</item><item>1.55105</item><item>-9.378807</item><item>4.60312</item><item>-13.070466</item>
-		<item>c</item><item>3.10211</item><item>-3.691659</item><item>7.00474</item><item>-6.435465</item><item>11.808</item><item>-8.28129</item>
-		<item>c</item><item>4.75322</item><item>-1.895715</item><item>9.55647</item><item>-2.793687</item><item>14.45979</item><item>-2.793687</item>
-		<item>c</item><item>5.35362</item><item>0.0</item><item>10.45708</item><item>1.346952</item><item>15.2103</item><item>4.090759</item>
-		<item>c</item><item>4.80325</item><item>2.693904</item><item>8.5558</item><item>6.435455</item><item>11.3577</item><item>11.074977</item>
-		<item>c</item><item>2.80189</item><item>4.689403</item><item>4.25287</item><item>9.678134</item><item>4.25287</item><item>15.065963</item>
-		<item>c</item><item>0.0</item><item>9.57836</item><item>-3.20217</item><item>18.45829</item><item>-9.60651</item><item>26.6897</item>
-		<item>c</item><item>-6.40433</item><item>8.23141</item><item>-14.30969</item><item>15.36529</item><item>-23.76609</item><item>21.45154</item>
-		<item>c</item><item>-6.30426</item><item>4.14063</item><item>-16.51117</item><item>9.72802</item><item>-30.5707</item><item>16.76212</item>
-		<item>l</item><item>-0.70047</item><item>-2.59413</item>
+		<item>@id/svgattr_pathspec</item><item>20</item>
+		<item>M</item><item>74.084114</item><item>19.93026</item>
+		<item>c</item><item>0.0</item><item>-1.79594</item><item>0.65044</item><item>-3.29256</item><item>1.95132</item><item>-4.48986</item>
+		<item>c</item><item>1.25085</item><item>-1.24718</item><item>2.8019</item><item>-1.84582</item><item>4.65315</item><item>-1.84582</item>
+		<item>c</item><item>1.60109</item><item>0.0</item><item>3.10211</item><item>0.69841</item><item>4.45303</item><item>2.04538</item>
+		<item>c</item><item>1.35091</item><item>1.29707</item><item>2.00135</item><item>2.84356</item><item>2.00135</item><item>4.53974</item>
+		<item>c</item><item>0.0</item><item>1.79594</item><item>-0.70048</item><item>3.34245</item><item>-2.00135</item><item>4.58963</item>
+		<item>c</item><item>-1.40095</item><item>1.1973</item><item>-2.952</item><item>1.79594</item><item>-4.70319</item><item>1.79594</item>
+		<item>c</item><item>-1.85126</item><item>0.0</item><item>-3.35227</item><item>-0.59864</item><item>-4.55308</item><item>-1.94561</item>
+		<item>c</item><item>-1.20081</item><item>-1.29706</item><item>-1.80123</item><item>-2.84357</item><item>-1.80123</item><item>-4.6894</item>
 		<item>Z</item>
-		<item>m</item><item>69.49705</item><item>-77.17565</item>
-		<item>c</item><item>0.0</item><item>-1.795944</item><item>0.65044</item><item>-3.292559</item><item>1.95132</item><item>-4.489859</item>
-		<item>c</item><item>1.25085</item><item>-1.24718</item><item>2.8019</item><item>-1.845824</item><item>4.65315</item><item>-1.845824</item>
-		<item>c</item><item>1.60109</item><item>0.0</item><item>3.10211</item><item>0.698416</item><item>4.45303</item><item>2.045379</item>
-		<item>c</item><item>1.35091</item><item>1.297072</item><item>2.00135</item><item>2.843569</item><item>2.00135</item><item>4.53974</item>
-		<item>c</item><item>0.0</item><item>1.795943</item><item>-0.70048</item><item>3.342451</item><item>-2.00135</item><item>4.589631</item>
-		<item>c</item><item>-1.40095</item><item>1.197299</item><item>-2.952</item><item>1.795944</item><item>-4.70319</item><item>1.795944</item>
-		<item>c</item><item>-1.85126</item><item>0.0</item><item>-3.35227</item><item>-0.598645</item><item>-4.55308</item><item>-1.945608</item>
-		<item>c</item><item>-1.20081</item><item>-1.297061</item><item>-1.80123</item><item>-2.843569</item><item>-1.80123</item><item>-4.689403</item>
-		<item>Z</item>
-		<item>m</item><item>0.0</item><item>26.140947</item>
+		<item>m</item><item>0.0</item><item>26.14095</item>
 		<item>c</item><item>0.0</item><item>-1.79595</item><item>0.65044</item><item>-3.34245</item><item>1.85127</item><item>-4.53975</item>
 		<item>c</item><item>1.25084</item><item>-1.24718</item><item>2.80189</item><item>-1.84583</item><item>4.7532</item><item>-1.84583</item>
 		<item>c</item><item>1.60109</item><item>0.0</item><item>3.05208</item><item>0.64855</item><item>4.45303</item><item>1.99549</item>
@@ -78,5 +44,43 @@
 		<item>c</item><item>-1.30089</item><item>1.24719</item><item>-2.80191</item><item>1.89571</item><item>-4.5531</item><item>1.89571</item>
 		<item>c</item><item>-1.95131</item><item>0.0</item><item>-3.50236</item><item>-0.64852</item><item>-4.7532</item><item>-1.84583</item>
 		<item>c</item><item>-1.20083</item><item>-1.19728</item><item>-1.85127</item><item>-2.79368</item><item>-1.85127</item><item>-4.78917</item>
+		<item>Z</item>
+	<item>@id/svgobject_path</item>
+		<item>@id/svgattr_fill</item><item>#00131516</item>
+		<item>@id/svgattr_stroke</item><item>#00131516</item>
+		<item>@id/svgattr_pathspec</item><item>34</item>
+		<item>M</item><item>26.42418</item><item>90.3423</item>
+		<item>l</item><item>6.896343</item><item>-6.28637</item>
+		<item>c</item><item>3.126079</item><item>-2.74423</item><item>6.416684</item><item>-6.186989</item><item>9.789556</item><item>-10.278389</item>
+		<item>c</item><item>3.372872</item><item>-4.091401</item><item>6.21102</item><item>-7.848568</item><item>8.514446</item><item>-12.987763</item>
+		<item>c</item><item>1.809833</item><item>-3.792034</item><item>3.372864</item><item>-8.182791</item><item>4.647973</item><item>-13.172302</item>
+		<item>c</item><item>1.275109</item><item>-4.939623</item><item>1.933237</item><item>-9.729543</item><item>2.056633</item><item>-14.270004</item>
+		<item>c</item><item>0.0</item><item>-4.241094</item><item>-0.452456</item><item>-8.282597</item><item>-1.398505</item><item>-12.07462</item>
+		<item>c</item><item>-0.904921</item><item>-3.841922</item><item>-2.46796</item><item>-6.985324</item><item>-4.689111</item><item>-9.529972</item>
+		<item>c</item><item>-2.221167</item><item>-2.4947507</item><item>-5.100437</item><item>-3.742126</item><item>-8.678972</item><item>-3.742126</item>
+		<item>c</item><item>-3.455139</item><item>0.0</item><item>-6.704606</item><item>0.8482128</item><item>-9.748426</item><item>2.49475</item>
+		<item>c</item><item>-3.002675</item><item>1.696436</item><item>-5.141567</item><item>4.390778</item><item>-6.334409</item><item>8.182801</item>
+		<item>c</item><item>0.0</item><item>0.349265</item><item>-0.164534</item><item>0.798325</item><item>-0.411318</item><item>1.446947</item>
+		<item>c</item><item>0.08227</item><item>0.798325</item><item>0.411318</item><item>1.397079</item><item>1.028308</item><item>1.846129</item>
+		<item>c</item><item>0.616982</item><item>0.44905</item><item>1.151705</item><item>0.648632</item><item>1.645298</item><item>0.648632</item>
+		<item>c</item><item>0.246793</item><item>0.0</item><item>0.94605</item><item>-0.149684</item><item>2.015496</item><item>-0.449061</item>
+		<item>c</item><item>1.110583</item><item>-0.299357</item><item>2.015495</item><item>-0.498948</item><item>2.755882</item><item>-0.498948</item>
+		<item>c</item><item>2.180029</item><item>0.0</item><item>4.113258</item><item>0.948009</item><item>5.881961</item><item>2.794128</item>
+		<item>c</item><item>1.727557</item><item>1.846119</item><item>2.591348</item><item>4.0914</item><item>2.591348</item><item>6.735844</item>
+		<item>c</item><item>0.0</item><item>1.896007</item><item>-0.452448</item><item>3.692248</item><item>-1.316239</item><item>5.338786</item>
+		<item>c</item><item>-0.863791</item><item>1.646538</item><item>-2.056633</item><item>2.993699</item><item>-3.578527</item><item>3.941717</item>
+		<item>c</item><item>-1.52191</item><item>0.997896</item><item>-3.208346</item><item>1.446947</item><item>-5.018186</item><item>1.446947</item>
+		<item>c</item><item>-3.290597</item><item>0.0</item><item>-6.087617</item><item>-1.197478</item><item>-8.391034</item><item>-3.642331</item>
+		<item>c</item><item>-2.262297</item><item>-2.49475</item><item>-3.41401</item><item>-5.638162</item><item>-3.41401</item><item>-9.579879</item>
+		<item>c</item><item>0.0</item><item>-5.039399</item><item>1.27511</item><item>-9.380279</item><item>3.784199</item><item>-13.072507</item>
+		<item>c</item><item>2.550227</item><item>-3.692238</item><item>5.758556</item><item>-6.4364777</item><item>9.707289</item><item>-8.282587</item>
+		<item>c</item><item>3.907594</item><item>-1.8960168</item><item>7.856318</item><item>-2.7941275</item><item>11.88731</item><item>-2.7941275</item>
+		<item>c</item><item>4.40118</item><item>0.0</item><item>8.596705</item><item>1.3471609</item><item>12.5043</item><item>4.0914006</item>
+		<item>c</item><item>3.948724</item><item>2.6943216</item><item>7.033673</item><item>6.4364576</item><item>9.337099</item><item>11.076705</item>
+		<item>c</item><item>2.303418</item><item>4.690144</item><item>3.650034</item><item>9.914413</item><item>3.49626</item><item>15.068328</item>
+		<item>c</item><item>-0.276734</item><item>9.275079</item><item>-3.257539</item><item>18.658031</item><item>-7.897456</item><item>26.693878</item>
+		<item>c</item><item>-4.728875</item><item>8.189913</item><item>-12.202233</item><item>14.60325</item><item>-19.537966</item><item>20.57183</item>
+		<item>c</item><item>-5.338491</item><item>4.343562</item><item>-17.549688</item><item>10.876699</item><item>-17.549688</item><item>10.876699</item>
+		<item>l</item><item>-0.575853</item><item>-2.594536</item>
 		<item>Z</item>
 </array></resources>

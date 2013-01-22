@@ -5,60 +5,60 @@
 		<item>@id/svgattr_fill</item><item>#00ff0000</item>
 		<item>@id/svgattr_fill_opacity</item><item>0.19607843</item>
 		<item>@id/svgattr_frame</item>
-		<item><!--x-->26.522545</item>
-		<item><!--y-->20.498064</item>
-		<item><!--width-->26.750687</item>
-		<item><!--height-->26.594389</item>
+		<item><!--x-->33.044304</item>
+		<item><!--y-->17.375944</item>
+		<item><!--width-->15.927338</item>
+		<item><!--height-->32.491722</item>
 	<item>@id/svgobject_path</item>
-		<item>@id/svgattr_stroke</item><item>#00ff00ff</item>
+		<item>@id/svgattr_stroke</item><item>#000000ff</item>
 		<item>@id/svgattr_stroke_opacity</item><item>0.47058824</item>
 		<item>@id/svgattr_pathspec</item><item>2</item>
-		<item>M</item><item>11.295148</item><item>22.336351</item>
+		<item>M</item><item>11.295148</item><item>21.376602</item>
 		<item>l</item><item>75.30687</item><item>0.0</item>
 	<item>@id/svgobject_path</item>
-		<item>@id/svgattr_stroke</item><item>#00ff00ff</item>
-		<item>@id/svgattr_stroke_opacity</item><item>0.49019608</item>
+		<item>@id/svgattr_stroke</item><item>#000000ff</item>
+		<item>@id/svgattr_stroke_opacity</item><item>0.50980383</item>
 		<item>@id/svgattr_pathspec</item><item>2</item>
-		<item>M</item><item>6.8902326</item><item>44.762047</item>
+		<item>M</item><item>6.8902326</item><item>45.80238</item>
 		<item>l</item><item>75.30688</item><item>0.0</item>
 	<item>@id/svgobject_path</item>
 		<item>@id/svgattr_fill</item><item>#00000000</item>
 		<item>@id/svgattr_fill_opacity</item><item>1.0</item>
 		<item>@id/svgattr_pathspec</item><item>36</item>
-		<item>M</item><item>37.8125</item><item>20.875</item>
-		<item>l</item><item>-4.59375</item><item>0.0625</item>
-		<item>l</item><item>-0.78125</item><item>3.40625</item>
-		<item>l</item><item>-5.28125</item><item>-1.21875</item>
-		<item>l</item><item>0.0625</item><item>5.46875</item>
-		<item>l</item><item>4.0625</item><item>0.78125</item>
-		<item>l</item><item>-1.0</item><item>4.46875</item>
-		<item>l</item><item>-3.375</item><item>-0.78125</item>
-		<item>l</item><item>0.0625</item><item>5.5</item>
-		<item>l</item><item>2.125</item><item>0.40625</item>
-		<item>l</item><item>-1.75</item><item>7.65625</item>
-		<item>l</item><item>5.46875</item><item>-0.0625</item>
-		<item>l</item><item>1.28125</item><item>-6.625</item>
-		<item>l</item><item>7.34375</item><item>1.4375</item>
-		<item>l</item><item>-1.21875</item><item>5.34375</item>
-		<item>l</item><item>5.46875</item><item>-0.0625</item>
-		<item>l</item><item>0.84375</item><item>-4.28125</item>
-		<item>l</item><item>6.125</item><item>1.1875</item>
-		<item>l</item><item>-0.09375</item><item>-4.59375</item>
-		<item>l</item><item>-5.15625</item><item>-1.1875</item>
-		<item>l</item><item>1.0</item><item>-5.0625</item>
-		<item>l</item><item>4.46875</item><item>0.875</item>
-		<item>l</item><item>-0.0625</item><item>-4.5625</item>
-		<item>l</item><item>-3.53125</item><item>-0.8125</item>
-		<item>L</item><item>50.6875</item><item>21.0</item>
-		<item>l</item><item>-4.59375</item><item>0.0625</item>
-		<item>l</item><item>-1.40625</item><item>6.09375</item>
-		<item>l</item><item>-7.75</item><item>-1.78125</item>
-		<item>l</item><item>0.875</item><item>-4.5</item>
+		<item>M</item><item>45.1875</item><item>17.53125</item>
+		<item>l</item><item>-2.46875</item><item>0.90625</item>
+		<item>l</item><item>0.0</item><item>7.125</item>
+		<item>l</item><item>-3.53125</item><item>1.28125</item>
+		<item>l</item><item>0.0</item><item>-7.125</item>
+		<item>l</item><item>-2.5</item><item>0.90625</item>
+		<item>l</item><item>0.0</item><item>7.125</item>
+		<item>l</item><item>-3.53125</item><item>1.28125</item>
+		<item>l</item><item>0.0</item><item>3.9375</item>
+		<item>l</item><item>3.53125</item><item>-1.28125</item>
+		<item>l</item><item>0.0</item><item>6.84375</item>
+		<item>l</item><item>-3.53125</item><item>1.28125</item>
+		<item>l</item><item>0.0</item><item>3.90625</item>
+		<item>l</item><item>3.53125</item><item>-1.28125</item>
+		<item>l</item><item>0.0</item><item>7.3125</item>
+		<item>l</item><item>2.5</item><item>-0.875</item>
+		<item>l</item><item>0.0</item><item>-7.34375</item>
+		<item>l</item><item>3.53125</item><item>-1.28125</item>
+		<item>l</item><item>0.0</item><item>7.3125</item>
+		<item>l</item><item>2.46875</item><item>-0.875</item>
+		<item>l</item><item>0.0</item><item>-7.34375</item>
+		<item>l</item><item>3.53125</item><item>-1.28125</item>
+		<item>l</item><item>0.0</item><item>-3.9375</item>
+		<item>l</item><item>-3.53125</item><item>1.28125</item>
+		<item>l</item><item>0.0</item><item>-6.84375</item>
+		<item>l</item><item>3.53125</item><item>-1.28125</item>
+		<item>l</item><item>0.0</item><item>-3.90625</item>
+		<item>l</item><item>-3.53125</item><item>1.28125</item>
+		<item>l</item><item>0.0</item><item>-7.125</item>
 		<item>Z</item>
-		<item>m</item><item>-1.84375</item><item>9.40625</item>
-		<item>l</item><item>7.65625</item><item>1.5</item>
-		<item>l</item><item>-1.09375</item><item>4.875</item>
-		<item>l</item><item>-7.46875</item><item>-1.71875</item>
-		<item>l</item><item>0.90625</item><item>-4.65625</item>
+		<item>m</item><item>-2.46875</item><item>11.9375</item>
+		<item>l</item><item>0.0</item><item>6.84375</item>
+		<item>l</item><item>-3.53125</item><item>1.28125</item>
+		<item>l</item><item>0.0</item><item>-6.84375</item>
+		<item>l</item><item>3.53125</item><item>-1.28125</item>
 		<item>Z</item>
 </array></resources>

@@ -141,8 +141,10 @@ public class NotesGroup extends ElementsOverlay {
 	}
 	
 	private void generateDrawingPath(Path path) {
+		
 		int sign = groupOrientation == ORIENT_UP ? 1 : -1;
-		int thickness = 4 * sheetParams.getLineThickness();
+		double dist = (double) Math.sqrt((start.x - end.x)*(start.x - end.x) + (start.y - end.y)*(start.y - end.y));
+		int thickness = (int) (3.5 * sheetParams.getLineThickness() / Math.abs((end.x - start.x)/dist));
 		int linesSpacing = 2 * sheetParams.getLineThickness();
 		path.moveTo(end.x, end.y);
 		path.lineTo(start.x, start.y);

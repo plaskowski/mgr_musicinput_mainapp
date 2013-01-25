@@ -26,8 +26,11 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 
 	private float Xcorrection;
 
-	public NoteStemAndFlag(Context context, NoteHeadElement wrappedElement) throws NoteDescriptionLoadingException {
+	private boolean noFlag;
+
+	public NoteStemAndFlag(Context context, NoteHeadElement wrappedElement, boolean noFlag) throws NoteDescriptionLoadingException {
 		super(wrappedElement);
+		this.noFlag = noFlag;
 		parseNoteSpec(context);
 	}
 	
@@ -59,18 +62,27 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 
 		int headRelativeXOffset = endJLx - headJLX; 
 		int headYOffset = wrappedElement.getOffsetToAnchor(NoteConstants.LINE0_ABSINDEX, AnchorPart.TOP_EDGE);
-		int endingYOffset = sheetParams.anchorOffset(endingIMAnchor, part(ending.getIMarker()))
-			- (int) (ending.getIMarker().getLine().first.y * scaleE);
+		int endingYOffset = sheetParams.anchorOffset(endingIMAnchor, part(ending.getIMarker()));
+		if(!noFlag) {
+			endingYOffset -= (int) (ending.getIMarker().getLine().first.y * scaleE);
+		}
 		int headRelativeYOffset = headYOffset - endingYOffset;
+		if(noFlag) {
+			headRelativeYOffset -= Math.signum(headRelativeYOffset) * sheetParams.getLineThickness()*3;
+		}
 		
 		calcDrawOffsets(
 			headRelativeXOffset,
 			headRelativeYOffset
 		);
-		calcSize(
-			(int) Math.ceil(ending.getWidth()*scaleE),
-			(int) Math.ceil(ending.getHeight()*scaleE)
-		);
+		if(noFlag) {
+			calcSize(0, 0);
+		} else {
+			calcSize(
+				(int) Math.ceil(ending.getWidth()*scaleE),
+				(int) Math.ceil(ending.getHeight()*scaleE)
+			);
+		}
 		
 		mHeadJLStart.set(elementDrawOffset.x, elementDrawOffset.y);
 		mHeadJLStart.offset(
@@ -78,7 +90,10 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 			wrappedElement.joinLineY()
 		);
 		mEndingJLEnd.set(wrapperDrawOffset.x, wrapperDrawOffset.y);
-		mEndingJLEnd.offset(ending.getJoinLine().second.x*scaleE, ending.getJoinLine().second.y * scaleE);
+		mEndingJLEnd.offset(
+			ending.getJoinLine().second.x*scaleE, 
+			noFlag ? 0 : ending.getJoinLine().second.y * scaleE
+		);
 	}
 	
 	@Override
@@ -146,6 +161,8 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 	}
 
 	private void drawEndingImage(Canvas canvas, Paint paint) {
+		if(noFlag)
+			return;
 		canvas.translate(wrapperDrawOffset.x + Xcorrection, wrapperDrawOffset.y);
 		SvgRenderer.drawSvgImage(canvas, ending, scaleE, paint);
 		canvas.translate(-(wrapperDrawOffset.x + Xcorrection), -wrapperDrawOffset.y);

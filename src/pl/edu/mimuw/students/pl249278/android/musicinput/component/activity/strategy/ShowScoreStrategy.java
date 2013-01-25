@@ -199,7 +199,7 @@ public class ShowScoreStrategy extends Activity {
 		elementView.setSheetParams(sheetParams);
 		overlay.setTag(elementView);
 		overlaysViews.add(elementView);
-		parent.addView(elementView);
+		parent.addView(elementView, 1);
 		updateOverlayPosition(overlay, elementView);
 		overlay.setObserver(new Observer() {
 			@Override

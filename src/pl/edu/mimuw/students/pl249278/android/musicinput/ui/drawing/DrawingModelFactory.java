@@ -27,8 +27,8 @@ public class DrawingModelFactory {
 				NoteSpec noteSpec = note.noteSpec();
 				NoteHeadElement head = new NoteHeadElement(ctx, note);
 				model = head;
-				if(!note.hasNoStem() && NoteConstants.hasStem(noteSpec.length())) {
-					model = new NoteStemAndFlag(ctx, head);
+				if(NoteConstants.hasStem(noteSpec.length())) {
+					model = new NoteStemAndFlag(ctx, head, note.hasNoStem());
 				}
 				for(int i = 0; i < noteSpec.dotExtension(); i++) {
 					model = new Modifier.Suffix(ctx, model, noteSpec.positon(), ElementModifier.DOT);

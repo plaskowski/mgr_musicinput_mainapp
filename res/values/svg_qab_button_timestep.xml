@@ -35,9 +35,9 @@
 		<item>l</item><item>0.0</item><item>-7.875</item>
 		<item>l</item><item>-52.40625</item><item>0.0</item>
 		<item>l</item><item>0.0</item><item>3.46875</item>
-		<item>c</item><item>-0.0080</item><item>0.79953</item><item>-0.73172</item><item>1.52321</item><item>-1.53125</item><item>1.53125</item>
+		<item>c</item><item>-0.008</item><item>0.79953</item><item>-0.73172</item><item>1.52321</item><item>-1.53125</item><item>1.53125</item>
 		<item>l</item><item>-18.0625</item><item>0.0</item>
-		<item>c</item><item>-0.79953</item><item>-0.0080</item><item>-1.52321</item><item>-0.73172</item><item>-1.53125</item><item>-1.53125</item>
+		<item>c</item><item>-0.79953</item><item>-0.008</item><item>-1.52321</item><item>-0.73172</item><item>-1.53125</item><item>-1.53125</item>
 		<item>l</item><item>0.0</item><item>-3.46875</item>
 		<item>l</item><item>-43.84375</item><item>0.0</item>
 		<item>l</item><item>0.0</item><item>-26.25</item>
@@ -50,7 +50,7 @@
 		<item>l</item><item>39.96875</item><item>0.0</item>
 		<item>c</item><item>2.52213</item><item>-1.593733</item><item>5.53661</item><item>-2.689169</item><item>9.0</item><item>-3.3125</item>
 		<item>l</item><item>-3.59375</item><item>0.0</item>
-		<item>c</item><item>-0.79953</item><item>-0.0080</item><item>-1.52321</item><item>-0.731715</item><item>-1.53125</item><item>-1.53125</item>
+		<item>c</item><item>-0.79953</item><item>-0.008</item><item>-1.52321</item><item>-0.731715</item><item>-1.53125</item><item>-1.53125</item>
 		<item>l</item><item>0.0</item><item>-3.0</item>
 		<item>l</item><item>-43.84375</item><item>0.0</item>
 		<item>l</item><item>0.0</item><item>-26.25</item>
@@ -82,7 +82,7 @@
 		<item>Z</item>
 		<item>m</item><item>-12.78125</item><item>34.125</item>
 		<item>l</item><item>0.0</item><item>3.0</item>
-		<item>c</item><item>-0.0030</item><item>0.750512</item><item>-0.62913</item><item>1.447858</item><item>-1.375</item><item>1.53125</item>
+		<item>c</item><item>-0.003</item><item>0.750512</item><item>-0.62913</item><item>1.447858</item><item>-1.375</item><item>1.53125</item>
 		<item>c</item><item>3.35671</item><item>0.62171</item><item>6.32875</item><item>1.706066</item><item>8.875</item><item>3.3125</item>
 		<item>l</item><item>44.90625</item><item>0.0</item>
 		<item>l</item><item>0.0</item><item>-7.84375</item>

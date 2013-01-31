@@ -53,22 +53,22 @@
 		<item>L</item><item>16.25553</item><item>2.8254833</item>
 		<item>c</item><item>-0.344092</item><item>-0.03139</item><item>-0.69096</item><item>-0.04334</item><item>-1.033561</item><item>-0.04543</item>
 		<item>c</item><item>-0.05546</item><item>-4.31E-4</item><item>-0.112752</item><item>0.0017</item><item>-0.168273</item><item>0.0021</item>
-		<item>c</item><item>-0.0231</item><item>1.52E-4</item><item>-0.04664</item><item>-0.0053</item><item>-0.0697</item><item>-0.0050</item>
-		<item>c</item><item>-0.339927</item><item>0.0040</item><item>-0.685266</item><item>0.02029</item><item>-1.026557</item><item>0.05314</item>
+		<item>c</item><item>-0.0231</item><item>1.52E-4</item><item>-0.04664</item><item>-0.0053</item><item>-0.0697</item><item>-0.005</item>
+		<item>c</item><item>-0.339927</item><item>0.004</item><item>-0.685266</item><item>0.02029</item><item>-1.026557</item><item>0.05314</item>
 		<item>l</item><item>-1.845062</item><item>-2.8211744</item>
 		<item>l</item><item>-5.543278</item><item>2.2961013</item>
 		<item>l</item><item>0.690214</item><item>3.299528</item>
 		<item>c</item><item>-0.02544</item><item>0.02115</item><item>-0.04938</item><item>0.04346</item><item>-0.07466</item><item>0.06475</item>
 		<item>c</item><item>-0.101971</item><item>0.08492</item><item>-0.19983</item><item>0.171095</item><item>-0.298619</item><item>0.258991</item>
 		<item>c</item><item>-0.150673</item><item>0.133664</item><item>-0.291577</item><item>0.275843</item><item>-0.435971</item><item>0.417358</item>
-		<item>c</item><item>-0.0070</item><item>0.0069</item><item>-0.02192</item><item>0.0051</item><item>-0.02887</item><item>0.01196</item>
-		<item>c</item><item>-0.0060</item><item>0.0059</item><item>-0.02283</item><item>0.0060</item><item>-0.02887</item><item>0.01196</item>
+		<item>c</item><item>-0.007</item><item>0.0069</item><item>-0.02192</item><item>0.0051</item><item>-0.02887</item><item>0.01196</item>
+		<item>c</item><item>-0.006</item><item>0.0059</item><item>-0.02283</item><item>0.006</item><item>-0.02887</item><item>0.01196</item>
 		<item>c</item><item>-0.115922</item><item>0.115048</item><item>-0.209643</item><item>0.250296</item><item>-0.320486</item><item>0.369521</item>
 		<item>c</item><item>-0.145856</item><item>0.156327</item><item>-0.314748</item><item>0.293465</item><item>-0.452882</item><item>0.458188</item>
 		<item>l</item><item>-3.2582</item><item>-0.679893</item>
 		<item>l</item><item>-2.3000832</item><item>5.552891</item>
 		<item>l</item><item>2.7846532</item><item>1.823138</item>
-		<item>c</item><item>-0.0023</item><item>0.02347</item><item>-0.0028</item><item>0.04626</item><item>-0.0050</item><item>0.0697</item>
+		<item>c</item><item>-0.0023</item><item>0.02347</item><item>-0.0028</item><item>0.04626</item><item>-0.005</item><item>0.0697</item>
 		<item>c</item><item>-0.0097</item><item>0.103148</item><item>-7.96E-4</item><item>0.204149</item><item>-0.0079</item><item>0.307677</item>
 		<item>c</item><item>-0.01955</item><item>0.297406</item><item>-0.03778</item><item>0.59816</item><item>-0.03552</item><item>0.894158</item>
 		<item>c</item><item>0.0021</item><item>0.342743</item><item>-0.0071</item><item>0.694279</item><item>0.02427</item><item>1.038515</item>
@@ -77,7 +77,7 @@
 		<item>Z</item>
 		<item>m</item><item>6.837323</item><item>-6.113115</item>
 		<item>c</item><item>-0.07914</item><item>-0.191053</item><item>-0.149724</item><item>-0.391465</item><item>-0.210305</item><item>-0.589382</item>
-		<item>c</item><item>-0.0030</item><item>-0.0099</item><item>-0.0089</item><item>-0.01893</item><item>-0.01196</item><item>-0.02887</item>
+		<item>c</item><item>-0.003</item><item>-0.0099</item><item>-0.0089</item><item>-0.01893</item><item>-0.01196</item><item>-0.02887</item>
 		<item>c</item><item>-0.01212</item><item>-0.04023</item><item>-0.0076</item><item>-0.08698</item><item>-0.01896</item><item>-0.127443</item>
 		<item>c</item><item>-0.214056</item><item>-0.766121</item><item>-0.281454</item><item>-1.554412</item><item>-0.213912</item><item>-2.312954</item>
 		<item>c</item><item>0.01947</item><item>-0.211336</item><item>0.03252</item><item>-0.428089</item><item>0.07345</item><item>-0.639271</item>
@@ -91,12 +91,12 @@
 		<item>c</item><item>0.112067</item><item>-0.168483</item><item>0.245532</item><item>-0.336784</item><item>0.3712233</item><item>-0.492013</item>
 		<item>c</item><item>0.116726</item><item>-0.144033</item><item>0.23669</item><item>-0.288076</item><item>0.366269</item><item>-0.422311</item>
 		<item>c</item><item>0.287837</item><item>-0.291758</item><item>0.578388</item><item>-0.5525526</item><item>0.924729</item><item>-0.7889326</item>
-		<item>c</item><item>0.0080</item><item>-0.0056</item><item>0.0208</item><item>-0.0065</item><item>0.02887</item><item>-0.01196</item>
+		<item>c</item><item>0.008</item><item>-0.0056</item><item>0.0208</item><item>-0.0065</item><item>0.02887</item><item>-0.01196</item>
 		<item>c</item><item>0.02614</item><item>-0.01764</item><item>0.04821</item><item>-0.04744</item><item>0.07465</item><item>-0.06475</item>
 		<item>c</item><item>0.05356</item><item>-0.03617</item><item>0.106385</item><item>-0.06592</item><item>0.161269</item><item>-0.100625</item>
 		<item>c</item><item>0.105012</item><item>-0.0645</item><item>0.212875</item><item>-0.142252</item><item>0.322538</item><item>-0.201249</item>
-		<item>c</item><item>0.0093</item><item>-0.0050</item><item>0.01948</item><item>-0.0070</item><item>0.02887</item><item>-0.01196</item>
-		<item>c</item><item>0.0090</item><item>-0.0048</item><item>0.01982</item><item>-0.0071</item><item>0.02887</item><item>-0.01196</item>
+		<item>c</item><item>0.0093</item><item>-0.005</item><item>0.01948</item><item>-0.007</item><item>0.02887</item><item>-0.01196</item>
+		<item>c</item><item>0.009</item><item>-0.0048</item><item>0.01982</item><item>-0.0071</item><item>0.02887</item><item>-0.01196</item>
 		<item>c</item><item>0.03668</item><item>-0.01974</item><item>0.07846</item><item>-0.02882</item><item>0.115487</item><item>-0.04784</item>
 		<item>c</item><item>0.140685</item><item>-0.07055</item><item>0.273362</item><item>-0.147055</item><item>0.42111</item><item>-0.208254</item>
 		<item>c</item><item>0.08838</item><item>-0.03661</item><item>0.170853</item><item>-0.07521</item><item>0.259841</item><item>-0.10763</item>
@@ -104,18 +104,18 @@
 		<item>c</item><item>0.01907</item><item>-0.0069</item><item>0.03864</item><item>-0.0172</item><item>0.05775</item><item>-0.02391</item>
 		<item>c</item><item>0.06807</item><item>-0.02408</item><item>0.13323</item><item>-0.0619</item><item>0.202099</item><item>-0.08371</item>
 		<item>c</item><item>0.01018</item><item>-0.0031</item><item>0.01868</item><item>-0.0089</item><item>0.02887</item><item>-0.01196</item>
-		<item>c</item><item>0.0097</item><item>-0.0029</item><item>0.01919</item><item>-0.0090</item><item>0.02887</item><item>-0.01196</item>
+		<item>c</item><item>0.0097</item><item>-0.0029</item><item>0.01919</item><item>-0.009</item><item>0.02887</item><item>-0.01196</item>
 		<item>c</item><item>0.01925</item><item>-0.0058</item><item>0.03846</item><item>-0.01831</item><item>0.05773</item><item>-0.02391</item>
-		<item>c</item><item>0.02142</item><item>-0.0063</item><item>0.0482</item><item>0.01098</item><item>0.0697</item><item>0.0050</item>
+		<item>c</item><item>0.02142</item><item>-0.0063</item><item>0.0482</item><item>0.01098</item><item>0.0697</item><item>0.005</item>
 		<item>c</item><item>0.01003</item><item>-0.0027</item><item>0.0188</item><item>-0.0093</item><item>0.02887</item><item>-0.01196</item>
 		<item>c</item><item>0.01902</item><item>-0.0054</item><item>0.03865</item><item>-0.01872</item><item>0.05773</item><item>-0.02391</item>
-		<item>c</item><item>0.04063</item><item>-0.01077</item><item>0.08658</item><item>-0.0090</item><item>0.127443</item><item>-0.01896</item>
+		<item>c</item><item>0.04063</item><item>-0.01077</item><item>0.08658</item><item>-0.009</item><item>0.127443</item><item>-0.01896</item>
 		<item>c</item><item>0.06373</item><item>-0.01501</item><item>0.120961</item><item>-0.0298</item><item>0.185186</item><item>-0.04288</item>
-		<item>c</item><item>0.02122</item><item>-0.0046</item><item>0.04846</item><item>0.0093</item><item>0.0697</item><item>0.0050</item>
+		<item>c</item><item>0.02122</item><item>-0.0046</item><item>0.04846</item><item>0.0093</item><item>0.0697</item><item>0.005</item>
 		<item>c</item><item>0.188821</item><item>-0.03659</item><item>0.378513</item><item>-0.08037</item><item>0.567517</item><item>-0.09977</item>
 		<item>c</item><item>0.0099</item><item>-0.0011</item><item>0.01893</item><item>-0.01087</item><item>0.02887</item><item>-0.01196</item>
 		<item>c</item><item>0.426359</item><item>-0.04198</item><item>0.84084</item><item>-0.02248</item><item>1.259578</item><item>0.01946</item>
-		<item>c</item><item>0.0319</item><item>0.0032</item><item>0.06665</item><item>-0.01064</item><item>0.09857</item><item>-0.0070</item>
+		<item>c</item><item>0.0319</item><item>0.0032</item><item>0.06665</item><item>-0.01064</item><item>0.09857</item><item>-0.007</item>
 		<item>c</item><item>0.156622</item><item>0.01716</item><item>0.314492</item><item>0.04654</item><item>0.470997</item><item>0.0755</item>
 		<item>c</item><item>0.03639</item><item>0.0066</item><item>0.07429</item><item>0.01464</item><item>0.110531</item><item>0.02187</item>
 		<item>c</item><item>0.40676</item><item>0.08288</item><item>0.782998</item><item>0.204739</item><item>1.165108</item><item>0.363014</item>
@@ -127,7 +127,7 @@
 		<item>c</item><item>0.05682</item><item>0.189119</item><item>0.0898</item><item>0.365113</item><item>0.128646</item><item>0.555559</item>
 		<item>c</item><item>0.0041</item><item>0.02003</item><item>0.02004</item><item>0.03767</item><item>0.02392</item><item>0.05775</item>
 		<item>c</item><item>0.02853</item><item>0.147247</item><item>0.03388</item><item>0.30461</item><item>0.05194</item><item>0.452032</item>
-		<item>c</item><item>0.0080</item><item>0.06605</item><item>0.0081</item><item>0.130747</item><item>0.01401</item><item>0.197147</item>
+		<item>c</item><item>0.008</item><item>0.06605</item><item>0.0081</item><item>0.130747</item><item>0.01401</item><item>0.197147</item>
 		<item>c</item><item>0.04239</item><item>0.460302</item><item>0.04259</item><item>0.907695</item><item>-0.01246</item><item>1.35815</item>
 		<item>c</item><item>-0.02151</item><item>0.176627</item><item>-0.05585</item><item>0.335514</item><item>-0.09242</item><item>0.511827</item>
 		<item>c</item><item>-0.03969</item><item>0.194746</item><item>-0.08096</item><item>0.374846</item><item>-0.1382</item><item>0.564617</item>
@@ -137,11 +137,11 @@
 		<item>c</item><item>-0.0071</item><item>0.01342</item><item>-0.0097</item><item>0.02753</item><item>-0.01691</item><item>0.04083</item>
 		<item>c</item><item>-0.02591</item><item>0.04819</item><item>-0.0526</item><item>0.08715</item><item>-0.07961</item><item>0.13445</item>
 		<item>c</item><item>-0.06446</item><item>0.112503</item><item>-0.09288</item><item>0.229982</item><item>-0.164173</item><item>0.338598</item>
-		<item>c</item><item>-0.0050</item><item>0.0076</item><item>-0.02382</item><item>0.0045</item><item>-0.02887</item><item>0.01196</item>
-		<item>c</item><item>-0.0080</item><item>0.01198</item><item>-0.0088</item><item>0.0289</item><item>-0.01691</item><item>0.04083</item>
+		<item>c</item><item>-0.005</item><item>0.0076</item><item>-0.02382</item><item>0.0045</item><item>-0.02887</item><item>0.01196</item>
+		<item>c</item><item>-0.008</item><item>0.01198</item><item>-0.0088</item><item>0.0289</item><item>-0.01691</item><item>0.04083</item>
 		<item>c</item><item>-0.0476</item><item>0.07028</item><item>-0.103842</item><item>0.13073</item><item>-0.154262</item><item>0.199198</item>
 		<item>c</item><item>-0.196654</item><item>0.270548</item><item>-0.41889</item><item>0.540739</item><item>-0.657882</item><item>0.779874</item>
-		<item>c</item><item>-0.0070</item><item>0.0069</item><item>-0.02189</item><item>0.0052</item><item>-0.02887</item><item>0.01196</item>
+		<item>c</item><item>-0.007</item><item>0.0069</item><item>-0.02189</item><item>0.0052</item><item>-0.02887</item><item>0.01196</item>
 		<item>c</item><item>-0.103284</item><item>0.100982</item><item>-0.206268</item><item>0.206492</item><item>-0.315531</item><item>0.299821</item>
 		<item>c</item><item>-0.0074</item><item>0.0061</item><item>-0.02143</item><item>0.0058</item><item>-0.02887</item><item>0.01196</item>
 		<item>c</item><item>-0.0074</item><item>0.0064</item><item>-0.02139</item><item>0.0056</item><item>-0.02887</item><item>0.01196</item>
@@ -152,7 +152,7 @@
 		<item>c</item><item>-0.118348</item><item>0.07565</item><item>-0.226953</item><item>0.144663</item><item>-0.351409</item><item>0.213208</item>
 		<item>c</item><item>-0.0092</item><item>0.0049</item><item>-0.01973</item><item>0.0072</item><item>-0.02887</item><item>0.01196</item>
 		<item>c</item><item>-0.0092</item><item>0.0049</item><item>-0.01973</item><item>0.0072</item><item>-0.02887</item><item>0.01196</item>
-		<item>c</item><item>-0.0092</item><item>0.0050</item><item>-0.01968</item><item>0.0071</item><item>-0.02888</item><item>0.01196</item>
+		<item>c</item><item>-0.0092</item><item>0.005</item><item>-0.01968</item><item>0.0071</item><item>-0.02888</item><item>0.01196</item>
 		<item>c</item><item>-0.06381</item><item>0.0339</item><item>-0.137221</item><item>0.05197</item><item>-0.202098</item><item>0.08371</item>
 		<item>c</item><item>-0.09357</item><item>0.04471</item><item>-0.181164</item><item>0.108335</item><item>-0.276753</item><item>0.14846</item>
 		<item>c</item><item>-0.01952</item><item>0.0083</item><item>-0.0381</item><item>0.01578</item><item>-0.05775</item><item>0.02392</item>
@@ -161,7 +161,7 @@
 		<item>c</item><item>-0.07786</item><item>0.02922</item><item>-0.163989</item><item>0.04056</item><item>-0.242929</item><item>0.0668</item>
 		<item>c</item><item>-0.0298</item><item>0.0099</item><item>-0.05678</item><item>0.02644</item><item>-0.08661</item><item>0.03588</item>
 		<item>c</item><item>-0.01018</item><item>0.0031</item><item>-0.01868</item><item>0.0089</item><item>-0.02887</item><item>0.01196</item>
-		<item>c</item><item>-0.01022</item><item>0.0030</item><item>-0.01865</item><item>0.0089</item><item>-0.02887</item><item>0.01196</item>
+		<item>c</item><item>-0.01022</item><item>0.003</item><item>-0.01865</item><item>0.0089</item><item>-0.02887</item><item>0.01196</item>
 		<item>c</item><item>-0.190058</item><item>0.0571</item><item>-0.393037</item><item>0.101657</item><item>-0.584431</item><item>0.140605</item>
 		<item>c</item><item>-0.02955</item><item>0.0062</item><item>-0.05705</item><item>0.03013</item><item>-0.08661</item><item>0.03588</item>
 		<item>c</item><item>-0.07679</item><item>0.01452</item><item>-0.161123</item><item>-0.01457</item><item>-0.237976</item><item>-0.0029</item>

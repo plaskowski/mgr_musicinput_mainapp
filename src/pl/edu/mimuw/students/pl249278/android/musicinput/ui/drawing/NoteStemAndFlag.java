@@ -132,10 +132,12 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 	public void getCollisionRegions(ArrayList<Rect> areas,
 			ArrayList<Rect> rectsPool) {
 		super.getCollisionRegions(areas, rectsPool);
-		Rect endingRect = obtain(rectsPool);
-		endingRect.set(0, 0, (int) FloatMath.ceil(ending.getWidth()*scaleE), (int) FloatMath.ceil(ending.getHeight()*scaleE));
-		endingRect.offset(wrapperDrawOffset.x, wrapperDrawOffset.y);
-		areas.add(endingRect);
+		if(!noFlag) {
+			Rect endingRect = obtain(rectsPool);
+			endingRect.set(0, 0, (int) FloatMath.ceil(ending.getWidth()*scaleE), (int) FloatMath.ceil(ending.getHeight()*scaleE));
+			endingRect.offset(wrapperDrawOffset.x, wrapperDrawOffset.y);
+			areas.add(endingRect);
+		}
 		Rect stemRect = obtain(rectsPool);
 		stemRect.set(
 			(int) mHeadJLStart.x,

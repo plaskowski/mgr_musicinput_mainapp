@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<string name="minDrawSpacing">2l</string>
+	<string name="minDrawSpacing">1l</string>	
 	<string name="notesAreaHorizontalPadding">2l</string>
 	<string name="timeDividerDrawAfterSpacingFactor">1s</string>
+	<string name="minSpacingBaseFactor">2s</string>
 	<color name="highlightColor">#FF73DCFF</color>
 	<string name="noteShadow">0.07s</string>
 	<item name="ShowScore_horizontal_scrollview" type="id" />

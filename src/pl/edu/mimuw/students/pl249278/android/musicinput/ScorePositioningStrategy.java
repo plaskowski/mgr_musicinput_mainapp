@@ -21,6 +21,7 @@ public class ScorePositioningStrategy {
 	private float minDrawSpacingFactor;
 	private float afterTimeDividerVisualSpacingFactor;
 	protected float notesAreaHorizontalPaddingFactor;
+	private float minSpacingBaseFactor;
 	
 	public static interface PositioningEnv {
 		int middleX(int index);
@@ -44,6 +45,7 @@ public class ScorePositioningStrategy {
 		minDrawSpacingFactor = params.readParametrizedFactor(res.getString(R.string.minDrawSpacing));
 		afterTimeDividerVisualSpacingFactor = params.readParametrizedFactor(res.getString(R.string.timeDividerDrawAfterSpacingFactor));
 		notesAreaHorizontalPaddingFactor = params.readParametrizedFactor(res.getString(R.string.notesAreaHorizontalPadding));
+		minSpacingBaseFactor = params.readParametrizedFactor(res.getString(R.string.minSpacingBaseFactor));
 	}
 	
 	public void calculatePositions(PositioningEnv posEnv, SpacingEnv env, SheetParams sheetParams, boolean updateSheetParams) {
@@ -112,6 +114,8 @@ public class ScorePositioningStrategy {
 	}
 	
 	private ArrayList<Rect> areas = new ArrayList<Rect>(), nextAreas = new ArrayList<Rect>(), rectsPool = new ArrayList<Rect>();
+	
+	private static final int SPACING_BASE_UNIT = 3;
 
 	public int computeTimeSpacingBase(SpacingEnv env, int firstElementIndex, int lastElementIndex, SheetParams params, boolean refreshSheetParams) {
 		if(env.getModel(firstElementIndex).getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
@@ -123,8 +127,8 @@ public class ScorePositioningStrategy {
 		if(refreshSheetParams && env.isValid(firstElementIndex)) { // update first element of Time if present
 			env.updateSheetParams(firstElementIndex, params);
 		}
-		int spacingBase = 0;
-		int baseLength = length(0, minPossibleValue);
+		int resultSpacingBase = 0;
+		int baseLength = length(SPACING_BASE_UNIT, minPossibleValue);
 		int minDrawSpacing = (int) (minDrawSpacingFactor * params.getScale());
 		// prepare areas of first element
 		if(firstElementIndex <= lastElementIndex) {
@@ -203,12 +207,18 @@ public class ScorePositioningStrategy {
 					minDrawSpacing
 				);
 			}
-			spacingBase = (int) Math.max(
-				spacingBase,
-				minSpacing * baseLength / model.getElementSpec().spacingLength(minPossibleValue)
-			);
+			int elemSpacingLength = model.getElementSpec().spacingLength(minPossibleValue);
+			int spacingBase;
+			if(elemSpacingLength <= baseLength) {
+				spacingBase = minSpacing * baseLength / elemSpacingLength;				
+			} else {
+				double times = log2(elemSpacingLength/baseLength);
+				spacingBase = (int) (minSpacing * 2 / (2 + times));
+			}
+			resultSpacingBase = Math.max(spacingBase, resultSpacingBase);
 		}
-		return spacingBase;
+		return Math.max(resultSpacingBase, (int) (
+			params.getScale() * minSpacingBaseFactor));
 	}
 
 	private static void getAreas(SheetAlignedElement model, ArrayList<Rect> areas, ArrayList<Rect> rectsPool) {
@@ -230,12 +240,22 @@ public class ScorePositioningStrategy {
 	}
 	
 	private static int length2spacing(int spacingBase, double lengthInMU, int measureUnit) {
-		int baseLength = length(0, measureUnit);
-		return (int) (spacingBase * lengthInMU / baseLength);
+		int baseLength = length(SPACING_BASE_UNIT, measureUnit);
+		if(lengthInMU <= baseLength) {
+			return (int) (spacingBase * lengthInMU / baseLength);
+		} else {
+			return (int) ((1 + log2(lengthInMU/baseLength) / 2) * spacingBase);
+		}
 	}
 
 	public float getNotesAreaHorizontalPaddingFactor() {
 		return notesAreaHorizontalPaddingFactor;
+	}
+	
+	private static final double LOG_2 = Math.log(2);
+	
+	private static double log2(double x) {
+		return Math.log(x)/LOG_2;
 	}
 
 }

@@ -20,6 +20,8 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 	@SuppressWarnings("unused")
 	private static LogUtils log = new LogUtils("Note");
 
+	public static int HLINE_STEM_MIDDLE = registerHorizontalLineAsOptional(registerIndex());
+	
 	private NoteEnding ending;
 	private int endingIMAnchor;
 	private float scaleE;
@@ -146,6 +148,15 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 			ceil(Math.max(mHeadJLStart.y, mEndingJLEnd.y)+1)
 		);
 		areas.add(stemRect);
+	}
+	
+	@Override
+	public int getHorizontalOffset(int lineIdentifier) {
+		if(lineIdentifier == HLINE_STEM_MIDDLE) {
+			return (((int) mHeadJLStart.x) + ceil(mEndingJLEnd.x + Xcorrection))/2;			
+		} else {
+			return super.getHorizontalOffset(lineIdentifier);
+		}
 	}
 	
 	private static int ceil(float value) {

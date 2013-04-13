@@ -9,6 +9,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.TimeDivider;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NoteStemAndFlag;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import android.content.Context;
@@ -134,22 +135,37 @@ public class ScorePositioningStrategy {
 			SheetAlignedElement model = env.getModel(i);
 			/** minimal visual spacing between 2 element's middles so that they don't collide */
 			int minSpacing;
+			int middleX = model.getMiddleX();
 			if(env.isValid(i+1)) {
 				if(refreshSheetParams) {
 					env.updateSheetParams(i+1, params);
 				}
 				SheetAlignedElement next = env.getModel(i+1);
+				int nextMiddleX = next.getMiddleX();
 				getAreas(next, nextAreas, rectsPool);
 				/* 
 				 * Obliczam o ile muszę odsunąć zestaw obszarów nextAreas w prawo 
 				 * aby był minDrawSpacing odstęp między nimi a zestawem areas
 				 */
 				int areasTotal = areas.size(), nextAreasTotal = nextAreas.size();
+				int maxRight = Integer.MIN_VALUE;
 				for(int areaIndex = 0; areaIndex < areasTotal; areaIndex++) {
-					areas.get(areaIndex).inset(-minDrawSpacing, -minDrawSpacing);
+					Rect area = areas.get(areaIndex);
+					area.inset(-minDrawSpacing, -minDrawSpacing);
+					area.offset(nextMiddleX - middleX, 0);
+					maxRight = Math.max(area.right, maxRight);
+				}
+				int totalMoveDist = 0;
+				/** Zapewniam, iż laseczka następnej nuty będzie nie cześniej niż koniec czegokolwiek z aktualnej nuty */
+				int stemMiddle = next.getHorizontalOffset(NoteStemAndFlag.HLINE_STEM_MIDDLE);
+				if(stemMiddle != SheetAlignedElement.HLINE_UNSPECIFIED) {
+					int moveDueToStem = maxRight - stemMiddle;
+					if(moveDueToStem > 0) {
+						totalMoveDist += moveDueToStem;
+						translate(areas, -moveDueToStem, 0);
+					}
 				}
 				int requiredMoveDist;
-				int totalMoveDist = 0;
 				do {
 					requiredMoveDist = 0;
 					for(int areaIndex = 0; areaIndex < areasTotal; areaIndex++) {
@@ -168,7 +184,7 @@ public class ScorePositioningStrategy {
 					totalMoveDist += requiredMoveDist;
 				} while(requiredMoveDist > 0);
 				minSpacing = Math.max(
-					totalMoveDist + next.getMiddleX() - model.getMiddleX(),
+					totalMoveDist,
 					minDrawSpacing);
 				clear(areas, rectsPool);
 				// switch references to save areas of next for next iteration
@@ -183,7 +199,7 @@ public class ScorePositioningStrategy {
 					maxRight = Math.max(area.right, maxRight);
 				}
 				minSpacing = Math.max(
-					maxRight - model.getMiddleX() + minDrawSpacing,
+					maxRight - middleX + minDrawSpacing,
 					minDrawSpacing
 				);
 			}

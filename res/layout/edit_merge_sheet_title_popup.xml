@@ -82,34 +82,42 @@
 	    />
    </pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.RelativeLayout_InterceptScale_LockTouchInput>
 	
-   <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_ExtendedBackground
-		android:id="@+id/EDIT_info_popup"   
-   		android:orientation="vertical"
-		android:layout_width="wrap_content" 
-		android:layout_height="wrap_content" 
-		android:layout_centerInParent="true"
+   <FrameLayout
+		android:id="@+id/EDIT_info_popup"
+		style="@style/EDIT_info_popup"
+		android:layout_alignWithParentIfMissing="true"
+		android:layout_alignParentTop="true"
+		android:layout_alignParentRight="true"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent"
 		android:visibility="gone"
-		custom:extendedBackground="@style/infoPopupBg"
-	><!-- popup view displaying note value -->
-		<TextView
-			android:text="@string/EDIT_current_note_value"
-			android:textSize="20sp"
+   >
+	   <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_ExtendedBackground
+	   		android:orientation="vertical"
 			android:layout_width="wrap_content" 
 			android:layout_height="wrap_content"
-			android:layout_gravity="center_horizontal"
-			android:textColor="@android:color/white"
-			android:layout_marginLeft="4dip"
-			android:layout_marginRight="4dip"
-			android:layout_marginBottom="5dip"
-		/>
-		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView
-			android:id="@+id/EDIT_info_popup_note"
-			android:layout_width="wrap_content" 
-			android:layout_height="wrap_content"
-			android:layout_gravity="center_horizontal"
-			custom:paint="@style/infoPopupIconPaint"
-			android:layout_marginBottom="4dip"
-		/>
-	</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_ExtendedBackground>
-    
+			android:layout_gravity="center" 
+			custom:extendedBackground="@style/infoPopupBg"
+		><!-- popup view displaying note value -->
+			<TextView
+				android:text="@string/EDIT_current_note_value"
+				android:textSize="20sp"
+				android:layout_width="wrap_content" 
+				android:layout_height="wrap_content"
+				android:layout_gravity="center_horizontal"
+				android:textColor="#666666"
+				android:layout_marginLeft="4dip"
+				android:layout_marginRight="4dip"
+				android:layout_marginBottom="5dip"
+			/>
+			<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView
+				android:id="@+id/EDIT_info_popup_note"
+				android:layout_width="wrap_content" 
+				android:layout_height="wrap_content"
+				android:layout_gravity="center_horizontal"
+				custom:paint="@style/infoPopupIconPaint"
+				android:layout_marginBottom="4dip"
+			/>
+		</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_ExtendedBackground>
+    </FrameLayout>
 </merge>

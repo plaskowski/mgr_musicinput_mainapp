@@ -20,5 +20,9 @@
        <item name="android:layout_marginRight">-49dip</item>
     </style>
     
+    <style name="EDIT_info_popup">
+        <item name="android:layout_toRightOf">@id/EDIT_menu_button</item>
+    </style>
+    
 	<dimen name="inputAreaRightMargin">80dip</dimen>	
 </resources>

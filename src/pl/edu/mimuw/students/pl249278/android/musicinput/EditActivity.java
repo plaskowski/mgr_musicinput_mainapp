@@ -94,7 +94,9 @@ import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
 import android.view.animation.ScaleAnimation;
 import android.widget.HorizontalScrollView;
 import android.widget.ScrollView;
@@ -2086,7 +2088,22 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private Handler popupHideHandler = new Handler();
 	private Runnable mHideInfoPopupTask = new Runnable() {
 	   public void run() {
-		   findViewById(R.id.EDIT_info_popup).setVisibility(View.GONE);
+		   final View view = findViewById(R.id.EDIT_info_popup);
+		   AlphaAnimation alphaAnim = new AlphaAnimation(1, 0);
+		   alphaAnim.setDuration(200);
+		   alphaAnim.setFillAfter(true);
+		   alphaAnim.setAnimationListener(new Animation.AnimationListener() {
+				@Override
+				public void onAnimationStart(Animation animation) {}
+				@Override
+				public void onAnimationRepeat(Animation animation) {}
+				@Override
+				public void onAnimationEnd(Animation animation) {
+				   view.setVisibility(View.GONE);
+				}
+			});
+		   view.clearAnimation();
+		   view.startAnimation(alphaAnim);
 	   }
 	};
 	
@@ -2108,6 +2125,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				NoteConstants.ORIENT_UP
 			)); 
 			noteView.setModel(model);
+			noteView.requestLayout();
 		} catch (CreationException e) {
 			e.printStackTrace();
 			finish();
@@ -2115,7 +2133,16 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 		noteView.setSheetParams(params);
 		popup.requestLayout();
-		popup.setVisibility(View.VISIBLE);		
+		popup.setVisibility(View.VISIBLE);
+		AnimationSet animSet = new AnimationSet(true);
+		AlphaAnimation alphaAnim = new AlphaAnimation(1f, 1f);
+		ScaleAnimation scaleAnim = new ScaleAnimation(0.75f, 1, 0.75f, 1, 
+				Animation.RELATIVE_TO_PARENT, 0.5f, Animation.RELATIVE_TO_PARENT, 0.5f);
+		animSet.addAnimation(alphaAnim);
+		animSet.addAnimation(scaleAnim);
+		animSet.setDuration(200);
+		popup.clearAnimation();
+		popup.startAnimation(animSet);
 		popupHideHandler.removeCallbacks(mHideInfoPopupTask);
 		popupHideHandler.postDelayed(mHideInfoPopupTask, getResources().getInteger(R.integer.infoPopupLife));
 	}

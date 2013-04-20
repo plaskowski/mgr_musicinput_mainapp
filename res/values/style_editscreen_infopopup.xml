@@ -4,7 +4,7 @@
 	<integer name="infoPopupLife">600</integer>
 	
 	<style name="infoPopupIconPaint" parent="PaintAntialias">
-	    <item name="color">#FFFFFFFF</item>
+	    <item name="color">#666666</item>
 	</style>
  
 	<style name="infoPopupBg" parent="OutlineDrawable">
@@ -19,7 +19,7 @@
     	<item name="drawRadius">7dip</item>
     	<!-- Paint -->
        	<item name="paintStyle">FILL</item>
-    	<item name="color">#FF73DCFF</item>
+    	<item name="color">#FFFFFF</item>
     	<item name="shadowLayer_radius">5dip</item>
     	<item name="shadowLayer_dx">1.67dip</item>
     	<item name="shadowLayer_dy">1.67dip</item>

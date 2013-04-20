@@ -9,15 +9,11 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.GradientDrawable.Orientation;
 import android.util.AttributeSet;
 import android.util.Log;
 
 public class Sheet5LinesView extends PaddingSettersStrategy {
 
-	private static final int LINESPACE3_ABSINDEX = NoteConstants.anchorIndex(3, NoteConstants.ANCHOR_TYPE_LINESPACE);
-	private static final int LINESPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	private static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
 	
 	public Sheet5LinesView(Context context) {
@@ -33,7 +29,6 @@ public class Sheet5LinesView extends PaddingSettersStrategy {
 	private Integer highlightedAnchor = null;
 	private Paint normalPaint = new Paint();
 	private Paint lineHighlightedPaint = new Paint();
-	private GradientDrawable linespaceHighlighted;
 	
 	public void setParams(SheetVisualParams params, int topPaddingMin, int bottomPaddingMin) {
 		this.params = params;
@@ -52,10 +47,6 @@ public class Sheet5LinesView extends PaddingSettersStrategy {
 	
 	public void setHiglightColor(int color) {
 		lineHighlightedPaint.setColor(color);
-		linespaceHighlighted = new GradientDrawable(
-			Orientation.TOP_BOTTOM,
-			new int[] { color, Color.WHITE, Color.WHITE, color }
-		);
 	}
 	
 	/**
@@ -79,18 +70,6 @@ public class Sheet5LinesView extends PaddingSettersStrategy {
 				paddingTop + params.anchorOffset(anchorIndex, AnchorPart.BOTTOM_EDGE),
 				highlightedAnchor != null && highlightedAnchor == anchorIndex ? lineHighlightedPaint : normalPaint
 			);
-		}
-		if(highlightedAnchor != null 
-		&& NoteConstants.anchorType(highlightedAnchor) == NoteConstants.ANCHOR_TYPE_LINESPACE
-		&& highlightedAnchor >= LINESPACE0_ABSINDEX
-		&& highlightedAnchor <= LINESPACE3_ABSINDEX) {
-			linespaceHighlighted.setBounds(
-				getPaddingLeft(), 
-				paddingTop + params.anchorOffset(highlightedAnchor, AnchorPart.TOP_EDGE),
-				getWidth() - getPaddingRight(), 
-				paddingTop + params.anchorOffset(highlightedAnchor, AnchorPart.BOTTOM_EDGE)
-			);
-			linespaceHighlighted.draw(canvas);
 		}
 	}
 	

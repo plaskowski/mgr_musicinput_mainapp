@@ -67,6 +67,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.Intercep
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptableOnScrollChanged.OnScrollChangedListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptsScaleGesture;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.NoteValueWidget;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.StaveHighlighter;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.NoteValueWidget.OnValueChanged;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.ScrollingLockable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.TouchInputLockable;
@@ -75,8 +76,6 @@ import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.TypedArray;
-import android.graphics.BlurMaskFilter;
-import android.graphics.BlurMaskFilter.Blur;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
@@ -141,6 +140,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	}
 	
 	private ViewGroup sheet;
+	private StaveHighlighter staveHighlighter;
 	private View inputArea;
 	private ScrollView vertscroll;
 	private ViewGroup scaleGestureDetector;
@@ -214,10 +214,12 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		scaleGestureDetector.setOnTouchListener(quickActionsDismiss);
 		vertscroll = (ScrollView) findViewById(R.id.EDIT_vertscrollview);
 		sheet = (ViewGroup) findViewById(R.id.EDIT_sheet_container);
+		staveHighlighter = (StaveHighlighter) sheet;
 		lines = (Sheet5LinesView) findViewById(R.id.EDIT_sheet_5lines);
 		((HackedScrollViewChild) vertscroll.getChildAt(0)).setRuler(lines);
 		int hColor = getResources().getColor(R.color.highlightColor);
 		lines.setHiglightColor(hColor);
+		staveHighlighter.setHiglightColor(hColor);
 		noteHighlightPaint.setColor(hColor);
 		this.inputArea = findViewById(R.id.EDIT_inputArea);
 		
@@ -2031,6 +2033,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			Math.abs(maxLinespaceBottomOffset - line4bottomOffset)
 		);
 		updateYPosition(lines, 0);
+		staveHighlighter.setParams(sheetParams);
 	}
 
 	private void updateTimeSpacingBase(int timeIndex, boolean refreshSheetParams) {
@@ -3084,6 +3087,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	
 	private void highlightAnchor(Integer anchorAbsIndex) {
 		lines.highlightAnchor(anchorAbsIndex);
+		staveHighlighter.highlightAnchor(anchorAbsIndex);
 	}
 	
 	private int moveDistance() {

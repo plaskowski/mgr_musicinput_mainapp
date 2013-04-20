@@ -183,6 +183,15 @@ class GenDeclarations {
 		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.View_ExtendedBackground_CacheDraw"
 	)
 	static Class<? extends View> CUSTOM20;
+	@JoinClasses(
+		superClass = AbsoluteLayout.class,
+		ancestors = {
+			CorrectTopPositionStrategy.class,
+			StaveHighlightStrategy.class
+		},
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.AbsoluteLayout_CorrectTopPosition_StaveHighlighter"
+	)
+	static Class<? extends View> CUSTOM21;	
 }
 
 /** a stub class, lets a strategy call super.onLayout() */

@@ -82,7 +82,6 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Parcelable;
 import android.os.Vibrator;
 import android.support.v4.app.DialogFragment;
@@ -2085,30 +2084,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		return sheet.getLayoutParams().width;
 	}
 	
-	private Handler popupHideHandler = new Handler();
-	private Runnable mHideInfoPopupTask = new Runnable() {
-	   public void run() {
-		   final View view = findViewById(R.id.EDIT_info_popup);
-		   AlphaAnimation alphaAnim = new AlphaAnimation(1, 0);
-		   alphaAnim.setDuration(200);
-		   alphaAnim.setFillAfter(true);
-		   alphaAnim.setAnimationListener(new Animation.AnimationListener() {
-				@Override
-				public void onAnimationStart(Animation animation) {}
-				@Override
-				public void onAnimationRepeat(Animation animation) {}
-				@Override
-				public void onAnimationEnd(Animation animation) {
-				   view.setVisibility(View.GONE);
-				}
-			});
-		   view.clearAnimation();
-		   view.startAnimation(alphaAnim);
-	   }
-	};
-	
 	protected void popupCurrentNoteLength() {
-		View popup = findViewById(R.id.EDIT_info_popup);
+		final View popup = findViewById(R.id.EDIT_info_popup);
 		SheetAlignedElementView noteView = (SheetAlignedElementView) popup.findViewById(R.id.EDIT_info_popup_note);
 		SheetParams params = new SheetParams(sheetParams);
 		params.setScale(1);
@@ -2134,17 +2111,44 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		noteView.setSheetParams(params);
 		popup.requestLayout();
 		popup.setVisibility(View.VISIBLE);
+		Animation animation = infoPoupAnimation(popup);
+		animation.cancel();
+		animation.reset();
+		popup.startAnimation(animation);
+	}
+	
+	private Animation mInfoPopupAnimation;
+
+	private Animation infoPoupAnimation(final View popup) {
+		if(mInfoPopupAnimation != null)
+			return mInfoPopupAnimation;
 		AnimationSet animSet = new AnimationSet(true);
-		AlphaAnimation alphaAnim = new AlphaAnimation(1f, 1f);
 		ScaleAnimation scaleAnim = new ScaleAnimation(0.75f, 1, 0.75f, 1, 
 				Animation.RELATIVE_TO_PARENT, 0.5f, Animation.RELATIVE_TO_PARENT, 0.5f);
-		animSet.addAnimation(alphaAnim);
+		scaleAnim.setDuration(200);
+		scaleAnim.setStartOffset(0);
 		animSet.addAnimation(scaleAnim);
-		animSet.setDuration(200);
 		popup.clearAnimation();
-		popup.startAnimation(animSet);
-		popupHideHandler.removeCallbacks(mHideInfoPopupTask);
-		popupHideHandler.postDelayed(mHideInfoPopupTask, getResources().getInteger(R.integer.infoPopupLife));
+		int life = getResources().getInteger(R.integer.infoPopupLife);
+		AlphaAnimation fadeOut = new AlphaAnimation(1, 0);
+		fadeOut.setDuration(300);
+		fadeOut.setStartOffset(200 + life);
+		fadeOut.setFillAfter(true);
+		animSet.addAnimation(fadeOut);
+		animSet.setFillAfter(true);
+		animSet.setAnimationListener(new Animation.AnimationListener() {
+			@Override
+			public void onAnimationStart(Animation animation) {
+				popup.setVisibility(View.VISIBLE);
+			}
+			@Override
+			public void onAnimationRepeat(Animation animation) {}
+			@Override
+			public void onAnimationEnd(Animation animation) {
+				popup.setVisibility(View.INVISIBLE);
+			}
+		});
+		return mInfoPopupAnimation = animSet;
 	}
 	
 	private Toast lastDisruptText = null;

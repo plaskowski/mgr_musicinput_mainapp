@@ -94,6 +94,8 @@ import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.ScaleAnimation;
 import android.widget.HorizontalScrollView;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -2965,6 +2967,16 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				refPointVisibleY - qActionsView.getIndicatorEndY()
 			);
 			qActionsView.setVisibility(View.VISIBLE);
+			float yRelPivot;
+			switch(qActionsView.getIndicatorOrigin()) {
+				case BOTTOM: yRelPivot = 1; break;
+				case TOP: yRelPivot = 0; break;
+				default: yRelPivot = 0.5f;
+			}
+			ScaleAnimation anim = new ScaleAnimation(0.5f, 1f, 0.8f, 1f, 
+					Animation.ABSOLUTE, originX, Animation.RELATIVE_TO_SELF, yRelPivot);
+			anim.setDuration(150);
+			qActionsView.startAnimation(anim);
 		}
 	}
 

@@ -10,16 +10,16 @@
 		<item><!--width-->15.990795</item>
 		<item><!--height-->43.444614</item>
 	<item>@id/svgobject_path</item>
-		<item>@id/svgattr_stroke</item><item>#000000ff</item>
-		<item>@id/svgattr_stroke_opacity</item><item>0.5098038</item>
+		<item>@id/svgattr_stroke</item><item>#00ff00ff</item>
+		<item>@id/svgattr_stroke_opacity</item><item>0.47058824</item>
 		<item>@id/svgattr_pathspec</item><item>2</item>
-		<item>M</item><item>11.197029</item><item>27.60693</item>
+		<item>M</item><item>11.197029</item><item>21.832808</item>
 		<item>l</item><item>75.30687</item><item>0.0</item>
 	<item>@id/svgobject_path</item>
-		<item>@id/svgattr_stroke</item><item>#000000ff</item>
-		<item>@id/svgattr_stroke_opacity</item><item>0.54901963</item>
+		<item>@id/svgattr_stroke</item><item>#00ff00ff</item>
+		<item>@id/svgattr_stroke_opacity</item><item>0.64705884</item>
 		<item>@id/svgattr_pathspec</item><item>2</item>
-		<item>M</item><item>7.4298854</item><item>38.131725</item>
+		<item>M</item><item>7.4692993</item><item>65.051346</item>
 		<item>l</item><item>75.30688</item><item>0.0</item>
 	<item>@id/svgobject_rect</item>
 		<item>@id/svgattr_fill</item><item>#00000000</item>

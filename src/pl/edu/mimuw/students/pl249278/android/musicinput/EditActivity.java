@@ -65,6 +65,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils.OnLayoutListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptableOnScrollChanged;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptableOnScrollChanged.OnScrollChangedListener;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.BarLineHighlighter;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptsScaleGesture;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.NoteValueWidget;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.StaveHighlighter;
@@ -144,6 +145,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	
 	private ViewGroup sheet;
 	private StaveHighlighter staveHighlighter;
+	private BarLineHighlighter barLineHighlighter;
 	private View inputArea;
 	private ScrollView vertscroll;
 	private ViewGroup scaleGestureDetector;
@@ -218,6 +220,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		vertscroll = (ScrollView) findViewById(R.id.EDIT_vertscrollview);
 		sheet = (ViewGroup) findViewById(R.id.EDIT_sheet_container);
 		staveHighlighter = (StaveHighlighter) sheet;
+		barLineHighlighter = (BarLineHighlighter) sheet;
 		lines = (Sheet5LinesView) findViewById(R.id.EDIT_sheet_5lines);
 		((HackedScrollViewChild) vertscroll.getChildAt(0)).setRuler(lines);
 		int hColor = getResources().getColor(R.color.highlightColor);
@@ -1211,7 +1214,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 					}
 					selectedIndex = i;
 					SheetAlignedElementView view = elementViews.get(selectedIndex);
-					view.setPaint(noteHighlightPaint, NOTE_DRAW_PADDING);
+					setHighlighted(view, true);
 					return true;
 				}
 				break;
@@ -1222,13 +1225,20 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			case MotionEvent.ACTION_CANCEL:
 				if(selectedIndex != -1) {
 					SheetAlignedElementView view = elementViews.get(selectedIndex);
-					view.setPaint(normalPaint, NOTE_DRAW_PADDING);
+					setHighlighted(view, false);
 				}
 				selectedIndex = -1;
 			}
 			return false;
 		}
 	};
+	
+	private void setHighlighted(SheetAlignedElementView view, boolean highlighted) {
+		view.setPaint(highlighted ? noteHighlightPaint : normalPaint, NOTE_DRAW_PADDING);
+		if(view.model().getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
+			barLineHighlighter.setHighlightedBar(highlighted ? view : null);
+		}
+	}
 	
 	private View.OnTouchListener noteTouchListener = new OnTouchListener() {
 		private static final int INVALID_POINTER = -1;

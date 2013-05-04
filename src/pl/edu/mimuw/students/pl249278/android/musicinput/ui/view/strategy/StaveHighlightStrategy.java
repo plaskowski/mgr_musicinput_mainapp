@@ -1,6 +1,5 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
-import pl.edu.mimuw.students.pl249278.android.common.PaintBuilder;
 import pl.edu.mimuw.students.pl249278.android.musicinput.StaticConfigurationError;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams;
@@ -8,12 +7,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualP
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.StaveHighlighter;
 import android.content.Context;
-import android.graphics.BlurMaskFilter;
-import android.graphics.BlurMaskFilter.Blur;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Paint.Style;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.GradientDrawable.Orientation;
@@ -34,8 +29,6 @@ public class StaveHighlightStrategy extends DummyViewGroup implements StaveHighl
 	private Integer highlightedAnchor = null;
 	private GradientDrawable downwardDrawable, upwardDrawable;
 	private Sheet5LinesView staveView;
-	private int highlightColor;
-	private Paint lineShadowPaint;
 	
 	@Override
 	protected void onFinishInflate() {
@@ -55,28 +48,15 @@ public class StaveHighlightStrategy extends DummyViewGroup implements StaveHighl
 	@Override
 	public void setParams(SheetVisualParams params) {
 		this.params = params;
-		recreateLinePaint();
 		invalidate();
 	}
 	
 	@Override
 	public void setHiglightColor(int color) {
-		highlightColor = color;
 		int whiteTrans = Color.argb(0, 255, 255, 255);
 		int[] colors = new int[] { color, whiteTrans, whiteTrans, whiteTrans };
 		downwardDrawable = new GradientDrawable(Orientation.TOP_BOTTOM, colors);
 		upwardDrawable = new GradientDrawable(Orientation.BOTTOM_TOP, colors);
-		recreateLinePaint();
-	}
-	
-	private void recreateLinePaint() {
-		if(params == null)
-			return;
-		lineShadowPaint = PaintBuilder.init()
-		.style(Style.FILL)
-		.color(highlightColor)
-		.build();
-		lineShadowPaint.setMaskFilter(new BlurMaskFilter(params.getLinespacingThickness()/4, Blur.NORMAL));
 	}
 	
 	/**
@@ -102,31 +82,6 @@ public class StaveHighlightStrategy extends DummyViewGroup implements StaveHighl
 		int lastUpwardShade = Math.max(highlightedAnchor + (isLine ? -1 : 0), LINESPACEM2_ABSINDEX);
 		drawDrawableOnLinespaces(canvas, downwardDrawable, firstDownwardShade, lastDownwardShade);
 		drawDrawableOnLinespaces(canvas, upwardDrawable, firstUpwardShade, lastUpwardShade);
-//		
-//		if(NoteConstants.anchorType(highlightedAnchor) == NoteConstants.ANCHOR_TYPE_LINESPACE) {
-//			int firstAnhor = Math.min(highlightedAnchor, LINESPACE4_ABSINDEX);
-//			int lastAnhor = Math.max(highlightedAnchor, LINESPACEM1_ABSINDEX);
-//			for(int anhor = firstAnhor; anhor <= lastAnhor; anhor += 2) {
-//				linespaceHighlighted.setBounds(
-//					0, 
-//					line0topY + params.anchorOffset(anhor, AnchorPart.TOP_EDGE),
-//					getWidth(), 
-//					line0topY + params.anchorOffset(anhor, AnchorPart.BOTTOM_EDGE)
-//				);
-//				linespaceHighlighted.draw(canvas);
-//			}
-//		} else {
-//			int firstAnhor = Math.min(highlightedAnchor, LINE5_ABSINDEX);
-//			int lastAnhor = Math.max(highlightedAnchor, LINEM1_ABSINDEX);
-//			int width = getWidth();
-//			for(int anhor = firstAnhor; anhor <= lastAnhor; anhor += 2) {
-//				int top = line0topY + params.anchorOffset(anhor, AnchorPart.TOP_EDGE);
-//				int bottom = line0topY + params.anchorOffset(anhor, AnchorPart.BOTTOM_EDGE);
-//				int offset = params.getLinespacingThickness()/4;
-//				canvas.drawRect(0, top - offset, width, bottom + offset, lineShadowPaint);
-//				canvas.drawRect(0, top, width, bottom, linePaint);				
-//			}
-//		}
 	}
 
 	private void drawDrawableOnLinespaces(Canvas canvas, Drawable drawable, int firstLinespaceAbsIndex,

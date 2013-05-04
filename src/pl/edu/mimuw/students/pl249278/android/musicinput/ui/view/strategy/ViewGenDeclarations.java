@@ -18,7 +18,7 @@ import android.widget.ScrollView;
 import android.widget.TableRow;
 import android.widget.TextView;
 
-class GenDeclarations {
+class ViewGenDeclarations {
 	@JoinClasses(
 		superClass = LinearLayout.class,
 		ancestors = {
@@ -187,9 +187,10 @@ class GenDeclarations {
 		superClass = AbsoluteLayout.class,
 		ancestors = {
 			CorrectTopPositionStrategy.class,
-			StaveHighlightStrategy.class
+			StaveHighlightStrategy.class,
+			BarLineHighlightStrategy.class
 		},
-		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.AbsoluteLayout_CorrectTopPosition_StaveHighlighter"
+		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.AbsoluteLayout_CorrectTopPosition_StaveHighlighter_BarLineHighlighter"
 	)
 	static Class<? extends View> CUSTOM21;	
 }

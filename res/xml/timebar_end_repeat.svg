@@ -2,12 +2,27 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
    version="1.1"
    width="744.09448"
    height="1052.3622"
    id="svg2">
+  <metadata
+     id="metadata3003">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
   <defs
      id="defs4" />
   <rect
@@ -20,15 +35,11 @@
   <path
      d="m 11.197029,27.606929 75.306872,0"
      id="path3709"
-     style="fill:none;stroke:#0000ff;stroke-width:0.13715945;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.50980392;stroke-dasharray:none" />
+     style="fill:none;stroke:#0000ff;stroke-width:0.13715945;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.50980386;stroke-dasharray:none" />
   <path
      d="m 7.4298854,38.131725 75.3068766,0"
      id="path3709-6"
      style="fill:none;stroke:#0000ff;stroke-width:0.12760623;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.54901961;stroke-dasharray:none" />
-  <path
-     d="m 42.433714,14.613482 0,53.512931"
-     id="path3643"
-     style="fill:none;stroke:#00ff00;stroke-width:1.94212162px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0.19607843" />
   <rect
      width="43.015663"
      height="3.8271985"
@@ -55,4 +66,16 @@
      transform="matrix(0.90298507,0,0,0.90298507,-17.352965,13.1475)"
      id="path2925"
      style="fill:#000000;fill-opacity:1;stroke:none" />
+  <path
+     d="m 42.233988,20.833108 0,53.512931"
+     id="path3643-2-6"
+     style="fill:none;stroke:#00ff00;stroke-width:1.00028813px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0.19607843" />
+  <path
+     d="m 40.320144,20.833109 0,53.51293"
+     id="path3643-2-6-9"
+     style="fill:none;stroke:#00ff00;stroke-width:1.00028813px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0.19607843" />
+  <path
+     d="m 44.147144,20.833108 0,53.512931"
+     id="path3643-2-6-4"
+     style="fill:none;stroke:#00ff00;stroke-width:1.00028813px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0.19607843" />
 </svg>

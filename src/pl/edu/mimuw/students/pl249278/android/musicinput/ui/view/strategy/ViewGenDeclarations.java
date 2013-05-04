@@ -3,10 +3,7 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinedSheetElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TextViewWithAnimations;
 import pl.waw.echo.eclipse.codegenerator.annotation.JoinClasses;
-import android.content.Context;
-import android.util.AttributeSet;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AbsoluteLayout;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
@@ -193,28 +190,4 @@ class ViewGenDeclarations {
 		outputClass = "pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.AbsoluteLayout_CorrectTopPosition_StaveHighlighter_BarLineHighlighter"
 	)
 	static Class<? extends View> CUSTOM21;	
-}
-
-/** a stub class, lets a strategy call super.onLayout() */
-class DummyViewGroup extends ViewGroup {
-
-	public DummyViewGroup(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
-		throw new RuntimeException("Should not be reached");
-	}
-
-	public DummyViewGroup(Context context, AttributeSet attrs) {
-		super(context, attrs);
-		throw new RuntimeException("Should not be reached");
-	}
-
-	public DummyViewGroup(Context context) {
-		super(context);
-	}
-
-	@Override
-	protected void onLayout(boolean changed, int l, int t, int r, int b) {
-		throw new RuntimeException("Should not be reached");
-	}
-	
 }

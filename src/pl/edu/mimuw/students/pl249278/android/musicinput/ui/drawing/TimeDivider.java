@@ -11,6 +11,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.LoadingSvgException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.img.EnhancedSvgImage.InvalidMetaException;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -18,6 +19,9 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 
 public class TimeDivider extends SheetAlignedElement {
+	public static final int HLINE_TIMEBAR_LEFTEDGE = registerIndex();
+	public static final int HLINE_TIMEBAR_RIGHTEDGE = registerIndex();
+	
 	// TODO make this a paramsFactor
 	private static final int EL_SPACING = 2;
 	private ElementSpec.TimeDivider spec;
@@ -42,7 +46,7 @@ public class TimeDivider extends SheetAlignedElement {
 			xmlId = R.array.svg_timebar_single;
 		}
 		try {
-			rightParts.add(new SheetAlignedImage(NotePartFactory.prepareAdujstableImage(
+			rightParts.add(new TimeDividerImage(NotePartFactory.prepareAdujstableImage(
 				ctx, xmlId, 
 				true
 			)));
@@ -123,6 +127,7 @@ public class TimeDivider extends SheetAlignedElement {
 		return sheetParams.anchorOffset(anchorAbsIndex, part) - line0Yoffset;
 	}
 
+	@SuppressLint("WrongCall")
 	@Override
 	public void onDraw(Canvas canvas, Paint paint) {
 //		debugElementDrawArea(canvas, this);
@@ -179,6 +184,10 @@ public class TimeDivider extends SheetAlignedElement {
 	public int getHorizontalOffset(int lineIdentifier) {
 		if(lineIdentifier == SheetAlignedElement.MIDDLE_X) {
 			return (int) ((SheetAlignedImage) rightParts.get(0)).getxMiddleMarker();
+		} else if(lineIdentifier == HLINE_TIMEBAR_LEFTEDGE) {
+			return (int) ((TimeDividerImage) rightParts.get(0)).getLeftEdge();
+		} else if(lineIdentifier == HLINE_TIMEBAR_RIGHTEDGE) {
+			return (int) ((TimeDividerImage) rightParts.get(0)).getRightEdge();
 		} else {
 			return super.getHorizontalOffset(lineIdentifier);
 		}

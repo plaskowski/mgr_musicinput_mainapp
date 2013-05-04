@@ -38,5 +38,10 @@ public class SheetAlignedImage extends SimpleSheetElement {
 			));
 		}
 	}
+	
+	protected SheetAlignedImage(AdjustableSizeImage img, float middleMarker) throws InvalidMetaException {
+		super(img);
+		this.xMiddleMarker = middleMarker;
+	}
 
 }

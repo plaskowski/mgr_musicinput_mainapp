@@ -3,6 +3,7 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.TimeDivider;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.BarLineHighlighter;
 import android.content.Context;
@@ -41,12 +42,15 @@ public class BarLineHighlightStrategy extends DummyViewGroup implements BarLineH
 		SheetVisualParams params = model.getSheetParams();
 		if(params == null)
 			return;
-		int offset = params.getLineThickness() * 3;
-		int thickness = params.getLinespacingThickness();
-		int xStart = highlightedBar.getLeft() + highlightedBar.getPaddingLeft() + model.getMiddleX();
-		leftDrawable.setBounds(xStart - offset - thickness, 0, xStart - offset, getHeight());
+		int leftEdge = model.getHorizontalOffset(TimeDivider.HLINE_TIMEBAR_LEFTEDGE);
+		int rightEdge = model.getHorizontalOffset(TimeDivider.HLINE_TIMEBAR_RIGHTEDGE);
+		int spacing = rightEdge - leftEdge;
+		int shadowWidth = params.getLinespacingThickness();
+		int xStart = highlightedBar.getLeft() + highlightedBar.getPaddingLeft() + leftEdge;
+		leftDrawable.setBounds(xStart - shadowWidth, 0, xStart, getHeight());
 		leftDrawable.draw(canvas);
-		rightDrawable.setBounds(xStart + offset, 0, xStart + offset + thickness, getHeight());
+		xStart += spacing;
+		rightDrawable.setBounds(xStart, 0, xStart + shadowWidth, getHeight());
 		rightDrawable.draw(canvas);
 	}
 }

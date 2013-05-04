@@ -5,7 +5,7 @@
 		<item>@id/svgattr_stroke</item><item>#0000ff00</item>
 		<item>@id/svgattr_stroke_opacity</item><item>0.19607843</item>
 		<item>@id/svgattr_pathspec</item><item>2</item>
-		<item>M</item><item>48.486774</item><item>14.613482</item>
+		<item>M</item><item>48.511642</item><item>14.613482</item>
 		<item>l</item><item>0.0</item><item>53.51293</item>
 	<item>@id/svgobject_rect</item>
 		<item>@id/svgattr_fill</item><item>#00ff0000</item>
@@ -34,5 +34,17 @@
 		<item>@id/svgattr_stroke_opacity</item><item>0.64705884</item>
 		<item>@id/svgattr_pathspec</item><item>2</item>
 		<item>M</item><item>7.5219264</item><item>64.0</item>
-		<item>l</item><item>75.247795</item><item>0.0</item>
+		<item>L</item><item>82.76972</item><item>64.0</item>
+	<item>@id/svgobject_path</item>
+		<item>@id/svgattr_stroke</item><item>#0000ff00</item>
+		<item>@id/svgattr_stroke_opacity</item><item>0.19607843</item>
+		<item>@id/svgattr_pathspec</item><item>2</item>
+		<item>M</item><item>48.9595</item><item>-6.6872516</item>
+		<item>l</item><item>0.0</item><item>53.51293</item>
+	<item>@id/svgobject_path</item>
+		<item>@id/svgattr_stroke</item><item>#0000ff00</item>
+		<item>@id/svgattr_stroke_opacity</item><item>0.19607843</item>
+		<item>@id/svgattr_pathspec</item><item>2</item>
+		<item>M</item><item>48.0635</item><item>-6.124752</item>
+		<item>l</item><item>0.0</item><item>53.51293</item>
 </array></resources>

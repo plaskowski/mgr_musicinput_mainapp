@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package android.widget;
+package pl.echo.android.view;
+
+import java.util.List;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Config;
@@ -31,27 +32,9 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.animation.AnimationUtils;
+import android.widget.FrameLayout;
+import android.widget.Scroller;
 
-import com.android.internal.R;
-
-import java.util.List;
-
-/**
- * Layout container for a view hierarchy that can be scrolled by the user,
- * allowing it to be larger than the physical display.  A ScrollView
- * is a {@link FrameLayout}, meaning you should place one child in it
- * containing the entire contents to scroll; this child may itself be a layout
- * manager with a complex hierarchy of objects.  A child that is often used
- * is a {@link LinearLayout} in a vertical orientation, presenting a vertical
- * array of top-level items that the user can scroll through.
- *
- * <p>The {@link TextView} class also
- * takes care of its own scrolling, so does not require a ScrollView, but
- * using the two together is possible to achieve the effect of a text view
- * within a larger container.
- * 
- * <p>ScrollView only supports vertical scrolling.
- */
 public class ScrollView extends FrameLayout {
     static final String TAG = "ScrollView";
     static final boolean localLOGV = false || Config.LOGV;
@@ -121,19 +104,12 @@ public class ScrollView extends FrameLayout {
     }
 
     public ScrollView(Context context, AttributeSet attrs) {
-        this(context, attrs, com.android.internal.R.attr.scrollViewStyle);
+        this(context, attrs, android.R.attr.scrollViewStyle);
     }
 
     public ScrollView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         initScrollView();
-
-        TypedArray a =
-            context.obtainStyledAttributes(attrs, com.android.internal.R.styleable.ScrollView, defStyle, 0);
-
-        setFillViewport(a.getBoolean(R.styleable.ScrollView_fillViewport, false));
-
-        a.recycle();
     }
 
     @Override
@@ -143,8 +119,8 @@ public class ScrollView extends FrameLayout {
         }
 
         final int length = getVerticalFadingEdgeLength();
-        if (mScrollY < length) {
-            return mScrollY / (float) length;
+        if (getScrollY() < length) {
+            return getScrollY() / (float) length;
         }
 
         return 1.0f;
@@ -157,8 +133,8 @@ public class ScrollView extends FrameLayout {
         }
 
         final int length = getVerticalFadingEdgeLength();
-        final int bottomEdge = getHeight() - mPaddingBottom;
-        final int span = getChildAt(0).getBottom() - mScrollY - bottomEdge;
+        final int bottomEdge = getHeight() - getPaddingBottom();
+        final int span = getChildAt(0).getBottom() - getScrollY() - bottomEdge;
         if (span < length) {
             return span / (float) length;
         }
@@ -171,7 +147,7 @@ public class ScrollView extends FrameLayout {
      *   an arrow event.
      */
     public int getMaxScrollAmount() {
-        return (int) (MAX_SCROLL_FACTOR * (mBottom - mTop));
+        return (int) (MAX_SCROLL_FACTOR * (getBottom() - getTop()));
     }
 
 
@@ -226,7 +202,7 @@ public class ScrollView extends FrameLayout {
         View child = getChildAt(0);
         if (child != null) {
             int childHeight = child.getHeight();
-            return getHeight() < childHeight + mPaddingTop + mPaddingBottom;
+            return getHeight() < childHeight + getPaddingTop() + getPaddingBottom();
         }
         return false;
     }
@@ -287,10 +263,10 @@ public class ScrollView extends FrameLayout {
         if (child.getMeasuredHeight() < height) {
             final FrameLayout.LayoutParams lp = (LayoutParams) child.getLayoutParams();
 
-            int childWidthMeasureSpec = getChildMeasureSpec(widthMeasureSpec, mPaddingLeft
-                    + mPaddingRight, lp.width);
-            height -= mPaddingTop;
-            height -= mPaddingBottom;
+            int childWidthMeasureSpec = getChildMeasureSpec(widthMeasureSpec, getPaddingLeft()
+                    + getPaddingRight(), lp.width);
+            height -= getPaddingTop();
+            height -= getPaddingBottom();
             int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
 
             child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
@@ -465,12 +441,12 @@ public class ScrollView extends FrameLayout {
                 mLastMotionY = y;
 
                 if (deltaY < 0) {
-                    if (mScrollY > 0) {
+                    if (getScrollY() > 0) {
                         scrollBy(0, deltaY);
                     }
                 } else if (deltaY > 0) {
-                    final int bottomEdge = getHeight() - mPaddingBottom;
-                    final int availableToScroll = getChildAt(0).getBottom() - mScrollY - bottomEdge;
+                    final int bottomEdge = getHeight() - getPaddingBottom();
+                    final int availableToScroll = getChildAt(0).getBottom() - getScrollY() - bottomEdge;
                     if (availableToScroll > 0) {
                         scrollBy(0, Math.min(availableToScroll, deltaY));
                     }
@@ -482,7 +458,7 @@ public class ScrollView extends FrameLayout {
                 int initialVelocity = (int) velocityTracker.getYVelocity();
 
                 if ((Math.abs(initialVelocity) >
-                        ViewConfiguration.get(mContext).getScaledMinimumFlingVelocity()) &&
+                        ViewConfiguration.get(getContext()).getScaledMinimumFlingVelocity()) &&
                         getChildCount() > 0) {
                     fling(-initialVelocity);
                 }
@@ -826,10 +802,11 @@ public class ScrollView extends FrameLayout {
      */
     public final void smoothScrollBy(int dx, int dy) {
         long duration = AnimationUtils.currentAnimationTimeMillis() - mLastScroll;
+        int mScrollY = getScrollY();
         if (duration > ANIMATED_SCROLL_GAP) {
             if (localLOGV) Log.v(TAG, "Smooth scroll: mScrollY=" + mScrollY
                     + " dy=" + dy);
-            mScroller.startScroll(mScrollX, mScrollY, dx, dy);
+            mScroller.startScroll(getScrollX(), mScrollY, dx, dy);
             invalidate();
         } else {
             if (!mScroller.isFinished()) {
@@ -849,7 +826,7 @@ public class ScrollView extends FrameLayout {
      * @param y the position where to scroll on the Y axis
      */
     public final void smoothScrollTo(int x, int y) {
-        smoothScrollBy(x - mScrollX, y - mScrollY);
+        smoothScrollBy(x - getScrollX(), y - getScrollY());
     }
 
     /**
@@ -870,8 +847,8 @@ public class ScrollView extends FrameLayout {
         int childWidthMeasureSpec;
         int childHeightMeasureSpec;
 
-        childWidthMeasureSpec = getChildMeasureSpec(parentWidthMeasureSpec, mPaddingLeft
-                + mPaddingRight, lp.width);
+        childWidthMeasureSpec = getChildMeasureSpec(parentWidthMeasureSpec, getPaddingLeft()
+                + getPaddingRight(), lp.width);
 
         childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
 
@@ -884,16 +861,20 @@ public class ScrollView extends FrameLayout {
         final MarginLayoutParams lp = (MarginLayoutParams) child.getLayoutParams();
 
         final int childWidthMeasureSpec = getChildMeasureSpec(parentWidthMeasureSpec,
-                mPaddingLeft + mPaddingRight + lp.leftMargin + lp.rightMargin
+                getPaddingLeft() + getPaddingRight() + lp.leftMargin + lp.rightMargin
                         + widthUsed, lp.width);
         final int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(
                 lp.topMargin + lp.bottomMargin, MeasureSpec.UNSPECIFIED);
 
         child.measure(childWidthMeasureSpec, childHeightMeasureSpec);
     }
+    
+    private boolean callsLocked = false;
 
     @Override
     public void computeScroll() {
+    	if(callsLocked)
+    		return;
         if (mScroller.computeScrollOffset()) {
             // This is called at drawing time by ViewGroup.  We don't want to
             // re-show the scrollbars at this point, which scrollTo will do,
@@ -911,14 +892,13 @@ public class ScrollView extends FrameLayout {
             //         will be a window where mScrollX/Y is different from what the app
             //         thinks it is.
             //
-            int oldX = mScrollX;
-            int oldY = mScrollY;
             int x = mScroller.getCurrX();
             int y = mScroller.getCurrY();
+            int mScrollX, mScrollY;
             if (getChildCount() > 0) {
                 View child = getChildAt(0);
-                mScrollX = clamp(x, getWidth() - mPaddingRight - mPaddingLeft, child.getWidth());
-                mScrollY = clamp(y, getHeight() - mPaddingBottom - mPaddingTop, child.getHeight());
+                mScrollX = clamp(x, getWidth() - getPaddingRight() - getPaddingLeft(), child.getWidth());
+                mScrollY = clamp(y, getHeight() - getPaddingBottom() - getPaddingTop(), child.getHeight());
                 if (localLOGV) Log.v(TAG, "mScrollY=" + mScrollY + " y=" + y
                         + " height=" + this.getHeight()
                         + " child height=" + child.getHeight());
@@ -926,11 +906,9 @@ public class ScrollView extends FrameLayout {
                 mScrollX = x;
                 mScrollY = y;
             }            
-            if (oldX != mScrollX || oldY != mScrollY) {
-                onScrollChanged(mScrollX, mScrollY, oldX, oldY);
-            }
-            
-            // Keep on drawing until the animation has finished.
+            callsLocked = true;
+            super.scrollTo(mScrollX, mScrollY);
+            callsLocked = false;
             postInvalidate();
         }
     }
@@ -1120,7 +1098,7 @@ public class ScrollView extends FrameLayout {
         mChildToScrollTo = null;
 
         // Calling this with the present values causes it to re-clam them
-        scrollTo(mScrollX, mScrollY);
+        scrollTo(getScrollX(), getScrollY());
     }
 
     @Override
@@ -1131,7 +1109,7 @@ public class ScrollView extends FrameLayout {
         if (null == currentFocused || this == currentFocused)
             return;
 
-        final int maxJump = mBottom - mTop;
+        final int maxJump = getBottom() - getTop();
 
         if (isWithinDeltaOfScreen(currentFocused, maxJump)) {
             currentFocused.getDrawingRect(mTempRect);
@@ -1161,10 +1139,10 @@ public class ScrollView extends FrameLayout {
      *                  which means we want to scroll towards the top.
      */
     public void fling(int velocityY) {
-        int height = getHeight() - mPaddingBottom - mPaddingTop;
+        int height = getHeight() - getPaddingBottom() - getPaddingTop();
         int bottom = getChildAt(0).getHeight();
 
-        mScroller.fling(mScrollX, mScrollY, 0, velocityY, 0, 0, 0, bottom - height);
+        mScroller.fling(getScrollX(), getScrollY(), 0, velocityY, 0, 0, 0, bottom - height);
 
         final boolean movingDown = velocityY > 0;
 
@@ -1192,9 +1170,9 @@ public class ScrollView extends FrameLayout {
         // we rely on the fact the View.scrollBy calls scrollTo.
         if (getChildCount() > 0) {
             View child = getChildAt(0);
-            x = clamp(x, getWidth() - mPaddingRight - mPaddingLeft, child.getWidth());
-            y = clamp(y, getHeight() - mPaddingBottom - mPaddingTop, child.getHeight());
-            if (x != mScrollX || y != mScrollY) {
+            x = clamp(x, getWidth() - getPaddingRight() - getPaddingLeft(), child.getWidth());
+            y = clamp(y, getHeight() - getPaddingBottom() - getPaddingTop(), child.getHeight());
+            if (x != getScrollX() || y != getScrollY()) {
                 super.scrollTo(x, y);
             }
         }

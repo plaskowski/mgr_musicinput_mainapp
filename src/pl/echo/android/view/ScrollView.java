@@ -33,7 +33,6 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
-import android.widget.Scroller;
 
 public class ScrollView extends FrameLayout {
     static final String TAG = "ScrollView";
@@ -47,7 +46,7 @@ public class ScrollView extends FrameLayout {
     private long mLastScroll;
 
     private final Rect mTempRect = new Rect();
-    private Scroller mScroller;
+    private VerticalScrollerWrapper mScroller;
 
     /**
      * Flag to indicate that we are moving focus ourselves. This is so the
@@ -152,7 +151,7 @@ public class ScrollView extends FrameLayout {
 
 
     private void initScrollView() {
-        mScroller = new Scroller(getContext());
+        mScroller = new VerticalScrollerWrapper(getContext());
         setFocusable(true);
         setDescendantFocusability(FOCUS_AFTER_DESCENDANTS);
         setWillNotDraw(false);

@@ -912,6 +912,13 @@ public class ScrollView extends FrameLayout {
             postInvalidate();
         }
     }
+    
+    @Override
+    public void invalidate() {
+    	if(callsLocked)
+    		return;
+    	super.invalidate();
+    }
 
     /**
      * Scrolls the view to the given child.

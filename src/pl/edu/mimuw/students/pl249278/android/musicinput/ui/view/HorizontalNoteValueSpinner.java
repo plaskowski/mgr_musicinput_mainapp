@@ -26,6 +26,7 @@ public class HorizontalNoteValueSpinner extends NoteValueSpinner_Horizontal {
 	public void setupNoteViews(SheetParams globalParams)
 			throws CreationException {
 		super.setupNoteViews(globalParams);
+		pageRatio = itemSpacing;
         maxNoteHeight = 0;
         for (int i = 0; i <= minNoteValue; i++) {
 			SheetAlignedElementView noteView = (SheetAlignedElementView) notesContainer.getChildAt(i);

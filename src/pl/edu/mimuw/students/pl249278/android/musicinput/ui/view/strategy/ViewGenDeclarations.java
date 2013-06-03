@@ -109,7 +109,7 @@ class ViewGenDeclarations {
 	)
 	static Class<? extends View> CUSTOM11; 
 	@JoinClasses(
-		superClass = HorizontalScrollView.class,
+		superClass = pl.echo.android.view.PagedHorizontalScrollView.class,
 		ancestors = {
 			NoteValueSpinner.class
 		},

@@ -26,6 +26,7 @@
 			android:layout_centerVertical="true"
 			custom:maxHeight="300dip"
 			android:background="#000000"
+			android:fadingEdgeLength="0dp"
 		>
 			<LinearLayout
 				android:layout_height="wrap_content"

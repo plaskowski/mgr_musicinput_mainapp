@@ -30,6 +30,7 @@ public class VerticalNoteValueSpinner extends NoteValueSpinner_Vertical {
 		values = resolver.obtainStyledAttributes(R.styleable.CustomizableView);
 		mMaxHeight = values.getDimensionPixelSize(R.styleable.CustomizableView_maxHeight, mMaxHeight);
 		values.recycle();
+		pageRatio = itemSpacing;
 	}
 	
 	@Override

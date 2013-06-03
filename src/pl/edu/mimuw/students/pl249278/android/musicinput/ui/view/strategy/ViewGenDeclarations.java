@@ -1,5 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
+import pl.echo.android.view.PagedScrollView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinedSheetElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TextViewWithAnimations;
 import pl.waw.echo.eclipse.codegenerator.annotation.JoinClasses;
@@ -116,7 +117,7 @@ class ViewGenDeclarations {
 	)
 	static Class<? extends View> CUSTOM12; 
 	@JoinClasses(
-		superClass = ScrollView.class,
+		superClass = PagedScrollView.class,
 		ancestors = {
 			NoteValueSpinner.class
 		},

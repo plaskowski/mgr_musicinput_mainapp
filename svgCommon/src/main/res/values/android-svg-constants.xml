@@ -1,0 +1,11 @@
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <item type="id" name="svgobject_path"/>
+    <item type="id" name="svgobject_rect" />
+    <item type="id" name="svgattr_fill" />
+    <item type="id" name="svgattr_fill_opacity" />
+    <item type="id" name="svgattr_stroke" />
+    <item type="id" name="svgattr_stroke_opacity" />
+    <item type="id" name="svgattr_pathspec" />    
+    <item type="id" name="svgattr_frame" />    
+    <array name="svggen_dummy_arr" />
+</resources>

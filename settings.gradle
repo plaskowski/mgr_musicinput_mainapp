@@ -1,3 +1,6 @@
 include ':svgCommon'
 include ':app'
+include ':gridLayout'
+include ':flowLayout'
+include ':asyncService'
 rootProject.name = "MusicInput"

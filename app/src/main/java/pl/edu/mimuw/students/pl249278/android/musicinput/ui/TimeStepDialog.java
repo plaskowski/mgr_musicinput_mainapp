@@ -22,7 +22,6 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -34,6 +33,9 @@ import android.widget.HorizontalScrollView;
 import android.widget.ScrollView;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.TextView;
+
+import androidx.fragment.app.DialogFragment;
+
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner.*;
 
 public class TimeStepDialog extends DialogFragment {

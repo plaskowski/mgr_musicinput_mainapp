@@ -1,11 +1,12 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy;
 
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentActivity;
+
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.FragmentUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog.InfoDialogListener;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
 
 public class ErrorDialogStrategy extends FragmentActivity implements InfoDialogListener {
 	protected static final int ERRORDIALOG_CALLBACKARG_DO_FINISH = 1;

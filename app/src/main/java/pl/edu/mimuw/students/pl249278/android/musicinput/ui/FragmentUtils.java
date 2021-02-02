@@ -1,7 +1,7 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentActivity;
 
 public class FragmentUtils {
 	public static void showDialogFragment(FragmentActivity ctx, String dialogTag, DialogFragment newFragment) {

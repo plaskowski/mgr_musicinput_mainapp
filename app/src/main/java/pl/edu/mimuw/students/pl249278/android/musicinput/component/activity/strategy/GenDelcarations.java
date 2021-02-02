@@ -1,8 +1,9 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy;
 
 import pl.waw.echo.eclipse.codegenerator.annotation.JoinClasses;
-import android.support.v4.app.FragmentActivity;
 import android.view.View;
+
+import androidx.fragment.app.FragmentActivity;
 
 class GenDeclarations {
 	@JoinClasses(

@@ -5,7 +5,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.FragmentUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ProgressDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ProgressDialog.ProgressDialogListener;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+
+import androidx.fragment.app.FragmentActivity;
 
 /**
  * Encapsulates showing progress dialog, which if dismissed causes finish() of current activity.

@@ -8,12 +8,22 @@ import android.os.Bundle;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentActivity;
 
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.CustomEventInterface;
+
 public class ProgressDialog extends DialogFragment {
 	private static final String ARG_MSG_ID = "msgId";
 	private static final String ARG_CANCELABLE = "cancelable";
 	
-	public static interface ProgressDialogListener {
-		void onCancel(ProgressDialog dialog);
+	public interface ProgressDialogListener {
+		void onCancel(ProgressDialogCanceledEvent event);
+	}
+
+	public static class ProgressDialogCanceledEvent implements CustomEventInterface {
+		private final ProgressDialog progressDialog;
+
+		public ProgressDialogCanceledEvent(ProgressDialog progressDialog) {
+			this.progressDialog = progressDialog;
+		}
 	}
 
 	public static ProgressDialog newInstance(Context ctx, int msgId, boolean cancelable) {
@@ -39,7 +49,7 @@ public class ProgressDialog extends DialogFragment {
 	public void onCancel(DialogInterface dialog) {
 		FragmentActivity a = getActivity();
 		if(a != null && a instanceof ProgressDialogListener) {
-			((ProgressDialogListener) a).onCancel(this);
+			((ProgressDialogListener) a).onCancel(new ProgressDialogCanceledEvent(this));
 		}
 		super.onCancel(dialog);
 	}

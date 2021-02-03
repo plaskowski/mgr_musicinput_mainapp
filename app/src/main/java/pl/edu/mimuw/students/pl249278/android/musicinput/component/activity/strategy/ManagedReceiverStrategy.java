@@ -5,24 +5,35 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.services.FilterByReques
 import android.app.Activity;
 import android.content.IntentFilter;
 
+import com.google.common.base.Preconditions;
+
 /** 
  * Encapsulated managing life cycle of single {@link FilterByRequestIdReceiver} that is bound to life cycle of the owner (Activity).
  * Receiver (by extending {@link SingleManagedReceiver}) is meant to be "single-shot".
  */
-public class ManagedReceiverStrategy extends Activity {
+public class ManagedReceiverStrategy extends ActivityStrategyBase {
 	private SingleManagedReceiver managedReceiver = null;
-	
-	protected void registerManagedReceiver(SingleManagedReceiver receiver, String action) {
+
+	public ManagedReceiverStrategy(ActivityStrategy parent) {
+		super(parent);
+	}
+
+	public void registerManagedReceiver(SingleManagedReceiver receiver, String action) {
+		receiver.outerObject = this;
 		unregisterManagedIfNotNull();
-		registerReceiver(receiver, new IntentFilter(action));
+		callbacks().registerReceiver(receiver, new IntentFilter(action));
 		managedReceiver = receiver;
 	}
-	
-	protected abstract class SingleManagedReceiver extends ManagedReceiver {
+
+	public static abstract class SingleManagedReceiver extends ManagedReceiver {
+		private ManagedReceiverStrategy outerObject;
+
+		public SingleManagedReceiver() {}
+
 		@Override
 		protected boolean unregister() {
-			if(this == managedReceiver) {
-				unregisterManagedIfNotNull();
+			if(this == outerObject.managedReceiver) {
+				outerObject.unregisterManagedIfNotNull();
 				return true;
 			} else {
 				return false;
@@ -31,14 +42,14 @@ public class ManagedReceiverStrategy extends Activity {
 	}
 	
 	@Override
-	protected void onDestroy() {
+	public void onDestroy(OnDestroySuperCall superCall) {
 		unregisterManagedIfNotNull();
-		super.onDestroy();
+		super.onDestroy(superCall);
 	}
 
 	private void unregisterManagedIfNotNull() {
 		if(managedReceiver != null) {
-			unregisterReceiver(managedReceiver);
+			callbacks().unregisterReceiver(managedReceiver);
 			managedReceiver = null;
 		}
 	}

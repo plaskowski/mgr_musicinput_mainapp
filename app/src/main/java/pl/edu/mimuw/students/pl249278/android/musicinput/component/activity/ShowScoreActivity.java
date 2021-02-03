@@ -1,4 +1,4 @@
-package pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy;
+package pl.edu.mimuw.students.pl249278.android.musicinput.component.activity;
 
 import static pl.edu.mimuw.students.pl249278.android.common.IntUtils.pow2;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.middleX;
@@ -32,7 +32,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetElement
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetElementView;
-import android.app.Activity;
+
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -43,19 +43,21 @@ import android.widget.AbsoluteLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.AbsoluteLayout.LayoutParams;
 
+import androidx.fragment.app.FragmentActivity;
+
 @SuppressWarnings("deprecation")
-public class ShowScoreStrategy extends Activity {
-	private static final LogUtils log = new LogUtils(ShowScoreStrategy.class);
+public class ShowScoreActivity extends FragmentActivity {
+	private static final LogUtils log = new LogUtils(ShowScoreActivity.class);
 	protected List<SheetAlignedElementView> elementViews = new ArrayList<SheetAlignedElementView>();
 	protected ArrayList<SheetElementView<SheetElement>> overlaysViews = new ArrayList<SheetElementView<SheetElement>>();
 	protected SheetParams sheetParams;
-	
+
 	protected int minPossibleValue;
 	protected ScorePositioningStrategy positioningStrategy;
-	
+
 	protected HorizontalScrollView hscroll;
 	protected Sheet5LinesView lines;
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -66,51 +68,51 @@ public class ShowScoreStrategy extends Activity {
 		positioningStrategy = new ScorePositioningStrategy(this.getApplicationContext());
 		minPossibleValue = getResources().getInteger(R.integer.minNotePossibleValue) + 1;
 	}
-	
+
 	@Override
 	public void onContentChanged() {
 		super.onContentChanged();
 		hscroll = (HorizontalScrollView) findViewById(R.id.ShowScore_horizontal_scrollview);
 	}
-	
+
 	/** Does nothing */
 	protected void onScaleChanged() {
 	}
-	
+
 	protected float readParametrizedFactor(int stringResId) {
 		return sheetParams.readParametrizedFactor(getResources().getString(stringResId));
 	}
-	
-	protected SpacingEnv spacingEnv = new SpacingEnv() {		
+
+	protected SpacingEnv spacingEnv = new SpacingEnv() {
 		@Override
 		public void updateSheetParams(int index, SheetParams sheetParams) {
 			elementViews.get(index).setSheetParams(sheetParams);
-		}		
+		}
 		@Override
 		public boolean isValid(int index) {
 			return index >= 0 && index < elementViews.size();
 		}
-		
+
 		@Override
 		public SheetAlignedElement getModel(int index) {
 			return elementViews.get(index).model();
 		}
 	};
-	
+
 	protected int computeTimeSpacingBase(int timeDividerIndex, int lastTimeElementIndex, boolean refreshSheetParams) {
 		return positioningStrategy.computeTimeSpacingBase(spacingEnv, timeDividerIndex, lastTimeElementIndex, sheetParams, refreshSheetParams);
 	}
-	
+
 	protected int timeDividerSpacing(int timeDividerIndex, boolean updateSheetParams) {
 		return positioningStrategy.timeDividerSpacing(spacingEnv, timeDividerIndex, sheetParams, updateSheetParams);
 	}
-	
+
 	protected int afterElementSpacing(int timeSpacingBase, int elementIndex) {
 		return positioningStrategy.afterElementSpacing(spacingEnv, timeSpacingBase, elementIndex, sheetParams);
 	}
-	
+
 	/**
-	 * build greedily NotesGroups starting from startIndex 
+	 * build greedily NotesGroups starting from startIndex
 	 * @param endIndex maximal index of first element of NotesGroup
 	 * @param instantRedraw do we want to reposition views immediately after changing their drawing model
 	 */
@@ -136,7 +138,7 @@ public class ShowScoreStrategy extends Activity {
 					endIndex = Math.max(endIndex, groupEndIndex);
 					log.v("buildNoteGroup(): %d -> %d", elementI, groupEndIndex);
 				}
-			} 
+			}
 			if(group != null) {
 				// recreate model because ElementSpec has been modified by GroupBuilder
 				SheetAlignedElement model = createDrawingModel(spec);
@@ -151,9 +153,9 @@ public class ShowScoreStrategy extends Activity {
 			}
 		}
 	}
-	
+
 	/**
-	 * Builds any JoinArc that starts at position from specified range 
+	 * Builds any JoinArc that starts at position from specified range
 	 * @param startIndex minimal index of JoinArc start element
 	 * @param endIndex maximal index of JoinArc start element
 	 */
@@ -188,10 +190,10 @@ public class ShowScoreStrategy extends Activity {
 				if(elementI == extendedEndIndex) {
 					extendedEndIndex = Math.min(extendedEndIndex+1, lastPossibleEl);
 				}
-			} 
+			}
 		}
 	}
-	
+
 	protected void addOverlayView(final ElementsOverlay overlay, ViewGroup parent, Paint paint, float drawRadius) {
 		SheetElementView<SheetElement> elementView;
 		elementView = new SheetElementView<SheetElement>(this, overlay);
@@ -214,16 +216,16 @@ public class ShowScoreStrategy extends Activity {
 			}
 		});
 	}
-	
+
 	private void updateOverlayPosition(ElementsOverlay overlay, SheetElementView<SheetElement> ovView) {
 		int left = overlay.left()-ovView.getPaddingLeft();
 		int top = line0Top() + overlay.top()-ovView.getPaddingTop();
 		updatePosition(ovView, left, top);
-	}	
-	
+	}
+
 	private ArrayList<Rect> areas = new ArrayList<Rect>();
 	private ArrayList<Rect> rectsPool = new ArrayList<Rect>();
-	
+
 	/**
 	 * Finds which element (if any) was targeted by given DOWN event
 	 * @param event DOWN event
@@ -272,8 +274,8 @@ public class ShowScoreStrategy extends Activity {
 			}
 		}
 		return minDistIndex;
-	}	
-	
+	}
+
 	protected int sheetElementY(SheetElementView<?> v) {
 		return line0Top() + v.getOffsetToAnchor(NoteConstants.anchorIndex(0, ANCHOR_TYPE_LINE), TOP_EDGE);
 	}
@@ -284,15 +286,15 @@ public class ShowScoreStrategy extends Activity {
 	protected static int middleAbsoluteX(SheetAlignedElementView view) {
 		return left(view)+middleX(view);
 	}
-	
+
 	protected int abs2visibleX(int absoluteX) {
 		return absoluteX - hscroll.getScrollX();
 	}
-	
+
 	protected int line0Top() {
 		return top(lines) + lines.getPaddingTop();
 	}
-	
+
 	protected static int left(View view) {
 		return ((AbsoluteLayout.LayoutParams) view.getLayoutParams()).x;
 	}
@@ -303,12 +305,12 @@ public class ShowScoreStrategy extends Activity {
 	protected ElementSpec specAt(int elementIndex) {
 		return elementViews.get(elementIndex).model().getElementSpec();
 	}
-	
+
 	protected SheetAlignedElement createDrawingModel(ElementSpec elementSpec) throws CreationException {
 		return DrawingModelFactory.createDrawingModel(this, elementSpec);
 	}
-		
-	protected Map<SheetAlignedElementView, Set<ElementsOverlay>> bindMap = new HashMap<SheetAlignedElementView, Set<ElementsOverlay>>(); 
+
+	protected Map<SheetAlignedElementView, Set<ElementsOverlay>> bindMap = new HashMap<SheetAlignedElementView, Set<ElementsOverlay>>();
 	protected void bind(ElementsOverlay overlay, SheetAlignedElementView view) {
 		if(bindMap.get(view) == null) {
 			bindMap.put(view, new LinkedHashSet<ElementsOverlay>());
@@ -328,7 +330,7 @@ public class ShowScoreStrategy extends Activity {
 		params.y = top;
 		onPositionUpdated(v, params);
 	}
-	
+
 	protected void updatePosition(View v, int left, int top) {
 		AbsoluteLayout.LayoutParams params = (LayoutParams) v.getLayoutParams();
 		params.x = left;
@@ -348,13 +350,13 @@ public class ShowScoreStrategy extends Activity {
 			}
 		}
 	}
-	
+
 	protected void dispatchPositionChanged(ElementsOverlay overlay, SheetAlignedElementView view) {
 		overlay.positionChanged(
-			view.model(), 
-			left(view) + view.getPaddingLeft(), 
+			view.model(),
+			left(view) + view.getPaddingLeft(),
 			top(view) + view.getPaddingTop() - line0Top()
 		);
 	}
-	
+
 }

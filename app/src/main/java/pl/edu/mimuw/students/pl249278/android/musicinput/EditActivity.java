@@ -18,6 +18,11 @@ import java.util.Set;
 import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.InsertDivided;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.mixin.ShowScoreActivityWithMixin;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ActivityStrategyChainRoot;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ErrorDialogStrategy;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.InitialProgressDialogStrategy;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ManagedReceiverStrategy;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.NoteModifier;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
@@ -37,9 +42,10 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogBuilder;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.IndicatorOrigin;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ProgressDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TimeStepDialog;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_ProgressDialog_ShowScore_ManagedReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.ElementType;
@@ -83,7 +89,6 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.os.Vibrator;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -102,24 +107,28 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_ShowScore_ManagedReceiver implements TimeStepDialog.OnPromptResult, ConfirmDialogListener {
+import androidx.fragment.app.DialogFragment;
+
+public class EditActivity extends ShowScoreActivityWithMixin
+		implements TimeStepDialog.OnPromptResult, ConfirmDialogListener, InfoDialog.InfoDialogListener,
+		ProgressDialog.ProgressDialogListener {
 	private static LogUtils log = new LogUtils(EditActivity.class);
 	protected static final int SPACE0_ABSINDEX = NoteConstants.anchorIndex(0, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	/** of type long */
 	public static final String STARTINTENT_EXTRAS_SCORE_ID = EditActivity.class.getCanonicalName()+".score_id";
 	private static final int REQUEST_CODE_PREFS = 1;
 	private static final int ANIM_TIME = 150;
-	
+
 	private static final String INSTANCE_STATE_SCORE = "state_score";
 	private static final String INSTANCE_STATE_VISUALCONF = "state_visualconf";
 	private static final String INSTANCE_STATE_RIGHT_TO_IA = "right2ia";
-	/** 
+	/**
 	 * Instance key for {@link #rightToIAsavedPosition}.
 	 * Required to restore horizontal scroll position.
 	 */
 	private static final String INSTANCE_STATE_RIGHT_TO_IA_POSITION = "right2iaPos";
 	private static final String INSTANCE_STATE_SCALE = "scale";
-	/** 
+	/**
 	 * Instance key for {@link #contextTimeIndex}.
 	 * Required to persist context of displayed TimestepDialog during configuration restart.
 	 */
@@ -128,9 +137,9 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
  	private static final String INSTANCE_STATE_CURRENT_NOTE_LENGTH = "newNoteLength";
 	private static final String INSTANCE_STATE_LAST_SAVED_CONTENT = "savedContent";
 	private static final String INSTANCE_STATE_LAST_SAVED_CONFIG = "savedConfig";
-	
+
 	private static final String CALLBACK_ACTION_GET = EditActivity.class.getName()+".callback_get";
-	
+
 	private int NOTE_DRAW_PADDING = 0;
 	protected Paint noteHighlightPaint = new Paint();
 	protected Paint fakePausePaint = new Paint();
@@ -141,7 +150,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		fakePausePaint.setAntiAlias(true);
 		fakePausePaint.setColor(Color.WHITE);
 	}
-	
+
 	private ViewGroup sheet;
 	private StaveHighlighter staveHighlighter;
 	private BarLineHighlighter barLineHighlighter;
@@ -150,14 +159,18 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private ViewGroup scaleGestureDetector;
 	private Animator animator = new EditActivity.Animator(this);
 	private QuickActionsView qActionsView;
-	
+	private final ErrorDialogStrategy errorDialogStrategy;
+	private final InitialProgressDialogStrategy initialProgressDialogStrategy;
+	private final ManagedReceiverStrategy managedReceiverStrategy;
+
+
 	private boolean isScaleValid = false;
 	private ArrayList<Time> times = new ArrayList<EditActivity.Time>();
 	private Score score = null;
 	private ScoreVisualizationConfig visualConf = null, lastSavedConf = null;
 	private String lastSavedContent = null;
-	private boolean skipOnStopCopy = false;	
-	
+	private boolean skipOnStopCopy = false;
+
 	/**
 	 * Index (in elementViews) of element that is first on right side of InputArea,
 	 * when there is no such element rightToIA = elementViews.size()
@@ -167,13 +180,13 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	 * @see #INSTANCE_STATE_RIGHT_TO_IA_POSITION
 	 */
 	private int rightToIAsavedPosition;
-	
+
 	/** index of Time which {@link TimeStepDialog} operates on */
 	private int contextTimeIndex = -1;
 
 	/** length attribute for new note being inserted, provided by {@link NoteValueSpinner} */
 	protected int currentNoteLength = 0;
-	
+
 	private int iaRightMargin;
 	private int delta;
 	private int mTouchSlop;
@@ -181,32 +194,55 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private int visibleRectWidth;
 	private int visibleRectHeight;
 	private int notesAreaX;
-	
+
 	private int inputAreaWidth;
 	private float noteMinDistToIA;
 	private float noteShadowFactor;
 	private float fakePauseEffectRadius;
 	private int maxLinespaceThickness;
 	private float actionSubjectVisiblePaddingLeft;
-	
+
 	/** takt muzyki */
 	private class Time {
-		/** index of left divider (TimeDivider class) in elementViews */ 
+		/** index of left divider (TimeDivider class) in elementViews */
 		private int rangeStart;
 		/** current (to sheetParams) spacing after whole note */
 		int spacingBase = -1;
 		private TimeSpec spec;
 		private SheetAlignedElementView view;
 		private int capLeft;
-		
+
 		public Time(TimeSpec spec, SheetAlignedElementView view) {
 			this.spec = spec;
 			this.view = view;
 		}
-		
+
 		public boolean isFull() {
 			return capLeft == 0;
 		}
+	}
+
+	public EditActivity() {
+		ActivityStrategyChainRoot root = new ActivityStrategyChainRoot(this);
+		errorDialogStrategy = new ErrorDialogStrategy(root) {
+			@Override
+			protected void lazyFinishCleanup() {
+				EditActivity.this.lazyFinishCleanup();
+			}
+		};
+		initialProgressDialogStrategy = new InitialProgressDialogStrategy(errorDialogStrategy);
+		managedReceiverStrategy = new ManagedReceiverStrategy(initialProgressDialogStrategy);
+		initMixin(managedReceiverStrategy);
+	}
+
+	@Override
+	public void onDismiss(InfoDialog.InfoDialogDismissalEvent dismissalEvent) {
+		mixin.onCustomEvent(dismissalEvent);
+	}
+
+	@Override
+	public void onCancel(ProgressDialog.ProgressDialogCanceledEvent event) {
+		mixin.onCustomEvent(event);
 	}
 
 	@Override
@@ -227,7 +263,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		staveHighlighter.setHiglightColor(hColor);
 		noteHighlightPaint.setColor(hColor);
 		this.inputArea = findViewById(R.id.EDIT_inputArea);
-		
+
 		this.inputAreaWidth = getResources().getDimensionPixelSize(R.dimen.inputAreaWidth);
 		ViewConfiguration configuration = ViewConfiguration.get(this);
         this.mTouchSlop = configuration.getScaledTouchSlop();
@@ -236,10 +272,10 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		noteMinDistToIA = readParametrizedFactor(R.string.minDistToIA);
 		maxLinespaceThickness = getResources().getDimensionPixelSize(R.dimen.maxLinespaceThickness);
 		actionSubjectVisiblePaddingLeft = readParametrizedFactor(R.string.actionSubjectVisiblePaddingLeft);
-		
+
 		NoteValueWidget valueSpinner = (NoteValueWidget) findViewById(R.id.EDIT_note_value_scroll);
 		try {
-			int newNoteLength = savedInstanceState == null ? 
+			int newNoteLength = savedInstanceState == null ?
 				-1 : savedInstanceState.getInt(INSTANCE_STATE_CURRENT_NOTE_LENGTH, -1);
 			if(newNoteLength == -1) {
 				valueSpinner.setupNoteViews(sheetParams);
@@ -252,7 +288,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 			return;
 		}
-		
+
 		if(savedInstanceState != null && savedInstanceState.containsKey(INSTANCE_STATE_SCORE)) {
 			ParcelableScore parcelable = savedInstanceState.getParcelable(INSTANCE_STATE_SCORE);
 			score = parcelable.getSource();
@@ -274,32 +310,33 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				showErrorDialog(R.string.errormsg_unrecoverable, null, true);
 				return;
 			}
-			GetScoreReceiver getScoreReceiver = new GetScoreReceiver();	
+			GetScoreReceiver getScoreReceiver = new GetScoreReceiver();
 			Intent requestIntent = AsyncHelper.prepareServiceIntent(
-				this, 
-				ContentService.class, 
-				ContentService.ACTIONS.GET_SCORE_BY_ID, 
-				getScoreReceiver.getCurrentRequestId(), 
-				AsyncHelper.getBroadcastCallback(CALLBACK_ACTION_GET), 
+				this,
+				ContentService.class,
+				ContentService.ACTIONS.GET_SCORE_BY_ID,
+				getScoreReceiver.getCurrentRequestId(),
+				AsyncHelper.getBroadcastCallback(CALLBACK_ACTION_GET),
 				false
 			);
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, scoreId);
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, true);
-			registerManagedReceiver(getScoreReceiver, CALLBACK_ACTION_GET);
+			managedReceiverStrategy.registerManagedReceiver(getScoreReceiver, CALLBACK_ACTION_GET);
         	log.v("Sending GET_SCORE_BY_ID for id "+scoreId);
         	startService(requestIntent);
-        	showProgressDialog();
+        	initialProgressDialogStrategy.showProgressDialog();
 		}
 	}
-	
-	private class GetScoreReceiver extends SingleManagedReceiver {
+
+	private class GetScoreReceiver extends ManagedReceiverStrategy.SingleManagedReceiver {
+
 		@Override
 		protected void onFailureReceived(Intent response) {
 			log.e("Failed to get score: " + AsyncHelper.getError(response));
-			hideProgressDialog();
+			initialProgressDialogStrategy.hideProgressDialog();
 			showErrorDialog(R.string.errormsg_unrecoverable, null, true);
 		}
-		
+
 		@Override
 		protected void onSuccessReceived(Intent response) {
 			ParcelableScore parcelable = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_ENTITY);
@@ -315,21 +352,20 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			onModelLoaded();
 		}
 	}
-	
-	@Override
-	protected void lazyFinishCleanup() {
+
+	/* errorDialogStrategy callback */
+	private void lazyFinishCleanup() {
 		skipOnStopCopy = true;
-		super.lazyFinishCleanup();
 	}
-	
+
 	@Override
 	protected void onStop() {
 		if(score != null && !skipOnStopCopy) {
 			parseModifiedCotentModel();
 			// save a working copy
 			Intent request = AsyncHelper.prepareServiceIntent(
-				this, ContentService.class, 
-				ContentService.ACTIONS.SAVE_SCORE_COPY, 
+				this, ContentService.class,
+				ContentService.ACTIONS.SAVE_SCORE_COPY,
 				null, null, false);
 			try {
 				request.putExtra(ContentService.ACTIONS.EXTRAS_SCORE, score.prepareParcelable());
@@ -347,7 +383,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 		super.onStop();
 	}
-	
+
 	/** Checks whether content in {@link #score} is different from the one most recently saved. */
 	private boolean isScoreDirty() {
 		try {
@@ -357,15 +393,15 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			return true;
 		}
 	}
-	
+
 	private boolean isConfigDirty() {
 		return visualConf != null && (lastSavedConf == null || !visualConf.isEqual(lastSavedConf));
 	}
-	
+
 	private static final int MENU_SAVE = 1;
 	private static final int MENU_PLAY = 4;
 	private static final int MENU_PREFS = 5;
-	
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		menu.add(Menu.NONE, MENU_PLAY, Menu.NONE, R.string.menu_label_play);
@@ -373,7 +409,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		menu.add(Menu.NONE, MENU_PREFS, Menu.NONE, R.string.menu_label_editor_prefs);
 		return super.onCreateOptionsMenu(menu);
 	}
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		int id = item.getItemId();
@@ -393,7 +429,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 			break;
 		case MENU_PREFS:
-			Intent i = new Intent(this, VisualPreferencesActivity.class);			
+			Intent i = new Intent(this, VisualPreferencesActivity.class);
 			i.putExtra(VisualPreferencesActivity.START_EXTRAS_VISCONF, new ScoreVisualizationConfig(visualConf));
 			startActivityForResult(i, REQUEST_CODE_PREFS);
 			break;
@@ -402,7 +438,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 		return true;
 	}
-	
+
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		switch(requestCode) {
@@ -429,7 +465,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 						}
 						buildNoteGroups(0, endIndex);
 						buildJoinArcs(0, endIndex);
-						updateScaleFactor(sheetParams.getScale(), false);						
+						updateScaleFactor(sheetParams.getScale(), false);
 						initialScrollTo();
 					} catch(Exception e) {
 						log.e("Failed to rebuild after DisplayMode change", e);
@@ -454,14 +490,14 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private void sendCleanCopy() {
 		if(score != null) {
 			Intent request = AsyncHelper.prepareServiceIntent(
-				this, ContentService.class, 
-				ContentService.ACTIONS.CLEAN_SCORE_SESSION_COPY, 
+				this, ContentService.class,
+				ContentService.ACTIONS.CLEAN_SCORE_SESSION_COPY,
 				null, null, false);
 			request.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, score.getId());
 			startService(request);
 		}
 	}
-	
+
 	private void saveChanges() {
 		if(score == null) {
 			Toast.makeText(this, "Score not loaded yet.", Toast.LENGTH_SHORT).show();
@@ -473,14 +509,14 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				scoreTitle = getString(android.R.string.untitled);
 			}
 			Intent callback = AsyncServiceToastReceiver.prepare(
-				this, 
-				getString(R.string.toast_score_saved, scoreTitle), 
-				getString(R.string.toast_failed_to_save_score, scoreTitle), 
+				this,
+				getString(R.string.toast_score_saved, scoreTitle),
+				getString(R.string.toast_failed_to_save_score, scoreTitle),
 				false
 			);
 			Intent request = AsyncHelper.prepareServiceIntent(
-				this, ContentService.class, 
-				ContentService.ACTIONS.UPDATE_SCORE, 
+				this, ContentService.class,
+				ContentService.ACTIONS.UPDATE_SCORE,
 				null, callback, false);
 			try {
 				request.putExtra(ContentService.ACTIONS.EXTRAS_SCORE, score.prepareParcelable());
@@ -495,7 +531,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 		}
 	}
-	
+
 	private void onModelLoaded() {
 		try {
 			List<ScoreContentElem> content = score.getContent();
@@ -504,7 +540,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				if(el instanceof TimeSpec) {
 					TimeSpec timeSpec = (TimeSpec) el;
 					spec = new ElementSpec.TimeDivider(
-						times.size() - 1 >= 0 ? times.get(times.size()-1).spec : null, 
+						times.size() - 1 >= 0 ? times.get(times.size()-1).spec : null,
 						timeSpec
 					);
 				} else if(el instanceof NoteSpec) {
@@ -536,9 +572,9 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 			return;
 		}
-		
+
 		rightToIA = Math.min(rightToIA, elementViews.size());
-		
+
 		setupListeners();
 		ViewUtils.addActivityOnLayout(this, new OnLayoutListener() {
 			@Override
@@ -548,10 +584,10 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 		});
 		hscroll.requestLayout();
-		hideProgressDialog();
+		initialProgressDialogStrategy.hideProgressDialog();
 		((TextView) findViewById(R.id.EDIT_title)).setText(ifNotNull(score.getTitle(), getString(android.R.string.untitled)));
 	}
-	
+
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		if(score != null) {
@@ -612,7 +648,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		score.setContent(content);
 	}
 
-	
+
 	private void setupListeners() {
 		hscroll.setOnTouchListener(quickActionsDismiss);
 		vertscroll.setOnTouchListener(quickActionsDismiss);
@@ -654,10 +690,10 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 		});
 	}
-	
+
 	private void rebuildTimes(int startTimeIndex) throws CreationException {
 //		log.i("rebuildTimes(%d)", startTimeIndex);
-		
+
 		TimeSpec.TimeStep currentMetrum = getCurrentTimeStep(startTimeIndex);
 		int i = startTimeIndex < times.size() ? times.get(startTimeIndex).rangeStart : 0;
 		int timeIndex = startTimeIndex;
@@ -689,14 +725,14 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 			int timeValue = elementSpec.timeValue(minPossibleValue);
 			if(timeValue <= currentTime.capLeft) {
-//					log.i("rebuildTimes(): element at %d of timeValue %d will shrink %d cap of time[%d]", i, timeValue, capLeft, timeIndex); 
+//					log.i("rebuildTimes(): element at %d of timeValue %d will shrink %d cap of time[%d]", i, timeValue, capLeft, timeIndex);
 				currentTime.capLeft -= timeValue;
 				if(currentTime.capLeft == 0) {
-//						log.i("rebuildTimes(): and forced it's end", i, timeValue, timeIndex); 
+//						log.i("rebuildTimes(): and forced it's end", i, timeValue, timeIndex);
 					timeIndex++;
 				}
-			} 
-			else if(timeValue > currentTimeCapcity) { 
+			}
+			else if(timeValue > currentTimeCapcity) {
 				// try to divide element to fit
 				if(elementSpec.getType() != ElementType.NOTE) {
 					// drop because no possibility of dividing
@@ -708,11 +744,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 					removeElementView(view);
 					insertDivdiedNote.insertDivided(i, capLeft, note.noteSpec(), true);
 					insertDivdiedNote.insertDivided(
-						i+insertDivdiedNote.getTotal(), 
+						i+insertDivdiedNote.getTotal(),
 						timeValue - capLeft, note.noteSpec(), false);
 					continue;
 				}
-			} 
+			}
 			else {
 				fillWithFakePauses.insertDivided(i, currentTime.capLeft, true, minPossibleValue);
 				i += fillWithFakePauses.getTotal();
@@ -731,37 +767,37 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			removeElementView(removedTime.view, false);
 		}
 	}
-	
+
 	private InsertDivided fillWithFakePauses = new InsertDivided() {
 		@Override
 		protected void handle(int atIndex, int baseLength, int dotExt) throws CreationException {
 			PauseSpec pause = new PauseSpec(baseLength);
 			pause.setDotExtension(dotExt);
 			SheetAlignedElementView pauseView = addElementView(
-				atIndex, 
+				atIndex,
 				createDrawingModel(new ElementSpec.Pause(pause, true))
 			);
 			pauseView.setPaint(fakePausePaint, fakePauseEffectRadius*sheetParams.getScale());
 			updatePosition(pauseView, positionAfter(atIndex-1), sheetElementY(pauseView));
 		}
 	};
-	
+
 	private class FillWithPauses extends InsertDivided {
 		private Point rebuildRange = new Point();
-		
+
 		@Override
 		protected void handle(int atIndex, int baseLength, int dotExt) throws CreationException {
 			PauseSpec pause = new PauseSpec(baseLength);
 			pause.setDotExtension(dotExt);
 			insertElementAtIA(
-				atIndex, 
-				new ElementSpec.Pause(pause), 
+				atIndex,
+				new ElementSpec.Pause(pause),
 				getTotal() != 1 ? null : rebuildRange
 			);
 		}
 	}
 	private FillWithPauses fillWithPauses = new FillWithPauses();
-	
+
 	private class InsertDividedNote extends InsertDivided {
 		private NoteSpec template;
 		private List<NoteSpec> specs = new ArrayList<NoteSpec>();
@@ -783,7 +819,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				updatePosition(view, positionAfter(insertIndex-1), sheetElementY(view));
 			}
 		}
-		
+
 		@Override
 		protected void handle(int atIndex, int baseLength, int dotExt) throws CreationException {
 			NoteSpec spec = new NoteSpec(template);
@@ -791,10 +827,10 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			spec.setDotExtension(dotExt);
 			specs.add(spec);
 		}
-		
+
 	}
 	private InsertDividedNote insertDivdiedNote = new InsertDividedNote();
-	
+
 	private Time rebuildTime(int timeIndex, int newRangeStart, TimeStep prevMetrum) throws CreationException {
 		Time currentTime;
 		if(timeIndex >= times.size()) {
@@ -809,7 +845,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			times.add(timeIndex, currentTime);
 			updatePosition(currentTime.view, positionAfter(newRangeStart-1), sheetElementY(currentTime.view));
 		} else {
-			currentTime = times.get(timeIndex); 
+			currentTime = times.get(timeIndex);
 			int prevIndex = elementViews.indexOf(currentTime.view);
 			if(prevIndex >= 0) {
 				if(prevIndex < newRangeStart) {
@@ -827,7 +863,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		currentTime.capLeft = timeCapacity(metrum != null ? metrum : prevMetrum, minPossibleValue);
 		return currentTime;
 	}
-	
+
 	private void debugViews() {
 		StringBuilder str = new StringBuilder();
 		for(int i = 0; i < elementViews.size(); i++) {
@@ -874,16 +910,16 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			if(type != ElementType.TIMES_DIVIDER) {
 				throw new RuntimeException(String.format(
 					"times[%d].rangeStart = %d points an element of type %s instead of TIME_DIVIDER",
-					i, rangeStart, type.name() 
+					i, rangeStart, type.name()
 				));
 			}
 		}
 	}
-	
+
 	protected void buildNoteGroups(int startIndex, int endIndex) throws CreationException {
 		super.buildNoteGroups(startIndex, endIndex, sheet, normalPaint, NOTE_DRAW_PADDING);
 	}
-	
+
 	protected void buildJoinArcs(int startIndex, int endIndex) throws CreationException {
 		super.buildJoinArcs(startIndex, endIndex, sheet, normalPaint, NOTE_DRAW_PADDING);
 	}
@@ -910,7 +946,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			if(boundOverlay != null) {
 				log.v(
 					"clearOverlay(of class %s): %d -> %d",
-					overlayClass.getSimpleName(), 
+					overlayClass.getSimpleName(),
 					elementViews.indexOf(boundOverlay.getElement(0).getTag()),
 					elementViews.indexOf(boundOverlay.getElement(boundOverlay.elementsCount()-1).getTag())
 				);
@@ -921,7 +957,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				boundOverlay.setTag(null);
 			}
 		}
-	}	
+	}
 	private void unbind(ElementsOverlay overlay, List<SheetAlignedElementView> modifiedElements) {
 		for(int i = 0; i < overlay.elementsCount(); i++) {
 			SheetAlignedElement drawingModel = overlay.getElement(i);
@@ -956,7 +992,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		rebuildTimes(currTime);
 		debugTimes();
 		assertTimesValidity();
-		
+
 		int lastEl = elementViews.size() - 1;
 		/** actual index may have changed because of removed FAKE pauses */
 		if(insertIndex > lastEl || !elementViews.get(insertIndex).equals(newElement)) {
@@ -969,14 +1005,14 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		clearNoteGroups(ngRebuildIndex, lastEl);
 		buildNoteGroups(ngRebuildIndex, lastEl);
 		buildJoinArcs(jaRebuildIndex, lastEl);
-		
+
 		updatePosition(newElement, inIA_noteViewX(newElement), sheetElementY(newElement));
 		updatePositions(insertIndex+1, lastEl, visible2absX(visibleRectWidth-iaRightMargin+delta));
 		if(rebuildRange != null) rebuildRange.set(jaRebuildIndex, lastEl);
 		debugViews();
 		return insertIndex;
 	}
-	
+
 	/**
 	 * @return index of start of possible NoteGroup that could span up to given index
 	 */
@@ -990,7 +1026,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 		return Math.max(i, 0);
 	}
-	
+
 	/**
 	 * @return index of start of possible JoinArc that could span up to given index
 	 */
@@ -1001,11 +1037,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			if(JoinArc.canEndJA(elementSpec) || JoinArc.canStartJA(elementSpec) || !JoinArc.canSkipOver(elementSpec)) {
 				break;
 			}
-			                                                                        
+
 		}
-		return Math.max(i, 0);		
+		return Math.max(i, 0);
 	}
-	
+
 	private void insertNewTime(int newTimeIndex, int timeDividerIndex) throws CreationException {
 		assert newTimeIndex > 0;
 		int ngRebuildIndex = findPossibleNoteGroupStart(timeDividerIndex);
@@ -1013,23 +1049,23 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		int lastEl = elementViews.size() - 1;
 		clearJoinArcs(jaRebuildIndex, lastEl);
 		clearNoteGroups(ngRebuildIndex, lastEl);
-		
+
 		TimeSpec newTime = new TimeSpec();
 		ElementSpec spec = new ElementSpec.TimeDivider(times.get(newTimeIndex-1).spec, newTime);
 		SheetAlignedElementView newElement = addElementView(timeDividerIndex, createDrawingModel(spec));
 		times.add(newTimeIndex, new Time(newTime, newElement));
 		rebuildTimes(newTimeIndex-1);
 		recreateTimeDivider(newTimeIndex+1);
-		
+
 		lastEl = elementViews.size() - 1;
 		buildNoteGroups(ngRebuildIndex, lastEl);
 		buildJoinArcs(jaRebuildIndex, lastEl);
-		
+
 		updateTimeSpacingBase(newTimeIndex, false);
 		updatePosition(newElement, inIA_noteViewX(newElement), sheetElementY(newElement));
 		updatePositions(timeDividerIndex+1, lastEl, visible2absX(visibleRectWidth-iaRightMargin+delta));
 		postInsert(timeDividerIndex, new Point(jaRebuildIndex, lastEl));
-	}	
+	}
 
 	/**
 	 * @return index of the rightmost time, which {@link Time#rangeStart} < insertIndex
@@ -1037,12 +1073,12 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private int findTimeToInsertTo(int insertIndex) {
 		int currTime = findTime(insertIndex);
 		if(times.get(currTime).rangeStart == insertIndex) {
-			// when insertIndex is index of TimeDivider we want to insert into left Time 
+			// when insertIndex is index of TimeDivider we want to insert into left Time
 			currTime--;
 		}
 		return currTime;
 	}
-	
+
 	private void updatePositions(int startIndex, int endIndex) {
 		int x;
 		x = positionAfter(startIndex-1);
@@ -1072,12 +1108,12 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			xstart += afterElementSpacing(times.get(timeIndex), elementI);
 		}
 	}
-	
+
 	private void updateElementSpec(int elementIndex, ElementSpec newSpec, Point rebuildRange) throws CreationException {
 		assertTimesValidity();
 		SheetAlignedElementView view = elementViews.get(elementIndex);
 		boolean timesRebuildRequired = view.model().getElementSpec().timeValue(minPossibleValue) != newSpec.timeValue(minPossibleValue);
-		
+
 		int ngRebuildIndex = findPossibleNoteGroupStart(elementIndex);
 		int jaRebuildIndex = findPossibleJoinArcStart(ngRebuildIndex);
 		int rebuildEnd;
@@ -1093,7 +1129,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 			rebuildEnd = Math.min(rebuildEnd, size-1);
 		}
-		
+
 		log.v(
 			"updateElementSpec(%d) rebuilds ja %d->%d ng %d->%d",
 			elementIndex,
@@ -1111,43 +1147,43 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		rebuildEnd = Math.min(rebuildEnd, elementViews.size()-1);
 		buildNoteGroups(ngRebuildIndex, rebuildEnd);
 		buildJoinArcs(jaRebuildIndex, rebuildEnd);
-		
+
 		assertTimesValidity();
 		rebuildRange.set(jaRebuildIndex, rebuildEnd);
 	}
-	
+
 	private SheetAlignedElementView removeElement(int elementIndex, Point rebuildRange) throws CreationException {
 		debugTimes();
 		debugViews();
 		assertTimesValidity();
-		
+
 		int currTime = findTime(elementIndex);
 		// wstawić element w miejsce insertIndex
 		SheetAlignedElementView elView = elementViews.get(elementIndex);
-		
+
 		// find NotesGroup start that could be affected by removal
 		int ngRebuildIndex = findPossibleNoteGroupStart(elementIndex);
 		int jaRebuildIndex = findPossibleJoinArcStart(ngRebuildIndex);
-		
+
 		// usunąć m.in. wszystkie Overlay-ie które operować na usuwanym elemencie
 		int lastEl = elementViews.size() - 1;
 		clearJoinArcs(jaRebuildIndex, lastEl);
 		clearNoteGroups(ngRebuildIndex, lastEl);
-		
+
 		// usunąć widok elementu
 		removeElementView(elView);
 		// przeliczyć czy nie zmieniła się struktura taktów
 		rebuildTimes(currTime);
 		debugTimes();
-		
+
 		lastEl = elementViews.size() - 1;
 		// odbudować Overlay-ie uwzględniając nowy układ (nieobecność usuniętego elementu i ew. przesunięcia pomiędzy taktami)
 		buildNoteGroups(ngRebuildIndex, lastEl);
 		buildJoinArcs(jaRebuildIndex, lastEl);
-		
+
 		debugViews();
 		assertTimesValidity();
-		
+
 		if(elementIndex < rightToIA) {
 			rightToIA--;
 		}
@@ -1156,7 +1192,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 		return elView;
 	}
-	
+
 	private void forceCloseTime(int insertIndex) {
 		int timeIndex = findTimeToInsertTo(insertIndex);
 		Time time = times.get(timeIndex);
@@ -1190,11 +1226,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 		}
 	}
-	
+
 	private View.OnTouchListener elementTouchListener = new OnTouchListener() {
 		int selectedIndex = -1;
 		IndexAwareAction[] actions;
-		
+
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
 			switch(event.getActionMasked()) {
@@ -1231,26 +1267,26 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			return false;
 		}
 	};
-	
+
 	private void setHighlighted(SheetAlignedElementView view, boolean highlighted) {
 		view.setPaint(highlighted ? noteHighlightPaint : normalPaint, NOTE_DRAW_PADDING);
 		if(view.model().getElementSpec().getType() == ElementType.TIMES_DIVIDER) {
 			barLineHighlighter.setHighlightedBar(highlighted ? view : null);
 		}
 	}
-	
+
 	private View.OnTouchListener noteTouchListener = new OnTouchListener() {
 		private static final int INVALID_POINTER = -1;
 		private int activePointerId = INVALID_POINTER;
 		private boolean touchSlopPassed;
 		private int downEventY;
-		
+
 		private int selectedIndex;
 		private int touchYoffset;
 		private int currentAnchor, startAnchor;
 		private int absMiddleX;
 		private Point temp = new Point();
-		
+
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
 			switch(event.getActionMasked()) {
@@ -1307,30 +1343,30 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				highlightAnchor(null);
 				if(startAnchor != currentAnchor) {
 					animatedRepositioning(
-						selectedIndex, selectedIndex, 
-						selectedIndex, 
+						selectedIndex, selectedIndex,
+						selectedIndex,
 						abs2visibleX(middleAbsoluteX(elementViews.get(selectedIndex))),
 						true
 					);
-				}				
+				}
 				return true;
 			}
 			return false;
 		}
 	};
-	
+
 	private View.OnTouchListener iaTouchListener = new LazyTouchListener(100, new LazyTouchListener.DelayedDownTouchListener() {
 		private static final int INVALID_POINTER = -1;
 		private int activePointerId;
 		private int currentAnchor;
 		private int insertIndex;
 		private boolean addGroupFlag;
-		
+
 		@Override
 		public boolean tryActionDown(Point coords) {
 			return insideIA(coords.x);
 		}
-		
+
 		@Override
 		public void actionDown(int downPointerId, Point downCoords, Point lastMoveCoords) {
 			activePointerId = INVALID_POINTER;
@@ -1371,7 +1407,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				activePointerId = INVALID_POINTER;
 			}
 		}
-		
+
 		Point temp = new Point(), rebuildRange = new Point();
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
@@ -1426,20 +1462,20 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			setVerticalScrollingLocked(false);
 			postInsert(insertIndex, rebuildRange);
 		}
-		
+
 		/**
 		 * Clear all artifacts introduced by touch inside IA box
 		 */
 		private void cancel() {
 			setVerticalScrollingLocked(false);
 			highlightAnchor(null);
-			
+
 			if(activePointerId != INVALID_POINTER) {
 				try {
 					removeElement(insertIndex, null);
 					// przywrócić właściwe pozycje
 					updatePositions(
-						rightToIA, 
+						rightToIA,
 						elementViews.size()-1,
 						positionAfter(rightToIA-1) + moveDistance()
 					);
@@ -1460,7 +1496,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			return pos >= visibleRectWidth-inputAreaWidth-iaRightMargin && pos <= visibleRectWidth-iaRightMargin;
 		}
 	});
-	
+
 	/**
 	 * find which anchor from range <minSpaceAbsIndex, maxSpaceAbsIndex> is nearest to horizontal line y
 	 * @param y in sheet view coordinates
@@ -1473,7 +1509,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			- line0middle;
 		int indexDeltaHead = y - (line0Top() + line0middle - delta/2);
 		int indexDelta = indexDeltaHead/delta;
-		return Math.max( 
+		return Math.max(
 			Math.min(
 			LINE0_ABSINDEX + indexDelta + (indexDeltaHead < 0 ? -1 : 0),
 			NoteConstants.anchorIndex(visualConf.getMaxSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
@@ -1481,7 +1517,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			NoteConstants.anchorIndex(visualConf.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE)
 		);
 	}
-	
+
 	private boolean willFitInTime(int insertIndex, ElementSpec spec) {
 		int timeIndex = findTimeToInsertTo(insertIndex);
 		TimeStep currentTimeStep = getCurrentTimeStep(timeIndex);
@@ -1497,7 +1533,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 		return spec.timeValue(minPossibleValue) <= capLeft;
 	}
-	
+
 	private TimeStep getCurrentTimeStep(int timeIndex) {
 		TimeStep result = null, curr;
 		timeIndex = Math.min(timeIndex, times.size()-1);
@@ -1508,7 +1544,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 		return result;
 	}
-	
+
 	private OnScrollChangedListener horizontalScrollListener = new OnScrollChangedListener() {
 		@Override
 		public void onScrollChanged(int l, int oldl) {
@@ -1528,7 +1564,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 					}
 				}
 			} else if(l > oldl && rightToIA < elementViews.size()) {
-				// move all elements that crossed "to the right of IA" border 
+				// move all elements that crossed "to the right of IA" border
 				while(rightToIA < elementViews.size()) {
 					if(shouldBeMovedLeft(rightToIA)) {
 						moveLeft(rightToIA);
@@ -1539,19 +1575,19 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				}
 			}
 		}
-		
+
 		/**
 		 * @param elIndex index of element
-		 * @return if element was on the right of IA should be moved to the left of IA. 
+		 * @return if element was on the right of IA should be moved to the left of IA.
 		 */
 		private boolean shouldBeMovedLeft(int elIndex) {
 			int middle = elementMiddleVisibleX(elIndex);
 			return middle < moveLeftBorder();
 		}
-		
+
 		/**
 		 * @param elIndex index of element
-		 * @return if element was on the left of IA should be moved to the right of IA. 
+		 * @return if element was on the left of IA should be moved to the right of IA.
 		 */
 		private boolean shouldBeMovedRight(int elIndex) {
 			int middle = elementMiddleVisibleX(elIndex);
@@ -1560,21 +1596,21 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 
 		/**
 		 * Horizontal position of element relative to visible rectangle.
-		 * If element is subject of animation, take it's destination position instead of temporary one. 
+		 * If element is subject of animation, take it's destination position instead of temporary one.
 		 */
 		private int elementMiddleVisibleX(int elIndex) {
 			SheetAlignedElementView element = elementViews.get(elIndex);
 			return abs2visibleX(viewStableX(element)) + middleX(element);
 		}
-		
+
 		private void moveRight(int elIndex) {
 			move(elIndex, moveDistance());
 		}
-		
+
 		private void moveLeft(int elIndex) {
 			move(elIndex, -moveDistance());
 		}
-		
+
 		private void move(int elIndex, int xDelta) {
 			SheetAlignedElementView element = elementViews.get(elIndex);
 			LayoutAnimator.LayoutAnimation<EditActivity, ?> anim = animator.getAnimation(element);
@@ -1588,19 +1624,19 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				animator.startRLAnimation(element, xDelta, ANIM_TIME);
 			}
 		}
-			
+
 	};
-	
+
 	private InterceptsScaleGesture.OnScaleListener scaleListener = new InterceptsScaleGesture.OnScaleListener() {
 		private int originalRightToIA;
 		private boolean scalingOccured = false;
-		
+
 		public void onScaleBegin() {
 			originalRightToIA = rightToIA;
 			rightToIA = elementViews.size();
 			scalingOccured = false;
 		}
-		
+
 		@Override
 		public void onScale(float scaleFactor, PointF focusPoint) {
 			isScaling = true;
@@ -1649,9 +1685,9 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				}
 			}
 //			log.i("onScaleEnd(): new right: %d", rightToIA);
-			
+
 			int leftToIAArea = moveRightBorder();
-			// scroll sheet so left border of IA matches: 
+			// scroll sheet so left border of IA matches:
 			int destScrollX = rightToIA == 1
 				// free place in first Time
 				? middleAbsoluteX(elementViews.get(0)) + timeDividerSpacing(times.get(0), false) - (visibleRectWidth - inputAreaWidth - iaRightMargin)
@@ -1678,7 +1714,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				}
 			});
 		}
-		
+
 		/**
 		 * search for note which middle is further on x-axis that markerX
 		 * @param index search from this index to the end of noteViews
@@ -1719,28 +1755,28 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		public int middleVisibleX(SheetAlignedElementView view) {
 			return abs2visibleX(middleAbsoluteX(view));
 		}
-		
+
 		private void scalingFinished() {
 			isScaling = false;
 			setTouchInputLocked(false);
 		}
 	};
-	
+
 	private void postInsert(int insertIndex, Point rebuildRange) {
 		int timeIndex = findTime(insertIndex);
-		boolean isLastNoteOfTime = timeIndex+1 < times.size() && insertIndex+1 == times.get(timeIndex+1).rangeStart; 
+		boolean isLastNoteOfTime = timeIndex+1 < times.size() && insertIndex+1 == times.get(timeIndex+1).rangeStart;
 		animatedRepositioning(
-			rebuildRange.x, 
-			rebuildRange.y, 
-			isLastNoteOfTime && times.get(timeIndex).isFull() ? insertIndex+1 : insertIndex, 
+			rebuildRange.x,
+			rebuildRange.y,
+			isLastNoteOfTime && times.get(timeIndex).isFull() ? insertIndex+1 : insertIndex,
 			visibleRectWidth - inputAreaWidth - iaRightMargin - delta,
 			false
 		);
 	}
-	
+
 	/**
 	 * Updates timeSpacingBase of times that overlaps rebuild range.
-	 * Calculates new {@link #rightToIA}, scrolls "sheet" and 
+	 * Calculates new {@link #rightToIA}, scrolls "sheet" and
 	 * moves element views to their appropriate horizontal positions inside "sheet".
 	 * @param rebuildStart indicates the leftmost element that was modified
 	 * @param rebuildEnd indicates the rightmost element that was modified
@@ -1761,9 +1797,9 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 		animatedRepositioning(pinnedElementIndex, pinVisiblePositionX, times.get(startTime).rangeStart, getResources().getInteger(R.integer.repositioningDuration), null);
 	}
-	
+
 	/**
-	 * @param repositioningStart 
+	 * @param repositioningStart
 	 * @see {@link #animatedRepositioning(int, int, int, int, long)}
 	 */
 	private void animatedRepositioning(int pinnedElementIndex, int pinVisiblePositionX, int repositioningStart, long animationDuration, final Runnable onAnimationEnd) {
@@ -1789,7 +1825,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 			rightToIA = i+1;
 		}
-		
+
 		WaitManyRunOnce animationsEndListener = new WaitManyRunOnce() {
 			@Override
 			protected void allFinished() {
@@ -1825,10 +1861,10 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		if(rescrollDest == -1) {
 			throw new RuntimeException();
 		}
-		
+
 		/** destination value of hscroll.scrollX */
 		int destScrollX = rescrollDest-pinVisiblePositionX;
-		/** how long part of resized sheet will remain in visible rect or further to right after scrolling 
+		/** how long part of resized sheet will remain in visible rect or further to right after scrolling
 		 *  to destScrollX
 		 */
 		int newWidth = getValidSheetWidth();
@@ -1840,13 +1876,13 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		if(getCurrentSheetWidth() < newWidth) {
 			correctSheetWidth();
 		}
-		
+
 		int scrollDelta = abs2visibleX(rescrollDest)-pinVisiblePositionX;
 		if(scrollDelta != 0) {
 			animator.startHScrollAnimation(
-				hscroll, 
-				scrollDelta, 
-				animationDuration, 
+				hscroll,
+				scrollDelta,
+				animationDuration,
 				animationsEndListener.countUsage()
 			);
 		}
@@ -1855,7 +1891,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			animationsEndListener.allFinished();
 		}
 	}
-	
+
 	/**
 	 * @return index of the rightmost time, which {@link Time#rangeStart} <= insertIndex
 	 */
@@ -1873,7 +1909,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		public Animator(EditActivity ctx) {
 			super(ctx);
 		}
-		
+
 		private static class RLAnimation extends LayoutAnimation<EditActivity, View> {
 			public RLAnimation(View view, int currentLMargin, int delta, long duration) {
 				super(view, currentLMargin, delta, duration);
@@ -1884,8 +1920,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 		}
 		private static class HScrollAnimation extends LayoutAnimation<EditActivity, HorizontalScrollView> {
-			
-			public HScrollAnimation(HorizontalScrollView view, int scrollStartX, int scrollDelta, 
+
+			public HScrollAnimation(HorizontalScrollView view, int scrollStartX, int scrollDelta,
 					long duration, Runnable onAnimationEndListener) {
 				super(view, scrollStartX, scrollDelta, duration, onAnimationEndListener);
 			}
@@ -1894,7 +1930,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				view.scrollTo(start_value + (int) (delta*state), 0);
 			}
 		}
-		
+
 		public void startRLAnimation(View view, int dx, int duration) {
 			startRLAnimation(view, dx, duration, null);
 		}
@@ -1909,15 +1945,15 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			startAnimation(anim);
 		}
 	}
-	
+
 	protected void onContainerResize(int visibleRectWidth, int visibleRectHeight) {
 		if(visibleRectWidth == this.visibleRectWidth && visibleRectHeight == this.visibleRectHeight)
 			return;
 		this.visibleRectWidth = visibleRectWidth;
 		this.visibleRectHeight = visibleRectHeight;
-		
+
 		iaRightMargin = ((View) inputArea.getParent()).getWidth() - inputArea.getRight();
-		
+
 		float scale;
 		if(!isScaleValid) {
 			// calculate default scale so spaces/lines (from space -1 to space 5) fit visible height
@@ -1938,10 +1974,10 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			scale = sheetParams.getScale();
 		}
 		updateScaleFactor(scale, false);
-		
+
 		int linesHalf = sheetParams.anchorOffset(NoteConstants.anchorIndex(2, NoteConstants.ANCHOR_TYPE_LINE), AnchorPart.MIDDLE);
 		fixLine0VisibleY((visibleRectHeight/2) - linesHalf);
-		
+
 		initialScrollTo();
 	}
 
@@ -1958,12 +1994,12 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		    public void run() {
 				hscroll.scrollTo(startScrollX, 0);
 				sheet.setVisibility(View.VISIBLE);
-		    } 
+		    }
 		});
 	}
-	
+
 	private void onFirstTimeDividerChanged() {
-		int paddingLeft = 
+		int paddingLeft =
 		Math.max(
 			(int) (positioningStrategy.getNotesAreaHorizontalPaddingFactor() * sheetParams.getScale()) + middleX(elementViews.get(0)),
 			// assure that when sheet is scrolled to start IA left edge matches start of area where notes are placed
@@ -1972,7 +2008,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		lines.setPaddingLeft(paddingLeft);
 		this.notesAreaX = paddingLeft;
 	}
-	
+
 	private void fixLine0VisibleY(int visY) {
 		((HackedScrollViewChild) vertscroll.getChildAt(0)).fixRulerVisibleY(visY - lines.getPaddingTop());
 	}
@@ -1986,14 +2022,14 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		onScaleChanged();
 		int noteShadowRadius = (int) (noteShadowFactor * sheetParams.getScale());
 		NOTE_DRAW_PADDING = noteShadowRadius*2;
-		noteHighlightPaint.setShadowLayer(noteShadowRadius, noteShadowRadius/2, noteShadowRadius, Color.BLACK);		
+		noteHighlightPaint.setShadowLayer(noteShadowRadius, noteShadowRadius/2, noteShadowRadius, Color.BLACK);
 		fakePausePaint.setShadowLayer(fakePauseEffectRadius/2, 0, 0, Color.BLACK);
 		NOTE_DRAW_PADDING = (int) Math.max(fakePauseEffectRadius*sheetParams.getScale(), NOTE_DRAW_PADDING);
 		delta = (int) (sheetParams.getScale()*noteMinDistToIA);
 		log.d("updateScaleFactor(%f): delta = %d", newScaleFactor, delta);
 		updateLinesViewSizeAndPosition();
 		onFirstTimeDividerChanged();
-		
+
 		int spacingAfter = notesAreaX;
 		int x = 0;
 		int timeIndex = -1;
@@ -2015,7 +2051,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			int xpos = x-middleX(v);
 			int ypos = sheetElementY(v);
 			updatePosition(
-				v, 
+				v,
 				xpos,
 				ypos
 			);
@@ -2029,7 +2065,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	 */
 	private void updateLinesViewSizeAndPosition() {
 		int minLinespaceTopOffset = sheetParams.anchorOffset(
-			NoteConstants.anchorIndex(visualConf.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE), 
+			NoteConstants.anchorIndex(visualConf.getMinSpaceAnchor(), NoteConstants.ANCHOR_TYPE_LINESPACE),
 			AnchorPart.TOP_EDGE
 		);
 		int maxLinespaceBottomOffset = sheetParams.anchorOffset(
@@ -2040,8 +2076,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			NoteConstants.LINE4_ABSINDEX,
 			AnchorPart.BOTTOM_EDGE
 		);
-		lines.setParams(sheetParams, 
-			Math.abs(minLinespaceTopOffset), 
+		lines.setParams(sheetParams,
+			Math.abs(minLinespaceTopOffset),
 			Math.abs(maxLinespaceBottomOffset - line4bottomOffset)
 		);
 		updateYPosition(lines, 0);
@@ -2053,11 +2089,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		int lastEl = (timeIndex + 1 < times.size() ? times.get(timeIndex+1).rangeStart : elementViews.size()) - 1;
 		time.spacingBase = computeTimeSpacingBase(time.rangeStart, lastEl, refreshSheetParams);
 	}
-	
+
 	private void setVerticalScrollingLocked(boolean verticalScrollingLocked) {
 		((ScrollingLockable) vertscroll).setScrollingLocked(verticalScrollingLocked);
 	}
-	
+
 	private void setTouchInputLocked(boolean setLocked) {
 		((TouchInputLockable) scaleGestureDetector).setTouchInputLocked(setLocked);
 	}
@@ -2074,13 +2110,13 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private int getValidSheetWidth() {
 		int lastElIndex = elementViews.size()-1;
 		SheetAlignedElementView lastView = elementViews.get(lastElIndex);
-		int lastViewShiftedX = 
-			viewStableX(lastView) 
+		int lastViewShiftedX =
+			viewStableX(lastView)
 			+ (lastElIndex < rightToIA ? moveDistance() : 0)
 		;
 		int newSheetWidth = Math.max(
 			visibleRectWidth,
-			lastViewShiftedX + middleX(lastView) + 
+			lastViewShiftedX + middleX(lastView) +
 			Math.max(
 				iaRightMargin - delta + mTouchSlop + 1,
 				lastView.measureWidth() - middleX(lastView)
@@ -2088,11 +2124,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		);
 		return newSheetWidth;
 	}
-	
+
 	private int getCurrentSheetWidth() {
 		return sheet.getLayoutParams().width;
 	}
-	
+
 	protected void popupCurrentNoteLength() {
 		final View popup = findViewById(R.id.EDIT_info_popup);
 		SheetAlignedElementView noteView = (SheetAlignedElementView) popup.findViewById(R.id.EDIT_info_popup_note);
@@ -2105,11 +2141,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		try {
 			SheetAlignedElement model = createDrawingModel(new ElementSpec.NormalNote(
 				new NoteSpec(
-					currentNoteLength, 
+					currentNoteLength,
 					LINE4_ABSINDEX
-				), 
+				),
 				NoteConstants.ORIENT_UP
-			)); 
+			));
 			noteView.setModel(model);
 			noteView.requestLayout();
 		} catch (CreationException e) {
@@ -2125,14 +2161,14 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		animation.reset();
 		popup.startAnimation(animation);
 	}
-	
+
 	private Animation mInfoPopupAnimation;
 
 	private Animation infoPoupAnimation(final View popup) {
 		if(mInfoPopupAnimation != null)
 			return mInfoPopupAnimation;
 		AnimationSet animSet = new AnimationSet(true);
-		ScaleAnimation scaleAnim = new ScaleAnimation(0.75f, 1, 0.75f, 1, 
+		ScaleAnimation scaleAnim = new ScaleAnimation(0.75f, 1, 0.75f, 1,
 				Animation.RELATIVE_TO_PARENT, 0.5f, Animation.RELATIVE_TO_PARENT, 0.5f);
 		scaleAnim.setDuration(200);
 		scaleAnim.setStartOffset(0);
@@ -2159,37 +2195,37 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		});
 		return mInfoPopupAnimation = animSet;
 	}
-	
+
 	private Toast lastDisruptText = null;
 	protected void disrupt(int stringResId) {
 		Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 		v.vibrate(100);
 		if(lastDisruptText == null) {
-			lastDisruptText = Toast.makeText(this, "", Toast.LENGTH_SHORT);			
+			lastDisruptText = Toast.makeText(this, "", Toast.LENGTH_SHORT);
 		}
 		lastDisruptText.cancel();
 		lastDisruptText.setText(stringResId);
 		lastDisruptText.show();
 	}
-	
+
 	private IndexAwareAction[] possibleActions;
 	private IndexAwareAction[]	modifiersActions;
 	private IndexAwareAction[] insertActions;
 	private IndexAwareAction[] timedividerActions;
 	private int elementActionIndex;
-	
+
 	private abstract class IndexAwareAction implements Action {
-		protected boolean mPostHide = true; 
+		protected boolean mPostHide = true;
 		@Override
 		public final void perform() {
 			perform(elementActionIndex);
 			if(mPostHide)
 				hideQuickActionsPopup();
 		}
-		
+
 		protected abstract void perform(int elementIndex);
 		protected abstract boolean isValidOn(int elementIndex);
-		
+
 		protected boolean isValidIndex(int elementIndex) {
 			return elementIndex >= 0 && elementIndex < elementViews.size();
 		}
@@ -2197,12 +2233,12 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		protected Boolean getState(int contextElementIndex) {
 			return null;
 		}
-		
+
 		@Override
 		public Boolean getState() {
 			return getState(elementActionIndex);
 		}
-		
+
 		@Override
 		public final boolean isActive() {
 			return isActive(elementActionIndex);
@@ -2212,15 +2248,15 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			return true;
 		}
 	};
-	
+
 	private abstract class SvgIconAction extends IndexAwareAction {
 		private int svgResId;
 		private SvgImage icon;
-		
+
 		public SvgIconAction(int svgResId) throws LoadingSvgException {
 			this.svgResId = svgResId;
 		}
-		
+
 		@Override
 		public SvgImage icon() {
 			if(icon == null) {
@@ -2234,9 +2270,9 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			return icon;
 		}
 	};
-	
+
 	private abstract class UpdateElementAction extends SvgIconAction {
-		
+
 		public UpdateElementAction(int svgResId) throws LoadingSvgException {
 			super(svgResId);
 		}
@@ -2261,9 +2297,9 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 
 		protected abstract ElementSpec updatedSpec(ElementSpec elementSpec);
 	};
-	
+
 	private class RemoveElementAction extends SvgIconAction {
-		
+
 		public RemoveElementAction(int svgResId) throws LoadingSvgException {
 			super(svgResId);
 		}
@@ -2277,7 +2313,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				removeElement(elementIndex, rebuildRange);
 				int pinElIndex = elementIndex-1;
 				animatedRepositioning(
-					rebuildRange.x, rebuildRange.y, 
+					rebuildRange.x, rebuildRange.y,
 					pinElIndex, abs2visibleX(middleAbsoluteX(elementViews.get(pinElIndex))), false
 				);
 			} catch (CreationException e) {
@@ -2286,11 +2322,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				return;
 			}
 		}
-		
+
 		@Override
 		protected boolean isValidOn(int elementIndex) {
 			if(isValidIndex(elementIndex)) {
-				switch(specAt(elementIndex).getType()) { 
+				switch(specAt(elementIndex).getType()) {
 				case NOTE:
 				case PAUSE:
 					return true;
@@ -2299,7 +2335,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			return false;
 		}
 	}
-	
+
 	private class ToggleJoinArc extends UpdateElementAction {
 
 		public ToggleJoinArc(int svgResId) throws LoadingSvgException {
@@ -2319,7 +2355,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			ElementSpec elementSpec = elementViews.get(elementIndex).model().getElementSpec();
 			return JoinArc.couldStartWithJA(elementSpec);
 		}
-		
+
 		@Override
 		public boolean isActive(int elementIndex) {
 			for(int i = elementIndex+1; i < elementViews.size(); i++) {
@@ -2332,14 +2368,14 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
  			}
 			return false;
 		}
-		
+
 		@Override
 		protected Boolean getState(int elementIndex) {
-			return isValidIndex(elementIndex) 
+			return isValidIndex(elementIndex)
 			&& ((ElementSpec.NormalNote) elementViews.get(elementIndex).model().getElementSpec()).noteSpec().hasJoinArc();
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private abstract class ToggleDot<T extends ElementSpec> extends UpdateElementAction {
 		ElementType type;
@@ -2365,20 +2401,20 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 			return false;
 		}
-		
+
 		@Override
 		protected boolean isActive(int elementIndex) {
 			ElementSpec elementSpec = elementViews.get(elementIndex).model().getElementSpec();
 			return willFitInTime(elementIndex, toggledCopy((T) elementSpec));
 		}
-		
+
 		@Override
 		protected Boolean getState(int elementIndex) {
-			return isValidIndex(elementIndex) 
+			return isValidIndex(elementIndex)
 			&& specAt(elementIndex).lengthSpec().dotExtension() > 0;
 		}
 	}
-	
+
 	private class ToggleNoteDot extends ToggleDot<ElementSpec.NormalNote> {
 
 		public ToggleNoteDot(int svgResId) throws LoadingSvgException {
@@ -2395,7 +2431,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			return elementSpecNN(copy);
 		}
 	}
-	
+
 	private class TogglePauseDot extends ToggleDot<ElementSpec.Pause> {
 
 		public TogglePauseDot(int svgResId) throws LoadingSvgException {
@@ -2412,7 +2448,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			return new ElementSpec.Pause(copy);
 		}
 	}
-	
+
 	private abstract class IndexAwareActionWrapper extends IndexAwareAction {
 		private int startIndex;
 		private int lastElementIndex;
@@ -2440,14 +2476,14 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				return wrappedElement.isValidOn(startIndex);
 			}
 		}
-		
+
 		@Override
 		protected boolean isActive(int elementIndex) {
 			if(elementIndex != lastElementIndex)
 				throw new InvalidParameterException("Called isActive() without calling isValidOn() first");
 			return wrappedElement.isActive(startIndex);
 		}
-		
+
 		protected abstract Integer getActualIndex(int elementIndex);
 
 		@Override
@@ -2456,7 +2492,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				throw new InvalidParameterException("Called getState() without calling isValidOn() first");
 			return wrappedElement.getState(startIndex);
 		}
-		
+
 		@Override
 		public SvgImage icon() {
 			return wrappedElement.icon();
@@ -2484,7 +2520,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			return null;
 		}
 	}
-	
+
 	private class ToggleNoteGroup extends UpdateElementAction {
 
 		public ToggleNoteGroup(int svgResId) throws LoadingSvgException {
@@ -2504,7 +2540,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			ElementSpec elementSpec = elementViews.get(elementIndex).model().getElementSpec();
 			return NotesGroup.GroupBuilder.couldExtendGroup(elementSpec);
 		}
-		
+
 		@Override
 		protected boolean isActive(int elementIndex) {
 			int nextIndex = elementIndex + 1;
@@ -2515,14 +2551,14 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				return false;
 			}
 		}
-		
+
 		@Override
 		protected Boolean getState(int elementIndex) {
-			return isValidIndex(elementIndex) 
+			return isValidIndex(elementIndex)
 			&& ((ElementSpec.NormalNote) elementViews.get(elementIndex).model().getElementSpec()).noteSpec().isGrouped();
 		}
 	}
-	
+
 	private class ToggleNoteGroupEnd extends IndexAwareActionWrapper {
 
 		public ToggleNoteGroupEnd(int svgResId) throws LoadingSvgException {
@@ -2533,18 +2569,18 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		protected Integer getActualIndex(int elementIndex) {
 			return elementIndex-1;
 		}
-		
+
 		@Override
 		protected boolean isValidOn(int elementIndex) {
-			return isValidIndex(elementIndex) 
+			return isValidIndex(elementIndex)
 			&& GroupBuilder.canEndGroup(specAt(elementIndex))
 			&& super.isValidOn(elementIndex);
 		}
 	}
-	
+
 	private class ToggleNoteModifier extends UpdateElementAction {
 		private NoteModifier modifier;
-		
+
 		public ToggleNoteModifier(int svgResId, NoteModifier modifier)
 				throws LoadingSvgException {
 			super(svgResId);
@@ -2569,16 +2605,16 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			ElementSpec elementSpec = elementViews.get(elementIndex).model().getElementSpec();
 			return elementSpec.getType() == ElementType.NOTE;
 		}
-		
+
 		@Override
 		protected Boolean getState(int elementIndex) {
-			return isValidIndex(elementIndex) 
+			return isValidIndex(elementIndex)
 			&& modifier ==
 				((ElementSpec.NormalNote) elementViews.get(elementIndex).model().getElementSpec()).noteSpec().getToneModifier()
 			;
 		}
 	}
-	
+
 	private class InsertPause extends SvgIconAction {
 		private int pauseLength;
 
@@ -2599,7 +2635,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				finish();
 			}
 		}
-		
+
 		private Point rebuildRange = new Point();
 		private ElementSpec.Pause spec;
 
@@ -2610,18 +2646,18 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 			return true;
 		}
-		
+
 		@Override
 		protected boolean isActive(int elementIndex) {
 			return willFitInTime(elementIndex, spec);
 		}
-		
+
 	};
-	
+
 	private static final String DIALOGTAG_TIMESTEP = "timestep";
 	private static final String DIALOGTAG_CONFIRM_SAVE_ON_EXIT = "save_changes_on_exit";
 	private static final int CONFIRMDIALOG_SAVE_ON_EXIT = 1;
-	
+
 	private class AlterTimeStep extends SvgIconAction {
 
 		public AlterTimeStep(int svgResId) throws LoadingSvgException {
@@ -2632,7 +2668,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		protected void perform(int elementIndex) {
 			try {
 				contextTimeIndex = getTimeIndex(elementIndex);
-				DialogFragment newFragment = TimeStepDialog.newInstance(EditActivity.this, 
+				DialogFragment newFragment = TimeStepDialog.newInstance(EditActivity.this,
 					times.get(contextTimeIndex).spec.getTimeStep());
 			    newFragment.show(getSupportFragmentManager(), DIALOGTAG_TIMESTEP);
 			} catch (LoadingSvgException e) {
@@ -2649,14 +2685,14 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		protected boolean isValidOn(int elementIndex) {
 			return getTimeIndex(elementIndex) >= 0;
 		}
-		
+
 	}
-	
+
 	private class DeleteTimeBar extends SvgIconAction {
 		public DeleteTimeBar(int svgResId) throws LoadingSvgException {
 			super(svgResId);
 		}
-		
+
 		@Override
 		protected void perform(int elementIndex) {
 			int timeIndex = findTime(elementIndex);
@@ -2684,7 +2720,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 			}
 		}
-		
+
 		@Override
 		protected boolean isValidOn(int elementIndex) {
 			if(isValidIndex(elementIndex)) {
@@ -2694,16 +2730,16 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				return false;
 			}
 		}
-		
+
 		@Override
 		protected boolean isActive(int elementIndex) {
 			int timeIndex = findTime(elementIndex);
-			return timeIndex > 0 
+			return timeIndex > 0
 			&& getCurrentTimeStep(timeIndex-1) == null
 			&& times.get(timeIndex).spec.getTimeStep() == null;
 		}
 	}
-	
+
 	private abstract class ToggleTimebarMark extends SvgIconAction {
 		private AdditionalMark mark;
 
@@ -2737,31 +2773,31 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				}
 				animatedRepositioning(
 					times.get(Math.max(timeIndex-1, 0)).rangeStart,
-					elementViews.size()-1, 
-					elementIndex, 
+					elementViews.size()-1,
+					elementIndex,
 					pinVisiblePositionX,
 					true
-				);				
+				);
 			} catch (CreationException e) {
 				log.e("", e);
 				showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 			}
 		}
-		
+
 		protected abstract int getTimeIndex(int elementIndex);
 
 		@Override
 		protected boolean isValidOn(int elementIndex) {
 			return isValidIndex(elementIndex);
 		}
-		
+
 		@Override
 		protected Boolean getState(int contextElementIndex) {
-			return times.get(getTimeIndex(contextElementIndex)).spec.hasMark(mark);			
+			return times.get(getTimeIndex(contextElementIndex)).spec.hasMark(mark);
 		}
-		
+
 	}
-	
+
 	@Override
 	/**
 	 * Result of prompt for new TimeStep for current Time
@@ -2787,8 +2823,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			buildNoteGroups(0, endIndex);
 			buildJoinArcs(0, endIndex);
 			animatedRepositioning(
-				0, elementViews.size()-1, 
-				times.get(Math.min(timeIndex, times.size()-1)).rangeStart, 
+				0, elementViews.size()-1,
+				times.get(Math.min(timeIndex, times.size()-1)).rangeStart,
 				pinVisiblePositionX,
 				true
 			);
@@ -2797,7 +2833,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 		}
 	}
-	
+
 	private void prepareQuickActions() throws LoadingSvgException {
 		qActionsView = (QuickActionsView) findViewById(R.id.EDIT_quickactions);
 		qActionsView.setVisibility(View.INVISIBLE);
@@ -2843,7 +2879,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 			@Override
 			public boolean isActive(int elementIndex) {
-				return 
+				return
 				(rightToIA >= elementViews.size() || elementViews.get(rightToIA).model().getElementSpec().getType() != ElementType.TIMES_DIVIDER)
 				&&
 				(rightToIA-1 < 0 || elementViews.get(rightToIA-1).model().getElementSpec().getType() != ElementType.TIMES_DIVIDER);
@@ -2860,7 +2896,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 		this.insertActions = insertActions.toArray(new IndexAwareAction[0]);
 		iconsMapping.recycle();
-		
+
 		timedividerActions = new IndexAwareAction[] {
 			new ToggleTimebarMark(R.array.svg_button_timebar_endrepeat, AdditionalMark.END_REPEAT) {
 				@Override
@@ -2894,7 +2930,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			return false;
 		}
 	};
-	
+
 	private void showQuickActionsAbove(View view, int actionsTargetIndex, IndexAwareAction[] possibleActions) {
 		showQuickActions(
 			actionsTargetIndex, possibleActions,
@@ -2903,11 +2939,11 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			false
 		);
 	}
-	
+
 	private void showElementQuickActions(int contextElementIndex, IndexAwareAction[] possibleActions) {
 		showElementQuickActions(contextElementIndex, possibleActions, false);
 	}
-	
+
 	private void showElementQuickActions(final int contextElementIndex, final IndexAwareAction[] possibleActions, final boolean preserveOrientation) {
 		final int middleX, middleY;
 		final SheetAlignedElementView view = elementViews.get(contextElementIndex);
@@ -2926,7 +2962,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 		// check if element view is fully visible
 		int x = abs2visibleX(viewStableX(view));
-		int minX = getResources().getDimensionPixelSize(R.dimen.horizontalScrollBarConflict) 
+		int minX = getResources().getDimensionPixelSize(R.dimen.horizontalScrollBarConflict)
 				+ (int) (actionSubjectVisiblePaddingLeft * sheetParams.getScale());
 		int destVisibleMiddleX;
 		if(x < minX) {
@@ -2950,7 +2986,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			}
 		});
 	}
-	
+
 	private void showQuickActions(int contextElementIndex, IndexAwareAction[] possibleActions, int refPointVisibleX, int refPointVisibleY, boolean preserveOrientation) {
 		List<Action> model = new ArrayList<Action>(possibleActions.length);
 		for(int i = 0; i < possibleActions.length; i++) {
@@ -2966,7 +3002,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			// validate ref point according to visible rect
 			refPointVisibleX = Math.min(Math.max(0, refPointVisibleX), visibleRectWidth);
 			refPointVisibleY = Math.min(Math.max(0, refPointVisibleY), visibleRectHeight);
-			
+
 			Point size = new Point();
 			IndicatorOrigin oldOrigin = qActionsView.getIndicatorOrigin();
 			// try to show above in 1 row
@@ -2985,7 +3021,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 					refPointVisibleY -= size.y/2;
 				}
 			}
-			
+
 			Rect margins = new Rect();
 			// calculate indicator origin horizontal position
 			qActionsView.getOriginPostionMargin(margins);
@@ -3000,7 +3036,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				originX = Math.min(refPointVisibleX - (visibleRectWidth - width), width - mR);
 			}
 			qActionsView.setOriginX(originX);
-			
+
 			updateMargins(
 				qActionsView,
 				refPointVisibleX - originX,
@@ -3013,7 +3049,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				case TOP: yRelPivot = 0; break;
 				default: yRelPivot = 0.5f;
 			}
-			ScaleAnimation anim = new ScaleAnimation(0.5f, 1f, 0.8f, 1f, 
+			ScaleAnimation anim = new ScaleAnimation(0.5f, 1f, 0.8f, 1f,
 					Animation.ABSOLUTE, originX, Animation.RELATIVE_TO_SELF, yRelPivot);
 			anim.setDuration(150);
 			qActionsView.startAnimation(anim);
@@ -3027,7 +3063,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			elementActionIndex = -1;
 		}
 	}
-	
+
 	@Override
 	public void onBackPressed() {
 		if(qActionsView.getVisibility() == View.VISIBLE) {
@@ -3053,13 +3089,12 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			.showNew(getSupportFragmentManager(), DIALOGTAG_CONFIRM_SAVE_ON_EXIT);
 		}
 	}
-	
+
 	@Override
-	public void onDialogResult(ConfirmDialog dialog, int dialogId,
-			DialogAction action, Parcelable state) {
-		switch(dialogId) {
+	public void onDialogResult(ConfirmDialog.ConfirmDialogClosedEvent event) {
+		switch(event.getDialogId()) {
 		case CONFIRMDIALOG_SAVE_ON_EXIT:
-			switch(action) {
+			switch(event.getAction()) {
 			case BUTTON_POSITIVE:
 				saveChanges();
 				cleanCopyAndFinish();
@@ -3086,7 +3121,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	protected void addOverlayView(ElementsOverlay overlay) {
 		super.addOverlayView(overlay, sheet, normalPaint, NOTE_DRAW_PADDING);
 	}
-	
+
 	private SheetAlignedElementView addElementView(int index, SheetAlignedElement model) {
 		SheetAlignedElementView elementView;
 		elementView = new SheetAlignedElementView(this, model);
@@ -3096,7 +3131,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		sheet.addView(elementView);
 		return elementView;
 	}
-	
+
 	private void removeElementView(SheetAlignedElementView view) {
 		removeElementView(view, true);
 	}
@@ -3111,7 +3146,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			throw new RuntimeException("Removing element view that still have overlays bound to it");
 		}
 	}
-	
+
 	private ElementSpec.NormalNote elementSpecNN(NoteSpec spec) {
 		return ScoreHelper.elementSpecNN(spec, visualConf.getDisplayMode());
 	}
@@ -3119,14 +3154,14 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private int afterElementSpacing(Time time, int elementIndex) {
 		return afterElementSpacing(time.spacingBase, elementIndex);
 	}
-	
+
 	private int timeDividerSpacing(Time time, boolean updateSheetParams) {
 		return timeDividerSpacing(time.rangeStart, updateSheetParams);
 	}
 
 	/**
 	 * Absolute position of element.
-	 * If element is subject of animation, take it's destination position instead of temporary one. 
+	 * If element is subject of animation, take it's destination position instead of temporary one.
 	 */
 	private int viewStableX(SheetAlignedElementView element) {
 		LayoutAnimator.LayoutAnimation<?, ?> anim = null;
@@ -3136,20 +3171,20 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			return left(element);
 		}
 	}
-	
+
 	private void highlightAnchor(Integer anchorAbsIndex) {
 		lines.highlightAnchor(anchorAbsIndex);
 		staveHighlighter.highlightAnchor(anchorAbsIndex);
 	}
-	
+
 	private int moveDistance() {
 		return 2*delta+inputAreaWidth-mTouchSlop;
 	}
-	
+
 	private static int declaredWidth(View view) {
 		return view.getLayoutParams().width;
 	}
-	
+
 	private int moveLeftBorder() {
 		return visibleRectWidth - iaRightMargin + delta - mTouchSlop;
 	}
@@ -3158,7 +3193,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private int moveRightBorder() {
 		return visibleRectWidth - inputAreaWidth - iaRightMargin - delta + mTouchSlop;
 	}
-	
+
 	private int visible2absX(int visibleX) {
 		return visibleX + hscroll.getScrollX();
 	}
@@ -3170,13 +3205,13 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private int abs2visibleY(int absoluteY) {
 		return absoluteY + sheet.getTop() - vertscroll.getScrollY();
 	}
-	
+
 	private int inIA_noteViewX(SheetAlignedElementView noteView) {
 		return visible2absX(visibleRectWidth-iaRightMargin-inputAreaWidth/2)-middleX(noteView);
 	}
 
 	/**
-	 * Updates drawing model of TimeDivider that starts given time. Preserves absolute position of middleX. 
+	 * Updates drawing model of TimeDivider that starts given time. Preserves absolute position of middleX.
 	 * @param timeIndex index of given time, may be invalid
 	 */
 	private void recreateTimeDivider(int timeIndex)
@@ -3189,8 +3224,8 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				time.spec
 			)));
 			updatePosition(
-				time.view, 
-				oldAbsMiddleX - middleX(time.view), 
+				time.view,
+				oldAbsMiddleX - middleX(time.view),
 				sheetElementY(time.view)
 			);
 		}
@@ -3198,7 +3233,7 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 
 	private static abstract class WaitManyRunOnce implements Runnable {
 		private int amount = 0;
-		
+
 		public WaitManyRunOnce countUsage() {
 			amount++;
 			return this;
@@ -3218,4 +3253,9 @@ public class EditActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			return amount;
 		}
 	}
+
+	private void showErrorDialog(int messageStringId, Throwable e, boolean lazyFinish) {
+		errorDialogStrategy.showErrorDialog(messageStringId, e, lazyFinish);
+	}
+
 }

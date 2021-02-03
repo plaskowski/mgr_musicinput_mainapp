@@ -1,6 +1,8 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
 import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
+
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.CustomEventInterface;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogListener.DialogAction;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -75,15 +77,41 @@ public class ConfirmDialog extends DialogFragment {
 	    }
 	}
 	
-	public static interface ConfirmDialogListener {
-		public static enum DialogAction {
+	public interface ConfirmDialogListener {
+		enum DialogAction {
 			BUTTON_POSITIVE,
 			BUTTON_NEUTRAL,
 			BUTTON_NEGATIVE,
 			CANCEL
 		}
 		
-		void onDialogResult(ConfirmDialog dialog, int dialogId, DialogAction action, Parcelable state);
+		void onDialogResult(ConfirmDialogClosedEvent event);
+	}
+
+	public class ConfirmDialogClosedEvent implements CustomEventInterface {
+		private final ConfirmDialog dialog;
+		private final int dialogId;
+		private final DialogAction action;
+		private final Parcelable state;
+
+		public ConfirmDialogClosedEvent(ConfirmDialog dialog, int dialogId, DialogAction action, Parcelable state) {
+			this.dialog = dialog;
+			this.dialogId = dialogId;
+			this.action = action;
+			this.state = state;
+		}
+
+		public int getDialogId() {
+			return dialogId;
+		}
+
+		public DialogAction getAction() {
+			return action;
+		}
+
+		public Parcelable getState() {
+			return state;
+		}
 	}
 
 	@Override
@@ -108,10 +136,10 @@ public class ConfirmDialog extends DialogFragment {
 				public void onClick(DialogInterface dialog, int id) {
 					FragmentActivity a = getActivity();
 					if(a != null && a instanceof ConfirmDialogListener) {
-						((ConfirmDialogListener) a).onDialogResult(
+						((ConfirmDialogListener) a).onDialogResult(new ConfirmDialogClosedEvent(
 							ConfirmDialog.this, getArguments().getInt(ARG_DIALOG_ID), 
 							DialogAction.BUTTON_POSITIVE,
-							getArguments().getParcelable(ARG_STATE));
+							getArguments().getParcelable(ARG_STATE)));
 					}
 				}
 		});
@@ -122,10 +150,10 @@ public class ConfirmDialog extends DialogFragment {
 					public void onClick(DialogInterface dialog, int which) {
 						FragmentActivity a = getActivity();
 						if(a != null && a instanceof ConfirmDialogListener) {
-							((ConfirmDialogListener) a).onDialogResult(
+							((ConfirmDialogListener) a).onDialogResult(new ConfirmDialogClosedEvent(
 								ConfirmDialog.this, getArguments().getInt(ARG_DIALOG_ID), 
 								DialogAction.BUTTON_NEGATIVE,
-								getArguments().getParcelable(ARG_STATE));
+								getArguments().getParcelable(ARG_STATE)));
 						}
 					}
 			});
@@ -137,10 +165,10 @@ public class ConfirmDialog extends DialogFragment {
 				public void onClick(DialogInterface dialog, int which) {
 					FragmentActivity a = getActivity();
 					if(a != null && a instanceof ConfirmDialogListener) {
-						((ConfirmDialogListener) a).onDialogResult(
+						((ConfirmDialogListener) a).onDialogResult(new ConfirmDialogClosedEvent(
 							ConfirmDialog.this, getArguments().getInt(ARG_DIALOG_ID), 
 							DialogAction.BUTTON_NEUTRAL,
-							getArguments().getParcelable(ARG_STATE));
+							getArguments().getParcelable(ARG_STATE)));
 					}
 				}
 			});
@@ -152,9 +180,10 @@ public class ConfirmDialog extends DialogFragment {
 	public void onCancel(DialogInterface dialog) {
 		FragmentActivity a = getActivity();
 		if(a != null && a instanceof ConfirmDialogListener) {
-			((ConfirmDialogListener) a).onDialogResult(this, getArguments().getInt(ARG_DIALOG_ID), 
-				DialogAction.CANCEL,
-				getArguments().getParcelable(ARG_STATE));
+			((ConfirmDialogListener) a).onDialogResult(new ConfirmDialogClosedEvent(
+					this, getArguments().getInt(ARG_DIALOG_ID),
+					DialogAction.CANCEL,
+					getArguments().getParcelable(ARG_STATE)));
 		}
 		super.onCancel(dialog);
 	}

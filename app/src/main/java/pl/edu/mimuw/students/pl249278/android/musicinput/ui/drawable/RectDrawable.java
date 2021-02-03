@@ -136,7 +136,7 @@ public class RectDrawable extends Drawable {
 			if((styleId = values.getResourceId(R.styleable.RectDrawable_strokePaint, -1)) != -1) {
 				strokePaint = ExtendedResourcesFactory.createPaint(resolver, styleId);
 				// round up stroke width to full pixels
-				strokePaint.setStrokeWidth(FloatMath.ceil(strokePaint.getStrokeWidth()));
+				strokePaint.setStrokeWidth((float) Math.ceil(strokePaint.getStrokeWidth()));
 			}
 			fillColorStateList = values.getColorStateList(R.styleable.RectDrawable_fillColorStateList);
 			strokeColorStateList = values.getColorStateList(R.styleable.RectDrawable_strokeColorStateList);

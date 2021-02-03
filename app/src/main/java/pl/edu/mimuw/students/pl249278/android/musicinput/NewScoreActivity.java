@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
 import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.mixin.FragmentActivityWithMixin;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ActivityStrategyChainRoot;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ErrorDialogStrategy;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.Clef;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.KeySignature;
@@ -16,9 +19,9 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.SerializationExce
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.FilterByRequestIdReceiver;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog.InfoDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.SheetParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.KeySignatureElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotePartFactory.LoadingSvgException;
@@ -48,7 +51,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class NewScoreActivity extends FragmentActivity_ErrorDialog implements InfoDialogListener {
+public class NewScoreActivity extends FragmentActivityWithMixin implements InfoDialogListener {
 	private static LogUtils log = new LogUtils(NewScoreActivity.class);
 	private static final Clef defaultClef = Clef.VIOLIN;
 	private static final KeySignature defaultKeySign = KeySignature.C_DUR;
@@ -58,7 +61,13 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 	private InsertRequestReceiver insertRequestReceiver;
 	private ScoreVisualizationConfig visConf;
 	private static final KeySignature[] KeySignature_values = KeySignature.values();
-	
+	private final ErrorDialogStrategy errorDialogStrategy;
+
+	public NewScoreActivity() {
+		errorDialogStrategy = new ErrorDialogStrategy(new ActivityStrategyChainRoot(this));
+		initMixin(errorDialogStrategy);
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -205,6 +214,11 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 	protected void onDestroy() {
 		unregisterInsertReceiver();
 		super.onDestroy();
+	}
+
+	@Override
+	public void onDismiss(InfoDialog.InfoDialogDismissalEvent dismissalEvent) {
+		mixin.onCustomEvent(dismissalEvent);
 	}
 
 	private void unregisterInsertReceiver() {
@@ -582,6 +596,10 @@ public class NewScoreActivity extends FragmentActivity_ErrorDialog implements In
 		okButton.setCompoundDrawablesWithIntrinsicBounds(dr, null, null, null);
 		dr.stop();
 		okButton.setEnabled(true);
+	}
+
+	private void showErrorDialog(int messageStringId, Throwable e, boolean lazyFinish) {
+		errorDialogStrategy.showErrorDialog(messageStringId, e, lazyFinish);
 	}
 
 	private static class EmptyElement extends SheetElement {

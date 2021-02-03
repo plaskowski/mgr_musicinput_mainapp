@@ -2,6 +2,8 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
 import pl.edu.mimuw.students.pl249278.android.common.Macros;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.CustomEventInterface;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -23,8 +25,22 @@ public class InfoDialog extends DialogFragment {
 	private static final String ARG_MSG_ARGS = "msg_args";
 	private static final String ARG_BUTTONLABEL_ID = "buttonLabelId";
 	
-	public static interface InfoDialogListener {
-		void onDismiss(InfoDialog dialog, int arg);
+	public interface InfoDialogListener {
+		void onDismiss(InfoDialogDismissalEvent dismissalEvent);
+	}
+
+	public static class InfoDialogDismissalEvent implements CustomEventInterface {
+		private final InfoDialog dialog;
+		private final int arg;
+
+		public InfoDialogDismissalEvent(InfoDialog dialog, int arg) {
+			this.dialog = dialog;
+			this.arg = arg;
+		}
+
+		public int getArg() {
+			return arg;
+		}
 	}
 
 	public static InfoDialog newInstance(Context ctx, int titleId, int messageStringId, int buttonLabelId, Throwable e, int listenerArg) {
@@ -61,7 +77,7 @@ public class InfoDialog extends DialogFragment {
 	public void onDismiss(DialogInterface dialog) {
 		FragmentActivity a = getActivity();
 		if(a != null && a instanceof InfoDialogListener) {
-			((InfoDialogListener) a).onDismiss(this, getArguments().getInt(ARG_LISTENER_ARG));
+			((InfoDialogListener) a).onDismiss(new InfoDialogDismissalEvent(this, getArguments().getInt(ARG_LISTENER_ARG)));
 		}
 		super.onDismiss(dialog);
 	}

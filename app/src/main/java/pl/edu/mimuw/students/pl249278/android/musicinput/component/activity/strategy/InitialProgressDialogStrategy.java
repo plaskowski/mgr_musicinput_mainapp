@@ -8,31 +8,42 @@ import android.os.Bundle;
 
 import androidx.fragment.app.FragmentActivity;
 
+import com.google.common.base.Preconditions;
+
 /**
  * Encapsulates showing progress dialog, which if dismissed causes finish() of current activity.
  * Progress dialog will be automatically dismissed if restart happens.
  */
-public class InitialProgressDialogStrategy extends FragmentActivity implements ProgressDialogListener {
+public class InitialProgressDialogStrategy extends ActivityStrategyBase {
 	private static final String DIALOGTAG_PROGRESS = "dialog_progress";
-	
-	@Override
-	public void onCancel(ProgressDialog dialog) {
-		// user dismissed "loading ..." dialog so we exit
-		finish();
+
+	public InitialProgressDialogStrategy(ActivityStrategy parent) {
+		super(parent);
 	}
-	
+
+	@Override
+	public void onCustomEvent(CustomEventInterface customEvent) {
+		if (customEvent instanceof ProgressDialog.ProgressDialogCanceledEvent) {
+			// user dismissed "loading ..." dialog so we exit
+			callbacks().finish();
+		} else {
+			super.onCustomEvent(customEvent);
+		}
+	}
+
 	public void showProgressDialog() {
-		FragmentUtils.showDialogFragment(this, DIALOGTAG_PROGRESS, 
-				ProgressDialog.newInstance(this, R.string.msg_loading_please_wait, true));
+		Preconditions.checkArgument(getContext() instanceof ProgressDialogListener);
+		FragmentUtils.showDialogFragment((FragmentActivity) getContext(), DIALOGTAG_PROGRESS,
+				ProgressDialog.newInstance(getContext(), R.string.msg_loading_please_wait, true));
 	}
 	
 	public void hideProgressDialog() {
-		FragmentUtils.dismissDialogFragment(this, DIALOGTAG_PROGRESS);
+		FragmentUtils.dismissDialogFragment((FragmentActivity) getContext(), DIALOGTAG_PROGRESS);
 	}
 	
 	@Override
-	protected void onSaveInstanceState(Bundle outState) {
-		FragmentUtils.dismissDialogFragment(this, DIALOGTAG_PROGRESS);
-		super.onSaveInstanceState(outState);
+	public void onSaveInstanceState(Bundle outState, OnSaveInstanceStateSuperCall superCall) {
+		FragmentUtils.dismissDialogFragment((FragmentActivity) getContext(), DIALOGTAG_PROGRESS);
+		super.onSaveInstanceState(outState, superCall);
 	}
 }

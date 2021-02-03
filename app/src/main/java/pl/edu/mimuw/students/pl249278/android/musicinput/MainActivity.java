@@ -2,6 +2,8 @@ package pl.edu.mimuw.students.pl249278.android.musicinput;
 
 import static pl.edu.mimuw.students.pl249278.android.async.AsyncHelper.getBroadcastCallback;
 import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ErrorDialogStrategy.ERRORDIALOG_CALLBACKARG_DO_FINISH;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.TipDialogStrategy.CONFIRMDIALOG_CALLBACKARG_TIP;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -20,6 +22,12 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivityHelper.BySc
 import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivityHelper.ExportMidiRequest;
 import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivityHelper.ReceiverState;
 import pl.edu.mimuw.students.pl249278.android.musicinput.component.ManagedReceiver;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.mixin.FragmentActivityWithMixin;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ActivityStrategyChainRoot;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ErrorDialogStrategy;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.InitialProgressDialogStrategy;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ManagedReceiverStrategy;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.TipDialogStrategy;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score.ParcelableScore;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig;
@@ -33,10 +41,10 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.Confir
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.DateRelativeFormatHelper;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ParcelablePrimitives.ParcelableLong;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ProgressDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.TextInputDialog.TextInputDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.WorkerThread;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_TipDialog_ProgressDialog_ManagedReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.ScoreThumbnailDrawable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator.LayoutAnimation;
@@ -63,7 +71,9 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_ProgressDialog_ManagedReceiver implements TextInputDialogListener, ConfirmDialogListener {
+public class MainActivity extends FragmentActivityWithMixin
+		implements TextInputDialogListener, ConfirmDialogListener, InfoDialog.InfoDialogListener,
+		ProgressDialog.ProgressDialogListener {
 	private static LogUtils log = new LogUtils(MainActivity.class);
 	private static final String CALLBACK_ACTION_GET = MainActivity.class.getName()+".callback_get";
 	protected static final String CALLBACK_ACTION_DELETE = MainActivity.class.getName()+".callback_delete";
@@ -111,7 +121,26 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	/** Id of {@link Score} on which "EDIT" action was requested most lately. */
 	protected long editedScoreId = -1;
 	private WorkerThread thumbnailsThread = new WorkerThread("Score thumbnails");
-	
+
+	private final ErrorDialogStrategy errorDialogStrategy;
+	private final TipDialogStrategy tipDialogStrategy;
+	private final InitialProgressDialogStrategy initialProgressDialogStrategy;
+	private final ManagedReceiverStrategy managedReceiverStrategy;
+
+	public MainActivity() {
+		ActivityStrategyChainRoot root = new ActivityStrategyChainRoot(this);
+		errorDialogStrategy = new ErrorDialogStrategy(root);
+		tipDialogStrategy = new TipDialogStrategy(errorDialogStrategy);
+		initialProgressDialogStrategy = new InitialProgressDialogStrategy(tipDialogStrategy);
+		managedReceiverStrategy = new ManagedReceiverStrategy(initialProgressDialogStrategy);
+		initMixin(managedReceiverStrategy);
+	}
+
+	@Override
+	public void onCancel(ProgressDialog.ProgressDialogCanceledEvent event) {
+		mixin.onCustomEvent(event);
+	}
+
 	static enum ReceiverType {
 		SCORE_DELETED(ContentService.class),
 		SCORE_DUPLICATED(ContentService.class),
@@ -266,22 +295,23 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			false
 		);
 		requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, true);
-		registerManagedReceiver(receiver, CALLBACK_ACTION_GET);
+		managedReceiverStrategy.registerManagedReceiver(receiver, CALLBACK_ACTION_GET);
 		startService(requestIntent);
-		showProgressDialog();
+		initialProgressDialogStrategy.showProgressDialog();
 	}
 	
-	private class ContentReceiver extends SingleManagedReceiver {
+	private class ContentReceiver extends ManagedReceiverStrategy.SingleManagedReceiver {
+
 		@Override
 		protected void onFailureReceived(Intent response) {
 			log.e("Failed to list scores: " + AsyncHelper.getError(response));
-			hideProgressDialog();
-			showErrorDialog(R.string.errormsg_unrecoverable, null, true);
+			initialProgressDialogStrategy.hideProgressDialog();
+			errorDialogStrategy.showErrorDialog(R.string.errormsg_unrecoverable, null, true);
 		}
 		
 		@Override
 		protected void onSuccessReceived(Intent response) {
-			hideProgressDialog();
+			initialProgressDialogStrategy.hideProgressDialog();
 			Parcelable[] scoresArr = response.getParcelableArrayExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_SCORES);
 			ArrayList<ParcelableScore> scores = new ArrayList<Score.ParcelableScore>(scoresArr.length);
 			Parcelable[] configsArr = response.getParcelableArrayExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_VISUAL_CONFS);
@@ -498,7 +528,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			entry.findViewById(R.id.mainscreen_entry_content).setBackgroundDrawable(thumb);
 		} catch (SerializationException e) {
 			log.e("Failed to deserialize score content", e);
-			showErrorDialog(R.string.errormsg_unrecoverable, e, true);
+			errorDialogStrategy.showErrorDialog(R.string.errormsg_unrecoverable, e, true);
 		}
 	}
 
@@ -652,8 +682,10 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 	}
 	
 	@Override
-	public void onDialogResult(ConfirmDialog dialog, int dialogId,
-			DialogAction action, Parcelable state) {
+	public void onDialogResult(ConfirmDialog.ConfirmDialogClosedEvent event) {
+		int dialogId = event.getDialogId();
+		DialogAction action = event.getAction();
+		Parcelable state = event.getState();
 		switch(dialogId) {
 		case CONFIRMDIALOG_CALLBACKARG_DELETESCORE:
 			switch(action) {
@@ -681,7 +713,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			}
 			break;
 		default:
-			super.onDialogResult(dialog, dialogId, action, state);
+			mixin.onCustomEvent(event);
 		}
 	}
 	
@@ -769,17 +801,17 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 			return new ReceiverState(ReceiverType.SCORE_DELETED, getCurrentRequestId());
 		}
 	}
-	
+
 	@Override
-	public void onDismiss(InfoDialog dialog, int arg) {
-		if(arg == ERRORDIALOG_CALLBACKARG_RELOAD) {			
+	public void onDismiss(InfoDialog.InfoDialogDismissalEvent dismissalEvent) {
+		if(dismissalEvent.getArg() == ERRORDIALOG_CALLBACKARG_RELOAD) {
 			// clear entry views
 			((ViewGroup) findViewById(R.id.entries_container)).removeAllViews();
 			// read model once again
 			scores = null;
 			requestModel();
 		} else {
-			super.onDismiss(dialog, arg);
+			mixin.onCustomEvent(dismissalEvent);
 		}
 	}
 	
@@ -1220,7 +1252,7 @@ public class MainActivity extends FragmentActivity_ErrorDialog_TipDialog_Progres
 					Toast.makeText(getApplicationContext(), R.string.toast_midi_export_finished, Toast.LENGTH_SHORT).show();
 					String relDir = WorkerService.getExportDir().getAbsolutePath();
 					relDir = relDir.replace(Environment.getExternalStorageDirectory().getAbsolutePath(), "");
-					showTipDialog(TIP_MIDI_ON_STORAGE, 
+					tipDialogStrategy.showTipDialog(TIP_MIDI_ON_STORAGE,
 						R.string.tip_midifile_exported, new String[] {
 						state.filename, getString(R.string.midiArtist), getString(R.string.midiAlbum), relDir
 					});

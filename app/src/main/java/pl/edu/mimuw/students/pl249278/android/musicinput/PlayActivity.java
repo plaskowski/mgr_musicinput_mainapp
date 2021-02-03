@@ -1,13 +1,33 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
-import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.elementSpecNN;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.middleX;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.timeCapacity;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE4_ABSINDEX;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.overallLength;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSize;
+import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PointF;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnErrorListener;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.AsyncTask.Status;
+import android.os.Bundle;
+import android.os.Handler;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.Menu;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.EditText;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.ViewAnimator;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,6 +44,11 @@ import pl.edu.mimuw.students.pl249278.android.common.PaintBuilder;
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.InsertDivided;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ScorePositioningStrategy.PositioningEnv;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.mixin.ShowScoreActivityWithMixin;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ActivityStrategyChainRoot;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ErrorDialogStrategy;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.InitialProgressDialogStrategy;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ManagedReceiverStrategy;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.LengthSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
@@ -38,7 +63,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.WorkerService;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.component.activity.FragmentActivity_ErrorDialog_ProgressDialog_ShowScore_ManagedReceiver;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ProgressDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
@@ -58,37 +84,18 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.OnInterc
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.OnInterceptTouchObservable.OnInterceptListener;
 import pl.edu.mimuw.students.pl249278.midi.MidiFile;
 import pl.edu.mimuw.students.pl249278.midi.MidiFormatException;
-import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.PointF;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnCompletionListener;
-import android.media.MediaPlayer.OnErrorListener;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.AsyncTask.Status;
-import android.os.Bundle;
-import android.os.Handler;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.FloatMath;
-import android.view.Menu;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.View.OnTouchListener;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.EditText;
-import android.widget.ScrollView;
-import android.widget.TextView;
-import android.widget.ViewAnimator;
 
-public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_ShowScore_ManagedReceiver implements OnLayoutListener {
+import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.elementSpecNN;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.middleX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.timeCapacity;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE4_ABSINDEX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.overallLength;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSize;
+
+public class PlayActivity extends ShowScoreActivityWithMixin
+		implements OnLayoutListener, InfoDialog.InfoDialogListener, ProgressDialog.ProgressDialogListener {
 	private static LogUtils log = new LogUtils(PlayActivity.class);
 	
 	/** of type long */
@@ -143,7 +150,29 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 	private OnPlayerPositionChanged listener = new OnPlayerPositionChanged();
 	private int listenerSavedPosition = 0;
 	private boolean isScaleValid = false;
-	
+
+	private final ErrorDialogStrategy errorDialogStrategy;
+	private final InitialProgressDialogStrategy initialProgressDialogStrategy;
+	private final ManagedReceiverStrategy managedReceiverStrategy;
+
+	public PlayActivity() {
+		ActivityStrategyChainRoot root = new ActivityStrategyChainRoot(this);
+		errorDialogStrategy = new ErrorDialogStrategy(root);
+		initialProgressDialogStrategy = new InitialProgressDialogStrategy(errorDialogStrategy);
+		managedReceiverStrategy = new ManagedReceiverStrategy(initialProgressDialogStrategy);
+		initMixin(managedReceiverStrategy);
+	}
+
+	@Override
+	public void onDismiss(InfoDialog.InfoDialogDismissalEvent dismissalEvent) {
+		mixin.onCustomEvent(dismissalEvent);
+	}
+
+	@Override
+	public void onCancel(ProgressDialog.ProgressDialogCanceledEvent event) {
+		mixin.onCustomEvent(event);
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -260,10 +289,10 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, scoreId);
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, true);
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_PLAY_CONF, true);
-			registerManagedReceiver(getScoreReceiver, CALLBACK_ACTION_GET);
+			managedReceiverStrategy.registerManagedReceiver(getScoreReceiver, CALLBACK_ACTION_GET);
 	    	log.v("Sending "+CALLBACK_ACTION_GET+" for id "+scoreId);
 	    	startService(requestIntent);
-	    	showProgressDialog();
+	    	initialProgressDialogStrategy.showProgressDialog();
 		}
 	}
 
@@ -540,10 +569,10 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 				return tempFile;
 			} catch (MidiFormatException e) {
 				log.e("Failed to create midi file", e);
-				showErrorDialogOnUiThread(R.string.errormsg_unrecoverable, e, true);
+				errorDialogStrategy.showErrorDialogOnUiThread(R.string.errormsg_unrecoverable, e, true);
 			} catch (IOException e) {
 				log.e("Failed to create midi file", e);
-				showErrorDialogOnUiThread(R.string.errormsg_exception_try_later, e, true);
+				errorDialogStrategy.showErrorDialogOnUiThread(R.string.errormsg_exception_try_later, e, true);
 			}
 			return null;
 		}
@@ -689,17 +718,18 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		}
 	}
 		
-	private class GetScoreReceiver extends SingleManagedReceiver {
+	private class GetScoreReceiver extends ManagedReceiverStrategy.SingleManagedReceiver {
+
 		@Override
 		protected void onFailureReceived(Intent response) {
 			log.e("Failed to get score: " + AsyncHelper.getError(response));
-			hideProgressDialog();
+			initialProgressDialogStrategy.hideProgressDialog();
 			showErrorDialog(R.string.errormsg_unrecoverable, null, true);
 		}
 		
 		@Override
 		protected void onSuccessReceived(Intent response) {
-			hideProgressDialog();
+			initialProgressDialogStrategy.hideProgressDialog();
 			ParcelableScore parcelable = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_ENTITY);
 			ScoreVisualizationConfig config = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF);
 			PlayingConfiguration playConf = response.getParcelableExtra(ContentService.ACTIONS.RESPONSE_EXTRAS_PLAY_CONF);
@@ -845,7 +875,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		super.onScaleChanged();
 		float highlightShadow = highlightShadowFactor*sheetParams.getScale();
 		highlightPaint.setShadowLayer(highlightShadow, highlightShadow/2, highlightShadow, Color.BLACK);		
-		NOTE_DRAW_PADDING = (int) FloatMath.floor(2*highlightShadow);
+		NOTE_DRAW_PADDING = (int) Math.floor(2*highlightShadow);
 		lines.setParams(sheetParams, 0, 0);
 		lines.setPaddingTop(sheetParams.getLinespacingThickness());
 		lines.setPaddingBottom(sheetParams.getLinespacingThickness());
@@ -970,6 +1000,7 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
 		if(playConf != null) {
 			try {
 				outState.putParcelable(INSTANCE_STATE_SCORE, score.prepareParcelable());
@@ -1088,4 +1119,9 @@ public class PlayActivity extends FragmentActivity_ErrorDialog_ProgressDialog_Sh
 		public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 		}
 	}
+
+	private void showErrorDialog(int messageStringId, Throwable e, boolean lazyFinish) {
+		errorDialogStrategy.showErrorDialog(messageStringId, e, lazyFinish);
+	}
+
 }

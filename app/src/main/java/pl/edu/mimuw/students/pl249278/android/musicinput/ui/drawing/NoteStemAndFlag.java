@@ -14,7 +14,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
-import android.util.FloatMath;
 
 public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 	@SuppressWarnings("unused")
@@ -136,7 +135,7 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 		super.getCollisionRegions(areas, rectsPool);
 		if(!noFlag) {
 			Rect endingRect = obtain(rectsPool);
-			endingRect.set(0, 0, (int) FloatMath.ceil(ending.getWidth()*scaleE), (int) FloatMath.ceil(ending.getHeight()*scaleE));
+			endingRect.set(0, 0, (int) Math.ceil(ending.getWidth()*scaleE), (int) Math.ceil(ending.getHeight()*scaleE));
 			endingRect.offset(wrapperDrawOffset.x, wrapperDrawOffset.y);
 			areas.add(endingRect);
 		}
@@ -160,7 +159,7 @@ public class NoteStemAndFlag extends AlignedElementWrapper<NoteHeadElement> {
 	}
 	
 	private static int ceil(float value) {
-		return (int) FloatMath.ceil(value);
+		return (int) Math.ceil(value);
 	}
 
 	private void drawStem(Canvas canvas, Paint paint) {

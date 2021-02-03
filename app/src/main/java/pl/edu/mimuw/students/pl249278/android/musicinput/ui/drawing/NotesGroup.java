@@ -108,7 +108,7 @@ public class NotesGroup extends ElementsOverlay {
 		int el0JLeft = (int) jLeft(0);
 		start.x = 0;
 		start.y = (int) (mStemEndExtremum.y - slope * (mStemEndExtremum.x - absJLLeft(0)));
-		end.x = (xpositions[last] + (int) FloatMath.ceil(jRight(last))) - (xpositions[0] + el0JLeft);
+		end.x = (xpositions[last] + (int) Math.ceil(jRight(last))) - (xpositions[0] + el0JLeft);
 		end.y = (int) (slope * (absJRight(last) - mStemEndExtremum.x) + mStemEndExtremum.y);
 		
 		offset2line0 = Math.min(Math.min(
@@ -231,7 +231,7 @@ public class NotesGroup extends ElementsOverlay {
 		return xpositions[index] + (int) jLeft(index);		
 	}
 	private int absJRight(int index) {
-		return xpositions[index] + (int) FloatMath.ceil(jRight(index));		
+		return xpositions[index] + (int) Math.ceil(jRight(index));
 	}
 	private float jLeft(int index) {
 		SheetAlignedElement el = elements[index];

@@ -1,15 +1,21 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ExtendedResourcesFactory;
-import android.content.Context;
-import android.util.AttributeSet;
 import android.widget.ImageView;
 
-public class ExtendedImageStrategy extends ImageView {
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ExtendedResourcesFactory;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewInflationContext;
 
-	public ExtendedImageStrategy(Context context, AttributeSet attrs) {
-		super(context, attrs);
-		ExtendedResourcesFactory.loadExtendedImage(this, context, attrs);
+public class ExtendedImageStrategy extends ViewGroupStrategyBase {
+
+	public ExtendedImageStrategy(ViewGroupStrategy parent) {
+		super(parent);
+		checkThatViewImplements(ImageView.class);
 	}
-	
+
+	@Override
+	public void initStrategy(ViewInflationContext viewInflationContext) {
+		super.initStrategy(viewInflationContext);
+		ExtendedResourcesFactory.loadExtendedImage((ImageView) internals().viewObject(), viewInflationContext);
+	}
+
 }

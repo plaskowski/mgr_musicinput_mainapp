@@ -1,27 +1,20 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
-import android.content.Context;
 import android.graphics.Rect;
-import android.util.AttributeSet;
-import android.view.View;
 
-public class PaddingSettersStrategy extends View {
+public class PaddingSettersStrategy extends ViewGroupStrategyBase {
 
-	public PaddingSettersStrategy(Context context, AttributeSet attrs) {
-		super(context, attrs);
-	}
-
-	public PaddingSettersStrategy(Context context) {
-		super(context);
-	}
-	
 	private Rect lastCall;
-	
+
+	public PaddingSettersStrategy(ViewGroupStrategy parent) {
+		super(parent);
+	}
+
 	@Override
-	public void setPadding(int left, int top, int right, int bottom) {
+	public void setPadding(int left, int top, int right, int bottom, SetPaddingSuperCall superCall) {
 		if(lastCall == null) { lastCall = new Rect(); }
 		lastCall.set(left, top, right, bottom);
-		super.setPadding(left, top, right, bottom);
+		super.setPadding(left, top, right, bottom, superCall);
 	}
 	
 	public void setPaddingLeft(int left) {
@@ -45,7 +38,7 @@ public class PaddingSettersStrategy extends View {
 	}
 
 	private void updatePadding() {
-		super.setPadding(lastCall.left, lastCall.top, lastCall.right, lastCall.bottom);
+		internals().super_setPadding(lastCall.left, lastCall.top, lastCall.right, lastCall.bottom);
 	}
 
 }

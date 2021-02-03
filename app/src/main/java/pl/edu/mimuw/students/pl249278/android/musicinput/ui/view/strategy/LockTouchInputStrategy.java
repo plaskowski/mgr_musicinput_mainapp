@@ -1,25 +1,24 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
+import android.view.MotionEvent;
+
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.TouchInputLockable;
-import android.content.Context;
-import android.util.AttributeSet;
-import android.view.MotionEvent;
-import android.view.View;
 
-public class LockTouchInputStrategy extends View implements TouchInputLockable {
-	protected static LogUtils log = new LogUtils(LockTouchInputStrategy.class);
+public class LockTouchInputStrategy extends ViewGroupStrategyBase {
 
-	public LockTouchInputStrategy(Context context, AttributeSet attrs) {
-		super(context, attrs);
-	}
-	
+	private static final LogUtils log = new LogUtils(LockTouchInputStrategy.class);
+
 	private boolean dispatchCancel = false;
 	private boolean dispatchDown = false;
 	private boolean touchInputLocked = false;
-	
-	@Override
+
+	public LockTouchInputStrategy(ViewGroupStrategy parent) {
+		super(parent);
+		checkThatViewImplements(TouchInputLockable.class);
+	}
+
 	public void setTouchInputLocked(boolean setLocked) {
 		if(touchInputLocked == setLocked) return;
 		dispatchCancel = setLocked;
@@ -28,11 +27,11 @@ public class LockTouchInputStrategy extends View implements TouchInputLockable {
 	}
 	
 	@Override
-	public boolean dispatchTouchEvent(MotionEvent ev) {
+	public boolean dispatchTouchEvent(MotionEvent ev, DispatchTouchEventSuperCall superCall) {
 		if(dispatchCancel) {
 			int action = ev.getAction();
 			ev.setAction(MotionEvent.ACTION_CANCEL);
-			super.dispatchTouchEvent(ev);
+			super.dispatchTouchEvent(ev, superCall);
 			ev.setAction(action);
 			dispatchCancel = false;
 		}
@@ -56,7 +55,7 @@ public class LockTouchInputStrategy extends View implements TouchInputLockable {
 				 */
 				ev.setAction(MotionEvent.ACTION_DOWN);
 				logEv("dispatchDown := false, dispatch faked", ev);
-				super.dispatchTouchEvent(ev);
+				super.dispatchTouchEvent(ev, superCall);
 				dispatchDown = false;
 			}
 			return true;
@@ -65,7 +64,7 @@ public class LockTouchInputStrategy extends View implements TouchInputLockable {
 			return true;
 		}
 //		logEv("dispatchEvent() normal route ", ev);
-		return super.dispatchTouchEvent(ev);
+		return super.dispatchTouchEvent(ev, superCall);
 	}
 
 	private static void logEv(String descr, MotionEvent ev) {

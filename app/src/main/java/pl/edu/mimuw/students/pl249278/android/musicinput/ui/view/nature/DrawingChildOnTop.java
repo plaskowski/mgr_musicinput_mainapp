@@ -4,8 +4,6 @@ import android.view.View;
 
 public interface DrawingChildOnTop {
 
-	View getFrontChildView();
-
 	void setFrontChildView(View frontChildView);
 
 }

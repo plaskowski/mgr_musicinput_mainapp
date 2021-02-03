@@ -1,38 +1,40 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.GradientDrawable.Orientation;
+import android.view.View;
+import android.view.ViewGroup;
+
 import pl.edu.mimuw.students.pl249278.android.musicinput.StaticConfigurationError;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.StaveHighlighter;
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.GradientDrawable.Orientation;
-import android.util.AttributeSet;
-import android.view.View;
 
-public class StaveHighlightStrategy extends DummyViewGroup implements StaveHighlighter {
+public class StaveHighlightStrategy extends ViewGroupStrategyBase {
 	private static final int LINESPACE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	private static final int LINESPACE5_ABSINDEX = NoteConstants.anchorIndex(5, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	private static final int LINESPACEM1_ABSINDEX = NoteConstants.anchorIndex(-1, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	private static final int LINESPACEM2_ABSINDEX = NoteConstants.anchorIndex(-2, NoteConstants.ANCHOR_TYPE_LINESPACE);
 	
-	public StaveHighlightStrategy(Context context, AttributeSet attrs) {
-		super(context, attrs);
-	}
-
 	SheetVisualParams params;
 	private Integer highlightedAnchor = null;
 	private GradientDrawable downwardDrawable, upwardDrawable;
 	private Sheet5LinesView staveView;
-	
+
+	public StaveHighlightStrategy(ViewGroupStrategy parent) {
+		super(parent);
+		checkThatViewImplements(ViewGroup.class);
+		checkThatViewImplements(StaveHighlighter.class);
+	}
+
 	@Override
-	protected void onFinishInflate() {
-		super.onFinishInflate();
+	public void onFinishInflate(OnFinishInflateSuperCall superCall) {
+		super.onFinishInflate(superCall);
 		int childCount = getChildCount();
 		for(int i = 0; i < childCount; i++) {
 			View child = getChildAt(i);
@@ -45,13 +47,11 @@ public class StaveHighlightStrategy extends DummyViewGroup implements StaveHighl
 			throw new StaticConfigurationError(getClass().getSimpleName()+" does not contain stave view as a child");
 	}
 	
-	@Override
 	public void setParams(SheetVisualParams params) {
 		this.params = params;
-		invalidate();
+		internals().viewObject().invalidate();
 	}
 	
-	@Override
 	public void setHiglightColor(int color) {
 		int whiteTrans = Color.argb(0, 255, 255, 255);
 		int[] colors = new int[] { color, whiteTrans, whiteTrans, whiteTrans };
@@ -62,15 +62,14 @@ public class StaveHighlightStrategy extends DummyViewGroup implements StaveHighl
 	/**
 	 * @param anchorAbsIndex null to turn off previous highlight
 	 */
-	@Override
 	public void highlightAnchor(Integer anchorAbsIndex) {
 		this.highlightedAnchor = anchorAbsIndex;
-		invalidate();
+		internals().viewObject().invalidate();
 	}
 	
 	@Override
-	protected void onDraw(Canvas canvas) {
-		super.onDraw(canvas);
+	public void onDraw(Canvas canvas, OnDrawSuperCall superCall) {
+		super.onDraw(canvas, superCall);
 		if(highlightedAnchor == null || params == null)
 			return;
 		
@@ -91,7 +90,7 @@ public class StaveHighlightStrategy extends DummyViewGroup implements StaveHighl
 			drawable.setBounds(
 				0, 
 				line0topY + params.anchorOffset(anhor, AnchorPart.TOP_EDGE),
-				getWidth(), 
+				internals().viewObject().getWidth(),
 				line0topY + params.anchorOffset(anhor, AnchorPart.BOTTOM_EDGE)
 			);
 			drawable.draw(canvas);

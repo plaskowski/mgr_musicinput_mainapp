@@ -19,7 +19,7 @@
 		    android:background="@drawable/button_bluegradient"
 		    android:clickable="true"
     	    >
-		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy.ExtendedDrawableLeftStrategy
+		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TextView_ExtendedDrawableLeft
 		    android:layout_width="wrap_content"
 		    android:layout_height="60dp"
 		    android:layout_gravity="center"

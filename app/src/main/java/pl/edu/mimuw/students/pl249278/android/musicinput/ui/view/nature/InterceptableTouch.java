@@ -4,11 +4,9 @@ import android.view.MotionEvent;
 
 public interface InterceptableTouch {
 
-	public interface InterceptTouchDelegate {
-		public boolean onInterceptTouchEvent(android.view.View interceptableView, MotionEvent ev);
+	interface InterceptTouchDelegate {
+		boolean onInterceptTouchEvent(android.view.View interceptableView, MotionEvent ev);
 	}
 
-	public InterceptTouchDelegate getInterceptTouchDelegate();
-
-	public void setInterceptTouchDelegate(InterceptTouchDelegate interceptTouchDelegate);
+	void setInterceptTouchDelegate(InterceptTouchDelegate interceptTouchDelegate);
 }

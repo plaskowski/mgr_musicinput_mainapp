@@ -1,23 +1,19 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
-import android.content.Context;
-import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AbsoluteLayout;
 
 @SuppressWarnings("deprecation")
-public class CorrectTopPositionStrategy extends DummyViewGroup {
+public class CorrectTopPositionStrategy extends ViewGroupStrategyBase {
 
-	public CorrectTopPositionStrategy(Context context, AttributeSet attrs) {
-		super(context, attrs);
-	}
-
-	public CorrectTopPositionStrategy(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
+	public CorrectTopPositionStrategy(ViewGroupStrategy parent) {
+		super(parent);
+		checkThatViewImplements(ViewGroup.class);
 	}
 
 	@Override
-	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+	public void onMeasure(int widthMeasureSpec, int heightMeasureSpec, OnMeasureSuperCall superCall) {
 		/* find min(child.layoutParams.topMargin) */
 		int topMin = Integer.MAX_VALUE;
 		int childCount = getChildCount();
@@ -33,7 +29,7 @@ public class CorrectTopPositionStrategy extends DummyViewGroup {
 			}
 //			LogUtils.log(Log.DEBUG, LogUtils.COMMON_TAG, "MarginDrivenLayout::onMeasure(): changed margins by %d", -topMarginMin);
 		}
-		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+		super.onMeasure(widthMeasureSpec, heightMeasureSpec, superCall);
 	}
 	
 	private static void changeTop(View view, int delta) {

@@ -1,6 +1,12 @@
 
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
+import android.content.res.TypedArray;
+import android.graphics.Paint;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout.LayoutParams;
+
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteSpec;
@@ -13,46 +19,44 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModel
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewInflationContext;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.NoteValueWidget;
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.Paint;
-import android.util.AttributeSet;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.NoteValueWidget.OnValueChanged;
 
-public abstract class NoteValueSpinner extends DummyViewGroup implements NoteValueWidget {	
+import static android.view.View.VISIBLE;
+
+public abstract class NoteValueSpinner extends ViewGroupStrategyBase
+		implements ViewGroupStrategy {
 	private static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
 	
 	private Paint itemPaint = new Paint();
 	private Paint itemSelectedPaint = new Paint();
 	private int maxPaintRadius = 0;
-	protected float itemSpacing;
-	protected ViewGroup notesContainer;	
-	protected int minNoteValue;
+	private float itemSpacing;
+	private ViewGroup notesContainer;
+	private int minNoteValue;
 	private int currentValue = 0;	
 	private OnValueChanged<Integer> onValueChangedListener = null;
-	protected SheetParams params;
+	private SheetParams params;
 	/**
-	 * If we need to scroll to currently selected element in next {@link #onLayout(boolean, int, int, int, int)} pass.
+	 * If we need to scroll to currently selected element in next {@link View#onLayout(boolean, int, int, int, int)} pass.
 	 */
 	private boolean scrollInOnLayout = false;
 
-	public NoteValueSpinner(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
-		init(ExtendedResourcesFactory.styleResolver(context, attrs, defStyle));
+	public NoteValueSpinner(ViewGroupStrategy parent) {
+		super(parent);
+		checkThatViewImplements(ViewGroup.class);
+		checkThatViewImplements(NoteValueWidget.class);
 	}
 
-	public NoteValueSpinner(Context context, AttributeSet attrs) {
-		super(context, attrs);
-		init(ExtendedResourcesFactory.styleResolver(context, attrs));
-	}
-	
-	private void init(StyleResolver resolver) {
+	@Override
+	public void initStrategy(ViewInflationContext viewInflationContext) {
+		super.initStrategy(viewInflationContext);
+
+		StyleResolver resolver = ExtendedResourcesFactory.styleResolver(viewInflationContext);
 		minNoteValue = resolver.getResources().getInteger(R.integer.spinnerDefaultMinNoteValue);
 		currentValue = minNoteValue/2;
-		
+
 		// initialize paints according to style attributes
 		TypedArray values = resolver.obtainStyledAttributes(R.styleable.NoteValueSpinner);
 		try {
@@ -74,7 +78,7 @@ public abstract class NoteValueSpinner extends DummyViewGroup implements NoteVal
 			values.recycle();
 		}
 	}
-	
+
 	public void setupNoteViews(SheetParams globalParams, int initialCurrentValue) throws CreationException {
 		setupNoteViews(globalParams);
 		currentValue = Math.min(initialCurrentValue, minNoteValue);
@@ -97,19 +101,19 @@ public abstract class NoteValueSpinner extends DummyViewGroup implements NoteVal
 			SheetAlignedElementView noteView = new SheetAlignedElementView(getContext(), model);
 			noteView.setSheetParams(params);
 			noteView.setPaint(itemPaint, maxPaintRadius);
-			notesContainer.addView(noteView, new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+			notesContainer.addView(noteView, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
 		}
 	}
 	
-	protected static int middleX(SheetAlignedElementView noteView) {
+	public int middleX(SheetAlignedElementView noteView) {
 		return noteView.getPaddingLeft()+noteView.model().getMiddleX();
 	}
 
 	@Override
-	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-		super.onSizeChanged(w, h, oldw, oldh);
+	public void onSizeChanged(int w, int h, int oldw, int oldh, OnSizeChangedSuperCall superCall) {
+		super.onSizeChanged(w, h, oldw, oldh, superCall);
 		// post outside layout pass so changes in layout parameters will take effect
-		post(new Runnable() {
+		internals().viewObject().post(new Runnable() {
 			@Override
 			public void run() {
 				layoutViews();
@@ -123,8 +127,8 @@ public abstract class NoteValueSpinner extends DummyViewGroup implements NoteVal
 	protected abstract void layoutViews();
 
 	@Override
-	protected void onLayout(boolean changed, int l, int t, int r, int b) {
-		super.onLayout(changed, l, t, r, b);
+	public void onLayout(boolean changed, int l, int t, int r, int b, OnLayoutSuperCall superCall) {
+		super.onLayout(changed, l, t, r, b, superCall);
 		if(changed) {
         	setIsSelected(currentValue, true);
 		}
@@ -138,7 +142,7 @@ public abstract class NoteValueSpinner extends DummyViewGroup implements NoteVal
 	/** scroll this container so that currently selected value will be centered */ 
 	protected abstract void scrollToCurrent();
 
-	protected void changeValue(int newNoteHeight) {
+	public void changeValue(int newNoteHeight) {
         setIsSelected(currentValue, false);
 		int oldValue = currentValue;
         currentValue = newNoteHeight;
@@ -154,15 +158,29 @@ public abstract class NoteValueSpinner extends DummyViewGroup implements NoteVal
 		);
 	}
 
-	@Override
 	public void setOnValueChangedListener(
 			OnValueChanged<Integer> onValueChangedListener) {
 		this.onValueChangedListener = onValueChangedListener;
 	}
 
-	@Override
 	public int getCurrentValue() {
 		return currentValue;
 	}
-	
+
+	public float getItemSpacing() {
+		return itemSpacing;
+	}
+
+	public int getMinNoteValue() {
+		return minNoteValue;
+	}
+
+	public ViewGroup getNotesContainer() {
+		return notesContainer;
+	}
+
+	public SheetParams getParams() {
+		return params;
+	}
+
 }

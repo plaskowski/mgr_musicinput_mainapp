@@ -1,6 +1,15 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
 
-import static android.view.View.MeasureSpec.makeMeasureSpec;
+import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.Point;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
+import android.util.AttributeSet;
+import android.view.View;
+import android.widget.ImageView;
+
+import com.gridlayout.GridLayout;
 
 import java.util.Collection;
 
@@ -13,16 +22,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.IndicatorAware.Indic
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.PaintSetup;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.CompoundDrawable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable.SvgCompoundDrawable;
-import android.content.Context;
-import android.content.res.TypedArray;
-import android.graphics.Point;
-import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
-import android.util.AttributeSet;
-import android.view.View;
-import android.widget.ImageView;
 
-import com.gridlayout.GridLayout;
+import static android.view.View.MeasureSpec.makeMeasureSpec;
 
 public class QuickActionsView extends GridLayout {
 	private int buttonStyleId, toggleButtonStyleId;
@@ -41,21 +42,22 @@ public class QuickActionsView extends GridLayout {
 	
 	private void init(Context ctx, AttributeSet attrs) {
 		if(attrs != null) {
-			ExtendedResourcesFactory.loadExtendedBackground(this, ctx, attrs);
+			ViewInflationContext viewInflationContext = new ViewInflationContext(ctx, attrs);
+			ExtendedResourcesFactory.loadExtendedBackground(this, viewInflationContext);
 			TypedArray styledAttributes = ctx.obtainStyledAttributes(attrs,R.styleable.QuickActions);
 			buttonStyleId = styledAttributes.getResourceId(R.styleable.QuickActions_buttonStyle, UNDEFINED);
 			toggleButtonStyleId = styledAttributes.getResourceId(R.styleable.QuickActions_toggleButtonStyle, UNDEFINED);
 			int paintsSetupId = styledAttributes.getResourceId(R.styleable.QuickActions_buttonIconPaintSetup, UNDEFINED);
 			if(paintsSetupId != UNDEFINED) {
 				iconPaintSetup = ExtendedResourcesFactory.createPaintsSetup(
-					ExtendedResourcesFactory.styleResolver(ctx, attrs), 
+					ExtendedResourcesFactory.styleResolver(viewInflationContext),
 					paintsSetupId
 				);
 			}
 			paintsSetupId = styledAttributes.getResourceId(R.styleable.QuickActions_inactiveButtonIconPaintSetup, UNDEFINED);
 			if(paintsSetupId != UNDEFINED) {
 				inactivePaintSetup = ExtendedResourcesFactory.createPaintsSetup(
-					ExtendedResourcesFactory.styleResolver(ctx, attrs), 
+					ExtendedResourcesFactory.styleResolver(viewInflationContext),
 					paintsSetupId
 				);
 			} else {

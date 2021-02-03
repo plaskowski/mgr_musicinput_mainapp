@@ -1,28 +1,25 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptableTouch;
-import android.content.Context;
-import android.util.AttributeSet;
 import android.view.MotionEvent;
 
-public class InterceptTouchEventStrategy extends DummyViewGroup implements InterceptableTouch {
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptableTouch;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptableTouch.InterceptTouchDelegate;
 
-	public InterceptTouchEventStrategy(Context context, AttributeSet attrs) {
-		super(context, attrs);
-	}
-	
+public class InterceptTouchEventStrategy extends ViewGroupStrategyBase {
+
 	private InterceptTouchDelegate interceptTouchDelegate;
-	
-	@Override
-	public boolean onInterceptTouchEvent(MotionEvent ev) {
-		if(interceptTouchDelegate != null) {
-			return interceptTouchDelegate.onInterceptTouchEvent(this, ev);
-		}
-		return super.onInterceptTouchEvent(ev);
+
+	public InterceptTouchEventStrategy(ViewGroupStrategy parent) {
+		super(parent);
+		checkThatViewImplements(InterceptableTouch.class);
 	}
 
-	public InterceptTouchDelegate getInterceptTouchDelegate() {
-		return interceptTouchDelegate;
+	@Override
+	public boolean onInterceptTouchEvent(MotionEvent ev, OnInterceptTouchEventSuperCall superCall) {
+		if(interceptTouchDelegate != null) {
+			return interceptTouchDelegate.onInterceptTouchEvent(internals().viewObject(), ev);
+		}
+		return super.onInterceptTouchEvent(ev, superCall);
 	}
 
 	public void setInterceptTouchDelegate(

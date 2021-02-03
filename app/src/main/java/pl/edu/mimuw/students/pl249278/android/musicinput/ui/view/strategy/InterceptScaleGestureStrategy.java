@@ -1,25 +1,26 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
-import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptsScaleGesture;
-import android.content.Context;
 import android.graphics.PointF;
-import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.OnScaleGestureListener;
 
-public class InterceptScaleGestureStrategy extends DummyViewGroup implements InterceptsScaleGesture {
+import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptsScaleGesture;
+
+public class InterceptScaleGestureStrategy extends ViewGroupStrategyBase {
+
 	protected static final float MIN_SCALE_STEP = 0.05f;
 	protected static final float MAX_SCALE_STEP = 0.5f;
 	protected static LogUtils log = new LogUtils(InterceptScaleGestureStrategy.class);
 
-	public InterceptScaleGestureStrategy(Context context, AttributeSet attrs) {
-		super(context, attrs);
-	}
-	
 	private InterceptsScaleGesture.OnScaleListener onScaleListener = null;
-	
+
+	public InterceptScaleGestureStrategy(ViewGroupStrategy parent) {
+		super(parent);
+		checkThatViewImplements(InterceptsScaleGesture.class);
+	}
+
 	ScaleGestureDetector detector = new ScaleGestureDetector(getContext(), new OnScaleGestureListener() {
 		
 		@Override
@@ -63,24 +64,22 @@ public class InterceptScaleGestureStrategy extends DummyViewGroup implements Int
 			);
 		}
 	});
-	
-	
+
 	@Override
-	public boolean dispatchTouchEvent(MotionEvent ev) {
+	public boolean dispatchTouchEvent(MotionEvent ev, DispatchTouchEventSuperCall superCall) {
 		detector.onTouchEvent(ev);
 		if(detector.isInProgress()) {
 			return true;
 		} else {
-			return super.dispatchTouchEvent(ev);
+			return super.dispatchTouchEvent(ev, superCall);
 		}
 	}
 	
 	protected void superDispatchCancelEvent() {
 		MotionEvent ev =  MotionEvent.obtain(0, 0, MotionEvent.ACTION_CANCEL, 0, 0, 0);
-		super.dispatchTouchEvent(ev);
+		internals().super_dispatchTouchEvent(ev);
 	}
 
-	@Override
 	public void setOnScaleListener(InterceptsScaleGesture.OnScaleListener onScaleListener) {
 		this.onScaleListener = onScaleListener;
 	}

@@ -1,13 +1,5 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.LinkedList;
-import java.util.List;
-
-import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -29,9 +21,19 @@ import android.util.SparseArray;
 import android.view.View;
 import android.widget.ImageView;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.LinkedList;
+import java.util.List;
+
+import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
+import pl.edu.mimuw.students.pl249278.android.common.ReflectionUtils;
+import pl.edu.mimuw.students.pl249278.android.musicinput.R;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewInflationContext;
+
 public class ExtendedResourcesFactory {
 	private static LogUtils log = new LogUtils(ExtendedResourcesFactory.class);
-	
+
 	private static final class SimpleResolver implements StyleResolver {
 		private final int styleId;
 		private final AttributeSet attrs;
@@ -60,9 +62,9 @@ public class ExtendedResourcesFactory {
 	}
 	
 
-	public static void loadExtendedImage(ImageView view, Context context, AttributeSet attrs) {
+	public static void loadExtendedImage(ImageView view, ViewInflationContext viewInflationContext) {
 		Drawable dr = inflateExtendedDrawable(
-			context, attrs,
+			viewInflationContext,
 			R.styleable.ExtendedImage,
 			R.styleable.ExtendedImage_extendedImage
 		);
@@ -71,9 +73,9 @@ public class ExtendedResourcesFactory {
 		}
 	}
 	
-	public static void loadExtendedBackground(View view, final Context context, final AttributeSet attrs) {
+	public static void loadExtendedBackground(View view, ViewInflationContext viewInflationContext) {
 		Drawable dr = inflateExtendedDrawable(
-			context, attrs,
+			viewInflationContext,
 			R.styleable.ExtendedBackground,
 			R.styleable.ExtendedBackground_extendedBackground
 		);
@@ -85,7 +87,9 @@ public class ExtendedResourcesFactory {
 	private static SparseArray<ExtendedDrawableState> drawableConstantState = new SparseArray<ExtendedDrawableState>();
 	private static Configuration lastConfiguration;
 	
-	public static Drawable inflateExtendedDrawable(Context ctx, AttributeSet attrsSet, int[] attrs, int attribute) {
+	public static Drawable inflateExtendedDrawable(ViewInflationContext viewInflationContexts, int[] attrs, int attribute) {
+		Context ctx = viewInflationContexts.context;
+		AttributeSet attrsSet = viewInflationContexts.attrs;
 		TypedArray styledAttributes = ctx.obtainStyledAttributes(attrsSet, attrs);
 		final int styleId = styledAttributes.getResourceId(attribute, -1);
 		if(styleId != -1) {
@@ -322,6 +326,14 @@ public class ExtendedResourcesFactory {
 		);
 		values.recycle();
 		return rect;
+	}
+
+	public static StyleResolver styleResolver(ViewInflationContext ctx) {
+		if (ctx.defStyle != null) {
+			return styleResolver(ctx.context, ctx.attrs, ctx.defStyle);
+		} else {
+			return styleResolver(ctx.context, ctx.attrs);
+		}
 	}
 
 	public static StyleResolver styleResolver(Context ctx, AttributeSet attrs) {

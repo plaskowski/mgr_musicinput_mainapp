@@ -1,10 +1,5 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view;
 
-import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy.PaddingSettersStrategy;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -12,16 +7,24 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.util.Log;
 
-public class Sheet5LinesView extends PaddingSettersStrategy {
+import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.mixin.view.View_WithMixin;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy.PaddingSettersStrategy;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy.ViewGroupStrategyChainRoot;
+
+public class Sheet5LinesView extends View_WithMixin {
 
 	private static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
-	
-	public Sheet5LinesView(Context context) {
-		super(context);
-	}
+	private final PaddingSettersStrategy paddingSettersStrategy;
 
 	public Sheet5LinesView(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		paddingSettersStrategy = new PaddingSettersStrategy(
+				new ViewGroupStrategyChainRoot(new Internals()));
+		initMixin(paddingSettersStrategy, new ViewInflationContext(context, attrs));
 	}
 
 	SheetVisualParams params;
@@ -35,8 +38,8 @@ public class Sheet5LinesView extends PaddingSettersStrategy {
 		totalVerticalSpan = params.anchorOffset(LINE4_ABSINDEX, AnchorPart.BOTTOM_EDGE);
 		int shadowThickness = params.getLineThickness()/2;
 		lineHighlightedPaint.setShadowLayer(shadowThickness, 0, params.getLineThickness()/4, Color.BLACK);
-		setPaddingTop(Math.max(shadowThickness, topPaddingMin));
-		setPaddingBottom(Math.max(shadowThickness, bottomPaddingMin));
+		paddingSettersStrategy.setPaddingTop(Math.max(shadowThickness, topPaddingMin));
+		paddingSettersStrategy.setPaddingBottom(Math.max(shadowThickness, bottomPaddingMin));
 		setMeasuredDimension(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
 		requestLayout();
 		invalidate();
@@ -90,4 +93,21 @@ public class Sheet5LinesView extends PaddingSettersStrategy {
 		}
 		setMeasuredDimension(width, totalVerticalSpan+getPaddingTop()+getPaddingBottom());
 	}
+
+	public void setPaddingLeft(int left) {
+		paddingSettersStrategy.setPaddingLeft(left);
+	}
+
+	public void setPaddingTop(int top) {
+		paddingSettersStrategy.setPaddingTop(top);
+	}
+
+	public void setPaddingRight(int right) {
+		paddingSettersStrategy.setPaddingRight(right);
+	}
+
+	public void setPaddingBottom(int bottom) {
+		paddingSettersStrategy.setPaddingBottom(bottom);
+	}
+
 }

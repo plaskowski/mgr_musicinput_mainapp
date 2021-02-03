@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:custom="http://schemas.android.com/apk/res/pl.edu.mimuw.students.pl249278.android.musicinput"
 >
-	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TextView_WithAnimations_ExtendedBackground
+	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TextViewWithAnimations_ExtendedBackground
 	        android:id="@+id/title"
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"

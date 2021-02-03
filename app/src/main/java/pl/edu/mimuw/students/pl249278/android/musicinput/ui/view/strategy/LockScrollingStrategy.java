@@ -1,36 +1,27 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy;
 
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.ScrollingLockable;
-import android.content.Context;
-import android.util.AttributeSet;
 import android.view.MotionEvent;
 
-public class LockScrollingStrategy extends DummyViewGroup implements ScrollingLockable {
-	
-	public LockScrollingStrategy(Context context, AttributeSet attrs) {
-		super(context, attrs);
-	}
-	
-	public LockScrollingStrategy(Context context, AttributeSet attrs,
-			int defStyle) {
-		super(context, attrs, defStyle);
-	}
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.ScrollingLockable;
 
-	public LockScrollingStrategy(Context context) {
-		super(context);
-	}
-
+public class LockScrollingStrategy extends ViewGroupStrategyBase {
+	
 	private boolean scrollingLocked = false;
-	
+
+	public LockScrollingStrategy(ViewGroupStrategy parent) {
+		super(parent);
+		checkThatViewImplements(ScrollingLockable.class);
+	}
+
 	@Override
-	public boolean onInterceptTouchEvent(MotionEvent ev) {
+	public boolean onInterceptTouchEvent(MotionEvent ev, OnInterceptTouchEventSuperCall superCall) {
 		if(scrollingLocked)
 			return false;
-		return super.onInterceptTouchEvent(ev);
+		return super.onInterceptTouchEvent(ev, superCall);
 	}
 
-	@Override
 	public void setScrollingLocked(boolean scrollingLocked) {
 		this.scrollingLocked = scrollingLocked;
 	}
+
 }

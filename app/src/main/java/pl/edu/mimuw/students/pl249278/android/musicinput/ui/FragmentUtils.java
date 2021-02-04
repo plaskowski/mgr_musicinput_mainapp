@@ -12,7 +12,7 @@ public class FragmentUtils {
 	public static void dismissDialogFragment(FragmentActivity ctx, String dialogTag) {
 		DialogFragment prev = (DialogFragment) ctx.getSupportFragmentManager().findFragmentByTag(dialogTag);
 	    if (prev != null) {
-	        prev.dismiss();
+	        prev.dismissAllowingStateLoss();
 	    }
 	}
 }

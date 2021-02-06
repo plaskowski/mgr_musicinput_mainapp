@@ -4,7 +4,7 @@ import android.graphics.Rect;
 
 public class PaddingSettersStrategy extends ViewGroupStrategyBase {
 
-	private Rect lastCall;
+	private final Rect lastCall = new Rect();
 
 	public PaddingSettersStrategy(ViewGroupStrategy parent) {
 		super(parent);
@@ -12,7 +12,6 @@ public class PaddingSettersStrategy extends ViewGroupStrategyBase {
 
 	@Override
 	public void setPadding(int left, int top, int right, int bottom, SetPaddingSuperCall superCall) {
-		if(lastCall == null) { lastCall = new Rect(); }
 		lastCall.set(left, top, right, bottom);
 		super.setPadding(left, top, right, bottom, superCall);
 	}

@@ -16,8 +16,6 @@
 
 package pl.echo.android.view;
 
-import java.util.List;
-
 import android.content.Context;
 import android.graphics.Rect;
 import android.util.AttributeSet;
@@ -34,7 +32,12 @@ import android.view.ViewParent;
 import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
 
-public class ScrollView extends FrameLayout {
+import java.util.List;
+
+/**
+ * A Copy from AOSP, needed for {@link PagedHorizontalScrollView} impl.
+ */
+public class ScrollViewCopied extends FrameLayout {
     static final String TAG = "ScrollView";
     static final boolean localLOGV = false || Config.LOGV;
     
@@ -98,15 +101,15 @@ public class ScrollView extends FrameLayout {
 
     private int mTouchSlop;
 
-    public ScrollView(Context context) {
+    public ScrollViewCopied(Context context) {
         this(context, null);
     }
 
-    public ScrollView(Context context, AttributeSet attrs) {
+    public ScrollViewCopied(Context context, AttributeSet attrs) {
         this(context, attrs, android.R.attr.scrollViewStyle);
     }
 
-    public ScrollView(Context context, AttributeSet attrs, int defStyle) {
+    public ScrollViewCopied(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         initScrollView();
     }

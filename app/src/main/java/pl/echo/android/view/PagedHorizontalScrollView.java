@@ -16,8 +16,6 @@
 
 package pl.echo.android.view;
 
-import java.util.List;
-
 import android.content.Context;
 import android.graphics.Rect;
 import android.util.AttributeSet;
@@ -35,6 +33,8 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Scroller;
 import android.widget.TextView;
+
+import java.util.List;
 
 /**
  * Layout container for a view hierarchy that can be scrolled by the user,
@@ -59,9 +59,9 @@ import android.widget.TextView;
  * <p>HorizontalScrollView only supports horizontal scrolling.
  */
 public class PagedHorizontalScrollView extends FrameLayout {
-    private static final int ANIMATED_SCROLL_GAP = ScrollView.ANIMATED_SCROLL_GAP;
+    private static final int ANIMATED_SCROLL_GAP = ScrollViewCopied.ANIMATED_SCROLL_GAP;
 
-    private static final float MAX_SCROLL_FACTOR = ScrollView.MAX_SCROLL_FACTOR;
+    private static final float MAX_SCROLL_FACTOR = ScrollViewCopied.MAX_SCROLL_FACTOR;
 
 
     private long mLastScroll;

@@ -21,33 +21,45 @@ public class SheetElementView<ElementType extends SheetElement> extends View {
 	protected ElementType model;
 	protected Paint paint;
 	private int drawRadius;
+	private PaintSetup initialPaintSetup;
+	private boolean constructorCallInProgress = true;
 
 	public SheetElementView(Context context, ElementType model) {
 		super(context);
 		setModel(model);
+		constructorCallInProgress = false;
 	}
 
 	public SheetElementView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
-		loadPaint(ExtendedResourcesFactory.styleResolver(context, attrs, defStyle));
+		initialPaintSetup = loadPaintSetup(ExtendedResourcesFactory.styleResolver(context, attrs, defStyle));
 	}
 	
 	public SheetElementView(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		loadPaint(ExtendedResourcesFactory.styleResolver(context, attrs));
+		initialPaintSetup = loadPaintSetup(ExtendedResourcesFactory.styleResolver(context, attrs));
 	}
 
-	private void loadPaint(StyleResolver styleResolver) {
+	@Override
+	protected void onFinishInflate() {
+		constructorCallInProgress = false;
+		super.onFinishInflate();
+		if (initialPaintSetup != null) {
+			setPaint(initialPaintSetup.paint, initialPaintSetup.drawRadius);
+		}
+	}
+
+	private PaintSetup loadPaintSetup(StyleResolver styleResolver) {
 		TypedArray values = styleResolver.obtainStyledAttributes(R.styleable.SheetElementView);
 		try {
 			int paintId = values.getResourceId(R.styleable.SheetElementView_paint, -1);
 			if(paintId != -1) {
-				PaintSetup paint = ExtendedResourcesFactory.createPaintSetup(styleResolver, paintId);
-				setPaint(paint.paint, paint.drawRadius);
+				return ExtendedResourcesFactory.createPaintSetup(styleResolver, paintId);
 			}
 		} finally {
 			values.recycle();
 		}
+		return null;
 	}
 
 	public void setModel(ElementType model) {
@@ -55,6 +67,9 @@ public class SheetElementView<ElementType extends SheetElement> extends View {
 			model.setSheetParams(this.model.getSheetParams());
 		}
 		this.model = model;
+		if (constructorCallInProgress) {
+			return;
+		}
 		invalidateMeasure();
 		invalidate();
 	}

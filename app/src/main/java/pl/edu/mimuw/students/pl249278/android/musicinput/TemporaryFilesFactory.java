@@ -1,12 +1,12 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
+import android.content.Context;
+import android.os.SystemClock;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
-import android.content.Context;
-import android.os.SystemClock;
 
 public class TemporaryFilesFactory {
 	private static final String PREFIX = "sessiontemp";
@@ -37,7 +37,7 @@ public class TemporaryFilesFactory {
 	public static File getUniqueName(Context ctx, String suffix) throws IOException {
 		init();
 		String name = PREFIX + sessionId + SEPARATOR + sequence++ + SEPARATOR + suffix;
-		FileOutputStream file = ctx.openFileOutput(name, Context.MODE_WORLD_READABLE);
+		FileOutputStream file = ctx.openFileOutput(name, Context.MODE_PRIVATE);
 		file.close();
 		File cacheDir = ctx.getFilesDir();
 		return new File(cacheDir, name);

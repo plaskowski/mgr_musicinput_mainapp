@@ -1,5 +1,15 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.services;
 
+import android.content.ContentUris;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore.Audio.Media;
+import android.util.Log;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -15,21 +25,14 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.TemporaryFilesFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.PlayingConfiguration;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score.ParcelableScore;
 import pl.edu.mimuw.students.pl249278.midi.MidiFile;
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Environment;
-import android.provider.MediaStore.Audio.Media;
-import android.util.Log;
 
 public class WorkerService extends AsynchronousRequestsService {
 	private static final String TAG = WorkerService.class.getName();
-	
+
 	public static void scheduleCleanOldFiles(Context ctx) {
 		Intent request = AsyncHelper.prepareServiceIntent(
-			ctx, WorkerService.class, 
-			WorkerService.ACTIONS.CLEAN_UNUSED_TEMPORARY_FILES, 
+			ctx, WorkerService.class,
+			WorkerService.ACTIONS.CLEAN_UNUSED_TEMPORARY_FILES,
 			null, null, false
 		);
 		ctx.startService(request);
@@ -38,7 +41,7 @@ public class WorkerService extends AsynchronousRequestsService {
 	public WorkerService() {
 		super(WorkerService.class.getSimpleName());
 	}
-	
+
 	public static class ACTIONS {
 		/** Deletes files created by {@link TemporaryFilesFactory} in previous sessions */
 		public static final String CLEAN_UNUSED_TEMPORARY_FILES = WorkerService.class.getName()+".clean_temp_files";
@@ -55,11 +58,11 @@ public class WorkerService extends AsynchronousRequestsService {
 		public static final String SCORE_TO_MIDI = WorkerService.class.getName()+".score_to_midi";
 		public static final String EXTRAS_ORIGINAL_REQUEST = "original_request";
 	}
-	
+
 	public static File getExportDir() {
 		return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
 	}
-	
+
 	@Override
 	protected void onHandleIntent(Intent requestIntent) {
 		String action = requestIntent.getAction();
@@ -67,7 +70,7 @@ public class WorkerService extends AsynchronousRequestsService {
 			Intent callbackIntent = AsyncHelper.getServiceCallback(getApplicationContext(), WorkerService.class);
 			callbackIntent.setAction(ACTIONS.SCORE_TO_MIDI);
 			callbackIntent.putExtra(ACTIONS.EXTRAS_ORIGINAL_REQUEST, requestIntent);
-			Intent i = AsyncHelper.prepareServiceIntent(this, ContentService.class, 
+			Intent i = AsyncHelper.prepareServiceIntent(this, ContentService.class,
 				ContentService.ACTIONS.GET_SCORE_BY_ID, null, callbackIntent, false);
 			i.putExtra(ContentService.ACTIONS.EXTRAS_ENTITY_ID, requestIntent.getLongExtra(ACTIONS.EXTRAS_SCORE_ID, -1));
 			i.putExtra(ContentService.ACTIONS.EXTRAS_ATTACH_SCORE_PLAY_CONF, true);
@@ -109,9 +112,15 @@ public class WorkerService extends AsynchronousRequestsService {
 				values.put(Media.MIME_TYPE, "audio/midi");
 				values.put(Media.IS_MUSIC, true);
 				values.put(Media.DATA, path);
-				int updated = getContentResolver().update(Media.EXTERNAL_CONTENT_URI, values, Media.DATA+" = ?", new String[] { path });
-				if(updated > 0) {
-					Log.v(TAG, "Updated meta for " + path);
+                Integer mediaId = queryExistingMediaItemId(path);
+				if (mediaId != null) {
+					Uri itemUri = ContentUris.withAppendedId(Media.EXTERNAL_CONTENT_URI, mediaId);
+					int updated = getContentResolver().update(itemUri, values, null, null);
+					if (updated > 0) {
+						Log.v(TAG, "Updated meta for " + path);
+					} else {
+						Log.w(TAG, "Failed to update metadata for MIDI file");
+					}
 				} else {
 					Uri uri = this.getContentResolver().insert(Media.EXTERNAL_CONTENT_URI, values);
 					Log.v(TAG, "Inserted "+path+" as "+uri);
@@ -157,5 +166,17 @@ public class WorkerService extends AsynchronousRequestsService {
 			super.onHandleIntent(requestIntent);
 		}
 	}
+
+	private Integer queryExistingMediaItemId(String path) {
+        try (Cursor cursor = getContentResolver().query(
+                Media.EXTERNAL_CONTENT_URI, new String[]{Media._ID},
+                Media.DATA + " = ?", new String[]{path}, null)
+        ) {
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getInt(0);
+            }
+            return null;
+        }
+    }
 
 }

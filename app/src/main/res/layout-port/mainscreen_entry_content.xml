@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_CacheDraw 
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/mainscreen_entry_content"
     android:layout_width="fill_parent"
@@ -9,4 +9,4 @@
 
     <include layout="@layout/mainscreen_entry_content_textfields" />
 
-</pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_CacheDraw>
+</LinearLayout>

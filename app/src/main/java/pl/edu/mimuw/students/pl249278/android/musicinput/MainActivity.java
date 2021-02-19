@@ -1,9 +1,24 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
-import static pl.edu.mimuw.students.pl249278.android.async.AsyncHelper.getBroadcastCallback;
-import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ErrorDialogStrategy.ERRORDIALOG_CALLBACKARG_DO_FINISH;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.TipDialogStrategy.CONFIRMDIALOG_CALLBACKARG_TIP;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.res.Resources;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Parcelable;
+import android.view.View;
+import android.view.View.MeasureSpec;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
+import android.view.animation.AnimationUtils;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -51,25 +66,11 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator.
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation.ExpandAnimation;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.DrawingChildOnTop;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.res.Resources;
-import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
-import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Parcelable;
-import android.view.View;
-import android.view.View.MeasureSpec;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.Animation.AnimationListener;
-import android.view.animation.AnimationUtils;
-import android.widget.ScrollView;
-import android.widget.TextView;
-import android.widget.Toast;
+
+import static pl.edu.mimuw.students.pl249278.android.async.AsyncHelper.getBroadcastCallback;
+import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ErrorDialogStrategy.ERRORDIALOG_CALLBACKARG_DO_FINISH;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.TipDialogStrategy.CONFIRMDIALOG_CALLBACKARG_TIP;
 
 public class MainActivity extends FragmentActivityWithMixin
 		implements TextInputDialogListener, ConfirmDialogListener, InfoDialog.InfoDialogListener,
@@ -762,8 +763,8 @@ public class MainActivity extends FragmentActivityWithMixin
 				}
 			});
     		entryView.setAnimation(fadeOut);
+			entryView.requestLayout();
     		fadeOut.startNow();
-    		entryView.invalidate();
     		entryView.setTag(null);
     	}
     	// remove Score from model

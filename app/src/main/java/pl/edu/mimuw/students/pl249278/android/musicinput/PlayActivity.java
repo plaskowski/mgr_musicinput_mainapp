@@ -1,5 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -85,6 +86,9 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.OnInterc
 import pl.edu.mimuw.students.pl249278.midi.MidiFile;
 import pl.edu.mimuw.students.pl249278.midi.MidiFormatException;
 
+import static android.media.AudioManager.AUDIOFOCUS_LOSS;
+import static android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT;
+import static android.media.AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
 import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.elementSpecNN;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.middleX;
@@ -95,7 +99,7 @@ import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.Eleme
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSize;
 
 public class PlayActivity extends ShowScoreActivityWithMixin
-		implements OnLayoutListener, InfoDialog.InfoDialogListener, ProgressDialog.ProgressDialogListener {
+		implements OnLayoutListener, InfoDialog.InfoDialogListener, ProgressDialog.ProgressDialogListener, AudioManager.OnAudioFocusChangeListener {
 	private static LogUtils log = new LogUtils(PlayActivity.class);
 	
 	/** of type long */
@@ -314,7 +318,14 @@ public class PlayActivity extends ShowScoreActivityWithMixin
 			return super.onMenuOpened(featureId, menu);
 		}
 	}
-	
+
+	@Override
+	public void onAudioFocusChange(int focusChange) {
+		if (focusChange == AUDIOFOCUS_LOSS || focusChange == AUDIOFOCUS_LOSS_TRANSIENT) {
+			exitPlayingState();
+		}
+	}
+
 	/** 
 	 * Detects clicks on Note/Pause views inside "sheet" View, 
 	 * fires {@link #listener#seek(LengthSpec)}, unless isPlayingState
@@ -605,6 +616,12 @@ public class PlayActivity extends ShowScoreActivityWithMixin
 	}
 	
 	private void play(File midiFile) {
+		AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+		int focusRequestResult = audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+		if (focusRequestResult != AUDIOFOCUS_REQUEST_GRANTED) {
+			LogUtils.info("requestAudioFocus() failed");
+			return;
+		}
 		if(player == null) {
 			player = MediaPlayer.create(this, Uri.fromFile(midiFile));
 			if(player == null) {
@@ -674,6 +691,8 @@ public class PlayActivity extends ShowScoreActivityWithMixin
 			playerIsPlaying = false;
 			player.pause();
 			listener.stopListening();
+			AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+			audioManager.abandonAudioFocus(this);
 		}
 	}
 	

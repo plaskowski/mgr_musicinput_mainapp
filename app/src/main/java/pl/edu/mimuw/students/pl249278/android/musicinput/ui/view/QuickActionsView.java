@@ -113,9 +113,13 @@ public class QuickActionsView extends GridLayout {
 	
 	public void setIndicatorOrigin(IndicatorOrigin origin) {
 		Drawable bg = getBackground();
-		if(bg != null && bg instanceof IndicatorAware) {
-			((IndicatorAware) bg).setIndicatorOrigin(origin);
-			setBackgroundDrawable(getBackground());
+		if(bg instanceof IndicatorAware) {
+			IndicatorAware indicatorAware = (IndicatorAware) bg;
+			if (indicatorAware.getIndicatorOrigin() != origin) {
+				indicatorAware.setIndicatorOrigin(origin);
+				setBackground(null); // to invalidate insets computed from background drawable
+				setBackground(bg);
+			}
 		}
 	}
 	

@@ -43,7 +43,6 @@ dependencies {
     implementation name: 'joda-primitives-1.0'
     implementation name: 'plurals'
     implementation name: 'MIDICreator'
-    implementation project(path: ':gridLayout')
     implementation project(path: ':flowLayout')
     implementation project(path: ':asyncService')
     testImplementation 'junit:junit:4.+'

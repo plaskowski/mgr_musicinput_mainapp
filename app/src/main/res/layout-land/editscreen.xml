@@ -15,9 +15,10 @@
 	/>
 	    <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.VerticalNoteValueSpinner
 			android:layout_above="@id/EDIT_menu_button"
-			android:layout_alignParentLeft="true" 
+			android:layout_alignParentLeft="true"
+			android:layout_alignParentTop="true"
 			android:id="@+id/EDIT_note_value_scroll" 
-			android:layout_height="fill_parent" 
+			android:layout_height="0dp"
 			android:layout_width="50dip" 
 			android:scrollbars="none"
 			custom:itemPaint="@style/spinnerNoSelection"

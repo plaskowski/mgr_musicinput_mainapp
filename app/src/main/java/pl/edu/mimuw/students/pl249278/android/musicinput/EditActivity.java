@@ -1,13 +1,33 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
-import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.middleX;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.timeCapacity;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE4_ABSINDEX;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.BOTTOM_EDGE;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateMargins;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSize;
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Point;
+import android.graphics.PointF;
+import android.graphics.Rect;
+import android.os.Bundle;
+import android.os.Vibrator;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
+import android.view.ViewConfiguration;
+import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.ScaleAnimation;
+import android.widget.HorizontalScrollView;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.fragment.app.DialogFragment;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -69,45 +89,27 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedEle
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils.OnLayoutListener;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.BarLineHighlighter;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptableOnScrollChanged;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptableOnScrollChanged.OnScrollChangedListener;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.BarLineHighlighter;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.InterceptsScaleGesture;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.NoteValueWidget;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.StaveHighlighter;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.NoteValueWidget.OnValueChanged;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.ScrollingLockable;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.StaveHighlighter;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.TouchInputLockable;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy.NoteValueSpinner;
 import pl.edu.mimuw.students.pl249278.android.svg.SvgImage;
-import android.content.Context;
-import android.content.Intent;
-import android.content.res.TypedArray;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Point;
-import android.graphics.PointF;
-import android.graphics.Rect;
-import android.os.Bundle;
-import android.os.Vibrator;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.View.OnTouchListener;
-import android.view.ViewConfiguration;
-import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.ScaleAnimation;
-import android.widget.HorizontalScrollView;
-import android.widget.ScrollView;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.fragment.app.DialogFragment;
+import static com.google.common.base.MoreObjects.firstNonNull;
+import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.middleX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper.timeCapacity;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE4_ABSINDEX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart.BOTTOM_EDGE;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateMargins;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSize;
 
 public class EditActivity extends ShowScoreActivityWithMixin
 		implements TimeStepDialog.OnPromptResult, ConfirmDialogListener, InfoDialog.InfoDialogListener,
@@ -275,14 +277,10 @@ public class EditActivity extends ShowScoreActivityWithMixin
 
 		NoteValueWidget valueSpinner = (NoteValueWidget) findViewById(R.id.EDIT_note_value_scroll);
 		try {
-			int newNoteLength = savedInstanceState == null ?
-				-1 : savedInstanceState.getInt(INSTANCE_STATE_CURRENT_NOTE_LENGTH, -1);
-			if(newNoteLength == -1) {
-				valueSpinner.setupNoteViews(sheetParams);
-			} else {
-				valueSpinner.setupNoteViews(sheetParams, newNoteLength);
-			}
-			currentNoteLength = valueSpinner.getCurrentValue();
+            int newNoteLength = firstNonNull(savedInstanceState, Bundle.EMPTY)
+                    .getInt(INSTANCE_STATE_CURRENT_NOTE_LENGTH, NoteValueWidget.INITIAL_VALUE_UNDEFINED);
+            valueSpinner.setupNoteViews(sheetParams, newNoteLength);
+            currentNoteLength = valueSpinner.getCurrentValue();
 		} catch (CreationException e) {
 			log.e("Failed to setup spinner", e);
 			showErrorDialog(R.string.errormsg_unrecoverable, e, true);

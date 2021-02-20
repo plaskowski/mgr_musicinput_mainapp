@@ -57,12 +57,6 @@ public class HorizontalNoteValueSpinner extends PagedHorizontalScrollView_WithMi
 	@Override
 	public void setupNoteViews(SheetParams globalParams, int initialCurrentValue) throws CreationException {
 		mixin.setupNoteViews(globalParams, initialCurrentValue);
-	}
-
-	@Override
-	public void setupNoteViews(SheetParams globalParams)
-			throws CreationException {
-		mixin.setupNoteViews(globalParams);
 		pageRatio = mixin.getItemSpacing();
         maxNoteHeight = 0;
         for (int i = 0; i <= mixin.getMinNoteValue(); i++) {

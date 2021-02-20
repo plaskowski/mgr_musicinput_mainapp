@@ -65,9 +65,8 @@ public class VerticalNoteValueSpinner extends PagedScrollView_WithMixin<NoteValu
 	}
 
 	@Override
-	public void setupNoteViews(SheetParams globalParams)
-			throws CreationException {
-		mixin.setupNoteViews(globalParams);
+	public void setupNoteViews(SheetParams globalParams, int initialCurrentValue) throws CreationException {
+		mixin.setupNoteViews(globalParams, initialCurrentValue);
         maxNoteHorizontalHalfWidth = 0;
         for (int i = 0; i <= mixin.getMinNoteValue(); i++) {
 			SheetAlignedElementView noteView = (SheetAlignedElementView) mixin.getNotesContainer().getChildAt(i);
@@ -76,11 +75,6 @@ public class VerticalNoteValueSpinner extends PagedScrollView_WithMixin<NoteValu
 				noteView.measureWidth() - mixin.middleX(noteView)
 			));
 		}
-	}
-
-	@Override
-	public void setupNoteViews(SheetParams globalParams, int initialCurrentValue) throws CreationException {
-		mixin.setupNoteViews(globalParams, initialCurrentValue);
 	}
 
 	/** {@link NoteValueSpinner} callback */

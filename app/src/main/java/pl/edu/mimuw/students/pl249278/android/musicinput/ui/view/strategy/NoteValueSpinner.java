@@ -28,6 +28,7 @@ import static android.view.View.VISIBLE;
 public abstract class NoteValueSpinner extends ViewGroupStrategyBase
 		implements ViewGroupStrategy {
 	private static final int LINE4_ABSINDEX = NoteConstants.anchorIndex(4, NoteConstants.ANCHOR_TYPE_LINE);
+	public static final int INITIAL_VALUE_UNDEFINED = -1;
 	
 	private Paint itemPaint = new Paint();
 	private Paint itemSelectedPaint = new Paint();
@@ -81,11 +82,13 @@ public abstract class NoteValueSpinner extends ViewGroupStrategyBase
 
 	public void setupNoteViews(SheetParams globalParams, int initialCurrentValue) throws CreationException {
 		setupNoteViews(globalParams);
-		currentValue = Math.min(initialCurrentValue, minNoteValue);
+		if (initialCurrentValue != INITIAL_VALUE_UNDEFINED) {
+			currentValue = Math.min(initialCurrentValue, minNoteValue);
+		}
 	}
 	
 	/** Setup views, set scale to 1 */
-	public void setupNoteViews(SheetParams globalParams) throws CreationException {
+	private void setupNoteViews(SheetParams globalParams) throws CreationException {
 		if(getChildCount() == 1) {
 			notesContainer = (ViewGroup) getChildAt(0);
 		} else {

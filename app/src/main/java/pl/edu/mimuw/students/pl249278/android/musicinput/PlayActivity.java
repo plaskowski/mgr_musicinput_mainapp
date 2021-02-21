@@ -14,18 +14,11 @@ import android.os.AsyncTask;
 import android.os.AsyncTask.Status;
 import android.os.Bundle;
 import android.os.Handler;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.ViewAnimator;
@@ -65,6 +58,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.TimeSpec.TimeStep
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.ContentService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.services.WorkerService;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.InfoDialog;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.PlayPreferencesDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ProgressDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.DrawingModelFactory.CreationException;
@@ -73,7 +67,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.HackedScrollViewChild;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.Sheet5LinesView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetAlignedElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.SheetElementView;
@@ -98,8 +91,10 @@ import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConsta
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.overallLength;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutParamsHelper.updateSize;
 
-public class PlayActivity extends ShowScoreActivityWithMixin
-		implements OnLayoutListener, InfoDialog.InfoDialogListener, ProgressDialog.ProgressDialogListener, AudioManager.OnAudioFocusChangeListener {
+public class PlayActivity extends ShowScoreActivityWithMixin implements
+		OnLayoutListener, InfoDialog.InfoDialogListener,
+		ProgressDialog.ProgressDialogListener, AudioManager.OnAudioFocusChangeListener,
+		PlayPreferencesDialog.PlayPreferencesDialogListener {
 	private static LogUtils log = new LogUtils(PlayActivity.class);
 	
 	/** of type long */
@@ -117,11 +112,7 @@ public class PlayActivity extends ShowScoreActivityWithMixin
 	/** of type float */
 	private static final String INSTANCE_STATE_SCALE = "scale";
 	private static final String CALLBACK_ACTION_GET = PlayActivity.class.getName()+".get_score";
-	private static final int[] MENUPANEL_FIELDS = new int[] {
-		R.id.button_minus_ten, R.id.button_plus_ten, R.id.PLAY_tempoField, 
-		R.id.PLAY_checkbox_intro, R.id.PLAY_checkbox_metronome
-	};
-	
+
 	private Score score;
 	private List<ScoreContentElem> content;
 	private ScoreVisualizationConfig visualConf;
@@ -141,8 +132,6 @@ public class PlayActivity extends ShowScoreActivityWithMixin
 	private Map<ScoreContentElem, SheetAlignedElementView> modelToViewsMapping = new HashMap<ScoreContentElem, SheetAlignedElementView>();
 	private ViewGroup sheet;
 	private ScrollView vertscroll;
-	IntegerSpinner.IntegerSpinnerController tempoController;
-	private View menuPanel;
 	private Paint normalPaint = PaintBuilder.init().antialias(true).build();
 	private Paint highlightPaint;
 	private float highlightShadowFactor;
@@ -196,23 +185,6 @@ public class PlayActivity extends ShowScoreActivityWithMixin
 		highlightPaint = PaintBuilder.init().antialias(true)
 		.color(getResources().getColor(R.color.highlightColor)).build();
 		highlightShadowFactor = readParametrizedFactor(R.string.noteShadow);
-		menuPanel = getLayoutInflater().inflate(R.layout.playscreen_menu, null);
-		setEnabled(menuPanel, MENUPANEL_FIELDS, false);
-		
-		((CompoundButton) menuPanel.findViewById(R.id.PLAY_checkbox_intro)).setOnCheckedChangeListener(new OnCheckedChangeListener() {			
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				playConf.setPrependEmptyBar(isChecked);
-				configurationUpdated = true;
-			}
-		});
-		((CompoundButton) menuPanel.findViewById(R.id.PLAY_checkbox_metronome)).setOnCheckedChangeListener(new OnCheckedChangeListener() {			
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				playConf.setPlayMetronome(isChecked);
-				configurationUpdated = true;
-			}
-		});		
 		findViewById(R.id.PLAY_barbutton_play).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -235,7 +207,7 @@ public class PlayActivity extends ShowScoreActivityWithMixin
 			@Override
 			public void onClick(View v) {
 				if(isPlayingState) return;
-				PlayActivity.this.openOptionsMenu();
+				PlayPreferencesDialog.showNew(getSupportFragmentManager(), playConf);
 			}
 		});
 		((View) findViewById(R.id.PLAY_barbutton_loop)).setOnClickListener(new OnClickListener() {
@@ -301,32 +273,22 @@ public class PlayActivity extends ShowScoreActivityWithMixin
 	}
 
 	@Override
-	public View onCreatePanelView(int featureId) {
-		if(featureId == Window.FEATURE_OPTIONS_PANEL) {
-			return menuPanel;
-		} else {
-			return super.onCreatePanelView(featureId);
-		}
-	}
-	
-	@Override
-	public boolean onMenuOpened(int featureId, Menu menu) {
-		if(featureId == Window.FEATURE_OPTIONS_PANEL) {
-			exitPlayingState();
-			return true;
-		} else {
-			return super.onMenuOpened(featureId, menu);
-		}
-	}
-
-	@Override
 	public void onAudioFocusChange(int focusChange) {
 		if (focusChange == AUDIOFOCUS_LOSS || focusChange == AUDIOFOCUS_LOSS_TRANSIENT) {
 			exitPlayingState();
 		}
 	}
 
-	/** 
+	@Override
+	public void onDialogResult(PlayPreferencesDialog.PlayPreferencesDialogClosedEvent event) {
+		PlayingConfiguration newConfiguration = event.getPlayingConfiguration();
+		if (!newConfiguration.equals(playConf)) {
+			playConf = newConfiguration;
+			configurationUpdated = true;
+		}
+	}
+
+	/**
 	 * Detects clicks on Note/Pause views inside "sheet" View, 
 	 * fires {@link #listener#seek(LengthSpec)}, unless isPlayingState
 	 */
@@ -796,10 +758,6 @@ public class PlayActivity extends ShowScoreActivityWithMixin
 			return;
 		}
 		// setup UI according to loaded model
-		setEnabled(menuPanel, MENUPANEL_FIELDS, true);
-		tempoController = new TempoFieldController(playConf.getTempo(), menuPanel);
-		((CompoundButton) menuPanel.findViewById(R.id.PLAY_checkbox_intro)).setChecked(playConf.isPrependEmptyBar());
-		((CompoundButton) menuPanel.findViewById(R.id.PLAY_checkbox_metronome)).setChecked(playConf.isPlayMetronome());
 		findViewById(R.id.PLAY_barbutton_loop).setSelected(playConf.isLoop());
 	}
 	
@@ -1075,67 +1033,6 @@ public class PlayActivity extends ShowScoreActivityWithMixin
 			isPlayingState = false;
 			hscroll.setKeepScreenOn(false);
 			pausePlaying();
-		}
-	}
-	
-	private void setEnabled(View wrapper, int[] fieldsIdentifiers, boolean enabled) {
-		for (int i = 0; i < fieldsIdentifiers.length; i++) {
-			int id = fieldsIdentifiers[i];
-			wrapper.findViewById(id).setEnabled(enabled);
-		}
-	}
-	
-	private class TempoFieldController extends IntegerSpinner.IntegerSpinnerController implements TextWatcher {
-		private EditText field;
-		private int prevValue;
-
-		public TempoFieldController(int initialValue, View wrapper) {
-			super(
-				new IntegerSpinner.IncrementModel(10)
-				.setMinValue(getResources().getInteger(R.integer.minPlayTempoBPM))
-				.setValue(initialValue),
-				wrapper,
-				R.id.button_plus_ten, 
-				R.id.button_minus_ten
-			);
-			field = (EditText) wrapper.findViewById(R.id.PLAY_tempoField);
-			field.addTextChangedListener(this);
-			prevValue = initialValue;
-			updateViews();
-		}
-		
-		@Override
-		protected void updateViews() {
-			super.updateViews();
-			if(field != null) {
-				field.setText(Integer.toString(getValue()));
-			}
-			onValueChanged();
-		}
-		
-		private void onValueChanged() {
-			if(model.getValue() != prevValue) {
-				prevValue = model.getValue();
-				playConf.setTempo(model.getValue());
-				configurationUpdated = true;
-			}
-		}
-
-		@Override
-		public void afterTextChanged(Editable s) {
-			try {
-				int newValue = Integer.parseInt(s.toString());
-				model.setValue(newValue);
-				super.updateViews();
-				onValueChanged();
-			} catch(NumberFormatException e) {
-			}
-		}
-		@Override
-		public void onTextChanged(CharSequence s, int start, int before, int count) {
-		}
-		@Override
-		public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 		}
 	}
 

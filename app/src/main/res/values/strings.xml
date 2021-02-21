@@ -79,4 +79,5 @@
         <item quantity="other">%1$d days ago, %2$2d:%3$2d</item>
 	</plurals>
     <string name="dialog_midi_export_explain_permission">MIDI file will be saved on external storage in public Music folder. This requires a permission to write to external storage. Do you want to continue?</string>
+    <string name="configure">Configure</string>
 </resources>

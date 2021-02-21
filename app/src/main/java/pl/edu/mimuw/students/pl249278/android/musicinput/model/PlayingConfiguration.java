@@ -1,8 +1,11 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.model;
 
-import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import com.google.common.base.Objects;
+
+import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
 
 public class PlayingConfiguration implements Parcelable {
 	private int tempo;
@@ -61,6 +64,22 @@ public class PlayingConfiguration implements Parcelable {
 	/** copy constructor */
 	public PlayingConfiguration(PlayingConfiguration source) {
 		this(source.tempo, source.playMetronome, source.prependEmptyBar, source.loop);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		PlayingConfiguration that = (PlayingConfiguration) o;
+		return tempo == that.tempo &&
+				playMetronome == that.playMetronome &&
+				prependEmptyBar == that.prependEmptyBar &&
+				loop == that.loop;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(tempo, playMetronome, prependEmptyBar, loop);
 	}
 
 	public static final Parcelable.Creator<PlayingConfiguration> CREATOR = new Parcelable.Creator<PlayingConfiguration>() {

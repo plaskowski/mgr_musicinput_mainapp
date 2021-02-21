@@ -27,8 +27,8 @@
    	
 	<integer name="minPlayTempoBPM">10</integer>
 	<integer name="defaultPlayTempoBPM">90</integer>
-	<string name="midiArtist">MusicInput</string>
-	<string name="midiAlbum">MusicInput</string>
+	<string name="midiArtist">Choir Buddy</string>
+	<string name="midiAlbum">Choir Buddy</string>
 	
 	<integer name="lineThickness">10</integer>
  	<integer name="linespaceThickness">100</integer>	

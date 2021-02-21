@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Music Input</string>
+    <string name="app_name">Choir Buddy</string>
     <string name="EDIT_current_note_value">Current time value</string>
     <string name="EDIT_msg_inserterror_notetolong">This note won\'t fit into current time</string>
     <string name="no_timestep">No metrum specified.</string>

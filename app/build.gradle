@@ -7,7 +7,7 @@ android {
     buildToolsVersion "30.0.3"
 
     defaultConfig {
-        applicationId "pl.edu.mimuw.students.pl249278.android.musicinput"
+        applicationId "pl.waw.echo.choirbuddy"
         minSdkVersion 23
         targetSdkVersion 30
         versionCode 1
@@ -15,7 +15,6 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-
     buildTypes {
         release {
             minifyEnabled false

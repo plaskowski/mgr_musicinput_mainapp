@@ -21,6 +21,8 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -729,6 +731,14 @@ public class MainActivity extends FragmentActivityWithMixin
 		default:
 			mixin.onCustomEvent(event);
 		}
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+		if (midiExportFlow != null) {
+			midiExportFlow.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		}
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 	}
 
 	/**

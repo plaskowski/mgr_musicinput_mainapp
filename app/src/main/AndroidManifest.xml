@@ -14,16 +14,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-		<activity android:name="pl.edu.mimuw.students.pl249278.android.musicinput.NewScoreActivity"
-			android:label="@string/NEWSCORE_title"
-			android:theme="@android:style/Theme.NoTitleBar"
-		>
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+
+        <activity
+            android:name="pl.edu.mimuw.students.pl249278.android.musicinput.NewScoreActivity"
+            android:label="@string/NEWSCORE_title"
+            android:theme="@android:style/Theme.NoTitleBar"
+        />
         
         <activity android:name=".VisualPreferencesActivity" 
             android:theme="@android:style/Theme.NoTitleBar"

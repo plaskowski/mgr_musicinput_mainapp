@@ -15,7 +15,7 @@
     	<!-- Paint -->
        	<item name="paintStyle">STROKE</item>
        	<item name="strokeWidth">3dip</item>
-    	<item name="color">#FF73DCFF</item>
+    	<item name="color">@color/colorPrimaryLight</item>
     	<item name="shadowLayer_radius">1.5dip</item>
     	<item name="shadowLayer_dx">1.5dip</item>
     	<item name="shadowLayer_dy">1.5dip</item>

@@ -8,30 +8,9 @@
 	<string name="actionSubjectVisiblePaddingLeft">0.5s</string>
 	<item name="repositioningDuration" type="integer">300</item>
 		
-    <array name="EmbossGray">
-    	<item>@style/EmbossGray_edge</item>
-    	<item>@style/EmbossGray_fill</item>
-    </array>
-    
-    <style name="EmbossGray_fill" parent="PaintAntialias">
-    	<item name="color">#40FFFFFF</item>
-    	<item name="drawRadius">3px</item>
-    </style>
-    <style name="EmbossGray_edge" parent="PaintAntialias">
-    	<item name="color">#40000000</item>
-    	<item name="offsetX">1px</item>
-    	<item name="offsetY">1px</item>
-    	<item name="drawRadius">1px</item>
-    	<item name="paintStyle">STROKE</item>
-    	<item name="strokeWidth">2px</item>
-    </style>
-    
     <style name="EDIT_menuButton">
 	    <item name="android:background">@drawable/button_darkgraygradient</item>
 	    <item name="android:scaleType">fitXY</item>
-   	    <item name="extendedImage">@style/SvgCompoundDrawable</item>
-	    <item name="svgResource">@array/svg_button_menu</item>
-	    <item name="paintsSetup">@array/EmbossGray</item>
-	    <item name="iconMaxHeight">32dip</item>
+		<item name="android:src">@drawable/ic_menu_24</item>
     </style>
 </resources>

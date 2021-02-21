@@ -1,11 +1,25 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.res.Resources;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.drawable.AnimationDrawable;
+import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
+
 import java.util.ArrayList;
 
 import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
 import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.mixin.FragmentActivityWithMixin;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.mixin.AppCompatActivityWithMixin;
 import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ActivityStrategyChainRoot;
 import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ErrorDialogStrategy;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
@@ -37,21 +51,8 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner.
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinedSheetElementView;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewUtils.OnLayoutListener;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.res.Resources;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.drawable.AnimationDrawable;
-import android.os.Bundle;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
 
-public class NewScoreActivity extends FragmentActivityWithMixin implements InfoDialogListener {
+public class NewScoreActivity extends AppCompatActivityWithMixin implements InfoDialogListener {
 	private static LogUtils log = new LogUtils(NewScoreActivity.class);
 	private static final Clef defaultClef = Clef.VIOLIN;
 	private static final KeySignature defaultKeySign = KeySignature.C_DUR;

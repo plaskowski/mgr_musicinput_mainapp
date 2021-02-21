@@ -1,62 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-	android:id="@+id/main_scrollview"
-	android:fillViewport="true"
->
-	<LinearLayout
-	    android:layout_width="fill_parent"
-	    android:layout_height="wrap_content"
-	    android:orientation="vertical"
-    >
-    	<FrameLayout 
-		    android:id="@+id/MAIN_entry_addnew"
-		    android:layout_width="fill_parent"
-		    android:layout_height="wrap_content"
-		    android:background="@drawable/button_bluegradient"
-		    android:clickable="true"
-    	    >
-		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TextView_ExtendedDrawableLeft
-		    android:layout_width="wrap_content"
-		    android:layout_height="60dp"
-		    android:layout_gravity="center"
-	        android:text="@string/MAIN_label_create_new_score"
-	        android:gravity="center"
-	        android:textSize="24dp"
-	        android:textColor="#FFFFFF"
-	        android:shadowColor="#000000"
-	        android:shadowDx="-1"
-	        android:shadowDy="-1"
-	        android:shadowRadius="1"
-	        android:drawablePadding="10dp"
-	        custom:extendedDrawableLeft="@style/SvgCompoundDrawable"
-	        custom:svgResource="@array/svg_icon_add" 
-	        custom:paintsSetup="@array/main_shadow_inverted"
-	        custom:intrinsicWidth="28dip"
-	        custom:intrinsicHeight="28dip"
-        />
-		</FrameLayout>
-		<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_FrontChild 
-		    android:id="@+id/entries_container"
-		    android:layout_width="fill_parent"
-		    android:layout_height="wrap_content"
-		    android:orientation="vertical"
-	    />
-		<TextView 
-		    android:id="@+id/MAIN_msg_on_empty"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:layout_margin="30dp"
-			android:layout_weight="1"
-			android:background="@drawable/main_msg_border"
-			android:text="@string/MAIN_msg_no_scores_yet"
-			android:textColor="@android:color/white"
-			android:textSize="20dp"
-			android:gravity="center"
-			android:visibility="gone"
-	    />
-	</LinearLayout>
-</ScrollView>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/main_scrollview"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinearLayout_FrontChild
+                android:id="@+id/entries_container"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView
+                android:id="@+id/MAIN_msg_on_empty"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="30dp"
+                android:layout_weight="1"
+                android:background="@drawable/main_msg_border"
+                android:gravity="center"
+                android:text="@string/MAIN_msg_no_scores_yet"
+                android:textColor="@android:color/white"
+                android:textSize="20dp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </ScrollView>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/floating_action_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:layout_margin="16dp"
+        app:srcCompat="@drawable/ic_plus_24"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

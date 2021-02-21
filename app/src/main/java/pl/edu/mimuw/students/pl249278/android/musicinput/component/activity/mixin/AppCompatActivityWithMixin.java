@@ -2,11 +2,11 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.mix
 
 import android.os.Bundle;
 
-import androidx.fragment.app.FragmentActivity;
+import androidx.appcompat.app.AppCompatActivity;
 
 import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ActivityStrategy;
 
-public class FragmentActivityWithMixin extends FragmentActivity {
+public class AppCompatActivityWithMixin extends AppCompatActivity {
 
     protected ActivityStrategy mixin;
 
@@ -19,7 +19,7 @@ public class FragmentActivityWithMixin extends FragmentActivity {
         mixin.onSaveInstanceState(outState, new ActivityStrategy.OnSaveInstanceStateSuperCall() {
             @Override
             public void onSaveInstanceState(Bundle outState) {
-                FragmentActivityWithMixin.super.onSaveInstanceState(outState);
+                AppCompatActivityWithMixin.super.onSaveInstanceState(outState);
             }
         });
     }
@@ -29,7 +29,7 @@ public class FragmentActivityWithMixin extends FragmentActivity {
         mixin.onDestroy(new ActivityStrategy.OnDestroySuperCall() {
             @Override
             public void onDestroy() {
-                FragmentActivityWithMixin.super.onDestroy();
+                AppCompatActivityWithMixin.super.onDestroy();
             }
         });
     }

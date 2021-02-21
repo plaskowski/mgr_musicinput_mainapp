@@ -2,5 +2,5 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true" android:color="@color/main_entry_stroke_selected" />
     <item android:state_selected="true" android:color="@color/main_entry_stroke_selected" />
-    <item android:color="#56A5BF" />
+    <item android:color="@color/colorPrimary" />
 </selector>

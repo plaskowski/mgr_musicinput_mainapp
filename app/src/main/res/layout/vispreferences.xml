@@ -7,16 +7,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
 	>
-		<TextView
-		    android:text="@string/VISPREFS_title"
-		    android:layout_width="fill_parent"
-		    android:layout_height="wrap_content"
-		    android:paddingTop="3dip"
-		    android:paddingLeft="5dip"
-		    android:paddingBottom="3dip"
-    	    android:background="#4F4F4F"
-		    android:textColor="@android:color/secondary_text_dark"
-		/>
 		<pl.edu.mimuw.students.pl249278.android.ui.view.FlowLayout
 		    style="@style/VISPREFS_entry"
 		>

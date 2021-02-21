@@ -1,15 +1,5 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.List;
-
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig.DisplayMode;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner.IncrementModel;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner.IntegerSpinnerController;
-import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner.IntegerSpinnerModel;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -21,7 +11,19 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-public class VisualPreferencesActivity extends Activity {
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig.DisplayMode;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner.IncrementModel;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner.IntegerSpinnerController;
+import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.IntegerSpinner.IntegerSpinnerModel;
+
+public class VisualPreferencesActivity extends AppCompatActivity {
 	public static final String START_EXTRAS_VISCONF = "visconf";
 	public static final String RESULT_EXTRAS_VISCONF = "visconf";
 	private IntegerSpinnerController lower;

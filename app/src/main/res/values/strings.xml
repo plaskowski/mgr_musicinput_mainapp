@@ -64,7 +64,7 @@
     <string name="EDIT_confirmmsg_if_save_preferences">Do you want to save changes in preferences?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
-    <string name="MAIN_msg_no_scores_yet">You have no saved scores yet. Use button above to create one.</string>
+    <string name="MAIN_msg_no_scores_yet">You have no saved scores yet. Use button below to create one.</string>
     <plurals name="format_minutes_ago">
         <item quantity="one">%d minute ago</item>
         <item quantity="other">%d minutes ago</item>

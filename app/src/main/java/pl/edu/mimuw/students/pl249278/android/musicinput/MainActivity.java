@@ -39,7 +39,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivityHelper.BySc
 import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivityHelper.ExportMidiRequest;
 import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivityHelper.ReceiverState;
 import pl.edu.mimuw.students.pl249278.android.musicinput.component.ManagedReceiver;
-import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.mixin.FragmentActivityWithMixin;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.mixin.AppCompatActivityWithMixin;
 import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ActivityStrategyChainRoot;
 import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ErrorDialogStrategy;
 import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.InitialProgressDialogStrategy;
@@ -74,7 +74,7 @@ import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ErrorDialogStrategy.ERRORDIALOG_CALLBACKARG_DO_FINISH;
 import static pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.TipDialogStrategy.CONFIRMDIALOG_CALLBACKARG_TIP;
 
-public class MainActivity extends FragmentActivityWithMixin
+public class MainActivity extends AppCompatActivityWithMixin
 		implements TextInputDialogListener, ConfirmDialogListener, InfoDialog.InfoDialogListener,
 		ProgressDialog.ProgressDialogListener {
 	private static LogUtils log = new LogUtils(MainActivity.class);
@@ -342,7 +342,7 @@ public class MainActivity extends FragmentActivityWithMixin
 		updateMsgOnEmptyState();
 		// FIXME ugly hack to force loading of SVG icons used in entry toolbar
 		getLayoutInflater().inflate(R.layout.mainscreen_entry_toolbar, null);
-		findViewById(R.id.MAIN_entry_addnew).setOnClickListener(new OnClickListener() {
+		findViewById(R.id.floating_action_button).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				Intent i = new Intent(getApplicationContext(), NewScoreActivity.class);
@@ -1064,8 +1064,7 @@ public class MainActivity extends FragmentActivityWithMixin
 
 		private boolean isTopVisible() {
 			ScrollView scrollView = (ScrollView) findViewById(R.id.main_scrollview);
-			View topView = findViewById(R.id.MAIN_entry_addnew);
-			return scrollView.getScrollY() <= topView.getHeight()/2;
+			return scrollView.getScrollY() <= 0;
 		}
 
 		private void moveEntryUpAnimation(int lowerEntryIndex, int upperEntryIndex, final int time) {

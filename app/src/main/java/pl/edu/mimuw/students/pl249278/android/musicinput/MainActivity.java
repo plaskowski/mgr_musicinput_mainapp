@@ -1,5 +1,6 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
@@ -20,7 +21,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -86,17 +86,13 @@ public class MainActivity extends FragmentActivityWithMixin
 	protected static final String DIALOGTAG_NEW_TITLE = "dialog_newtitle";
 	protected static final String DIALOGTAG_COPY_TITLE = "dialog_copytitle";
 	protected static final String DIALOGTAG_CONFIRM_DELETE = "dialog_confirm_delete";
-	protected static final String DIALOGTAG_EXPORT_MIDI = "dialog_export_midi";
 	protected static final String DIALOGTAG_INFO = "dialog_info";
-	private static final String DIALOGTAG_CONFIRM_OVERWRITE = "dialog_overwrite_file";
 	private static final int ERRORDIALOG_CALLBACKARG_RELOAD = ERRORDIALOG_CALLBACKARG_DO_FINISH+1;
 	private static final int ERRORDIALOG_CALLBACKARG_DUPLICATE = ERRORDIALOG_CALLBACKARG_RELOAD+1;
 	private static final int ERRORDIALOG_CALLBACKARG_INFO = ERRORDIALOG_CALLBACKARG_DUPLICATE+1;
 	protected static final int INPUTDIALOG_CALLBACKARG_NEW_TITLE = 1;
 	protected static final int INPUTDIALOG_CALLBACKARG_COPY_TITLE = 2;
-	protected static final int INPUTDIALOG_CALLBACKARG_MIDIFILE = 3;
 	protected static final int CONFIRMDIALOG_CALLBACKARG_DELETESCORE = CONFIRMDIALOG_CALLBACKARG_TIP+1;
-	private static final int CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE = CONFIRMDIALOG_CALLBACKARG_DELETESCORE+1;
 	protected static final String TIP_MIDI_ON_STORAGE = MainActivity.class.getCanonicalName()+".midi_exported_to_storage";
 	
 	private static final String STATE_SCORES = "scores";
@@ -105,10 +101,11 @@ public class MainActivity extends FragmentActivityWithMixin
 	private static final String STATE_RECEIVERS_STATES = "receivers_states";
 	/** key for persisting {@link #editedScoreId} field */
 	private static final String STATE_EDITED_SCOREID = "edited_score";
-	
+	private static final String STATE_MIDI_EXPORT_FLOW = "midi_export_flow";
+
 	protected static final int REQUEST_NEW_SCORE = 1;
 	protected static final int REQUEST_EDIT = 2;
-	
+
 	/**
 	 * Not null means whole model has been successfully loaded.
 	 */
@@ -127,6 +124,7 @@ public class MainActivity extends FragmentActivityWithMixin
 	private final TipDialogStrategy tipDialogStrategy;
 	private final InitialProgressDialogStrategy initialProgressDialogStrategy;
 	private final ManagedReceiverStrategy managedReceiverStrategy;
+	private MidiExportFlow midiExportFlow;
 
 	public MainActivity() {
 		ActivityStrategyChainRoot root = new ActivityStrategyChainRoot(this);
@@ -157,7 +155,7 @@ public class MainActivity extends FragmentActivityWithMixin
 		}
 	};
 	
-	private abstract class EnqueuedReceiver extends ManagedReceiver {		
+	private abstract class EnqueuedReceiver extends ManagedReceiver {
 		protected final ReceiverType type;
 		
 		public EnqueuedReceiver(ReceiverType type) {
@@ -196,7 +194,11 @@ public class MainActivity extends FragmentActivityWithMixin
 		super.onCreate(savedState);
 		setContentView(R.layout.mainscreen);
 		uiHandler = new Handler();
-		
+
+		if (savedState != null && savedState.containsKey(STATE_MIDI_EXPORT_FLOW)) {
+			midiExportFlow = MidiExportFlow.restore(
+					toMidiExportContext(), savedState.getBundle(STATE_MIDI_EXPORT_FLOW));
+		}
 		if(savedState != null && savedState.containsKey(STATE_SCORES)) {
 			ArrayList<ParcelableScore> scores = savedState.getParcelableArrayList(STATE_SCORES);
 			ArrayList<ScoreVisualizationConfig> confs = savedState.getParcelableArrayList(STATE_VISCONFS);
@@ -672,21 +674,44 @@ public class MainActivity extends FragmentActivityWithMixin
 				.show(getSupportFragmentManager(), DIALOGTAG_COPY_TITLE);
 			}
 		});
-		toolbar.findViewById(R.id.button_exportmidi).setOnClickListener(new OnClickListener() {			
+		toolbar.findViewById(R.id.button_exportmidi).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				String title = ifNotNull(score.getTitle(), getString(android.R.string.untitled));
-				String initValue = title.replaceAll("[^A-Za-z \\(\\)0-9]", "_") + ".midi";
-				showExportMidiDialog(score, initValue);
+				MainActivity.this.midiExportFlow = MidiExportFlow.start(toMidiExportContext(), score);
 			}
 		});
 	}
-	
+
+	private MidiExportFlowContext toMidiExportContext() {
+		return new MidiExportFlowContext() {
+			@Override
+			public MainActivity getDialogContext() {
+				return MainActivity.this;
+			}
+			@Override
+			public Activity getPermissionContext() {
+				return MainActivity.this;
+			}
+			@Override
+			public void showInfoDialog(int messageResId) {
+				showErrorDialog(messageResId, ERRORDIALOG_CALLBACKARG_INFO);
+			}
+			@Override
+			public void onMidiExportFlowEnd(ExportMidiRequest state) {
+				MainActivity.this.midiExportFlow = null;
+				MainActivity.this.sendExportMidiRequest(state);
+			}
+		};
+	}
+
 	@Override
 	public void onDialogResult(ConfirmDialog.ConfirmDialogClosedEvent event) {
 		int dialogId = event.getDialogId();
 		DialogAction action = event.getAction();
 		Parcelable state = event.getState();
+		if (midiExportFlow != null) {
+			midiExportFlow.onDialogResult(event);
+		}
 		switch(dialogId) {
 		case CONFIRMDIALOG_CALLBACKARG_DELETESCORE:
 			switch(action) {
@@ -701,23 +726,11 @@ public class MainActivity extends FragmentActivityWithMixin
 				break;
 			}
 			break;
-		case CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE:
-			switch(action) {
-			case BUTTON_POSITIVE:
-				// user chose to overwrite existing MIDI file
-				sendExportMidiRequest((ExportMidiRequest) state);
-				break;
-			case BUTTON_NEUTRAL:
-				ExportMidiRequest request = (ExportMidiRequest) state;
-				showExportMidiDialog(findScoreById(request.scoreId), request.filename);
-				break;
-			}
-			break;
 		default:
 			mixin.onCustomEvent(event);
 		}
 	}
-	
+
 	/**
 	 * Send DELETE request to {@link ContentService}, removes view and updates {@link #scores}
 	 */
@@ -820,24 +833,10 @@ public class MainActivity extends FragmentActivityWithMixin
 	public void onValueEntered(TextInputDialog dialog, int valueId,
 			long listenerArg, String value) {
 		Score score;
+		if (midiExportFlow != null) {
+			midiExportFlow.onValueEntered(valueId, listenerArg, value);
+		}
 		switch(valueId) {
-		case INPUTDIALOG_CALLBACKARG_MIDIFILE:
-			if(!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-				showErrorDialog(R.string.errormsg_external_storage_not_present, ERRORDIALOG_CALLBACKARG_INFO);
-			} else {
-				File dir = WorkerService.getExportDir();
-				File destFile = new File(dir, value);
-				if(destFile.exists()) {
-					new ConfirmDialogBuilder(CONFIRMDIALOG_CALLBACKARG_MIDIFILE_OVERWRITE)
-					.setState(new ExportMidiRequest(listenerArg, value))
-					.setMsg(R.string.popup_msg_file_already_exists, new String[] { value })
-					.setButtons(R.string.overwrite, R.string.change, android.R.string.cancel)
-					.showNew(getSupportFragmentManager(), DIALOGTAG_CONFIRM_OVERWRITE);
-				} else {
-					sendExportMidiRequest(new ExportMidiRequest(listenerArg, value));
-				}
-			}
-			break;
 		case INPUTDIALOG_CALLBACKARG_NEW_TITLE:
 			if((score = findScoreById(listenerArg)) == null) {
 				log.w("onValueEntered::new title for non-existient score %d", listenerArg);
@@ -863,7 +862,7 @@ public class MainActivity extends FragmentActivityWithMixin
 			break;
 		}		
 	}
-	
+
 	private Score findScoreById(long scoreId) {
 		ParcelableScore pScore = findParcelableScoreById(scoreId);
 		return pScore == null ? null : pScore.getSource();
@@ -1228,7 +1227,7 @@ public class MainActivity extends FragmentActivityWithMixin
 			ensureViewIsVisible(entry, true);
 		}
 	}
-	
+
 	private class ExportMidiReceiver extends EnqueuedReceiver {
 		private ExportMidiRequest state;
 
@@ -1260,7 +1259,7 @@ public class MainActivity extends FragmentActivityWithMixin
 				}
 			}, 500);
 		}
-		
+
 		private void hideProgress() {
 			View entryView = findEntryView(state.scoreId);
 			if(entryView != null) {
@@ -1268,20 +1267,20 @@ public class MainActivity extends FragmentActivityWithMixin
 				removeLock(entryView, R.id.button_exportmidi);
 			}
 		}
-		
+
 		public ExportMidiRequest getState() {
 			state.requestId = getCurrentRequestId();
 			return state;
 		}
 	}
-		
+
 	private void sendExportMidiRequest(ExportMidiRequest state) {
 		ExportMidiReceiver receiver = new ExportMidiReceiver(state);
 		registerAndEnqueue(receiver, CALLBACK_ACTION_EXPORTMIDI);
 		String requestId = receiver.getCurrentRequestId();
-		Intent request = AsyncHelper.prepareServiceIntent(MainActivity.this, 
-			WorkerService.class, WorkerService.ACTIONS.EXPORT_TO_MIDI, 
-			requestId, 
+		Intent request = AsyncHelper.prepareServiceIntent(MainActivity.this,
+			WorkerService.class, WorkerService.ACTIONS.EXPORT_TO_MIDI,
+			requestId,
 			getBroadcastCallback(CALLBACK_ACTION_EXPORTMIDI), true);
 		request.putExtra(WorkerService.ACTIONS.EXTRAS_SCORE_ID, state.scoreId);
 		request.putExtra(WorkerService.ACTIONS.EXTRAS_DEST_FILE, state.filename);
@@ -1298,6 +1297,10 @@ public class MainActivity extends FragmentActivityWithMixin
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
+		if (midiExportFlow != null) {
+			outState.putBundle(STATE_MIDI_EXPORT_FLOW, midiExportFlow.saveState());
+			midiExportFlow = null;
+		}
 		if(scores != null) {
 			outState.putParcelableArrayList(STATE_SCORES, scores);
 			ArrayList<ScoreVisualizationConfig> confs = new ArrayList<ScoreVisualizationConfig>(scores.size());
@@ -1408,14 +1411,6 @@ public class MainActivity extends FragmentActivityWithMixin
 	
 	@Override
 	public void onDismiss(TextInputDialog dialog, int valueId, long listenerArg) {
-	}
-
-	private void showExportMidiDialog(final Score score, String initValue) {
-		TextInputDialog.newInstance(MainActivity.this, 
-			INPUTDIALOG_CALLBACKARG_MIDIFILE, score.getId(),
-			R.string.popup_title_export_as_midi, getString(R.string.popup_msg_exportmidi),
-			android.R.string.ok, android.R.string.cancel, initValue
-		).show(getSupportFragmentManager(), DIALOGTAG_EXPORT_MIDI);
 	}
 
 	private void dismissReceiversByType(ReceiverType type) {

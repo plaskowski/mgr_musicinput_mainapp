@@ -1,9 +1,9 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing;
 
-import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.MIN_STEM_SPAN;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ORIENT_DOWN;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ORIENT_UP;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.Point;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -16,12 +16,12 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.ElementSpec.NormalNote.SpacingSource;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Path;
-import android.graphics.Point;
-import android.util.FloatMath;
-import android.util.Log;
+
+import static pl.edu.mimuw.students.pl249278.android.common.LogUtils.commonLog;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.MIN_STEM_SPAN;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ORIENT_DOWN;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.ORIENT_UP;
 
 public class NotesGroup extends ElementsOverlay {
 	@SuppressWarnings("unused")
@@ -65,7 +65,7 @@ public class NotesGroup extends ElementsOverlay {
 		assert(elements.length > 1);
 		if(!isValid()) {
 			makeEmpty();
-			LogUtils.log(Log.VERBOSE, LogUtils.COMMON_TAG, "INVALID recalculate()");
+			commonLog.v("INVALID recalculate()");
 			return;
 		}
 		

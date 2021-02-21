@@ -1,14 +1,15 @@
 package pl.edu.mimuw.students.pl249278.android.svg;
 
+import android.content.res.Resources;
+import android.content.res.TypedArray;
+
 import java.util.ArrayList;
 import java.util.EnumMap;
 
-import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.util.Log;
+import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 
 public class SvgInflater {
-	private static final String TAG = SvgInflater.class.getSimpleName();
+	private static final LogUtils log = new LogUtils(SvgInflater.class);
 	private TypedArray arr;
 	private int index;
 	
@@ -64,7 +65,7 @@ public class SvgInflater {
 					}
 					obj = new SvgPath(builder.toString(), args.toFloatArray()); 
 				} else {
-					Log.w(TAG, "Invalid svgattr for Path: "+attr);
+					log.w("Invalid svgattr for Path: "+attr);
 					break;
 				}
 			} else if(objType == R.id.svgobject_rect) {
@@ -76,11 +77,11 @@ public class SvgInflater {
 					obj = new SvgRect(arr.getFloat(index++, 0), arr.getFloat(index++, 0),
 							arr.getFloat(index++, 0), arr.getFloat(index++, 0));
 				} else {
-					Log.w(TAG, "Invalid svgattr for Rect: "+attr);
+					log.w("Invalid svgattr for Rect: "+attr);
 					break;
 				}
 			} else {
-				Log.w(TAG, "Invalid svgobject type: "+objType);
+				log.w("Invalid svgobject type: "+objType);
 				break;
 			}
 			obj.style = style;

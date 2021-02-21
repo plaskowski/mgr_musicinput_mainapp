@@ -1,19 +1,20 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+
+import com.google.common.base.Preconditions;
+
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ConfirmDialog.ConfirmDialogListener;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.ParcelablePrimitives.ParcelableString;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.os.Parcelable;
-import android.util.Log;
-
-import com.google.common.base.Preconditions;
 
 public class TipDialogStrategy extends ActivityStrategyBase {
+	private static LogUtils log = new LogUtils(TipDialogStrategy.class);
+
 	public static final int CONFIRMDIALOG_CALLBACKARG_TIP = 1;
 	protected static final String DIALOGTAG_TIP = "tipdialog";
 	private static final String REGISTRY_FILE = "tips_registry";
@@ -58,7 +59,7 @@ public class TipDialogStrategy extends ActivityStrategyBase {
 					String tipTag = ((ParcelableString) event.getState()).value;
 					editor.putBoolean(tipTag, true);
 					editor.commit();
-					Log.v(LogUtils.COMMON_TAG, "Permanently dismissed tip: " + tipTag);
+					log.v("Permanently dismissed tip: " + tipTag);
 				}
 				return;
 			}

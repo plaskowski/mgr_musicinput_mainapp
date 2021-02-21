@@ -3,17 +3,9 @@ package pl.edu.mimuw.students.pl249278.android.common;
 import android.util.Log;
 
 public class LogUtils {
-	public static final String COMMON_TAG = "pl249278.android";
+	public static final LogUtils commonLog = new LogUtils("pl249278.android");
 
-	public static void info(String format, Object... args) {
-		Log.i(COMMON_TAG, String.format(format, args));
-	}
-	
-	public static void debug(String format, Object... args) {
-		Log.d(COMMON_TAG, String.format(format, args));
-	}
-	
-	public static void log(int priority, String tag, String format, Object... args) {
+	private static void log(int priority, String tag, String format, Object... args) {
 		String msg;
 		if(args.length > 0) {
 			msg = String.format(format, args);

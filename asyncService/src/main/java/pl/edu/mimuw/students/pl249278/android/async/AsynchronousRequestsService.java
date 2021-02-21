@@ -1,15 +1,16 @@
 package pl.edu.mimuw.students.pl249278.android.async;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import android.app.IntentService;
 import android.content.Intent;
 import android.os.Parcelable;
-import android.util.Log;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 
 public abstract class AsynchronousRequestsService extends IntentService {
-	static final String TAG = AsynchronousRequestsService.class.getName();
+	static final LogUtils log = new LogUtils(AsynchronousRequestsService.class);
 
 	public AsynchronousRequestsService(String name) {
 		super(name);
@@ -44,7 +45,7 @@ public abstract class AsynchronousRequestsService extends IntentService {
 		} else if(ACTIONS.CLEAN_CALLBACK.equals(action)) { 
 			cleanCallback(requestIntent);
 		} else {
-			Log.e(TAG, "Unhandled action type "+action);
+			log.e("Unhandled action type "+action);
 			onRequestError(requestIntent, "Uknown action "+action);
 		}
 	}
@@ -56,36 +57,36 @@ public abstract class AsynchronousRequestsService extends IntentService {
 		String id = requestIntent.getStringExtra(ACTIONS.EXTRAS_CALLBACKID_STRING);
 		if(repeatable && id != null) {
 			if(repeatableCallbacksData.containsKey(id)) {
-				Log.w(TAG, "saving repeatable callback with non-unique id "+id);
+				log.w("saving repeatable callback with non-unique id "+id);
 			}
 			repeatableCallbacksData.put(id, outData);
 		} else if(repeatable) {
-			Log.w(TAG, "received request with is_repeatable TRUE but no callback id");
+			log.w("received request with is_repeatable TRUE but no callback id");
 		}
 	}
 	
 	private void cleanCallback(Intent requestIntent) {
 		String id = requestIntent.getStringExtra(ACTIONS.EXTRAS_CALLBACKID_STRING);
 		if(id == null) {
-			Log.d(TAG, "received CLEAN_CALLBACK without callback_id");
+			log.d("received CLEAN_CALLBACK without callback_id");
 		} else if(!repeatableCallbacksData.containsKey(id)) {
-			Log.d(TAG, "received CLEAN_CALLBACK, but no persisted data with id "+id);
+			log.d("received CLEAN_CALLBACK, but no persisted data with id "+id);
 		} else {
 			repeatableCallbacksData.remove(id);
-			Log.v(TAG, "CLEAN_CALLBACK, cleaned data for id "+id);
+			log.v("CLEAN_CALLBACK, cleaned data for id "+id);
 		}
 	}
 
 	private void repeatCallback(Intent requestIntent) {
 		String id = requestIntent.getStringExtra(ACTIONS.EXTRAS_CALLBACKID_STRING);
 		if(id == null) {
-			Log.w(TAG, "received REPEAT_CALLBACK without callback_id");
+			log.w("received REPEAT_CALLBACK without callback_id");
 			onRequestError(requestIntent, "Callback ID extra required for "+requestIntent.getAction());
 		} else if(!repeatableCallbacksData.containsKey(id)) {
-			Log.w(TAG, "received REPEAT_CALLBACK, but no persisted data with id "+id);
+			log.w("received REPEAT_CALLBACK, but no persisted data with id "+id);
 			onRequestError(requestIntent, "Data not found for ID "+id);
 		} else {
-			Log.v(TAG, "REPEAT_CALLBACK for id "+id);
+			log.v("REPEAT_CALLBACK for id "+id);
 			doCallback(requestIntent, repeatableCallbacksData.get(id));
 		}
 	}
@@ -116,7 +117,7 @@ public abstract class AsynchronousRequestsService extends IntentService {
 			try {
 				callbackType = CallbackType.valueOf(typeStringRep);
 			} catch (Exception e) {
-				Log.w(TAG, "Invalid CallbackType specified in callbackIntent: "+typeStringRep);
+				log.w("Invalid CallbackType specified in callbackIntent: "+typeStringRep);
 				callbackType = CallbackType.BROADCAST_RECEIVER;
 			}
 			callbackIntent.fillIn(outData, 0);

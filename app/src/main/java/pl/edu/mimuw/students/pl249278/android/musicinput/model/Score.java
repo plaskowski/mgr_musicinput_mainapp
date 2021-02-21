@@ -1,14 +1,14 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.util.List;
 
 import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.util.Log;
-
 public class Score {
+	private static LogUtils log = new LogUtils(Score.class);
 	public static final long NO_ID = -1L;
 	
 	private long id = NO_ID;
@@ -89,7 +89,7 @@ public class Score {
 	    	try {
 				source.writeToParcel(out, flags);
 			} catch (SerializationException e) {
-				Log.e(LogUtils.COMMON_TAG, "suppress serialization error", e);
+				log.e("suppress serialization error", e);
 				throw new RuntimeException(e);
 			}
 	    }

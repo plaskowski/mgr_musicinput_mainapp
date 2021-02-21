@@ -1,15 +1,15 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.services;
 
-import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
-import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
-import pl.edu.mimuw.students.pl249278.android.common.Macros;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
+
+import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
+import pl.edu.mimuw.students.pl249278.android.common.Macros;
+
+import static pl.edu.mimuw.students.pl249278.android.common.LogUtils.commonLog;
 
 public abstract class FilterByRequestIdReceiver extends BroadcastReceiver {
-	private static final String TAG = LogUtils.COMMON_TAG;
 	private String currentRequestId = null;
 	
 	/**
@@ -34,7 +34,7 @@ public abstract class FilterByRequestIdReceiver extends BroadcastReceiver {
 	public void onReceive(Context context, Intent response) {
 		String id = AsyncHelper.getRequestId(response);
 		if(id == null || currentRequestId == null || !id.equals(currentRequestId)) {
-			Log.w(TAG, "Received callback intent with invalid callback id = "+id+" when expected is "+currentRequestId);
+			commonLog.w("Received callback intent with invalid callback id = "+id+" when expected is "+currentRequestId);
 			return;
 		}
 		if(AsyncHelper.isSuccess(response)) {

@@ -6,9 +6,9 @@ import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import android.util.Log;
-
 public class ReflectionUtils {
+	private static LogUtils log = new LogUtils(ReflectionUtils.class);
+
 	public static Collection<Field> findConsts(Class<?> constWrapperClass, String constNamePrefix) {
 		Field[] fields = constWrapperClass.getDeclaredFields();
 		Collection<Field> result = new LinkedList<Field>();
@@ -34,10 +34,10 @@ public class ReflectionUtils {
 				Object fieldValue = field.get(null);
 				if(fieldValue.equals(constValue)) return field.getName();
 			} catch (IllegalArgumentException e) {
-				Log.e(ReflectionUtils.class.getName(), "", e);
+				log.e("", e);
 				e.printStackTrace();
 			} catch (IllegalAccessException e) {
-				Log.e(ReflectionUtils.class.getName(), "", e);
+				log.e("", e);
 			}
 		}
 		return defaultValue;

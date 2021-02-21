@@ -5,15 +5,15 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.util.Log;
 
-import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.mixin.view.View_WithMixin;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy.PaddingSettersStrategy;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.strategy.ViewGroupStrategyChainRoot;
+
+import static pl.edu.mimuw.students.pl249278.android.common.LogUtils.commonLog;
 
 public class Sheet5LinesView extends View_WithMixin {
 
@@ -43,9 +43,8 @@ public class Sheet5LinesView extends View_WithMixin {
 		setMeasuredDimension(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
 		requestLayout();
 		invalidate();
-		LogUtils.debug("5::setParams(..., topM: %d, bottomM: %d) vSpan %d vPadding %d, %d",
-			topPaddingMin, bottomPaddingMin, totalVerticalSpan, getPaddingTop(), getPaddingBottom()
-		);
+		commonLog.d("5::setParams(..., topM: %d, bottomM: %d) vSpan %d vPadding %d, %d",
+				topPaddingMin, bottomPaddingMin, totalVerticalSpan, getPaddingTop(), getPaddingBottom());
 	}
 	
 	public void setHiglightColor(int color) {
@@ -79,7 +78,7 @@ public class Sheet5LinesView extends View_WithMixin {
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		if(params == null) {
-			LogUtils.log(Log.VERBOSE, LogUtils.COMMON_TAG, "Sheet5LinesView::onMeasure when sheet params not yet set.");
+			commonLog.v("Sheet5LinesView::onMeasure when sheet params not yet set.");
 			super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 			return;
 		}

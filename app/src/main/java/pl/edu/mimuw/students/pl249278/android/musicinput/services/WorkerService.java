@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore.Audio.Media;
-import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -18,6 +17,7 @@ import java.util.List;
 
 import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
 import pl.edu.mimuw.students.pl249278.android.async.AsynchronousRequestsService;
+import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.musicinput.FileOutputWrapper;
 import pl.edu.mimuw.students.pl249278.android.musicinput.MidiBuilder;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
@@ -27,7 +27,7 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score.ParcelableS
 import pl.edu.mimuw.students.pl249278.midi.MidiFile;
 
 public class WorkerService extends AsynchronousRequestsService {
-	private static final String TAG = WorkerService.class.getName();
+	private static final LogUtils log = new LogUtils(WorkerService.class);
 
 	public static void scheduleCleanOldFiles(Context ctx) {
 		Intent request = AsyncHelper.prepareServiceIntent(
@@ -78,7 +78,7 @@ public class WorkerService extends AsynchronousRequestsService {
 		} else if(ACTIONS.SCORE_TO_MIDI.equals(action)) {
 			Intent originalRequest = requestIntent.getParcelableExtra(ACTIONS.EXTRAS_ORIGINAL_REQUEST);
 			if(!AsyncHelper.isSuccess(requestIntent)) {
-				Log.v(TAG, "Failed to get response from ContentService");
+				log.v("Failed to get response from ContentService");
 				onRequestError(originalRequest, "Failed to get Score from ContentService");
 				return;
 			}
@@ -117,23 +117,23 @@ public class WorkerService extends AsynchronousRequestsService {
 					Uri itemUri = ContentUris.withAppendedId(Media.EXTERNAL_CONTENT_URI, mediaId);
 					int updated = getContentResolver().update(itemUri, values, null, null);
 					if (updated > 0) {
-						Log.v(TAG, "Updated meta for " + path);
+						log.v("Updated meta for " + path);
 					} else {
-						Log.w(TAG, "Failed to update metadata for MIDI file");
+						log.w("Failed to update metadata for MIDI file");
 					}
 				} else {
 					Uri uri = this.getContentResolver().insert(Media.EXTERNAL_CONTENT_URI, values);
-					Log.v(TAG, "Inserted "+path+" as "+uri);
+					log.v("Inserted "+path+" as "+uri);
 				}
 				onRequestSuccess(originalRequest, new Intent());
 			} catch (Exception e) {
-				Log.w(TAG, "Failed to parse Score and write it to .midi file", e);
+				log.w("Failed to parse Score and write it to .midi file", e);
 				onRequestError(originalRequest, "Exception occured");
 			} finally {
 				if(stream != null) try {
 					stream.close();
 				} catch(Exception e) {
-					Log.w(TAG, "Failed to close .midi output stream", e);
+					log.w("Failed to close .midi output stream", e);
 				}
 			}
 		} else if(ACTIONS.CLEAN_UNUSED_TEMPORARY_FILES.equals(action)) {
@@ -148,18 +148,12 @@ public class WorkerService extends AsynchronousRequestsService {
 				}
 			}
 			if(success.size() > 0) {
-				Log.v(TAG, String.format(
-					"Deleted %d unused files: %s",
-					success.size(),
-					Arrays.toString(success.toArray())
-				));
+				log.v("Deleted %d unused files: %s",
+						success.size(), Arrays.toString(success.toArray()));
 			}
 			if(failure.size() > 0) {
-				Log.w(TAG, String.format(
-					"Failed to delete %d unused files: %s",
-					failure.size(),
-					Arrays.toString(failure.toArray())
-				));
+				log.w("Failed to delete %d unused files: %s",
+						failure.size(), Arrays.toString(failure.toArray()));
 			}
 			onRequestSuccess(requestIntent, new Intent());
 		} else {

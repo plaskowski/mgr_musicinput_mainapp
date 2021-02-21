@@ -1,20 +1,5 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.services;
 
-import static pl.edu.mimuw.students.pl249278.android.common.IntUtils.asFlagVal;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import pl.edu.mimuw.students.pl249278.android.async.AsynchronousRequestsService;
-import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
-import pl.edu.mimuw.students.pl249278.android.musicinput.R;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.PlayingConfiguration;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score.ParcelableScore;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig.DisplayMode;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfigFactory;
-import pl.edu.mimuw.students.pl249278.android.musicinput.model.SerializationException;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -22,10 +7,26 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
-import android.util.Log;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import pl.edu.mimuw.students.pl249278.android.async.AsynchronousRequestsService;
+import pl.edu.mimuw.students.pl249278.android.common.IntUtils;
+import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
+import pl.edu.mimuw.students.pl249278.android.musicinput.R;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.PlayingConfiguration;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.Score.ParcelableScore;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfig.DisplayMode;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.ScoreVisualizationConfigFactory;
+import pl.edu.mimuw.students.pl249278.android.musicinput.model.SerializationException;
+
+import static pl.edu.mimuw.students.pl249278.android.common.IntUtils.asFlagVal;
 
 public class ContentService extends AsynchronousRequestsService {
-	static final String TAG = ContentService.class.getName();
+	private static LogUtils log = new LogUtils(ContentService.class);
 
 	private DbHelper mDb;
 
@@ -193,7 +194,7 @@ public class ContentService extends AsynchronousRequestsService {
 				ScoresMeta._ID, id
 			));
 		} catch(Exception e) {
-			Log.w(TAG, "Failed to copy meta data of Score#"+id, e);
+			log.w("Failed to copy meta data of Score#"+id, e);
 		}
 		try {
 			Intent outData = new Intent();
@@ -214,7 +215,7 @@ public class ContentService extends AsynchronousRequestsService {
 		if(count == 0) {
 			onRequestError(requestIntent, "No Score to delete with id "+scoreId);
 		} else {
-			Log.v(TAG, "Deleted Score#"+scoreId);
+			log.v("Deleted Score#"+scoreId);
 			db.delete(SCORES_INTMETA_TABLE_NAME, ScoresMeta._ID + " = " + scoreId, null);
 			onRequestSuccess(requestIntent, new Intent());
 		}
@@ -266,10 +267,10 @@ public class ContentService extends AsynchronousRequestsService {
 			}
 			onRequestSuccess(requestIntent, result);
 		} catch (SerializationException e) {
-			Log.w(TAG, "Impossible error", e);
+			log.w("Impossible error", e);
 			onRequestError(requestIntent, "Failed to read Scores from DB");
 		} catch (Exception e) {
-			Log.w(TAG, "", e);
+			log.w("", e);
 			onRequestError(requestIntent, "Failed to read Scores from DB");
 		} finally {
 			if(scoreCursor != null) {
@@ -338,15 +339,11 @@ public class ContentService extends AsynchronousRequestsService {
 			int count = db.delete(SCORES_TABLE_NAME, Scores._ID + " = " + copyId, null);
 			db.delete(SCORES_INTMETA_TABLE_NAME, ScoresMeta._ID + " = " + copyId, null);
 			if(count != 1) {
-				Log.w(TAG, String.format(
-					"Trying to drop %d session copy of %d caused %d deletions",
-					copyId,
-					originalId,
-					count
-				));
+				log.w("Trying to drop %d session copy of %d caused %d deletions",
+						copyId, originalId, count);
 			} else {
 				scoreCopies.remove(originalId);
-				Log.v(TAG, "Dropped session copy #"+copyId+" of "+originalId);
+				log.v("Dropped session copy #"+copyId+" of "+originalId);
 			}
 		}
 	}
@@ -354,13 +351,13 @@ public class ContentService extends AsynchronousRequestsService {
 	private Score getScoreWithValidId(Intent requestIntent) {
 		ParcelableScore parcelable = requestIntent.getParcelableExtra(ACTIONS.EXTRAS_SCORE);
 		if(parcelable == null) {
-			Log.e(TAG, "Invalid request, no score provided");
+			log.e("Invalid request, no score provided");
 			onRequestError(requestIntent, "No score provided");
 			return null;
 		}
 		Score score = parcelable.getSource();
 		if(score.getId() == Score.NO_ID) {
-			Log.e(TAG, "Invalid request, score has invalid id");
+			log.e("Invalid request, score has invalid id");
 			onRequestError(requestIntent, "Score has invalid id");
 			return null;
 		}
@@ -409,7 +406,7 @@ public class ContentService extends AsynchronousRequestsService {
 		try {
 			values.put(Scores.CONTENT, score.getRawContent());
 		} catch (SerializationException e) {
-			Log.e(TAG, "Exception while deserializing Score from requestIncent", e);
+			log.e("Exception while deserializing Score from requestIncent", e);
 			onRequestError(requestIntent, "Unable to deserialize Score");
 			return false;
 		}
@@ -417,7 +414,7 @@ public class ContentService extends AsynchronousRequestsService {
 		values.put(Scores.MODIFIED_UTC_TIME, time);
 		int count = writableDatabase.update(SCORES_TABLE_NAME, values, Scores._ID + " = " + score.getId(), null);
 		if(count != 1) {
-			Log.e(TAG, String.format(
+			log.e(String.format(
 				"Updated %d rows, when trying to update just one Score#%d(parent: %d)",
 				count, score.getId(), score.getOriginalId()
 			));
@@ -425,7 +422,7 @@ public class ContentService extends AsynchronousRequestsService {
 			onRequestError(requestIntent, "Failed to update DB row");
 			return false;
 		} else {
-			Log.v(TAG, "Updated Score#"+score.getId()+" row in DB storage");
+			log.v("Updated Score#"+score.getId()+" row in DB storage");
 			ScoreVisualizationConfig config = requestIntent.getParcelableExtra(ACTIONS.EXTRAS_SCORE_VISUAL_CONF);
 			updateScoreMeta(writableDatabase, score.getId(), config);
 			onRequestSuccess(requestIntent, new Intent());
@@ -479,12 +476,12 @@ public class ContentService extends AsynchronousRequestsService {
 				if(presence == 0x0F) {
 					outData.putExtra(ACTIONS.RESPONSE_EXTRAS_PLAY_CONF, playConf);
 				} else if(presence != 0) {
-					Log.d(TAG, "Missing meta entries for PlayingConfiguration for Score#"+id);
+					log.d("Missing meta entries for PlayingConfiguration for Score#"+id);
 				}
 			}
  			onRequestSuccess(requestIntent, outData);
 		} catch (Exception e) {
-			Log.e(TAG, "Exception while fetching Score row", e);
+			log.e("Exception while fetching Score row", e);
 			onRequestError(requestIntent, "findScore() exception occured "+e.getMessage());
 		}
 		finally {
@@ -536,7 +533,7 @@ public class ContentService extends AsynchronousRequestsService {
 		long metaValue = metaCursor.getLong(metaCursor.getColumnIndex(ScoresMeta.META_VALUE));
 		if(ScoresMeta.IntMeta.DISPLAY_MODE.equals(metaName)) {
 			if(metaValue < 0 || metaValue >= DisplayMode.values().length) {
-				Log.w(TAG, "Score meta DISPLAY_MODE = "+metaValue+" outside of Enum scope");
+				log.w("Score meta DISPLAY_MODE = "+metaValue+" outside of Enum scope");
 			} else {
 				scoreConf.setDisplayMode(DisplayMode.values()[(int) metaValue]);
 			}
@@ -561,7 +558,7 @@ public class ContentService extends AsynchronousRequestsService {
 	@SuppressWarnings("unused")
 	private void debuggingDelay(String action, final int secs) {
 		for(int i = secs; i > 0; i--) {
-			Log.v(TAG, i+" secs left to handle "+action);
+			log.v(i+" secs left to handle "+action);
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
@@ -576,7 +573,7 @@ public class ContentService extends AsynchronousRequestsService {
 	private void insertScore(Intent requestIntent) {
 		ParcelableScore parcelable = requestIntent.getParcelableExtra(ACTIONS.EXTRAS_SCORE);
 		if(parcelable == null) {
-			Log.e(TAG, "Invalid request, no score provided");
+			log.e("Invalid request, no score provided");
 			onRequestError(requestIntent, "No score provided");
 			return;
 		}
@@ -591,7 +588,7 @@ public class ContentService extends AsynchronousRequestsService {
 			// send back error
 			onRequestError(requestIntent, "Failed to insert into DB");
 		} else {
-			Log.v(TAG, "Creted Score in DB storage, id = "+id);
+			log.v("Creted Score in DB storage, id = "+id);
 			ScoreVisualizationConfig config = requestIntent.getParcelableExtra(ACTIONS.EXTRAS_SCORE_VISUAL_CONF);
 			updateScoreMeta(writableDatabase, id, config);
 			
@@ -613,7 +610,7 @@ public class ContentService extends AsynchronousRequestsService {
 		try {
 			values.put(Scores.CONTENT, score.getRawContent());
 		} catch (SerializationException e) {
-			Log.e(TAG, "Exception while deserializing Score from requestIncent", e);
+			log.e("Exception while deserializing Score from requestIncent", e);
 			return -1;
 		}
 		values.put(Scores.ORIGINAL_ID, score.getOriginalId());
@@ -654,7 +651,7 @@ public class ContentService extends AsynchronousRequestsService {
 		metaEntry.put(ScoresMeta.META_VALUE, metaValue);
 		long id = writableDatabase.insertWithOnConflict(SCORES_INTMETA_TABLE_NAME, null, metaEntry, SQLiteDatabase.CONFLICT_REPLACE);
 		if(id == -1) {
-			Log.w(TAG, "Failed to save integer meta "+metaName);
+			log.w("Failed to save integer meta "+metaName);
 		}
 	}
 	
@@ -711,7 +708,7 @@ public class ContentService extends AsynchronousRequestsService {
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
+            log.w("Upgrading database from version " + oldVersion + " to "
                     + newVersion + ", which will destroy all old data");
             db.execSQL("DROP TABLE IF EXISTS "+ SCORES_TABLE_NAME);
             db.execSQL("DROP TABLE IF EXISTS "+ SCORES_INTMETA_TABLE_NAME);

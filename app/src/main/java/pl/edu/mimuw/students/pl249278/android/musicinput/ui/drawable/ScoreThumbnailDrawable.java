@@ -1,14 +1,22 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawable;
 
-import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.SPACEm1_ABSINDEX;
+import android.content.Context;
+import android.content.res.ColorStateList;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.Paint.Style;
+import android.graphics.PixelFormat;
+import android.graphics.Rect;
+import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Handler;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import pl.edu.mimuw.students.pl249278.android.common.LogUtils;
 import pl.edu.mimuw.students.pl249278.android.common.PaintBuilder;
 import pl.edu.mimuw.students.pl249278.android.musicinput.R;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ScoreHelper;
@@ -35,18 +43,10 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.NotesGroup.G
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetAlignedElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetElement;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.drawing.SheetVisualParams.AnchorPart;
-import android.content.Context;
-import android.content.res.ColorStateList;
-import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.Paint;
-import android.graphics.Paint.Style;
-import android.graphics.PixelFormat;
-import android.graphics.Rect;
-import android.graphics.drawable.AnimationDrawable;
-import android.graphics.drawable.Drawable;
-import android.os.Handler;
-import android.util.Log;
+
+import static pl.edu.mimuw.students.pl249278.android.common.LogUtils.commonLog;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.LINE0_ABSINDEX;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.model.NoteConstants.SPACEm1_ABSINDEX;
 
 public class ScoreThumbnailDrawable extends Drawable implements Drawable.Callback {
 	private WorkerThread worker;
@@ -243,7 +243,7 @@ public class ScoreThumbnailDrawable extends Drawable implements Drawable.Callbac
 			try {
 				return mPrepareValue(args);
 			} catch (CreationException e) {
-				Log.w(LogUtils.COMMON_TAG, e);
+				commonLog.w("", e);
 				return new DrawingSetup(args.width, args.height, null);
 			}
 		}

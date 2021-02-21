@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:custom="http://schemas.android.com/apk/res/pl.edu.mimuw.students.pl249278.android.musicinput"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:id="@+id/entry_toolbar"
 	style="@style/mainscreen_entry_toolbar"
     android:orientation="horizontal"

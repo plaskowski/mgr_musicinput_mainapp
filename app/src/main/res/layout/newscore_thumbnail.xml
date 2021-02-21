@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LinedSheetElementView_ExtendedBackground
     xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:custom="http://schemas.android.com/apk/res/pl.edu.mimuw.students.pl249278.android.musicinput"
+	xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     custom:paint="@style/NEWSCORE_thumbsPaint"

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.TableRow_ExtendedBackground 
-	xmlns:custom="http://schemas.android.com/apk/res/pl.edu.mimuw.students.pl249278.android.musicinput"
+	xmlns:custom="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"

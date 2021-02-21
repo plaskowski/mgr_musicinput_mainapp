@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge 
 	xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:custom="http://schemas.android.com/apk/res/pl.edu.mimuw.students.pl249278.android.musicinput"
+	xmlns:custom="http://schemas.android.com/apk/res-auto"
 >
 	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.RelativeLayout_InterceptScale_LockTouchInput
 		android:id="@+id/EDIT_scale_detector"

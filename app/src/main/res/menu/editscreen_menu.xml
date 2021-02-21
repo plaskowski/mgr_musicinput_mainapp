@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_play"
+        android:title="@string/menu_label_play" />
+    <item
+        android:id="@+id/menu_save"
+        android:title="@string/menu_label_save" />
+    <item
+        android:id="@+id/menu_editor_prefs"
+        android:title="@string/menu_label_editor_prefs" />
+</menu>

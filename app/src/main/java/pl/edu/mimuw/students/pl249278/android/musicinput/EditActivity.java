@@ -10,7 +10,7 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Vibrator;
-import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -23,10 +23,12 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.ScaleAnimation;
 import android.widget.HorizontalScrollView;
+import android.widget.PopupMenu;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 
 import java.security.InvalidParameterException;
@@ -396,26 +398,11 @@ public class EditActivity extends ShowScoreActivityWithMixin
 		return visualConf != null && (lastSavedConf == null || !visualConf.isEqual(lastSavedConf));
 	}
 
-	private static final int MENU_SAVE = 1;
-	private static final int MENU_PLAY = 4;
-	private static final int MENU_PREFS = 5;
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		menu.add(Menu.NONE, MENU_PLAY, Menu.NONE, R.string.menu_label_play);
-		menu.add(Menu.NONE, MENU_SAVE, Menu.NONE, R.string.menu_label_save);
-		menu.add(Menu.NONE, MENU_PREFS, Menu.NONE, R.string.menu_label_editor_prefs);
-		return super.onCreateOptionsMenu(menu);
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
+	private boolean onMenuItemSelected(@NonNull MenuItem item) {
 		int id = item.getItemId();
-		switch(id) {
-		case MENU_SAVE:
+		if (id == R.id.menu_save) {
 			saveChanges();
-			break;
-		case MENU_PLAY:
+		} else if (id == R.id.menu_play) {
 			try {
 				parseModifiedCotentModel();
 				Intent i = new Intent(this, PlayActivity.class);
@@ -425,16 +412,14 @@ public class EditActivity extends ShowScoreActivityWithMixin
 				showErrorDialog(R.string.errormsg_exception_try_later, e, false);
 				log.e("Failed to serialize", e);
 			}
-			break;
-		case MENU_PREFS:
+			return true;
+		} else if (id == R.id.menu_editor_prefs) {
 			Intent i = new Intent(this, VisualPreferencesActivity.class);
 			i.putExtra(VisualPreferencesActivity.START_EXTRAS_VISCONF, new ScoreVisualizationConfig(visualConf));
 			startActivityForResult(i, REQUEST_CODE_PREFS);
-			break;
-		default:
-			return super.onOptionsItemSelected(item);
+			return true;
 		}
-		return true;
+		return false;
 	}
 
 	@Override
@@ -681,10 +666,15 @@ public class EditActivity extends ShowScoreActivityWithMixin
 			return;
 		}
 		((InterceptableOnScrollChanged) hscroll).setListener(horizontalScrollListener);
-		findViewById(R.id.EDIT_menu_button).setOnClickListener(new OnClickListener() {
+		View menuButton = findViewById(R.id.EDIT_menu_button);
+		menuButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				openOptionsMenu();
+				PopupMenu popup = new PopupMenu(EditActivity.this, menuButton);
+				popup.setOnMenuItemClickListener(EditActivity.this::onMenuItemSelected);
+				MenuInflater inflater = popup.getMenuInflater();
+				inflater.inflate(R.menu.editscreen_menu, popup.getMenu());
+				popup.show();
 			}
 		});
 	}

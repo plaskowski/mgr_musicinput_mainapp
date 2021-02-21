@@ -1,3 +1,4 @@
+include ':logUtil'
 include ':svgCommon'
 include ':app'
 include ':flowLayout'

@@ -42,7 +42,11 @@ public class LogUtils {
 	public void v(String format, Object... args) {
 		log(Log.VERBOSE, tag, format, args);
 	}
-	
+
+	public void w(String msg, Throwable tr) {
+		Log.w(tag, msg, tr);
+	}
+
 	public void w(String format, Object... args) {
 		log(Log.WARN, tag, format, args);
 	}

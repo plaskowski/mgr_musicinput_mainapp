@@ -38,6 +38,7 @@ import pl.edu.mimuw.students.pl249278.android.common.Macros;
 import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivityHelper.ByScoreIdRequest;
 import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivityHelper.ExportMidiRequest;
 import pl.edu.mimuw.students.pl249278.android.musicinput.MainActivityHelper.ReceiverState;
+import pl.edu.mimuw.students.pl249278.android.musicinput.component.LifecycleOneTimeCallback;
 import pl.edu.mimuw.students.pl249278.android.musicinput.component.ManagedReceiver;
 import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.mixin.AppCompatActivityWithMixin;
 import pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ActivityStrategyChainRoot;
@@ -735,9 +736,11 @@ public class MainActivity extends AppCompatActivityWithMixin
 
 	@Override
 	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-		if (midiExportFlow != null) {
-			midiExportFlow.onRequestPermissionsResult(requestCode, permissions, grantResults);
-		}
+		LifecycleOneTimeCallback.doWhenResumed(this, () -> {
+			if (midiExportFlow != null) {
+				midiExportFlow.onRequestPermissionsResult(requestCode, permissions, grantResults);
+			}
+		});
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 	}
 
@@ -1308,7 +1311,6 @@ public class MainActivity extends AppCompatActivityWithMixin
 		super.onSaveInstanceState(outState);
 		if (midiExportFlow != null) {
 			outState.putBundle(STATE_MIDI_EXPORT_FLOW, midiExportFlow.saveState());
-			midiExportFlow = null;
 		}
 		if(scores != null) {
 			outState.putParcelableArrayList(STATE_SCORES, scores);

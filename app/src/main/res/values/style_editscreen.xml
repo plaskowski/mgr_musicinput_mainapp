@@ -3,9 +3,9 @@
 	<dimen name="optimalLinespaceThickness">60dp</dimen>
 	<dimen name="maxLinespaceThickness">100dp</dimen>    
 	<dimen name="inputAreaWidth">88dip</dimen>
-	<string name="minDistToIA">1.5s</string>
-	<string name="fakePauseEffectRadius">0.1s</string>
-	<string name="actionSubjectVisiblePaddingLeft">0.5s</string>
+	<string name="minDistToIA" translatable="false">1.5s</string>
+	<string name="fakePauseEffectRadius" translatable="false">0.1s</string>
+	<string name="actionSubjectVisiblePaddingLeft" translatable="false">0.5s</string>
 	<item name="repositioningDuration" type="integer">300</item>
 		
     <style name="EDIT_menuButton">

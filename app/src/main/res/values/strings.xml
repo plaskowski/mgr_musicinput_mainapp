@@ -43,7 +43,6 @@
     <string name="tip_midifile_exported">Score has been saved as \'%1$s\' file on external storage. You can find it in any music player (under artist \'%2$s\' or album \'%3$s\') or directly through the file browser in \'%4$s\' folder</string>
     <string name="label_dismiss_tip">Don\'t remind</string>
     <string name="tipdialog_title">Tip</string>
-    <string name="MAIN_label_create_new_score">Create new score</string>
     <string name="menu_label_play">Play</string>
     <string name="spinner_label_normal_voice">single voice</string>
     <string name="spinner_label_upper_voice">upper voice</string>

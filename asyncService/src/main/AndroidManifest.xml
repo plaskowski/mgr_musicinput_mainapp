@@ -1,7 +1,2 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="pl.edu.mimuw.students.pl249278.android.async"
-    android:versionCode="1"
-    android:versionName="1.0" >
-
-</manifest>
+<manifest package="pl.edu.mimuw.students.pl249278.android.async" />

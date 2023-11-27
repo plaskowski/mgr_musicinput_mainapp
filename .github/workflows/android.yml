@@ -37,5 +37,5 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: outputs-bundle
+          name: outputs-bundle.zip
           path: app/build/outputs/bundle/

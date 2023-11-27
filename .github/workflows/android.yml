@@ -35,9 +35,7 @@ jobs:
           encodedString: ${{ secrets.KEYSTORE }}
 
       - name: Build release bundle
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: :app:bundleRelease
+        run: gradle :app:bundleRelease
         env:
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}

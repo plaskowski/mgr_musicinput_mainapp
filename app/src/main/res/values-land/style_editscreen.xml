@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <style name="EDIT_scale_detector">
     	<item name="android:layout_toRightOf">@id/EDIT_note_value_scroll</item> 
 	    <item name="android:layout_width">fill_parent</item>
@@ -24,5 +24,5 @@
         <item name="android:layout_toRightOf">@id/EDIT_menu_button</item>
     </style>
     
-	<dimen name="inputAreaRightMargin">80dip</dimen>	
+	<dimen name="inputAreaRightMargin" tools:ignore="MissingDefaultResource">80dip</dimen>
 </resources>

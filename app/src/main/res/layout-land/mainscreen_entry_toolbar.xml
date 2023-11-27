@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/entry_toolbar"
 	style="@style/mainscreen_entry_toolbar"
     android:orientation="horizontal"
->
+    tools:ignore="MissingDefaultResource">
         <pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
             android:id="@+id/button_play"
             style="@style/mainscreen_entry_toolbar_item"

@@ -2,9 +2,10 @@
 <RelativeLayout 
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_width="fill_parent"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="fill_parent"
     android:layout_height="fill_parent"
->
+	tools:ignore="MissingDefaultResource">
 	<pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ImageButton_ExtendedImage 
 	    android:id="@+id/EDIT_menu_button"
 		android:layout_width="50dip"

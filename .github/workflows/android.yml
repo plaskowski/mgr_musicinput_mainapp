@@ -9,7 +9,7 @@ on:
         default: '1.0'
 env:
   APPLICATION_NAME: MusicInput
-  KEYSTORE_DIR: "$GITHUB_WORKSPACE/app/keystore/"
+  KEYSTORE_DIR: ${{ github.workspace }}
 jobs:
   build:
     name: Build Signed APK
@@ -29,13 +29,13 @@ jobs:
         uses: timheuer/base64-to-file@v1.2
         with:
           fileName: 'android_keystore.jks'
-          fileDir: $KEYSTORE_DIR
+          fileDir: ${{ KEYSTORE_DIR }}
           encodedString: ${{ secrets.KEYSTORE }}
 
       - name: Build release bundle
         run: ./gradlew :app:bundleRelease
         env:
-          SIGNING_STORE_PATH: $KEYSTORE_DIR
+          SIGNING_STORE_PATH: ${{ KEYSTORE_DIR }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}

@@ -1,4 +1,4 @@
-name: Android CI
+name: Build release bundle
 
 on:
   workflow_dispatch:
@@ -7,6 +7,8 @@ on:
         description: 'Application version'
         required: true
         default: '1.0'
+env:
+  APPLICATION_NAME: MusicInput
 jobs:
   build:
     name: Build Signed APK
@@ -27,44 +29,18 @@ jobs:
         uses: timheuer/base64-to-file@v1.2
         with:
           fileName: 'android_keystore.jks'
-          fileDir: '/home/runner/work/<<project name>>/<<project name>>/app/keystore/'
+          fileDir: "$GITHUB_WORKSPACE/app/keystore/"
           encodedString: ${{ secrets.KEYSTORE }}
 
-      # Build and sign APK ("-x test" argument is used to skip tests)
-      - name: Build APK
-        run: ./gradlew :app:assembleRelease -x test
+      - name: Build release bundle
+        run: ./gradlew :app:bundleRelease
         env:
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
 
-      # Show information about the APK's signing certificates
-      - name: Verify Signature
-        run: $ANDROID_SDK_ROOT/build-tools/33.0.1/apksigner verify --print-certs app/build/outputs/apk/release/<<application name>>_${{ github.event.inputs.version }}.apk
-
-      # Save the APK after the Build job is complete to publish it as a Github release in the next job
-      - name: Upload APK
+      - name: Upload bundle
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: <<application name>>
-          path: app/build/outputs/apk/release/<<application name>>_${{ github.event.inputs.version }}.apk
-  release:
-    name: Release APK
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download APK from build
-        uses: actions/download-artifact@v1
-        with:
-          name: <<application name>>
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ github.event.inputs.version }}
-          name: Release v${{ github.event.inputs.version }}
-          draft: false
-          prerelease: false
-          files: <<application name>>/<<application name>>_${{ github.event.inputs.version }}.apk
+          name: $APPLICATION_NAME-${{ github.event.inputs.version }}
+          path: app/build/outputs/bundle/release/app-release.aab

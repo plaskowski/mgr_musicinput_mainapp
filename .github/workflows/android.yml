@@ -34,7 +34,7 @@ jobs:
       - name: Build release bundle
         run: ./gradlew :app:bundleRelease
         env:
-          SIGNING_STORE_PATH: ${{ github.workspace }}
+          SIGNING_STORE_PATH: ${{ github.workspace }}/android_keystore.jks
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}

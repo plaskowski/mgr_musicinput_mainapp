@@ -2,11 +2,6 @@ name: Build release bundle
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Application version'
-        required: true
-        default: '1.0'
 env:
   APPLICATION_NAME: MusicInput
 jobs:
@@ -42,5 +37,4 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: $APPLICATION_NAME-${{ github.event.inputs.version }}
-          path: app/build/outputs/bundle/release/app-release.aab
+          path: app/build/outputs/bundle/release/*.aab

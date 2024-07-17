@@ -6,9 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
-import android.view.View;
 
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
@@ -55,7 +54,11 @@ public class ActivityStrategyChainRoot implements ActivityStrategy {
 
             @Override
             public Intent registerReceiver(BroadcastReceiver receiver, IntentFilter filter) {
-                return target.registerReceiver(receiver, filter);
+                if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    return target.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+                } else {
+                    return target.registerReceiver(receiver, filter);
+                }
             }
 
             @Override

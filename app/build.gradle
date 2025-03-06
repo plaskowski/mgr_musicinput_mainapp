@@ -5,15 +5,15 @@ plugins {
 }
 
 android {
-    compileSdkVersion 34
+    compileSdkVersion 35
     buildToolsVersion "30.0.3"
 
     defaultConfig {
         applicationId "pl.waw.echo.choirbuddy"
         minSdkVersion 23
-        targetSdkVersion 34
-        versionCode 5
-        versionName "1.3"
+        targetSdkVersion 35
+        versionCode 6
+        versionName "1.4"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

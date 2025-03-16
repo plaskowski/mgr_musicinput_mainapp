@@ -14,6 +14,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.core.content.ContextCompat;
+
 import java.util.ArrayList;
 
 import pl.edu.mimuw.students.pl249278.android.async.AsyncHelper;
@@ -410,7 +412,7 @@ public class NewScoreActivity extends AppCompatActivityWithMixin implements Info
 				return;
 			}
 			requestIntent.putExtra(ContentService.ACTIONS.EXTRAS_SCORE_VISUAL_CONF, visConf);
-			registerReceiver(insertRequestReceiver, new IntentFilter(CALLBACK_ACTION_INSERT));
+			ContextCompat.registerReceiver(NewScoreActivity.this, insertRequestReceiver, new IntentFilter(CALLBACK_ACTION_INSERT), ContextCompat.RECEIVER_EXPORTED);
         	log.v("Sending "+CALLBACK_ACTION_INSERT);
         	startService(requestIntent);
 		}

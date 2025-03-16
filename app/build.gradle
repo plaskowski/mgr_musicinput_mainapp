@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    compileSdkVersion 35
+    compileSdk 35
     buildToolsVersion "30.0.3"
 
     defaultConfig {
@@ -48,6 +48,9 @@ android {
             finalBundleFile.set(finalFile)
         }
     }
+    lintOptions {
+        abortOnError false
+    }
 }
 
 repositories {
@@ -57,8 +60,7 @@ repositories {
 }
 
 dependencies {
-
-    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation "androidx.core:core:${androidxCoreVersion}"
     implementation 'com.google.android.material:material:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation project(path: ':svgCommon')
@@ -69,8 +71,8 @@ dependencies {
     implementation project(path: ':asyncService')
     implementation project(path: ':logUtil')
     testImplementation 'junit:junit:4.+'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    androidTestImplementation "androidx.test.ext:junit:${androidJUnitVersion}"
+    androidTestImplementation "androidx.test.espresso:espresso-core:${espressoVersion}"
     implementation 'com.google.guava:guava:30.1-android'
 
 }

@@ -1,5 +1,10 @@
 package pl.edu.mimuw.students.pl249278.android.musicinput;
 
+import static pl.edu.mimuw.students.pl249278.android.async.AsyncHelper.getBroadcastCallback;
+import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ErrorDialogStrategy.ERRORDIALOG_CALLBACKARG_DO_FINISH;
+import static pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.TipDialogStrategy.CONFIRMDIALOG_CALLBACKARG_TIP;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -22,6 +27,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,11 +75,6 @@ import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.LayoutAnimator.
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.ViewHeightAnimation.ExpandAnimation;
 import pl.edu.mimuw.students.pl249278.android.musicinput.ui.view.nature.DrawingChildOnTop;
-
-import static pl.edu.mimuw.students.pl249278.android.async.AsyncHelper.getBroadcastCallback;
-import static pl.edu.mimuw.students.pl249278.android.common.Macros.ifNotNull;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.ErrorDialogStrategy.ERRORDIALOG_CALLBACKARG_DO_FINISH;
-import static pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.strategy.TipDialogStrategy.CONFIRMDIALOG_CALLBACKARG_TIP;
 
 public class MainActivity extends AppCompatActivityWithMixin
 		implements TextInputDialogListener, ConfirmDialogListener, InfoDialog.InfoDialogListener,
@@ -285,7 +286,7 @@ public class MainActivity extends AppCompatActivityWithMixin
 	}
 
 	private void registerAndEnqueue(EnqueuedReceiver receiver, String callbackAction) {
-		registerReceiver(receiver, new IntentFilter(callbackAction));
+		ContextCompat.registerReceiver(this, receiver, new IntentFilter(callbackAction), ContextCompat.RECEIVER_EXPORTED);
 		receivers.add(receiver);
 	}
 

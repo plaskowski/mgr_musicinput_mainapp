@@ -2,13 +2,12 @@ package pl.edu.mimuw.students.pl249278.android.musicinput.component.activity.str
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 
@@ -54,11 +53,7 @@ public class ActivityStrategyChainRoot implements ActivityStrategy {
 
             @Override
             public Intent registerReceiver(BroadcastReceiver receiver, IntentFilter filter) {
-                if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    return target.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
-                } else {
-                    return target.registerReceiver(receiver, filter);
-                }
+                return ContextCompat.registerReceiver(target, receiver, filter, ContextCompat.RECEIVER_EXPORTED);
             }
 
             @Override

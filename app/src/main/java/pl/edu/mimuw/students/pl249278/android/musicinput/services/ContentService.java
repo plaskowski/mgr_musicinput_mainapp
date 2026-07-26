@@ -29,6 +29,7 @@ public class ContentService extends AsynchronousRequestsService {
 	private static LogUtils log = new LogUtils(ContentService.class);
 
 	private DbHelper mDb;
+	private ScoreRepository scoreRepository;
 
 	public ContentService() {
 		super(ContentService.class.getSimpleName());
@@ -38,10 +39,12 @@ public class ContentService extends AsynchronousRequestsService {
 	public void onCreate() {
 		super.onCreate();
 		mDb = new DbHelper(this);
+		scoreRepository = new ScoreRepository(this);
 	}
 	
 	@Override
 	public void onDestroy() {
+		scoreRepository.close();
 		mDb.close();
 		super.onDestroy();
 	}
@@ -229,41 +232,13 @@ public class ContentService extends AsynchronousRequestsService {
 	};
 	
 	private void listScores(Intent requestIntent) {
-		Cursor scoreCursor = null, metaCursor = null; 
 		try {
-			SQLiteDatabase db = mDb.getReadableDatabase();
-			scoreCursor = db.query(
-					SCORES_TABLE_NAME, null, 
-					null, null, 
-					null, null,
-					Scores.MODIFIED_UTC_TIME + " DESC"
-			);
-			int total = scoreCursor.getCount();
-			ParcelableScore[] scores = new ParcelableScore[total];
-			idToIndex.clear();
-			for(int i = 0; scoreCursor.moveToNext(); i++) {
-				Score score = rowToScore(scoreCursor);
-				scores[i] = score.prepareParcelable();
-				idToIndex.put(score.getId(), i);
-			}
+			ScoreRepository.ListResult listResult = scoreRepository.listScores(
+				requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, false));
 			Intent result = new Intent();
-			result.putExtra(ACTIONS.RESPONSE_EXTRAS_SCORES, scores);
-			if(requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, false)) {
-				ScoreVisualizationConfig[] confs = new ScoreVisualizationConfig[total];
-				for(int i = 0; i < total; i++) {
-					confs[i] = ScoreVisualizationConfigFactory.createWithDefaults(this);
-				}
-				metaCursor = db.query(
-					SCORES_INTMETA_TABLE_NAME, null,
-					ScoresMeta.META_NAME + " IN (?, ?, ?)" , METAS_VISUAL,
-					null, null, null);
-				while(metaCursor.moveToNext()) {
-					long scoreId = metaCursor.getLong(metaCursor.getColumnIndex(ScoresMeta._ID));
-					if(idToIndex.containsKey(scoreId)) {
-						fillField(metaCursor, confs[idToIndex.get(scoreId)]);
-					}
-				}
-				result.putExtra(ACTIONS.RESPONSE_EXTRAS_VISUAL_CONFS, confs);
+			result.putExtra(ACTIONS.RESPONSE_EXTRAS_SCORES, listResult.scores);
+			if(listResult.visualConfigs != null) {
+				result.putExtra(ACTIONS.RESPONSE_EXTRAS_VISUAL_CONFS, listResult.visualConfigs);
 			}
 			onRequestSuccess(requestIntent, result);
 		} catch (SerializationException e) {
@@ -272,13 +247,6 @@ public class ContentService extends AsynchronousRequestsService {
 		} catch (Exception e) {
 			log.w("", e);
 			onRequestError(requestIntent, "Failed to read Scores from DB");
-		} finally {
-			if(scoreCursor != null) {
-				scoreCursor.close();
-			}
-			if(metaCursor != null) {
-				metaCursor.close();
-			}
 		}
 	}
 
@@ -436,58 +404,27 @@ public class ContentService extends AsynchronousRequestsService {
 			onRequestError(requestIntent, "No entity ID provided");
 			return;
 		}
-		Cursor playConfCursor = null; 
 		try {
-			SQLiteDatabase db = mDb.getReadableDatabase();
-			Score score = loadScore(db, id);
-			if(score == null) {
+			ScoreRepository.ScoreWithConfig scoreWithConfig = scoreRepository.findScore(
+				id,
+				requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, false),
+				requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_PLAY_CONF, false));
+			if(scoreWithConfig == null) {
 				onRequestError(requestIntent, "No Score row with id "+id);
 				return;
 			}
 			Intent outData = new Intent();
-			outData.putExtra(ACTIONS.RESPONSE_EXTRAS_ENTITY, score.prepareParcelable());
-			if(requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_VISUAL_CONF, false)) {
-				outData.putExtra(ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF, parseVisualConfig(db, id));
+			outData.putExtra(ACTIONS.RESPONSE_EXTRAS_ENTITY, scoreWithConfig.score.prepareParcelable());
+			if(scoreWithConfig.visualConfig != null) {
+				outData.putExtra(ACTIONS.RESPONSE_EXTRAS_VISUAL_CONF, scoreWithConfig.visualConfig);
 			}
-			if(requestIntent.getBooleanExtra(ACTIONS.EXTRAS_ATTACH_SCORE_PLAY_CONF, false)) {
-				playConfCursor = db.query(
-					SCORES_INTMETA_TABLE_NAME, null,
-					ScoresMeta._ID + " = " + id, null,
-					null, null, null);
-				PlayingConfiguration playConf = new PlayingConfiguration(-1, false, false, false);
-				int presence = 0;
-				while(playConfCursor.moveToNext()) {
-					String metaName = playConfCursor.getString(playConfCursor.getColumnIndex(ScoresMeta.META_NAME));
-					long metaValue = playConfCursor.getLong(playConfCursor.getColumnIndex(ScoresMeta.META_VALUE));
-					if(ScoresMeta.IntMeta.TEMPO.equals(metaName)) {
-						playConf.setTempo((int) metaValue);
-						presence |= 1 << 0;
-					} else if(ScoresMeta.IntMeta.LOOP.equals(metaName)) {
-						playConf.setLoop(IntUtils.asBool((int) metaValue)); 
-						presence |= 1 << 1;
-					} else if(ScoresMeta.IntMeta.METRONOME.equals(metaName)) {
-						playConf.setPlayMetronome(IntUtils.asBool((int) metaValue)); 
-						presence |= 1 << 2;
-					} else if(ScoresMeta.IntMeta.INTRO.equals(metaName)) {
-						playConf.setPrependEmptyBar(IntUtils.asBool((int) metaValue)); 
-						presence |= 1 << 3;
-					}
-				}
-				if(presence == 0x0F) {
-					outData.putExtra(ACTIONS.RESPONSE_EXTRAS_PLAY_CONF, playConf);
-				} else if(presence != 0) {
-					log.d("Missing meta entries for PlayingConfiguration for Score#"+id);
-				}
+			if(scoreWithConfig.playConfig != null) {
+				outData.putExtra(ACTIONS.RESPONSE_EXTRAS_PLAY_CONF, scoreWithConfig.playConfig);
 			}
  			onRequestSuccess(requestIntent, outData);
 		} catch (Exception e) {
 			log.e("Exception while fetching Score row", e);
 			onRequestError(requestIntent, "findScore() exception occured "+e.getMessage());
-		}
-		finally {
-			if(playConfCursor != null) {
-				playConfCursor.close();
-			}
 		}
 	}
 	
@@ -582,15 +519,20 @@ public class ContentService extends AsynchronousRequestsService {
 	}
 	
 	private long insertScore(Intent requestIntent, Score score) {
-		SQLiteDatabase writableDatabase = mDb.getWritableDatabase();
-		long id = insertAsNew(score, writableDatabase);
+		long id;
+		try {
+			ScoreVisualizationConfig config = requestIntent.getParcelableExtra(ACTIONS.EXTRAS_SCORE_VISUAL_CONF);
+			id = scoreRepository.insertScore(score, config);
+		} catch (SerializationException e) {
+			log.e("Exception while deserializing Score from requestIncent", e);
+			onRequestError(requestIntent, "Failed to insert into DB");
+			return -1;
+		}
 		if(id == -1) {
 			// send back error
 			onRequestError(requestIntent, "Failed to insert into DB");
 		} else {
 			log.v("Creted Score in DB storage, id = "+id);
-			ScoreVisualizationConfig config = requestIntent.getParcelableExtra(ACTIONS.EXTRAS_SCORE_VISUAL_CONF);
-			updateScoreMeta(writableDatabase, id, config);
 			
 			// send back created score id
 			Intent outData = new Intent();

@@ -87,6 +87,10 @@ public class TimeStepDialog extends DialogFragment {
 		spinners.x = bundle.getInt(KEY_SPINNERS_X, spinners.x);
 		spinners.y = bundle.getInt(KEY_SPINNERS_Y, spinners.y);
 	}
+
+	void restoreInstanceStateForTest(Bundle bundle) {
+		onRestoreInstanceState(bundle);
+	}
 	
 	@Override
 	public void onSaveInstanceState(Bundle bundle) {
@@ -366,6 +370,14 @@ public class TimeStepDialog extends DialogFragment {
 	}
 	static private IntegerSpinnerController getController(Dialog wrapper, int spinnerViewId) {
 		return (IntegerSpinnerController) wrapper.findViewById(spinnerViewId).getTag();
+	}
+
+	static int getSpinnerValueForTest(Dialog wrapper, int spinnerViewId) {
+		return getController(wrapper, spinnerViewId).getValue();
+	}
+
+	static boolean isContainerSelectedForTest(Context ctx, Dialog wrapper, int containerId) {
+		return radioButton(ctx, wrapper.findViewById(containerId)).isChecked();
 	}
 	
 	private static class IntegerSpinnerController extends IntegerSpinner.IntegerSpinnerController {

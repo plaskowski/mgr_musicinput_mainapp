@@ -5,8 +5,15 @@ plugins {
 }
 
 android {
+    namespace 'pl.edu.mimuw.students.pl249278.android.musicinput'
     compileSdkVersion 35
     buildToolsVersion "30.0.3"
+
+    def releaseSigningStorePath = System.getenv("SIGNING_STORE_PATH")
+    def hasReleaseSigningConfig = releaseSigningStorePath &&
+            System.getenv("SIGNING_STORE_PASSWORD") &&
+            System.getenv("SIGNING_KEY_ALIAS") &&
+            System.getenv("SIGNING_KEY_PASSWORD")
 
     defaultConfig {
         applicationId "pl.waw.echo.choirbuddy"
@@ -19,17 +26,21 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file(System.getenv("SIGNING_STORE_PATH"))
-            storePassword System.getenv("SIGNING_STORE_PASSWORD")
-            keyAlias System.getenv("SIGNING_KEY_ALIAS")
-            keyPassword System.getenv("SIGNING_KEY_PASSWORD")
+            if (hasReleaseSigningConfig) {
+                storeFile file(releaseSigningStorePath)
+                storePassword System.getenv("SIGNING_STORE_PASSWORD")
+                keyAlias System.getenv("SIGNING_KEY_ALIAS")
+                keyPassword System.getenv("SIGNING_KEY_PASSWORD")
+            }
         }
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+            if (hasReleaseSigningConfig) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     compileOptions {

@@ -51,8 +51,8 @@ public class NotePartFactory {
 			String constName = ReflectionUtils.findConstName(R.array.class, "svg", xmlResId, null);
 			String type = "array";
 			if(constName == null) {
-				constName = ReflectionUtils.findConstName(R.xml.class, "", xmlResId);
-				type = "xml";
+				constName = String.valueOf(xmlResId);
+				type = "resource";
 			}
 			return "Exception while loading EnhancedSvg from " + type + ": " + constName;
 		}

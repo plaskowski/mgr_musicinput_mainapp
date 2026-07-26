@@ -42,6 +42,10 @@ public class ScoreRepository implements AutoCloseable {
         this.dbHelper = new DbHelper(context);
     }
 
+    public static boolean clearStorage(Context context) {
+        return context.deleteDatabase(DATABASE_NAME);
+    }
+
     public long insertScore(Score score, ScoreVisualizationConfig config) throws SerializationException {
         SQLiteDatabase writableDatabase = dbHelper.getWritableDatabase();
         long id = insertAsNew(score, writableDatabase);

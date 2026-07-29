@@ -5,7 +5,6 @@ plugins {
 android {
     namespace 'pl.edu.mimuw.students.pl249278.android.async'
     compileSdkVersion 30
-    buildToolsVersion "30.0.3"
 
     defaultConfig {
         minSdkVersion 16

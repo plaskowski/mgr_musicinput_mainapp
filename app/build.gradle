@@ -6,8 +6,7 @@ plugins {
 
 android {
     namespace 'pl.edu.mimuw.students.pl249278.android.musicinput'
-    compileSdkVersion 35
-    buildToolsVersion "30.0.3"
+    compileSdkVersion 36
 
     def releaseSigningStorePath = System.getenv("SIGNING_STORE_PATH")
     def hasReleaseSigningConfig = releaseSigningStorePath &&
@@ -18,9 +17,9 @@ android {
     defaultConfig {
         applicationId "pl.waw.echo.choirbuddy"
         minSdkVersion 23
-        targetSdkVersion 35
-        versionCode 6
-        versionName "1.4"
+        targetSdkVersion 36
+        versionCode 7
+        versionName "1.5"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

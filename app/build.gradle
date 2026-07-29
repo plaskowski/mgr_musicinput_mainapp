@@ -18,8 +18,8 @@ android {
         applicationId "pl.waw.echo.choirbuddy"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 7
-        versionName "1.5"
+        versionCode 8
+        versionName "1.6"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
